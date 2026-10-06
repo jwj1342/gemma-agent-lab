@@ -59,8 +59,10 @@ gh pr create --base main
 
 Create an Issue for the hypothesis or task, and link it in the PR. A useful PR
 explains the change, the baseline it compares against, what was checked, and what
-remains untested. Ask another teammate to review before merging. This is our
-working convention; it is not a claim that branch protection is enabled.
+remains untested. Wait for **Repository checks**, obtain one other teammate's approval,
+resolve review threads, and squash merge. After a new code update, get the revised version reviewed.
+The [CI and review guide](docs/ci-and-review.md) records the check scope, local commands,
+and whether GitHub currently enforces the policy. Keep direct pushes and force pushes off `main`.
 
 Keep the known baseline intact when exploring: put alternative agent directories
 under `configs/experiments/<name>/` and implementations under `src/`. Build bundles
@@ -89,7 +91,8 @@ storage, and keep provenance and access instructions in the experiment report.
 
 ## Environment and source boundaries
 
-When changing notebook preparation, run `python3 -m unittest discover -s tests -v`.
+Before opening a PR, run the checks in the [CI guide](docs/ci-and-review.md).
+The preparation suite remains available as `python3 -m unittest discover -s tests -v`.
 These lightweight tests exercise local generation, input filtering, and preservation of existing
 artifacts. They do not run the model or spend Kaggle quota. GPU/runtime changes require the relevant
 platform experiment as well.

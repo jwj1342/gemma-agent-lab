@@ -1,0 +1,2 @@
+# Repository checks only; separate from evaluation and training environments.
+PyYAML==6.0.3

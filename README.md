@@ -1,5 +1,7 @@
 # Gemma Agent Lab
 
+[![Repository checks](https://github.com/jwj1342/gemma-agent-lab/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/jwj1342/gemma-agent-lab/actions/workflows/ci.yml)
+
 **Research and reproducible experiments for reliable open-model coding agents.**
 
 A collaborative workspace for the [Gemma 4 Developer Agent Competition](https://www.kaggle.com/competitions/gemma-4-developer-agent), exploring how agents locate relevant code, use tools, and repair real software issues.
@@ -110,6 +112,7 @@ For a first contribution, open an Issue with a small hypothesis, make one change
 | Start with | Then explore |
 | --- | --- |
 | [Repository map](docs/repository-map.md) | Where each maintained file belongs and how the run paths connect |
+| [CI and review](docs/ci-and-review.md) | Lightweight checks, one-person review, and branch-protection status |
 | [Kaggle runtime](docs/kaggle-runtime.md) | Prepare and run our agent without local data or a local GPU |
 | [Competition overview](docs/overview.md) | Task, scoring, submission contract, and constraints |
 | [Data guide](docs/data.md) | Schemas, snapshots, graph inputs, and label separation |
