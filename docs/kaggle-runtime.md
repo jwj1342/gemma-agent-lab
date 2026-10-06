@@ -85,8 +85,11 @@ The metadata attaches these inputs:
 
 Their standard mounted paths appear near the top of the generated notebook. It checks their presence,
 selects the requested task, removes validation labels from the inference task, and verifies official
-wheel hashes before installation. A source change fails the check for review rather than silently
-substituting a different environment. No GitHub or Kaggle token is embedded in the notebook.
+wheel inventory and hashes before installation. Missing, additional, or changed wheels stop preparation;
+installation uses only recorded entries and rechecks them before pip runs. No GitHub or Kaggle token
+is embedded in the notebook. `git_revision` identifies the preparation checkout; `source_run_git_revision`
+identifies the original frozen run, when supplied. Embedded script hashes record the exact helper code,
+including any uncommitted edits present during generation.
 
 ## 4. Read the result and keep the evidence
 
@@ -100,6 +103,7 @@ kaggle kernels output YOUR_KAGGLE_USERNAME/gemma4-first-smoke \
 | Output | What to inspect |
 | --- | --- |
 | `runtime-smoke/run-manifest.json` | Exact task, public-task hash, bundle hash, and intended resource settings |
+| `runtime-smoke/inputs/` | Sanitized task, agent files, exact submission ZIP, and member-hash manifest for submission checks |
 | `runtime-smoke/hardware.csv` | Actual allocated GPU names, memory, and driver |
 | `runtime-smoke/installation.log` | Dependency preparation problems |
 | `runtime-smoke/compile/validation.json` | Official agent compiler result |
@@ -115,6 +119,22 @@ are separate outcomes. If execution fails, inspect the last phase log. A running
 its current outputs; export them and use a fresh session/output location before repeating setup.
 Record results with the [experiment template](experiments/TEMPLATE.md). Coordinate an official
 entry separately through the [submission guide](submission.md).
+
+Check the downloaded run locally without consuming a submission:
+
+```bash
+python3 scripts/submit_competition.py \
+  --run-dir runs/first-kaggle-smoke/output/runtime-smoke
+```
+
+The dry-run uses only the standard library. It verifies task identity, frozen input hashes, official
+compiler results, controls, and completed agent tests. An unresolved repair can still pass the pipeline
+check; inspect `agent_resolved` before selecting an entry. Add `--submit` only after the team selects
+the candidate, using a Python environment with your own Kaggle CLI installation and credentials.
+
+This complete output layout applies to notebooks generated after the October 6 repository audit.
+The archived October 5 L4 run lacks some input manifests; preserve it as historical evidence and
+generate a new experiment when the checked submission route is needed. Do not invent missing receipts.
 
 ## Resource choices and tuning
 

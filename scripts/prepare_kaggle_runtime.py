@@ -9,6 +9,7 @@ import tempfile
 
 from build_submission import build, collect_files
 from prepare_eval_task import PUBLIC_FIELDS
+from verify_eval_run import verify_inputs
 
 
 def cell(kind, source):
@@ -36,33 +37,28 @@ def main():
         parser.error('--run-dir already records its task; omit --task-id')
     if args.output.exists():
         raise ValueError('Output directory exists; choose a new path to preserve previous notebook evidence')
+    try:
+        revision = subprocess.run(['git', '-C', str(root), 'rev-parse', 'HEAD'], capture_output=True, text=True)
+        git_revision = revision.stdout.strip() if revision.returncode == 0 else None
+    except FileNotFoundError:
+        git_revision = None  # Source archives can be used without Git installed.
     if args.run_dir:
-        run = json.loads((args.run_dir / 'run-manifest.json').read_text())
         bundle_path = args.run_dir / 'inputs/submission.zip'
         if bundle_path.stat().st_size > 5 * 1024**2:
             raise ValueError('Inline runtime notebook only supports small baseline bundles')
+        run = verify_inputs(args.run_dir)
         bundle = bundle_path.read_bytes()
-        task_bytes = (args.run_dir / 'inputs/tasks.jsonl').read_bytes()
-        public_task = task_bytes.decode('utf-8')
-        if hashlib.sha256(task_bytes).hexdigest() != run['public_task_sha256']:
-            raise ValueError('Frozen public task hash changed')
-        rows = [json.loads(line) for line in public_task.splitlines() if line.strip()]
-        if len(rows) != 1 or rows[0].get('instance_id') != run['task_id'] or not set(rows[0]) <= PUBLIC_FIELDS:
-            raise ValueError('Frozen task must contain one matching public task without validation labels')
+        archive_manifest = json.loads(bundle_path.with_suffix('.manifest.json').read_text())
+        public_task = (args.run_dir / 'inputs/tasks.jsonl').read_text()
     else:
         _, files = collect_files(args.agent_dir)
         if sum(path.stat().st_size for path in files) > 5 * 1024**2:
             raise ValueError('Inline notebooks support small configurations; use versioned inputs for adapters')
         with tempfile.TemporaryDirectory(prefix='gemma-notebook-') as temporary:
             bundle_path = Path(temporary) / 'submission.zip'
-            manifest = build(args.agent_dir, bundle_path)
+            archive_manifest = build(args.agent_dir, bundle_path)
             bundle = bundle_path.read_bytes()
-        try:
-            revision = subprocess.run(['git', '-C', str(root), 'rev-parse', 'HEAD'], capture_output=True, text=True)
-            git_revision = revision.stdout.strip() if revision.returncode == 0 else None
-        except FileNotFoundError:
-            git_revision = None  # A downloaded source archive can be used without Git installed.
-        run = {'task_id': args.task_id, 'agent_archive_sha256': manifest['sha256'],
+        run = {'task_id': args.task_id, 'agent_archive_sha256': archive_manifest['sha256'],
                'git_revision': git_revision}
         public_task = None
     if len(bundle) > 5 * 1024**2:
@@ -72,11 +68,16 @@ def main():
     official = json.loads((root / 'resource/notebooks/official/kernel-metadata.json').read_text())
     assets = json.loads((root / 'resource/manifests/eval-assets-verification.json').read_text())
     payload = {'bundle': base64.b64encode(bundle).decode(), 'bundle_sha256': run['agent_archive_sha256'],
+               'archive_manifest': archive_manifest,
                'public_task': public_task, 'public_fields': sorted(PUBLIC_FIELDS), 'task_id': run['task_id'],
-               'git_revision': run.get('git_revision'),
+               'git_revision': git_revision,
+               'source_run_git_revision': run.get('git_revision') if args.run_dir else None,
                'scripts': {name: (root / 'scripts' / name).read_text() for name in
-                           ['validate_agent.py', 'evaluate_agent.py', 'summarize_eval_smoke.py']},
+                           ['validate_agent.py', 'evaluate_agent.py', 'summarize_eval_smoke.py',
+                            'verify_eval_run.py', 'build_submission.py', 'prepare_eval_task.py']},
                'wheels': {item['path']: item['sha256'] for item in assets['wheelhouse_files']}}
+    payload['script_sha256'] = {name: hashlib.sha256(source.encode()).hexdigest()
+                                for name, source in payload['scripts'].items()}
     encoded = base64.b64encode(json.dumps(payload).encode()).decode()
     setup = '''import base64, hashlib, json, os, subprocess, sys, zipfile, io
 from pathlib import Path
@@ -107,9 +108,14 @@ with zipfile.ZipFile(io.BytesIO(raw)) as archive:
         path=Path(name)
         assert not path.is_absolute() and '..' not in path.parts
     archive.extractall(AGENT)
+(WORK/'inputs/submission.zip').write_bytes(raw)
+archive_manifest = dict(PAYLOAD['archive_manifest'], archive=str(WORK/'inputs/submission.zip'))
+(WORK/'inputs/submission.manifest.json').write_text(json.dumps(archive_manifest, indent=2) + '\\n')
 (WORK/'inputs/tasks.jsonl').write_text(task_text)
 (WORK/'run-manifest.json').write_text(json.dumps({
     'task_id': PAYLOAD['task_id'], 'git_revision': PAYLOAD['git_revision'],
+    'source_run_git_revision': PAYLOAD['source_run_git_revision'],
+    'script_sha256': PAYLOAD['script_sha256'],
     'agent_archive_sha256': PAYLOAD['bundle_sha256'],
     'public_task_sha256': hashlib.sha256(task_text.encode()).hexdigest(),
     'public_fields': sorted(public_task),
@@ -119,15 +125,20 @@ with zipfile.ZipFile(io.BytesIO(raw)) as archive:
 }, indent=2) + '\\n')
 for name, source in PAYLOAD['scripts'].items():
     (WORK/'scripts'/name).write_text(source)
-for name, expected in PAYLOAD['wheels'].items():
-    h=hashlib.sha256()
-    with (WHEELS/name).open('rb') as stream:
-        for chunk in iter(lambda: stream.read(8*1024**2), b''):h.update(chunk)
-    assert h.hexdigest() == expected, 'Official wheelhouse changed: '+name
-print('Exact local bundle and 41 official wheel hashes match.')
+def verify_wheels():
+    actual = {path.name for path in WHEELS.glob('*.whl')}
+    assert actual == set(PAYLOAD['wheels']), 'Official wheelhouse inventory changed.'
+    for name, expected in PAYLOAD['wheels'].items():
+        h=hashlib.sha256()
+        with (WHEELS/name).open('rb') as stream:
+            for chunk in iter(lambda: stream.read(8*1024**2), b''):h.update(chunk)
+        assert h.hexdigest() == expected, 'Official wheelhouse changed: '+name
+verify_wheels()
+print('Exact local bundle and official wheel inventory/hashes match.')
 '''
     install = '''# Same installation scope as the reviewed official starter, in this disposable notebook.
 import glob
+verify_wheels()
 for pattern in ('/usr/local/lib/python*/dist-packages/*cutlass*.pth',
                 '/usr/local/lib/python*/site-packages/*cutlass*.pth'):
     for pth in glob.glob(pattern):
@@ -135,7 +146,8 @@ for pattern in ('/usr/local/lib/python*/dist-packages/*cutlass*.pth',
 normalized = Path('/tmp/gemma4-official-wheels')
 normalized.mkdir(exist_ok=True)
 packages=[]
-for source in sorted(WHEELS.glob('*.whl')):
+for name in sorted(PAYLOAD['wheels']):
+    source = WHEELS/name
     if 'cutlass' in source.name.lower():continue
     with zipfile.ZipFile(source) as z:
         meta=next(n for n in z.namelist() if n.endswith('.dist-info/METADATA'))
@@ -175,6 +187,7 @@ print('Official patched wheels installed; helper scripts use fresh Python proces
 
 hardware=subprocess.check_output(['nvidia-smi','--query-gpu=name,memory.total,driver_version','--format=csv'],text=True)
 (WORK/'hardware.csv').write_text(hardware);print(hardware)
+run_script('verify_eval_run.py',['--run-dir',WORK],'checks','inputs.log')
 run_script('validate_agent.py',['--agent-dir',AGENT,'--output',WORK/'compile/validation.json'],'compile','compile.log')
 common=['--task-id',PAYLOAD['task_id'],'--data-dir',DATA,'--agent-dir',AGENT]
 for source in ['empty','gold']:
@@ -209,7 +222,8 @@ print('One-task smoke complete; this notebook has NOT submitted a competition en
     (args.output / 'kernel-metadata.json').write_text(json.dumps(metadata, indent=2)+'\n')
     (args.output / 'preparation.json').write_text(json.dumps({
         'task_id': run['task_id'], 'agent_archive_sha256': run['agent_archive_sha256'],
-        'git_revision': run.get('git_revision'), 'kernel': metadata['id'],
+        'git_revision': git_revision, 'source_run_git_revision': payload['source_run_git_revision'],
+        'script_sha256': payload['script_sha256'], 'kernel': metadata['id'],
         'task_source': 'frozen run checked against Kaggle inputs' if args.run_dir else 'Kaggle inputs at runtime',
         'status': 'notebook generated locally; no GPU execution or upload'
     }, indent=2) + '\n')

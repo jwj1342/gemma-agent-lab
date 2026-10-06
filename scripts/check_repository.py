@@ -30,13 +30,13 @@ def references(value, seen=None):
     """Yield local file references without following YAML alias cycles."""
     seen = set() if seen is None else seen
     if isinstance(value, Include):
-        yield str(value)
+        yield 'include', str(value)
     elif isinstance(value, (dict, list)) and id(value) not in seen:
         seen.add(id(value))
         if isinstance(value, dict):
             for key, child in value.items():
                 if key == 'config_path' and isinstance(child, str):
-                    yield child
+                    yield 'config_path', child
                 else:
                     yield from references(child, seen)
         else:
@@ -92,13 +92,21 @@ def check(root):
     output = subprocess.check_output(['git', '-C', str(root), 'ls-files', '-z'])
     tracked = {Path(name.decode()) for name in output.split(b'\0') if name}
     errors = []
+    ignored = subprocess.check_output(['git', '-C', str(root), 'ls-files', '-ci', '--exclude-standard', '-z'])
+    for name in ignored.split(b'\0'):
+        if name:
+            errors.append(f'{name.decode()}: tracked file matches an ignore rule; remove it from Git')
+    agent_roots = sorted((root / p.parent for p in tracked
+                          if p.parts[0] == 'configs' and p.name == 'agent.yaml'),
+                         key=lambda p: len(p.parts), reverse=True)
     counts = {'python': 0, 'shell': 0, 'configuration': 0, 'markdown': 0, 'agent_packages': 0}
     for relative in sorted(tracked):
         path = root / relative
+        agent_root = next((agent for agent in agent_roots if path.is_relative_to(agent)), None)
         try:
             if relative.parts[0] == 'slides':
                 raise ValueError('Slides belong in the separate Overleaf workspace, outside Git')
-            if relative.parts[0] in {'scripts', 'src', 'tests'}:
+            if relative.parts[0] in {'scripts', 'src', 'tests'} or agent_root:
                 if path.suffix == '.py':
                     ast.parse(path.read_text(), filename=str(relative))
                     counts['python'] += 1
@@ -113,8 +121,18 @@ def check(root):
                     counts['configuration'] += 1
                 elif path.suffix in {'.yml', '.yaml'}:
                     config = yaml.load(path.read_text(), Loader=ConfigLoader)
-                    for target in references(config):
-                        included = (path.parent / target).resolve()
+                    for kind, target in references(config):
+                        candidate = path.parent / target
+                        if agent_root:
+                            if Path(target).is_absolute() or (kind == 'config_path' and '..' in Path(target).parts):
+                                raise ValueError(f'Non-portable {kind} reference: {target}')
+                            # Official config_path resolution prefers the current directory,
+                            # then the submission root; !include is always file-relative.
+                            if kind == 'config_path' and not (candidate.exists() or candidate.is_symlink()):
+                                candidate = agent_root / target
+                        included = candidate.resolve()
+                        if agent_root and not included.is_relative_to(agent_root):
+                            raise ValueError(f'Configuration reference escapes agent bundle: {target}')
                         if (not included.is_relative_to(root) or included.relative_to(root) not in tracked
                                 or not included.is_file()):
                             raise ValueError(f'Untracked or missing configuration reference: {target}')

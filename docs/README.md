@@ -16,6 +16,7 @@ Start with a question, then follow the matching guide. All team guides are in En
 | Record a new experiment | [Experiment reports](experiments/README.md) |
 | Open a branch or pull request | [Contribution guide](../CONTRIBUTING.md) |
 | Understand CI, review, and main-branch protection | [CI and review](ci-and-review.md) |
+| Review collaboration risks and their fixes | [Independent repository audit](repository-audit.md) |
 
 Execution guides distinguish commands that prepare local files from commands that start a paid-in-quota
 GPU session or submit an entry. Historical results refer to the exact recorded configuration and task.

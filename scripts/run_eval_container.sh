@@ -20,6 +20,7 @@ case "$mode" in infer|verify|compile) ;; *) echo 'Mode must be infer, verify or 
 if [[ "$mode" != compile && -z ${SLURM_JOB_ID:-} ]]; then
   echo 'Inference and repository tests must run within a Slurm allocation.' >&2; exit 2
 fi
+python3 "$project_root/scripts/verify_eval_run.py" --run-dir "$run_dir"
 work="$run_dir/$mode"
 mkdir -p "$work/tmp" "$work/home"
 args=(exec --cleanenv --containall --no-home --no-mount hostfs,bind-paths,cwd
