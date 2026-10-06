@@ -100,8 +100,11 @@ The configuration file describes the requested rule; its presence alone does not
 
 ## Enforcement status
 
-Last checked: October 6, 2026. At setup start, `main` was unprotected and no Actions workflows existed.
-CI installation and its first hosted run are being verified as part of this change.
+Last checked: October 6, 2026. The first [hosted PR run](https://github.com/jwj1342/gemma-agent-lab/actions/runs/37518341796)
+passed all repository checks and 13 tests. The workflow is configured for PRs, `main`, and manual runs.
+Squash merging and automatic deletion of merged feature branches are enabled; other merge methods
+and automatic merging are disabled. The initial installation is owner-authorized and has no independent
+reviewer approval; subsequent routine changes follow the one-review policy above.
 
 GitHub's protection/ruleset API returned HTTP 403 with an instruction to upgrade to GitHub Pro or
 make the repository public. This repository stays private. Until an entitlement upgrade allows the
