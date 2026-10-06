@@ -9,6 +9,9 @@
   Notebook preparation from `--agent-dir` must work without local data, model weights, or Kaggle credentials.
 - Write all team-authored documentation, comments, templates, and generated navigation in English.
   Preserve original third-party sources, quoted metadata, and provenance; do not rewrite upstream notebooks.
+- Follow `docs/ci-and-review.md`: use a feature branch and PR, run the CPU checks, and obtain
+  one other teammate's approval before routine merges. Check the documented enforcement status;
+  a passing CI result alone is not reviewer approval. Keep GPU runs and competition uploads manual.
 - Track code, configuration, and experiment reports in Git. Exclude data, weights, caches,
   checkpoints, credentials, and run outputs according to `.gitignore`. Put adaptations in `src/` or `configs/`.
 - Use `runs/<date>-<short-name>/` for each experiment. Record Git revision, modules,
