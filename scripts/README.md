@@ -10,6 +10,7 @@ The generated Kaggle notebook subsequently runs in Kaggle's evaluation environme
 | Script | Where | Purpose |
 | --- | --- | --- |
 | [build_submission.py](build_submission.py) | Local | Deterministic agent ZIP and hash manifest; official compilation is separate |
+| [check_repository.py](check_repository.py) | Development Python + PyYAML and Bash | CPU checks for tracked syntax, configuration references, deterministic agent packaging, and maintained-document links |
 | [prepare_kaggle_runtime.py](prepare_kaggle_runtime.py) | Local | Private offline L4×4 notebook from `--agent-dir` plus `--task-id`, or an existing `--run-dir`; no local model/data needed in agent mode |
 | [prepare_kaggle_upload.py](prepare_kaggle_upload.py) | Local | Private CPU notebook that emits an already reviewed small ZIP; no model inference |
 | [prepare_eval_run.py](prepare_eval_run.py) | Local, with task data | Freeze agent, sanitized public task, and ZIP identity into a new run |

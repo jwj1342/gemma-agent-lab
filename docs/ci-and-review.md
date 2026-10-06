@@ -85,6 +85,19 @@ The workflow check must have run successfully before selecting it as required. R
 should allow squash merging and automatically delete merged feature branches. There is no automatic
 merge, release deployment, or competition upload in this workflow.
 
+The intended REST configuration is versioned in
+[.github/main-protection.json](../.github/main-protection.json). It binds the required check to
+the GitHub Actions app (`15368`), rather than accepting an identically named check from any app.
+Once entitlement is available and the workflow has passed, the owner can apply and verify it:
+
+```bash
+gh api --method PUT repos/jwj1342/gemma-agent-lab/branches/main/protection \
+  --input .github/main-protection.json
+gh api repos/jwj1342/gemma-agent-lab/branches/main/protection
+```
+
+The configuration file describes the requested rule; its presence alone does not enable protection.
+
 ## Enforcement status
 
 Last checked: October 6, 2026. At setup start, `main` was unprotected and no Actions workflows existed.

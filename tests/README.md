@@ -1,8 +1,9 @@
 # Lightweight preparation checks
 
-Run from the repository root with Python 3.10+:
+Run from the repository root with Python 3.10+, Git, Bash, and the development dependencies:
 
 ```bash
+python3 -m pip install -r configs/ci.requirements.txt
 python3 -m unittest discover -s tests -v
 ```
 
@@ -11,6 +12,14 @@ checks the embedded shared scripts and baseline ZIP, and executes only the input
 cell against tiny temporary mount fixtures. It checks label removal, frozen-task tampering,
 input mismatch, and protection of existing output. It never installs the wheelhouse, contacts
 Kaggle, loads a model, runs repository tests, or consumes GPU quota.
+
+`test_repository_checks.py` verifies the CI gates using tiny temporary Git repositories. It checks
+that missing/untracked local links, broken YAML/includes, and team Python syntax errors fail, while
+valid agent packages and reference links pass. Original upstream material is excluded from these gates.
+
+The notebook-preparation tests alone still use only the standard library:
+`python3 -m unittest discover -s tests -p test_kaggle_preparation.py -v`.
+See [CI and review](../docs/ci-and-review.md) for the hosted workflow and local static-check command.
 
 Changes to inference, hardware settings, dependencies, or agent behavior also need a platform
 experiment with valid controls. Historical runtime evidence is indexed in

@@ -23,6 +23,7 @@ to the unchanged baseline ZIP, not automatically to a new variant.
 | File | Scope |
 | --- | --- |
 | [kaggle-cli.requirements.txt](kaggle-cli.requirements.txt) | Maintainer's Kaggle collection/upload environment snapshot |
+| [ci.requirements.txt](ci.requirements.txt) | Small development dependency for CPU repository checks; independent of model environments |
 | [compiler-precheck.requirements.txt](compiler-precheck.requirements.txt) | Preliminary native compiler checks on Trillium; not the complete runtime |
 | [eval-container.requirements.txt](eval-container.requirements.txt) | Prepared Trillium container environment package freeze |
 | [eval-container.requirements.official-constraints.txt](eval-container.requirements.official-constraints.txt) | Official wheel versions preserved during installation |

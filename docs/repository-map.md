@@ -30,6 +30,8 @@ Choose the platform at the execution entry point; the agent configuration is sha
 | `.gitattributes` | Mark reference snapshots as vendored in GitHub language statistics |
 | `.github/ISSUE_TEMPLATE/experiment.md` | Propose a hypothesis and its resource budget |
 | `.github/pull_request_template.md` | Explain a change and its validation to reviewers |
+| `.github/workflows/ci.yml` | CPU checks for pull requests and `main`; see [CI and review](ci-and-review.md) |
+| `.github/main-protection.json` | Intended GitHub branch-protection request; actual enforcement depends on account entitlement |
 
 ## Working directories and ownership
 
