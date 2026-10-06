@@ -40,6 +40,9 @@ Any change to agent, budget, or adapter requires fresh timing and behavior check
 
 ### Verified Kaggle L4 run
 
+To prepare a new experiment from a fresh clone, use the [Kaggle runtime walkthrough](kaggle-runtime.md).
+The commands below for `jwj1342` refer to the maintainer's historical run.
+
 Private notebook `jwj1342/gemma4-official-runtime-smoke`, version 1, uses the pinned official starter
 image, four L4 GPUs, no Internet, and a 2700-second maximum. It checks the same `rich_3454` task and
 41 official wheel hashes, then runs compilation, empty/gold controls, inference, and agent verification.

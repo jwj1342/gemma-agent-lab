@@ -14,6 +14,9 @@
 
 ## Kaggle development resources
 
+For a complete team-baseline run using your own account, follow the [Kaggle runtime guide](kaggle-runtime.md).
+It starts from a fresh clone and needs no local competition data or GPU.
+
 Copy & Edit the [official starter](https://www.kaggle.com/code/ryanholbrook/getting-started-gemma-4-developer-agent).
 Check Inputs for the competition data, official wheelhouse, and required model version.
 Choose L4×4 under Session options with Internet disabled. CPU-only ZIP packaging does not need a GPU;

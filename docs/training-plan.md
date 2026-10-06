@@ -11,7 +11,9 @@ All environment versions and resource figures below are dated October 5, 2026 un
    model revision, and chat template. Establish offline generation and independent verification.
    Replacing this with the latest Alliance vLLM does not demonstrate scoring parity. The official
    notebook assumes many dependencies are already present in the Kaggle image.
-2. **Training:** use Trillium modules, Alliance wheels, and a HOME venv. Validate Torch,
+2. **Training:** on Trillium, use modules, Alliance wheels, and a HOME venv. On Kaggle, prepare
+   a separate versioned training notebook with dependencies and data attached for offline use;
+   follow the resource constraints in the [Kaggle runtime guide](kaggle-runtime.md). Validate Torch,
    Transformers, PEFT, TRL, quantization, and attention extensions together for the target model.
    Exported adapters must load in the evaluation environment with compatible target modules/shapes,
    measurable effect, and a submission below 3 GiB.
@@ -28,7 +30,8 @@ verification on `rich_3454`. See [runtime status](cluster-runtime.md). This vali
 1. Fix grouped public splits and establish unpatched failure plus gold-patch success for chosen
    tasks. Exclude incomplete or invalid environments. Group by repository/base commit to prevent snapshot overlap.
 2. Stage the required v2 base, tokenizer/configuration, data, and caches. Use a short allocated
-   H100 run for inference and two-stage evaluation; retain patches, traces, timing, and failure categories.
+   H100 run or a Kaggle L4×4 session for inference and two-stage evaluation; retain patches, traces,
+   timing, and failure categories.
 3. Establish an analyzer/coder baseline without an adapter, then check timing near the L4 scoring environment.
 4. Begin SFT with verified tool-use trajectories. Check chat templates, tool schemas, and loss masks;
    run a few steps, save, resume, export, and reload. Issue-to-reference-diff training alone does not teach the entire agent loop.

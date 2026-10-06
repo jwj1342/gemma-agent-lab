@@ -13,7 +13,7 @@ Read the [research report](../docs/competition-research.md) and
 | [discussions/](discussions/README.md) | 116 topics and 370 opening posts/replies, with authors and timestamps |
 | [models/](models/README.md) | All four listed instances and available cards; required Gemma v2 weights were downloaded separately |
 | [leaderboard/](leaderboard/README.md) | Official CSV and distribution across 1,755 scored teams |
-| [manifests/](manifests/data-audit.json) | File inventories, verification, structural audits, and storage snapshots |
+| [manifests/](manifests/README.md) | Catalog of every evidence receipt, inventory, audit, and storage snapshot |
 | [harness-source/](harness-source/README.md) | Python source and metadata from three official wheels, for static inspection |
 | `downloads/` | Local dataset ZIP, download caches, and harness wheels; excluded from Git |
 

@@ -6,6 +6,9 @@ A collaborative workspace for the [Gemma 4 Developer Agent Competition](https://
 
 [Getting started](#getting-started) · [Results](#verified-results) · [Documentation](#documentation) · [Contributing](CONTRIBUTING.md) · [Kickoff slides](https://www.overleaf.com/project/6ac31a4a617496d875323ad8)
 
+**New to the workspace?** Use the [repository map](docs/repository-map.md) to find files and the
+[Kaggle walkthrough](docs/kaggle-runtime.md) to run our baseline with your own account.
+
 ## 🔬 Research focus
 
 We develop and evaluate agents built on the competition's required Gemma 4 base. The current baseline runs without a LoRA adapter; training remains a proposed research direction.
@@ -70,7 +73,19 @@ This creates a reproducible ZIP and a file-hash manifest. It does not run a mode
 
 ### 3. Run your first agent experiment
 
-Copy the [official Kaggle starter](https://www.kaggle.com/code/ryanholbrook/getting-started-gemma-4-developer-agent), attach the required competition inputs, and follow the [participation guide](docs/participation.md). Start with one public task before increasing scale.
+Generate a private Kaggle notebook from the team's baseline. Replace the owner with your Kaggle username:
+
+```bash
+python3 scripts/prepare_kaggle_runtime.py \
+  --owner YOUR_KAGGLE_USERNAME --slug gemma4-first-smoke \
+  --agent-dir configs/baseline --task-id rich_3454 \
+  --output runs/first-kaggle-smoke/notebook
+```
+
+This prepares files locally using only Python's standard library. The notebook reads data and weights
+from Kaggle Inputs when it runs. Follow the [Kaggle walkthrough](docs/kaggle-runtime.md) to check
+quota, launch L4×4, and inspect results. The [official starter](https://www.kaggle.com/code/ryanholbrook/getting-started-gemma-4-developer-agent)
+is also available for a browser-first introduction.
 
 For a first contribution, open an Issue with a small hypothesis, make one change on a branch, and compare it against the baseline. The [contribution guide](CONTRIBUTING.md) explains the PR workflow and experiment records.
 
@@ -80,6 +95,7 @@ For a first contribution, open an Issue with a small hypothesis, make one change
 | --- | --- |
 | [`configs/`](configs/) | Baseline agent, experiment settings, and environment specifications |
 | [`scripts/`](scripts/) | Packaging, collection, validation, and execution utilities |
+| [`tests/`](tests/) | Lightweight checks for notebook preparation; no GPU required |
 | [`src/`](src/) | Team implementations and future agent/training extensions |
 | [`docs/`](docs/) | Competition guides, research findings, and execution plans |
 | [`resource/`](resource/) | Reference snapshots, reading notes, provenance, and small evidence manifests |
@@ -93,6 +109,8 @@ For a first contribution, open an Issue with a small hypothesis, make one change
 
 | Start with | Then explore |
 | --- | --- |
+| [Repository map](docs/repository-map.md) | Where each maintained file belongs and how the run paths connect |
+| [Kaggle runtime](docs/kaggle-runtime.md) | Prepare and run our agent without local data or a local GPU |
 | [Competition overview](docs/overview.md) | Task, scoring, submission contract, and constraints |
 | [Data guide](docs/data.md) | Schemas, snapshots, graph inputs, and label separation |
 | [Participation](docs/participation.md) | Kaggle setup, compute quota, and team access |

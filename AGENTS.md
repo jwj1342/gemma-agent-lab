@@ -4,6 +4,9 @@
 - On Trillium, read `/home/jwj/.codex/cluster-guides/trillium.md` before cluster operations.
   Other systems do not depend on that local path. Start with `README.md`,
   `docs/competition-research.md`, and `docs/training-plan.md`.
+- Use `docs/repository-map.md` to locate files and `docs/kaggle-runtime.md` for the laptop-to-Kaggle path.
+  Keep the shared agent/evaluation logic independent of platform-specific installation and launch scripts.
+  Notebook preparation from `--agent-dir` must work without local data, model weights, or Kaggle credentials.
 - Write all team-authored documentation, comments, templates, and generated navigation in English.
   Preserve original third-party sources, quoted metadata, and provenance; do not rewrite upstream notebooks.
 - Track code, configuration, and experiment reports in Git. Exclude data, weights, caches,

@@ -31,7 +31,8 @@ Kaggle. Configure Git with your own name and email before committing.
 | --- | --- |
 | Understand coding agents and our plan | [Slides](https://www.overleaf.com/project/6ac31a4a617496d875323ad8) |
 | Modify prompts, tools, or agent settings | [Baseline configuration](configs/baseline/) |
-| Run one task without a local GPU | Copy & Edit the [official Kaggle starter](https://www.kaggle.com/code/ryanholbrook/getting-started-gemma-4-developer-agent) and follow [participation](docs/participation.md) |
+| Run one task without a local GPU | Follow the [Kaggle runtime guide](docs/kaggle-runtime.md) using your own account |
+| Find a script, configuration, or source record | [Repository map](docs/repository-map.md) |
 | Study public approaches | [Notebook reading notes](resource/notebooks/reading-notes.md) |
 | Understand our measured results | [Submission guide](docs/submission.md) and [L4 evidence](resource/manifests/kaggle-runtime-smoke.json) |
 | Plan fine-tuning | [Training plan](docs/training-plan.md); training has not yet been validated |
@@ -69,7 +70,8 @@ Coordinate formal competition submissions with the team; a PR does not upload a 
 ## Record experiments without committing large artifacts
 
 Use `runs/<date>-<short-name>/` for local outputs. Keep a small report in
-`docs/experiments/<date>-<short-name>.md` with:
+`docs/experiments/<date>-<short-name>.md`, starting from the
+[report template](docs/experiments/TEMPLATE.md), with:
 
 - Question, baseline, and the single change being evaluated.
 - Code commit, configuration, task/split identifiers, random seed, and model/data versions.
@@ -86,6 +88,11 @@ those files belong. Use the approved Kaggle inputs or agreed private artifact
 storage, and keep provenance and access instructions in the experiment report.
 
 ## Environment and source boundaries
+
+When changing notebook preparation, run `python3 -m unittest discover -s tests -v`.
+These lightweight tests exercise local generation, input filtering, and preservation of existing
+artifacts. They do not run the model or spend Kaggle quota. GPU/runtime changes require the relevant
+platform experiment as well.
 
 - `scripts/kaggle.sh`, download wrappers, Slurm scripts, and the documented HOME
   virtual environments describe the maintainer's Trillium setup. Inspect these
