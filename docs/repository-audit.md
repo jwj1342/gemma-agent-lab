@@ -26,6 +26,9 @@ label removal, configuration boundaries, wheel additions, frozen-input changes, 
 handoff. The existing H100 evidence passes the strengthened submission dry-run. The baseline ZIP
 remains `02bb939095ded0c970088fc9d19634e203e2d3119a36a5feff20bad55c9343fc`.
 All 37 artifact hashes listed in the historical H100 and L4 manifests were rechecked and match.
+The [hosted audit CI run](https://github.com/jwj1342/gemma-agent-lab/actions/runs/37521076367)
+also passed. The same independent reviewer then verified all six fixes, reproduced the Kaggle
+submission handoff and wheel allowlist behavior, and reported no new actionable defects.
 
 No training, model inference, Kaggle notebook launch, competition upload, or dependency installation
 was performed for this audit. New guards and output metadata have CPU coverage; the changed generated
