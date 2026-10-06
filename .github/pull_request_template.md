@@ -13,4 +13,3 @@ State anything not yet tested; link the small report and any private artifacts.
 - [ ] Changes use my own branch and preserve upstream reference files.
 - [ ] The diff contains no credentials, datasets, weights, caches, or full run outputs.
 - [ ] Documentation and configuration match the result being reported.
-- [ ] For slide changes, I rebuilt and visually checked `main.pdf`.

@@ -1,5 +1,5 @@
-# 团队代码
+# Team implementations
 
-后续 agent、数据转换、训练与评测实现放在此处。
-上游资料保留在 `resource/`；复用代码时记录来源和改动，不覆盖原始 notebook。
-运行输出写入各自 `runs/<run-id>/`。
+Add agent tools, data transformations, training, and evaluation code here.
+Keep upstream references in `resource/`. Record attribution and changes when adapting code,
+and preserve the original notebooks. Write outputs to a dedicated `runs/<run-id>/` directory.

@@ -15,29 +15,29 @@ def main():
     assert len(reviewed) == len(notes['entries'])
     assert set(reviewed) <= {x['ref'] for x in index}
     pending = len(index) - len(reviewed)
-    scope = (f'另有 {pending} 项仍为结构扫描，继续补读。' if pending else
-             '本次快照已全部逐项记录；其中空源码条目仅记录不可审阅的边界。')
-    lines = ['# 公开 Notebook 逐项阅读表', '',
-             f'当前 {len(index)} 个公开条目；已完成 {len(reviewed)} 项阅读记录。{scope}',
-             '本表区分实际写入的提交内容、notebook 外围实验和作者自述。没有执行第三方 notebook，也不是逐行安全审计。',
-             '原始下载不改写；嵌入的文字配置可以静态解码，不能因此认为其中脚本已运行或模型已训练。', '',
-             '所有条目的原始入口见 [完整索引](README.md)，已有重点结论见 [比赛调研](../../docs/competition-research.md)。', '']
+    scope = (f'{pending} entries still have structure scans only and await detailed notes.' if pending else
+             'Every entry has a reading record; the empty-source entry documents its review limitation.')
+    lines = ['# Public notebook reading notes', '',
+             f'Snapshot: {len(index)} public entries, {len(reviewed)} individual reading records. {scope}',
+             'These notes distinguish submitted payloads, surrounding notebook experiments, and author claims. No third-party notebook was executed; this is not a line-by-line security audit.',
+             'Original downloads remain unchanged. Static decoding of embedded configuration does not establish that its scripts ran or its model was trained.', '',
+             'See the [complete index](README.md) for sources and [competition research](../../docs/competition-research.md) for conclusions.', '']
     for number, item in enumerate(index, 1):
         ref = item['ref']
         note = reviewed.get(ref)
-        title = item['title'].replace('\n', ' ')
+        title = item['title'].replace('\n', ' ').strip()
         lines += [f'## {number}. {title}', '',
-                  f'[Kaggle](https://www.kaggle.com/code/{ref}) · [本地源码](public/{ref}/readable.txt)', '']
+                  f'[Kaggle](https://www.kaggle.com/code/{ref}) · [Local source](public/{ref}/readable.txt)', '']
         if note is None:
-            lines += ['状态：已下载和结构扫描；关键执行路径评语待补充。', '']
+            lines += ['Status: downloaded and structurally scanned; execution-path notes are pending.', '']
             continue
         source = BASE / 'public' / ref / 'readable.txt'
         assert hashlib.sha256(source.read_bytes()).hexdigest() == note['readable_sha256'], ref
         count = len(source.read_text().splitlines())
         assert all(1 <= a <= b <= count for a, b in note['evidence_lines']), ref
-        lines += [f"**类型：{note['role']}。** {note['implementation']}", '',
-                  f"可借鉴：{note['reuse']}", '', f"边界与疑点：{note['caveats']}", '',
-                  '阅读定位：' + (', '.join(f'L{a}–L{b}' for a, b in note['evidence_lines']) or '下载源码为空') + '。', '']
+        lines += [f"**Category: {note['role']}.** {note['implementation']}", '',
+                  f"Reusable ideas: {note['reuse']}", '', f"Caveats: {note['caveats']}", '',
+                  'Source locations: ' + (', '.join(f'L{a}–L{b}' for a, b in note['evidence_lines']) or 'Downloaded source is empty') + '.', '']
     (BASE / 'reading-notes.md').write_text('\n'.join(lines))
     print(json.dumps({'rendered_at': datetime.now(timezone.utc).isoformat(),
                       'reviewed_entries': len(reviewed), 'total_entries': len(index)}))

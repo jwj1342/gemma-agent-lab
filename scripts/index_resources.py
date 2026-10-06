@@ -1,4 +1,5 @@
 """Build navigable indexes from the local snapshot; never execute upstream code."""
+import argparse
 from datetime import datetime, timezone
 import hashlib
 import json
@@ -34,6 +35,9 @@ def messages(topic):
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--navigation-only", action="store_true", help="Regenerate Markdown indexes without changing source digests or audit manifests")
+    args = parser.parse_args()
     assets_path = RES / "manifests/eval-assets-verification.json"
     assets = read(assets_path) if assets_path.exists() else {}
     kernels = read(RES / "notebooks/index.json")
@@ -41,19 +45,19 @@ def main():
     review_count = len(read(notes_path)["entries"]) if notes_path.exists() else 0
     downloads = {x["ref"]: x for x in read(RES / "notebooks/downloads.json")}
     features = {x["ref"]: x for x in read(RES / "notebooks/review-features.json")}
-    labels = {"packs_submission": "打包", "evaluates": "评测入口", "trains": "训练入口",
-              "peft": "PEFT", "gold_patch": "参考补丁", "network": "联网代码",
-              "skills": "skills", "graphs": "图检索"}
+    labels = {"packs_submission": "Packaging", "evaluates": "Evaluation entry", "trains": "Training entry",
+              "peft": "PEFT", "gold_patch": "Reference patches", "network": "Network access",
+              "skills": "skills", "graphs": "Graph retrieval"}
     empty_count = sum(not (RES / "notebooks/public" / x["ref"] / "readable.txt").read_text().strip() for x in kernels)
-    lines = ["# 公开 Code 全量索引", "",
-             f"当前快照 {len(kernels)} 个条目，全部下载，{empty_count} 个源码为空。顺序与 API 清单相同。",
-             "全部做结构、依赖和配置扫描；重点代码审读见 [研究报告](../../docs/competition-research.md)。",
-             "表中标签由源码模式识别，只表示存在相应文本/入口，不能证明功能已运行。",
-             "未逐行审计所有第三方源码，未执行 notebook 或复现作者成绩。", "",
-             f"逐项阅读已记录 {review_count}/{len(kernels)} 项，见 [阅读表](reading-notes.md)；空源码的不可审阅边界单独说明。", "",
-             "原始 metadata 见 [index.json](index.json)，hash 见 [downloads.json](downloads.json)，",
-             "逐条结构记录见 [review-features.json](review-features.json)。", "",
-             "| # | 标题 / 原始页面 | 本地文本 | 静态标签 |",
+    lines = ["# Public notebook index", "",
+             f"Snapshot: {len(kernels)} entries downloaded, including {empty_count} with empty source. Entries follow API order.",
+             "All entries received structure, dependency, and configuration scans; see the [research report](../../docs/competition-research.md).",
+             "Tags identify source patterns or entry points; they do not establish execution.",
+             "Third-party code was not exhaustively audited or executed, and author scores were not independently reproduced.", "",
+             f"Individual reviews cover {review_count}/{len(kernels)} entries; see [reading notes](reading-notes.md), including the empty-source limitation.", "",
+             "Original metadata: [index.json](index.json). Source hashes: [downloads.json](downloads.json).",
+             "Per-entry structural records: [review-features.json](review-features.json).", "",
+             "| # | Title / source | Local text | Static tags |",
              "| ---: | --- | --- | --- |"]
     empty = []
     for i, item in enumerate(kernels, 1):
@@ -62,24 +66,24 @@ def main():
         assert downloads[ref]["status"] == "ok", ref
         assert (dest / "readable.txt").is_file(), ref
         feat = features.get(ref, {})
-        tags = ", ".join(labels.get(x, x) for x in feat.get("features", [])) or "结构资料"
+        tags = ", ".join(labels.get(x, x) for x in feat.get("features", [])) or "Structure reference"
         if not (dest / "readable.txt").read_text().strip():
             empty.append(ref)
-            tags = "源码为空"
+            tags = "Empty source"
         lines.append(f"| {i} | [{cell(item['title'])}](https://www.kaggle.com/code/{ref}) | "
-                     f"[源码文本](public/{ref}/readable.txt) | {tags} |")
+                     f"[Source text](public/{ref}/readable.txt) | {tags} |")
     (RES / "notebooks/README.md").write_text("\n".join(lines) + "\n")
 
     topics = read(RES / "discussions/index.json")
     coverage = {x["id"]: x for x in read(RES / "discussions/coverage.json")}
     message_count = sum(x["messages"] for x in coverage.values())
-    lines = ["# Discussion 全量索引", "",
-             f"当前快照 {len(topics)} 个主题，{message_count} 条首帖及回复；完整文本及作者/时间在每个 `-full.json`。",
-             "已按主题检查问题，并交叉阅读影响规则和实现的主办方答复；外链、截图、",
-             "Discord、删除/私有内容不包含在本次完整性声明中。", "",
-             "主办方/工作人员数量按 API 的 HOST/ADMIN 或作者 STAFF 标识统计；该标识不保证整条回复",
-             "就是正式规则更新。关键结论见 [研究报告](../../docs/competition-research.md)。", "",
-             "| # | 主题 / 原始页面 | 本地文本 | 首帖及回复 | HOST/STAFF |",
+    lines = ["# Discussion index", "",
+             f"Snapshot: {len(topics)} topics and {message_count} opening posts/replies. Each `-full.json` retains text, authors, and timestamps.",
+             "Topics and relevant organizer clarifications were cross-checked. External links, screenshots,",
+             "Discord, and deleted/private material are outside this coverage claim.", "",
+             "Host/staff counts use API HOST/ADMIN roles or author STAFF labels. Those labels do not make every reply",
+             "an official rule update. See the [research report](../../docs/competition-research.md) for conclusions.", "",
+             "| # | Topic / source | Local text | Messages | HOST/STAFF |",
              "| ---: | --- | --- | ---: | ---: |"]
     total_messages = 0
     host_digest = []
@@ -95,18 +99,19 @@ def main():
         host_digest.extend({"topic_id": tid, "title": topic["title"], "message": m} for m in host_msgs)
         total_messages += len(msgs)
         lines.append(f"| {i} | [{cell(topic['title'])}](https://www.kaggle.com{topic['topicUrl']}) | "
-                     f"[正文]({tid}.txt) | {len(msgs)} | {len(host_msgs)} |")
+                     f"[Text]({tid}.txt) | {len(msgs)} | {len(host_msgs)} |")
     (RES / "discussions/README.md").write_text("\n".join(lines) + "\n")
-    save(RES / "discussions/host-messages.json", host_digest)
+    if not args.navigation_only:
+        save(RES / "discussions/host-messages.json", host_digest)
 
     model_tab = read(RES / "models/competition-tab.json")
     models = model_tab.get("pinnedModelInstances", []) + model_tab.get("unpinnedModelInstances", [])
-    lines = ["# Models 页面完整快照", "",
-             f"本地页面快照有 {len(models)} 个模型实例。全部 metadata、实例说明及存在的",
-             "模型卡已保存。指定 Gemma v2 权重已下载并校验；其他条目未下载权重。" if assets else "模型卡已保存；尚无完整权重校验记录。",
-             "只有规则指定的 Gemma 31B 量化底座可用于正式评分。",
-             "其他模型出现在此页，不代表获准用于提交。", "",
-             "| 实例 | 版本 | 包大小（字节） | 本地模型卡 / 实例记录 |",
+    lines = ["# Models-page snapshot", "",
+             f"The captured page lists {len(models)} model instances. Metadata, descriptions, and available",
+             "model cards are saved. Required Gemma v2 weights were verified separately; other weights were not downloaded." if assets else "model cards are saved; complete weight verification is not yet recorded.",
+             "Official scoring requires the specified quantized Gemma 31B base.",
+             "Other entries on this page do not imply approval for submissions.", "",
+             "| Instance | Version | Package bytes | Local card / instance record |",
              "| --- | ---: | ---: | --- |"]
     for item in models:
         ref = item["modelInstanceUrl"].removeprefix("/models/")
@@ -114,22 +119,26 @@ def main():
         instance = read(RES / f"models/{base}/instance.json")
         lines.append(f"| [{ref}](https://www.kaggle.com{item['modelInstanceUrl']}) | "
                      f"{instance.get('versionNumber', '')} | {instance.get('totalUncompressedBytes', '')} | "
-                     f"[卡片]({base}/model.json) / [实例]({base}/instance.json) |")
-    lines.extend(["", "Google 家族卡的其他尺寸和长上下文能力不能覆盖比赛固定底座与 32,768 token 限制。",
-                  "wheelhouse 的 metadata 另存于 `wheelhouse/`，它是依赖数据集，不是底座。"])
+                     f"[Card]({base}/model.json) / [Instance]({base}/instance.json) |")
+    lines.extend(["", "Other family-card model sizes or context lengths do not override the required base and 32,768-token limit.",
+                  "The dependency dataset metadata is stored under `wheelhouse/`; it is separate from the base model."])
     (RES / "models/README.md").write_text("\n".join(lines) + "\n")
 
     board = read(RES / "leaderboard/summary.json")
-    lines = ["# Leaderboard 快照", "",
-             f"来源：[官方完整 CSV]({board['source']})，时间 2026-10-05 03:50:43 UTC。",
-             f"共 {board['teams_with_score']:,} 队；最高 {board['max']:.2f}、中位数 {board['median']:.2f}、"
-             f"均值 {board['mean']:.5f}。", "",
-             "| 分数 | 队伍数 | 占比 |", "| ---: | ---: | ---: |"]
+    lines = ["# Leaderboard snapshot", "",
+             f"Source: [official CSV]({board['source']}), captured October 5, 2026 at 03:50:43 UTC.",
+             f"{board['teams_with_score']:,} scored teams; maximum {board['max']:.2f}, median {board['median']:.2f}, "
+             f"mean {board['mean']:.5f}.", "",
+             "| Score | Teams | Share |", "| ---: | ---: | ---: |"]
     for score, count in board["score_counts"].items():
         lines.append(f"| {float(score):.2f} | {count} | {100 * count / board['teams_with_score']:.2f}% |")
-    lines.extend(["", "前十名及原始队名保存在 [summary.json](summary.json)。大量分数并列；",
-                  "榜单显示精度不足以反推出精确任务数，public 排名不能代替 private 最终结果。"])
+    lines.extend(["", "The top ten and original team names are in [summary.json](summary.json). Many scores tie;",
+                  "display precision cannot establish an exact task count, and public rank does not determine final private results."])
     (RES / "leaderboard/README.md").write_text("\n".join(lines) + "\n")
+
+    if args.navigation_only:
+        print(json.dumps({"navigation_updated": ["notebooks", "discussions", "models", "leaderboard"]}))
+        return
 
     wheels = []
     for path in sorted((RES / "downloads/harness").glob("*.whl")):

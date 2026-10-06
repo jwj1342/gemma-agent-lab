@@ -1,1 +1,1 @@
-此目录保存本地大文件，不进入 Git。管理约定见父目录 README.md。
+Large local artifacts in this directory are excluded from Git. See the parent [README](../README.md) for conventions.

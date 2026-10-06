@@ -1,15 +1,16 @@
-# 官方 harness 源码快照
+# Official harness source snapshot
 
-来自比赛官方 [wheelhouse](https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse)。
-仅解包 `.py` 与 wheel `METADATA`，未导入、安装或执行。
-三个 wheel 的版本、字节数和 SHA-256 见 [清单](../manifests/harness-wheels.json)。
+Source: the competition's official [wheelhouse](https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse).
+Only Python source and wheel `METADATA` were extracted for inspection; these snapshots were not imported,
+installed, or executed during collection. Versions, sizes, and SHA256 hashes of the three wheels are in the
+[manifest](../manifests/harness-wheels.json).
 
-本次重点核对：
+The review focused on:
 
-- `swegemma/config.py`：3 GiB 限制、扩展白名单、输出/思考 token 范围。
-- `adk_submission/server.py`：根据实际 adapter 数量与 rank 设置 vLLM LoRA 参数。
-- `adk_submission/resolvers/generation.py`：thinking budget、seed 到 LiteLLM/vLLM 的转发。
-- `swegemma/tools/graph.py`：数字参数转换、查询结果截断。
-- `swegemma/graph/`：现有图/embedding 的检索路径；不能假定支持任意自然语言 embedding。
+- `swegemma/config.py`: 3 GiB limit, allowed extensions, and output/thinking token ranges.
+- `adk_submission/server.py`: vLLM LoRA settings derived from actual adapter count and rank.
+- `adk_submission/resolvers/generation.py`: thinking-budget and seed forwarding to LiteLLM/vLLM.
+- `swegemma/tools/graph.py`: numeric argument conversion and result truncation.
+- `swegemma/graph/`: graph/embedding retrieval paths; arbitrary natural-language embedding support must be verified.
 
-源码检查不能代替依赖安装、模型服务启动或评分环境实测。
+Static inspection does not establish dependency compatibility, model startup, or behavior in the scoring environment.

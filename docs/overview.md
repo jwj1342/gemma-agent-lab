@@ -1,59 +1,63 @@
-# 比赛 Overview 导读
+# Competition overview
 
-官方原文完整快照：[Description](../resource/competition/description.md)、
-[Evaluation](../resource/competition/evaluation.md)、[Rules](../resource/competition/rules.md)、
-[模型与 harness 规则](../resource/competition/model-selection-budget-and-harness-rules.md)。
-本页是中文操作解读；规则冲突以当前官方页面及明确的主办方澄清为准。
+Official snapshots: [Description](../resource/competition/description.md),
+[Evaluation](../resource/competition/evaluation.md), [Rules](../resource/competition/rules.md),
+and [Model and harness rules](../resource/competition/model-selection-budget-and-harness-rules.md).
+This guide interprets the October 4–5, 2026 snapshot. Current official rules and explicit organizer
+clarifications take precedence if a conflict appears.
 
-## 我们要做什么
+## Objective
 
-给定真实 Python 仓库的旧版本和一个 issue，让 Gemma 4 agent 自己找代码、修改实现、
-验证并提交 git diff。参赛者可以调整提示词、ADK agent 结构、skills，或训练 LoRA。
-提交物是描述 agent 的 ZIP；Kaggle 在隐藏任务上启动它。无需预先生成隐藏题答案。
+Given an issue and a historical version of a real Python repository, a Gemma 4 agent
+locates relevant code, changes the implementation, checks its work, and submits a Git diff.
+Participants can change prompts, ADK agent structure, skills, or optional LoRA adapters.
+The submission is an agent ZIP that Kaggle executes on hidden tasks.
 
-正式底座统一为 `gemma-4-31b-it-qat-w4a16-ct`。每个 agent/subagent 使用同一底座，
-可各自使用不同的可选 adapter。Models 标签下的其他模型和本地 CLI 支持的其他尺寸
-不代表正式评分允许使用。无 adapter 的合法基线可用于首先验证提交链路。
+Every agent and subagent must use `gemma-4-31b-it-qat-w4a16-ct`, with optional different adapters.
+Other Models-page entries or locally supported model sizes do not extend the approved scoring models.
+A baseline without an adapter can establish the complete submission path.
 
-## 什么决定得分
+## Scoring
 
-每题先运行 agent 生成补丁，再在干净环境应用补丁及保密验证测试；通过为 1，否则为 0。
-排行榜展示解决比例。训练集有 129 题，隐藏集约 120 题，public/private 约各一半；
-隐藏题来自私有仓库。对公开四个仓库硬编码策略，未必能泛化到隐藏集。
+For each issue, the agent generates a patch. A clean verification environment applies the
+patch and hidden validation tests. A passing issue scores 1; otherwise it scores 0.
+The leaderboard reports the fraction resolved. The public dataset contains 129 tasks;
+the hidden set contains approximately 120, split roughly evenly between public/private scoring,
+and comes from private repositories. Strategies tailored only to the four public repositories may not generalize.
 
 ```mermaid
 flowchart LR
-    A[agent.yaml / prompts / 可选 LoRA] --> B[submission.zip]
-    B --> C[Kaggle 解包与编译]
-    C --> D[指定 Gemma 底座 + issue + 仓库快照]
-    D --> E[工具调用与代码修改]
-    E --> F[git diff]
-    F --> G[干净验证环境 + 保密测试]
-    G --> H[public / private 解决率]
+    A[Agent config, prompts, optional LoRA] --> B[submission.zip]
+    B --> C[Kaggle extraction and compilation]
+    C --> D[Required Gemma model, issue, repository]
+    D --> E[Tool calls and code edits]
+    E --> F[Git diff]
+    F --> G[Clean verification with hidden tests]
+    G --> H[Public and private resolution rates]
 ```
 
-公开数据的 gold patch/test patch 用于训练或独立验证，不能混入解题输入。
-本地环境错误应和代码错误分开记，尤其是公开测试依赖不完整的情况。
+Public reference patches and test patches support training or independent verification;
+keep them out of inference inputs. Record environment failures separately from incorrect repairs,
+especially when public tests have incomplete dependencies.
 
-## 资源与限制
+## Resources and limits
 
-- 评分硬件 4×L4，24 GB/卡；总上下文上限 32,768 tokens。
-- 所有题生成补丁共 12 小时，包括环境 setup，不包括之后的补丁验证。
-- `eval_config.yaml` 只控制 `timeout_seconds`、`max_tool_calls`、
-  `max_time_minutes`、`max_turns` 四个字段；每题预算不能替代全局时间预算。
-- 展开后的提交保守控制为小于 3 GiB；ZIP 根必须有 `agent.yaml`。
-- 只允许官方扩展白名单，LoRA 使用 safetensors；不提交 pickle 权重、模型底座或训练环境。
-- Kaggle L4 Notebook 必须关联本比赛且关闭 Internet。L4 开发运行按 GPU quota 的
-  2 倍速率消耗；它与评分的 12 小时时限是不同额度。
-- 计算任务只能使用 harness 提供的工具，或配置中的 agent tools / 沙箱 skills。
-  提交中的 Python 不能成为任意宿主入口。
+- Scoring hardware: four L4 GPUs, 24 GB each; total context limit: 32,768 tokens.
+- All tasks share a 12-hour patch-generation budget, including environment setup and excluding subsequent patch verification.
+- `eval_config.yaml` exposes `timeout_seconds`, `max_tool_calls`, `max_time_minutes`, and
+  `max_turns`. Per-task budgets must also fit the global limit.
+- Conservatively keep the expanded submission below 3 GiB, with `agent.yaml` at the ZIP root.
+- Use approved extensions and safetensors adapters. Exclude pickle weights, the base model, and training environments.
+- L4 notebooks must be attached to this competition with Internet disabled. Development sessions
+  currently consume GPU quota at twice the reference rate; this quota and the scoring time limit are distinct constraints.
+- Use harness tools, configured agent tools, and sandbox skills. Submitted Python cannot act as an arbitrary host entry point.
 
-## 参与安排
+## Participation
 
-预测赛奖金 $65,000，论文赛另有 $35,000；论文赛是独立入口。
-2026-11-12 为可选论文截止，11-25 为预测赛报名及合队截止，12-02 为最终提交截止，
-时间均按官方 UTC 23:59 处理。最多 5 人一队，每天 1 次预测赛提交，最终可选 2 个。
-当前账号 API 显示已加入预测赛，未加入论文赛；后续状态需重新检查。
+The prediction competition offers $65,000; the separate paper track offers $35,000.
+The optional paper deadline is November 12, 2026; prediction entry/team merger closes November 25;
+final submissions close December 2. Official deadlines use 23:59 UTC unless stated otherwise.
+The snapshot allows up to five members, one prediction submission per day, and two final selections.
+The account snapshot shows prediction-track membership and no paper-track membership; recheck before acting.
 
-参赛操作见 [参与指南](participation.md)，数据字段见 [Data 导读](data.md)，
-代码/讨论/模型/榜单解读见 [比赛调研](competition-research.md)。
+Next: [participation](participation.md), [data](data.md), and [research findings](competition-research.md).

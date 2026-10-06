@@ -53,5 +53,5 @@ __pycache__/
 # and source links are retained in resource/discussions/.
 /resource/discussions/*.html
 
-# Unused fonts from the earlier Chinese slide draft stay local.
-/slides/gemma4-kickoff/fonts/*.otf
+# Presentation files are maintained separately in Overleaf and kept local.
+/slides/

@@ -1,6 +1,6 @@
 # Working together
 
-This is the private team workspace for the **Gemma 4 Developer Agent prediction
+Gemma Agent Lab is the private team workspace for the **Gemma 4 Developer Agent prediction
 competition**. You can contribute from a regular laptop and use Kaggle for GPU
 experiments. A Trillium account is optional.
 
@@ -9,13 +9,13 @@ experiments. A Trillium account is optional.
 1. Ask the repository owner to invite your GitHub account, then accept the invitation.
 2. Use your own Kaggle account to accept the competition rules and join the formal
    Kaggle team. GitHub access and Kaggle team membership are separate.
-3. Read the [English kickoff slides](slides/gemma4-kickoff/main.pdf), then the
+3. Read the [English kickoff slides](https://www.overleaf.com/project/6ac31a4a617496d875323ad8), then the
    [competition overview](docs/overview.md), [data guide](docs/data.md), and
-   [research notes](docs/competition-research.md). Most detailed notes are currently in Chinese.
+   [research notes](docs/competition-research.md).
 
 ```bash
-gh repo clone jwj1342/kaggle_gemma4_agent
-cd kaggle_gemma4_agent
+gh repo clone jwj1342/gemma-agent-lab
+cd gemma-agent-lab
 python3 scripts/build_submission.py \
   --agent-dir configs/baseline \
   --output runs/local-packaging/submission.zip
@@ -29,13 +29,13 @@ Kaggle. Configure Git with your own name and email before committing.
 
 | Goal | Start here |
 | --- | --- |
-| Understand coding agents and our plan | [Slides](slides/gemma4-kickoff/main.pdf) |
+| Understand coding agents and our plan | [Slides](https://www.overleaf.com/project/6ac31a4a617496d875323ad8) |
 | Modify prompts, tools, or agent settings | [Baseline configuration](configs/baseline/) |
 | Run one task without a local GPU | Copy & Edit the [official Kaggle starter](https://www.kaggle.com/code/ryanholbrook/getting-started-gemma-4-developer-agent) and follow [participation](docs/participation.md) |
 | Study public approaches | [Notebook reading notes](resource/notebooks/reading-notes.md) |
 | Understand our measured results | [Submission guide](docs/submission.md) and [L4 evidence](resource/manifests/kaggle-runtime-smoke.json) |
 | Plan fine-tuning | [Training plan](docs/training-plan.md); training has not yet been validated |
-| Edit the presentation | [Slide source and build guide](slides/gemma4-kickoff/README.md) |
+| Edit the presentation | [Separate Overleaf project](https://www.overleaf.com/project/6ac31a4a617496d875323ad8) |
 
 In Kaggle, attach the competition inputs, required model, and official wheelhouse
 before starting an L4×4 session, with Internet disabled. Check your own quota and
@@ -96,5 +96,6 @@ storage, and keep provenance and access instructions in the experiment report.
   inputs, base models, and the runs named by manifests are not included in a clone.
 - Preserve upstream notebooks and source snapshots. Put adaptations in our own
   code directories and record attribution. See [third-party notices](THIRD_PARTY_NOTICES.md).
-- Edit slides in `sections/` and `figures/`, rebuild `main.pdf`, and coordinate
-  Overleaf synchronization so browser edits and Git changes do not overwrite each other.
+- The presentation is maintained separately in Overleaf and excluded from GitHub.
+  The maintainer keeps its local source directly in `slides/`, including `main.tex`,
+  `sections/`, `figures/`, and `main.pdf`. Coordinate edits in the Overleaf project.

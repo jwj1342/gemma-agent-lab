@@ -1,4 +1,2 @@
 # Reference snapshots should not dominate GitHub's language statistics.
 resource/** linguist-vendored
-slides/gemma4-kickoff/sty/** linguist-vendored
-slides/gemma4-kickoff/assets/** linguist-vendored

@@ -1,30 +1,31 @@
-# 比赛资源索引
+# Research resource index
 
-采集快照：2026-10-04 晚至 10-05（UTC）。原始资料与我们的判断分开保存。
-请先看 [比赛调研](../docs/competition-research.md)；数据可用性与阅读范围见
-[覆盖清单](manifests/research-collection.json)。
+Collection snapshot: October 4–5, 2026 (UTC). Source material and our interpretations are stored separately.
+Read the [research report](../docs/competition-research.md) and
+[coverage record](manifests/research-collection.json) for scope and limitations.
 
-| 目录 | 内容与覆盖范围 |
+| Location | Contents and coverage |
 | --- | --- |
-| [competition/](competition/pages.json) | 10 份完整官方页面，包括 Overview、Data description、规则、赛程和 L4 说明 |
-| [notebooks/](notebooks/README.md) | 112 个公开条目全部下载，1 个源码为空；结构审阅与重点代码检查 |
-| [Notebook 阅读表](notebooks/reading-notes.md) | 按条目记录实现、可借鉴部分、复现边界和源码位置；补读进度在表头 |
-| [notebooks/official/](notebooks/official/getting-started-gemma-4-developer-agent.ipynb) | 用户指定的官方 starter，已审读 |
-| [discussions/](discussions/README.md) | 116 个主题、370 条首帖及回复，作者和时间随原始 JSON 保留 |
-| [models/](models/README.md) | Models 页全部 4 个实例及模型卡；指定 Gemma v2 已另行下载并校验 |
-| [leaderboard/](leaderboard/README.md) | 官方完整 CSV、统计与 1,755 队分布 |
-| [manifests/](manifests/data-audit.json) | 比赛文件清单、下载校验、数据结构检查和存储快照 |
-| [harness-source/](harness-source/README.md) | 三个官方 wheel 的 Python 源码与 metadata，只作静态检查 |
-| `downloads/` | 原始比赛 ZIP、下载缓存与小型 harness wheels；不进 Git |
+| [competition/](competition/pages.json) | Ten complete official pages, including Overview, Data description, rules, dates, and L4 guidance |
+| [notebooks/](notebooks/README.md) | All 112 listed public notebooks downloaded; one has empty source |
+| [Notebook reading notes](notebooks/reading-notes.md) | Per-entry execution paths, reusable ideas, evidence limits, and source locations |
+| [Official starter](notebooks/official/getting-started-gemma-4-developer-agent.ipynb) | Requested official walkthrough, reviewed statically |
+| [discussions/](discussions/README.md) | 116 topics and 370 opening posts/replies, with authors and timestamps |
+| [models/](models/README.md) | All four listed instances and available cards; required Gemma v2 weights were downloaded separately |
+| [leaderboard/](leaderboard/README.md) | Official CSV and distribution across 1,755 scored teams |
+| [manifests/](manifests/data-audit.json) | File inventories, verification, structural audits, and storage snapshots |
+| [harness-source/](harness-source/README.md) | Python source and metadata from three official wheels, for static inspection |
+| `downloads/` | Local dataset ZIP, download caches, and harness wheels; excluded from Git |
 
-第三方文件保持原样。不直接运行 notebook 安装/清理单元，不把作者自报成绩当作复现。
-尚未全量检查外部链接、图片附件或每行第三方代码；没有执行第三方 notebook 的训练
-或评测。团队实测见 [H100 运行记录](manifests/hpc-smoke.json)、
-[Kaggle L4 验证](manifests/kaggle-runtime-smoke.json) 和
-[正式评分结果](manifests/competition-result.json)。
-公开资源可能更新，此目录是带来源的快照，不表示永久最新。
+Third-party sources retain their original content, language, and attribution. Do not directly execute
+notebook installation/cleanup cells or treat reported scores as reproduced results. English navigation
+and reading notes are maintained by the team. External links, image attachments, and every line of
+third-party source have not all been audited; no third-party training or evaluation notebook was executed.
+Our measured results are in the [H100](manifests/hpc-smoke.json), [L4](manifests/kaggle-runtime-smoke.json),
+and [official score](manifests/competition-result.json) records.
 
-更新基础页面/Code/回复树：运行 `scripts/collect_resources.py`；补齐讨论首帖与作者：
-运行 `scripts/collect_discussion_bodies.py`；完成新一轮核查后运行
-`scripts/index_resources.py` 重建索引。Models 页与 wheelhouse 清单当前为本次独立 API
-采集结果，基础采集脚本不会自动更新它们。工具均使用 HOME 的 kaggle-cli 环境。
+To collect pages, Code, and reply trees, use `scripts/collect_resources.py`; to fill discussion
+opening posts and authors, use `scripts/collect_discussion_bodies.py`. After reviewing a new snapshot,
+run `scripts/index_resources.py` to regenerate navigation. Models-page and wheelhouse inventories
+were collected separately and are not automatically refreshed by the base collector.
+The collection tools use the maintainer's HOME Kaggle CLI environment.

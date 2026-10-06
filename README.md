@@ -1,94 +1,120 @@
-# Gemma 4 Developer Agent
+# Gemma Agent Lab
 
-团队私有仓库：[jwj1342/kaggle_gemma4_agent](https://github.com/jwj1342/kaggle_gemma4_agent)，默认分支 `main`。
-维护者的 Trillium 工作区为 `/scratch/jwj/kaggle_gemma4_agent`；队友可在自己的电脑克隆，
-参与开发不需要 Trillium 账号或 H100。
-比赛：[Google — The Gemma 4 Developer Agent Competition](https://www.kaggle.com/competitions/gemma-4-developer-agent)。
+**Research and reproducible experiments for reliable open-model coding agents.**
 
-新成员先读 [团队上手与协作 / Contributing](CONTRIBUTING.md)、
-[英文组会 slides PDF](slides/gemma4-kickoff/main.pdf)，再读 [Overview](docs/overview.md)、[Data 导读](docs/data.md)、
-[参与指南](docs/participation.md)，再按 [完整资源索引](resource/README.md) 查原文。
-首次组会的 32 页英文材料与构建说明见 [slides](slides/gemma4-kickoff/README.md)，已同步到
-[Overleaf](https://www.overleaf.com/project/6ac31a4a617496d875323ad8)。技术判断见
-[比赛调研](docs/competition-research.md)、[提交步骤](docs/submission.md) 和
-[训练与评测准备](docs/training-plan.md)。资料快照采集于 2026-10-04 晚（UTC 为 10-05），
-并不保证未来规则、排行榜或软件版本不变。
+A collaborative workspace for the [Gemma 4 Developer Agent Competition](https://www.kaggle.com/competitions/gemma-4-developer-agent), exploring how agents locate relevant code, use tools, and repair real software issues.
 
-本次快照的 112 个公开 Code 条目已全部建立[逐项阅读记录](resource/notebooks/reading-notes.md)：
-记录关键执行路径、可借鉴点和结论边界；其中 1 个条目源码为空，无法检查实现。
-这些是源码阅读与静态核对，不代表复现了全部 notebook 或其声称的成绩。
+[Getting started](#getting-started) · [Results](#verified-results) · [Documentation](#documentation) · [Contributing](CONTRIBUTING.md) · [Kickoff slides](https://www.overleaf.com/project/6ac31a4a617496d875323ad8)
 
-| 目录 | 用途 |
+## 🔬 Research focus
+
+We develop and evaluate agents built on the competition's required Gemma 4 base. The current baseline runs without a LoRA adapter; training remains a proposed research direction.
+
+| Direction | Research question |
 | --- | --- |
-| `src/` | 团队实现的 agent 工具、数据转换、训练和评测代码 |
-| `configs/` | 可复现的环境、agent、训练和评测配置 |
-| `scripts/` | 数据下载、校验和资料采集脚本 |
-| `data/raw/` | 原始比赛包，已下载并验证 524 个文件 |
-| `data/processed/` | 清洗数据和训练/验证切分 |
-| `model/base/` | 指定 Gemma 底座 v2；已通过单题离线推理 |
-| `model/adapters/` | 导出的 LoRA adapters；目前尚未训练 |
-| `resource/` | 官方页面、公开 notebook、讨论、模型卡、榜单与来源清单 |
-| `runs/` | 每次实验的日志、缓存、检查点；不进 Git |
-| `docs/` | 团队维护的说明、判断和后续计划 |
-| `slides/` | 首次组会英文 slides、可编辑 LaTeX 与校徽来源 |
+| Code localization | Can source search and code graphs find useful context within a limited budget? |
+| Tool use and repair | Can better tool selection, concise plans, and targeted checks produce more reliable patches? |
+| Evaluation | Which improvements survive matched-task comparisons and independent verification? |
+| Model adaptation | Can verified repair trajectories support useful parameter-efficient fine-tuning? |
 
-## 克隆与第一次轻量检查
+```mermaid
+flowchart LR
+    A[Issue and repository] --> B[Locate relevant code]
+    B --> C[Edit implementation]
+    C --> D[Run focused checks]
+    D --> C
+    D --> E[Export patch]
+    E --> F[Independent verification]
+```
 
-获得仓库访问权限并登录 GitHub 后：
+<a id="verified-results"></a>
+
+## 📊 Verified results
+
+The baseline uses `gemma-4-31b-it-qat-w4a16-ct` with no LoRA. The following are recorded results, last checked on **October 5, 2026**.
+
+| Evaluation | Result | Evidence |
+| --- | --- | --- |
+| Official competition submission | **0.12 public score**, submission `56844353` complete; private score unavailable | [Submission record](resource/manifests/competition-result.json) |
+| Kaggle L4×4 smoke test | `rich_3454` resolved; **84 tests passed**, including one added regression test | [L4 run](resource/manifests/kaggle-runtime-smoke.json) |
+| Independent H100 smoke test | The same public task passed compilation, offline generation, and patch verification | [H100 run](resource/manifests/hpc-smoke.json) |
+
+Controls reproduced the original failure (**1 failed / 82 passed**) and confirmed the reference patch (**83 passed**). On L4×4, the agent phase took **74.10 seconds**, excluding model startup; the notebook reached smoke completion in about **655 seconds**.
+
+These smoke tests cover one public task. They do not establish full-benchmark performance, training success, or compliance with the global runtime budget. See the [submission guide](docs/submission.md) for the complete evidence and remaining work.
+
+<a id="getting-started"></a>
+
+## 🚀 Getting started
+
+You can begin on a regular laptop. The packaging check below uses only Python 3.10+ and its standard library; GPU experiments can run in a Kaggle notebook.
+
+### 1. Clone the workspace
+
+Accept your private-repository invitation and sign in with GitHub CLI:
 
 ```bash
-gh repo clone jwj1342/kaggle_gemma4_agent
-cd kaggle_gemma4_agent
-# Python 3.10+；只使用标准库，不需要 GPU、模型或 Kaggle token。
+gh repo clone jwj1342/gemma-agent-lab
+cd gemma-agent-lab
+```
+
+### 2. Check the baseline package
+
+```bash
 python3 scripts/build_submission.py \
   --agent-dir configs/baseline \
   --output runs/local-packaging/submission.zip
 ```
 
-这一步检查基线能否打包；真实推理从 [Kaggle 官方 starter](https://www.kaggle.com/code/ryanholbrook/getting-started-gemma-4-developer-agent)
-开始，具体流程见 [参与指南](docs/participation.md)。新的配置在功能分支修改，经 PR 合入 `main`。
+This creates a reproducible ZIP and a file-hash manifest. It does not run a model or upload a competition submission.
 
-Git 中包含代码、配置、资料快照、轻量结果清单和 slides PDF。**数据、权重、下载包、
-运行目录和凭据不会随 clone 获取**。清单内的文件路径、作业 ID 和账号额度是维护者的
-历史运行记录；队友需使用自己的数据位置、环境和账号。第三方资料的来源与许可见
-[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+### 3. Run your first agent experiment
 
-## 已验证的工作区与运行结果
+Copy the [official Kaggle starter](https://www.kaggle.com/code/ryanholbrook/getting-started-gemma-4-developer-agent), attach the required competition inputs, and follow the [participation guide](docs/participation.md). Start with one public task before increasing scale.
 
-维护者本地原始文件位于 `data/raw/gemma-4-developer-agent/`：22,416,766,904 字节（20.88 GiB）。
-ZIP 保留在 `resource/downloads/`：21,929,289,087 字节（20.42 GiB）。
-两份合计约 41.30 GiB；无需现在展开全部 129 个仓库。
+For a first contribution, open an Issue with a small hypothesis, make one change on a branch, and compare it against the baseline. The [contribution guide](CONTRIBUTING.md) explains the PR workflow and experiment records.
 
-Kaggle CLI 使用 HOME 中的独立环境，凭据由客户端自动读取 `~/.kaggle/access_token`。
-以下命令为维护者的 **Trillium 配置**，不作为其他电脑的通用安装命令：
+## 🗂️ Repository structure
 
-```bash
-bash -l scripts/kaggle.sh competitions files -c gemma-4-developer-agent
-```
+| Path | Purpose |
+| --- | --- |
+| [`configs/`](configs/) | Baseline agent, experiment settings, and environment specifications |
+| [`scripts/`](scripts/) | Packaging, collection, validation, and execution utilities |
+| [`src/`](src/) | Team implementations and future agent/training extensions |
+| [`docs/`](docs/) | Competition guides, research findings, and execution plans |
+| [`resource/`](resource/) | Reference snapshots, reading notes, provenance, and small evidence manifests |
+| [`data/`](data/) | Local original and processed datasets; large files excluded from Git |
+| [`model/`](model/) | Local base weights and adapters; large files excluded from Git |
+| [`runs/`](runs/) | Local logs, outputs, caches, and checkpoints; artifacts excluded from Git |
 
-重新下载/检查归档应在 datamover 上运行（脚本使用当前账户路径）：
+<a id="documentation"></a>
 
-```bash
-ssh -o BatchMode=yes trig-dm1 'bash -l /scratch/jwj/kaggle_gemma4_agent/scripts/download_competition.sh'
-```
+## 📚 Documentation
 
-下载校验记录在 `resource/manifests/download-verification.json`。
-无 LoRA 基线已经打包；私有 Kaggle CPU notebook v1 运行完成，下载的 ZIP 与本地一致。
-记录见 `resource/manifests/kaggle-pipeline.json`。这验证的是打包和 notebook 输出链路，
-完整官方编译、GPU 离线推理和独立仓库测试也已通过：公开题 `rich_3454` 的原始代码
-1 项失败，gold 补丁 83 项通过，Agent 补丁 84 项通过（含新增的一项测试）。
-作业 `1033882` 正常结束，用时 5 分 49 秒；证据见
-[单题验证记录](resource/manifests/hpc-smoke.json)。这不是全量 benchmark 或训练结果。
+| Start with | Then explore |
+| --- | --- |
+| [Competition overview](docs/overview.md) | Task, scoring, submission contract, and constraints |
+| [Data guide](docs/data.md) | Schemas, snapshots, graph inputs, and label separation |
+| [Participation](docs/participation.md) | Kaggle setup, compute quota, and team access |
+| [Research report](docs/competition-research.md) | Findings from official material and public approaches |
+| [Resource index](resource/README.md) | Official pages, 112 notebook reviews, discussions, models, and leaderboard snapshot |
+| [Submission guide](docs/submission.md) | Packaging, validation, official upload, and result tracking |
+| [Training plan](docs/training-plan.md) | Proposed SFT/LoRA work, compatibility checks, and prerequisites |
+| [Trillium runtime](docs/cluster-runtime.md) | Optional cluster-specific environment and execution instructions |
 
-同一份 ZIP 的正式提交 **56844353 已完成，公开分数 0.12（12%）**；
-2026-10-05 18:14 UTC 查询无评分错误，private 分数尚未提供。
-私有 **L4×4 验证也已完成**：`rich_3454` 的 empty/gold 对照有效，Agent 补丁 84 项
-测试通过，Agent 阶段约 74.10 秒（不含模型启动），notebook 到 smoke 完成约 655 秒。
-这是单题验证，不是全量 benchmark 或训练结果。
-结果见 [正式评分](resource/manifests/competition-result.json)、
-[L4 验证](resource/manifests/kaggle-runtime-smoke.json) 和 [提交指南](docs/submission.md)。
+The [32-page kickoff presentation](https://www.overleaf.com/project/6ac31a4a617496d875323ad8) introduces coding agents, the competition, research directions, and team workflows. It is maintained separately in Overleaf and is excluded from this repository.
 
-协作时每个改动附简短目的、使用的配置及验证结果。不要把公开 notebook 的标题成绩
-当作可复现结论。Git 仅负责源码历史；SCRATCH 无备份，重要源码/结果还应按团队约定
-备份到 PROJECT 或独立的结果存储。GitHub 邀请和 Kaggle 正式组队分别管理；仓库创建
-不会自动授予队友权限。当前正式训练方案仍在讨论，尚无已完成的微调结果。
+## 🤝 Reproducibility and collaboration
+
+- **Keep comparisons explicit.** Record code/configuration revisions, task splits, model/data versions, seeds, resources, timing, and measured outcomes.
+- **Separate inputs from answers.** Reference patches and validation labels stay outside agent inference inputs.
+- **Share compact evidence.** Commit reports and manifests; keep datasets, weights, full logs, checkpoints, and credentials in their appropriate private storage.
+- **Review changes together.** Use feature branches, [Issues](https://github.com/jwj1342/gemma-agent-lab/issues), and [pull requests](https://github.com/jwj1342/gemma-agent-lab/pulls). Coordinate official submissions across the team.
+
+A clone does not include model weights, competition archives, local environments, or historical run outputs. Existing Trillium paths refer to the maintainer's workspace, `/scratch/jwj/kaggle_gemma4_agent`; other accounts need their own setup. GitHub access, Kaggle team membership, and cluster permissions are independent.
+
+## Sources and attribution
+
+The reference collection dates to **October 4–5, 2026**. Rules, rankings, packages, and quotas may change; check current official guidance before running new experiments. Public notebook reviews are static analysis, not independent reproductions of every author's claims.
+
+Team-authored documentation and navigation use English. Original third-party sources, quoted metadata, and names retain their source language and attribution. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for licensing boundaries and asset provenance. No repository-wide open-source license has been selected for the team's original work.

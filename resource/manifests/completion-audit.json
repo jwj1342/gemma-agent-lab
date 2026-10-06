@@ -133,8 +133,8 @@
       "status": "complete",
       "finding": "32 English pages with five original black chapter dividers; author text 9.3 pt, orange accents, small emoji and two official images. Independent review without conversation history completed twice; five beginner comprehension gaps addressed. Both TeX compilers pass without overflow or missing glyphs.",
       "evidence": [
-        "slides/gemma4-kickoff/main.pdf",
-        "slides/gemma4-kickoff/main.tex",
+        "slides/main.pdf",
+        "slides/main.tex",
         "resource/downloads/presentations/gemma4-kickoff-overleaf.zip",
         "resource/manifests/slides-kickoff.json"
       ]

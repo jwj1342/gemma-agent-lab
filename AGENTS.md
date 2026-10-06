@@ -1,23 +1,32 @@
-# 项目协作指南
+# Project collaboration guide
 
-- 本项目参加 `gemma-4-developer-agent`；paper track 是另一项比赛。
-- 仅在 Trillium 操作时先读 `/home/jwj/.codex/cluster-guides/trillium.md`；其他电脑不依赖此路径。项目说明见
-  `README.md`、`docs/competition-research.md` 和 `docs/training-plan.md`。
-- 代码、配置、实验说明进入 Git。数据、权重、运行缓存、检查点和凭据按 `.gitignore`
-  排除；原始比赛文件与上游 notebook 保持不修改，实验改动写入 `src/`、`configs/`。
-- 新实验使用 `runs/<日期>-<简短名称>/`，记录 Git revision、模块、依赖、数据版本、
-  模型 revision、随机种子、资源、指标和完整恢复路径。
-- 不在登录节点运行评测、训练或批量解包仓库；大传输在 datamover，计算由 Slurm 分配。
-- 资料是日期快照。优先级为当前比赛规则/主办方明确回复、当前官方包行为、公开案例；
-  区分作者宣称成绩、静态代码分析和独立运行验证。
-- 正式评测底座目前固定 `gemma-4-31b-it-qat-w4a16-ct`；Models 页其他模型不表示获准。
-- 评测环境与训练环境分开；第三方 notebook 只能作为资料，不直接执行其安装/删除单元。
-- HOME 中 Kaggle token 不复制进工作区。训练作业无需也不应携带 Kaggle 凭据。
-- 团队成员先加入正式 Kaggle team；共享权限按成员需求设置，不全局开放 SCRATCH。
-- GitHub 仓库为 `jwj1342/kaggle_gemma4_agent`（私有）；新成员流程见 `CONTRIBUTING.md`。
-  不将本机已下载的数据/模型、HOME 环境或历史 run 路径视为 clone 后自动可用。
-- Kaggle quota 用 `scripts/check_kaggle_quota.py` 或 CLI 查询；kagglesdk 0.1.37 的
-  `to_dict()` 会漏掉 duration 的整天。早期保存的 6 小时值有误，原始 API 已确认总额度
-  108000 秒（30 小时）；使用 `total_seconds()`，运行前再查已用与预留。
-- 每次评测先用 `prepare_eval_run.py` 固定 agent/公开任务/ZIP hash；运行器读取 run
-  内配置快照。empty/gold 控制实验通过后才跑推理，分别记录流程执行与解题成功。
+- This project enters `gemma-4-developer-agent`; the paper track is a separate competition.
+- On Trillium, read `/home/jwj/.codex/cluster-guides/trillium.md` before cluster operations.
+  Other systems do not depend on that local path. Start with `README.md`,
+  `docs/competition-research.md`, and `docs/training-plan.md`.
+- Write all team-authored documentation, comments, templates, and generated navigation in English.
+  Preserve original third-party sources, quoted metadata, and provenance; do not rewrite upstream notebooks.
+- Track code, configuration, and experiment reports in Git. Exclude data, weights, caches,
+  checkpoints, credentials, and run outputs according to `.gitignore`. Put adaptations in `src/` or `configs/`.
+- Use `runs/<date>-<short-name>/` for each experiment. Record Git revision, modules,
+  dependencies, data/model versions, seeds, resources, metrics, and the complete recovery path.
+- On Trillium, use Slurm allocations for evaluation, training, and repository tests;
+  use datamovers for large transfers and bulk extraction. Keep login-node work lightweight.
+- Treat resources as dated snapshots. Prioritize current rules and explicit organizer
+  clarification, then official package behavior, then public examples. Distinguish author
+  claims, static source analysis, and independently executed results.
+- Official evaluation currently requires `gemma-4-31b-it-qat-w4a16-ct`. Other Models-page entries do not imply approval.
+- Keep evaluation and training environments separate. Do not directly execute installation
+  or deletion cells from third-party notebooks on the host.
+- Keep Kaggle credentials in HOME, outside the workspace. Training jobs should not carry them.
+- Members must join the formal Kaggle team. Grant sharing permissions as needed; never open all of SCRATCH.
+- The private repository is `jwj1342/gemma-agent-lab`; onboarding is in `CONTRIBUTING.md`.
+  Local data, models, HOME environments, and historical run paths are not included in a clone.
+- Check Kaggle quota with `scripts/check_kaggle_quota.py` or the CLI. kagglesdk 0.1.37
+  `to_dict()` loses whole days in durations. The early six-hour figure was incorrect;
+  the raw API confirmed 108000 seconds (30 hours). Use `total_seconds()` and recheck usage/reservations before running.
+- Before evaluation, freeze the agent, public task, and ZIP hashes with `prepare_eval_run.py`.
+  The runner reads that snapshot. Require valid empty/gold controls before inference;
+  report execution success separately from issue resolution.
+- Presentation sources and outputs remain local in `slides/` and in the separate Overleaf project.
+  Keep the entire `slides/` directory out of this repository; `slides/main.tex` is the local entry point.

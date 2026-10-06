@@ -1,9 +1,9 @@
-# Leaderboard 快照
+# Leaderboard snapshot
 
-来源：[官方完整 CSV](gemma-4-developer-agent-publicleaderboard-2026-10-05T03:50:43.csv)，时间 2026-10-05 03:50:43 UTC。
-共 1,755 队；最高 0.24、中位数 0.08、均值 0.08199。
+Source: [official CSV](gemma-4-developer-agent-publicleaderboard-2026-10-05T03:50:43.csv), captured October 5, 2026 at 03:50:43 UTC.
+1,755 scored teams; maximum 0.24, median 0.08, mean 0.08199.
 
-| 分数 | 队伍数 | 占比 |
+| Score | Teams | Share |
 | ---: | ---: | ---: |
 | 0.24 | 1 | 0.06% |
 | 0.17 | 6 | 0.34% |
@@ -18,5 +18,5 @@
 | 0.01 | 55 | 3.13% |
 | 0.00 | 133 | 7.58% |
 
-前十名及原始队名保存在 [summary.json](summary.json)。大量分数并列；
-榜单显示精度不足以反推出精确任务数，public 排名不能代替 private 最终结果。
+The top ten and original team names are in [summary.json](summary.json). Many scores tie;
+display precision cannot establish an exact task count, and public rank does not determine final private results.
