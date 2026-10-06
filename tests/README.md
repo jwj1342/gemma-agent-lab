@@ -9,13 +9,17 @@ python3 -m unittest discover -s tests -v
 
 `test_kaggle_preparation.py` generates real notebooks through the command-line entry point,
 checks the embedded shared scripts and baseline ZIP, and executes only the input-preparation
-cell against tiny temporary mount fixtures. It checks label removal, frozen-task tampering,
-input mismatch, and protection of existing output. It never installs the wheelhouse, contacts
+cell against tiny temporary mount fixtures. It checks label removal, frozen-input tampering,
+input mismatch, execution provenance, the downloaded-run submission dry-run, and output preservation.
+Synthetic result JSON files exercise the submission handoff without claiming model performance.
+The wheel-inventory test also executes the start of the installation cell with pip mocked, requiring
+unexpected wheels to fail before any installation or deletion. It never installs the wheelhouse, contacts
 Kaggle, loads a model, runs repository tests, or consumes GPU quota.
 
 `test_repository_checks.py` verifies the CI gates using tiny temporary Git repositories. It checks
-that missing/untracked local links, broken YAML/includes, and team Python syntax errors fail, while
-valid agent packages and reference links pass. Original upstream material is excluded from these gates.
+that missing/untracked local links, escaping configuration references, ignored tracked artifacts,
+broken YAML, and team/agent Python syntax errors fail. Valid nested references and complete agent
+packages pass. Original upstream material is excluded from these gates.
 
 The notebook-preparation tests alone still use only the standard library:
 `python3 -m unittest discover -s tests -p test_kaggle_preparation.py -v`.

@@ -26,6 +26,7 @@ The generated Kaggle notebook subsequently runs in Kaggle's evaluation environme
 | [validate_agent.py](validate_agent.py) | Invoke the official compiler and restrictions in the prepared runtime |
 | [evaluate_agent.py](evaluate_agent.py) | Separate inference from verification; explicit tensor parallelism and GPU-memory fraction |
 | [prepare_eval_task.py](prepare_eval_task.py) | Export inference fields while removing reference/test patches and labels |
+| [verify_eval_run.py](verify_eval_run.py) | Check frozen task identity/hash and agent/ZIP member hashes before execution or submission; standard library only |
 | [summarize_eval_smoke.py](summarize_eval_smoke.py) | Check empty/gold controls and report pipeline execution separately from issue resolution |
 
 Kaggle embeds these evaluation helpers in its generated notebook. H100 runs them in the prepared

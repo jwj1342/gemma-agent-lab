@@ -29,11 +29,12 @@ Python 3.12, and a five-minute timeout. A newer update to the same PR cancels th
 
 | Check | Coverage |
 | --- | --- |
-| Python and shell syntax | Team code under `scripts/`, `src/`, and `tests/`; scripts are parsed rather than launched |
-| Configuration | Team YAML/JSON syntax and tracked local `!include` / `config_path` targets |
+| Python and shell syntax | Team code under `scripts/`, `src/`, `tests/`, and agent bundles; scripts are parsed rather than launched |
+| Configuration | Team YAML/JSON syntax and tracked references confined to each agent bundle, including nested path resolution |
 | Agent packaging | Build each versioned agent directory twice and compare ZIP bytes; verify archive structure/CRC |
+| Artifact exclusions | Reject tracked files that match ignore rules, including force-added excluded files |
 | Documentation links | Local file/directory targets in maintained Markdown; ignored local artifacts cannot satisfy a link |
-| Preparation tests | Existing notebook generation, task-label filtering, frozen-input checks, and output preservation |
+| Preparation tests | Notebook generation, checked submission handoff, frozen-input integrity, wheel inventory, and output preservation |
 
 The workflow file is `.github/workflows/ci.yml`; `scripts/check_repository.py` performs the static
 checks and packaging. The test suite is under `tests/`. CI installs only the small dependency in
@@ -46,6 +47,9 @@ excluding original source/page bodies and historical reading-note excerpts from 
 The link check covers inline local destinations and reference definitions; it skips code blocks,
 external URLs, and heading anchors. It is not a full Markdown renderer or external-link crawler.
 YAML checks verify syntax and references; the official competition compiler remains a separate runtime gate.
+The ignore-rule gate checks filenames, not credential contents. Review diffs before pushing and keep
+credentials out of source files even when their names are allowed. An ignored-file check cannot undo
+a credential leak after a commit has already reached GitHub.
 
 ## Run the checks locally
 

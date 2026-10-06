@@ -69,8 +69,8 @@ class NotebookPreparationTests(unittest.TestCase):
         for name in ('data', 'wheels', 'model'):
             (mounts / name).mkdir(parents=True, exist_ok=True)
         (mounts / 'data/tasks.jsonl').write_text(json.dumps(task or self.task) + '\n')
-        (mounts / 'wheels/fixture.txt').write_bytes(b'tiny fixture')
-        payload = dict(payload, wheels={'fixture.txt': hashlib.sha256(b'tiny fixture').hexdigest()})
+        (mounts / 'wheels/fixture.whl').write_bytes(b'tiny fixture')
+        payload = dict(payload, wheels={'fixture.whl': hashlib.sha256(b'tiny fixture').hexdigest()})
         encoded = base64.b64encode(json.dumps(payload).encode()).decode()
         source = notebook['cells'][1]['source'].split('\n', 1)[1]
         substitutions = {
@@ -81,8 +81,9 @@ class NotebookPreparationTests(unittest.TestCase):
         }
         for original, fixture in substitutions.items():
             source = source.replace(repr(original), repr(str(fixture)))
+        self.setup_namespace = {'PAYLOAD_B64': encoded}
         with contextlib.redirect_stdout(io.StringIO()):
-            exec(compile(source, '<setup-cell-fixture>', 'exec'), {'PAYLOAD_B64': encoded})
+            exec(compile(source, '<setup-cell-fixture>', 'exec'), self.setup_namespace)
         return self.work / 'runtime'
 
     def test_fresh_clone_generates_pinned_private_notebook_and_same_agent(self):
@@ -140,6 +141,83 @@ class NotebookPreparationTests(unittest.TestCase):
         with self.assertRaisesRegex(AssertionError, 'exactly one'):
             self.setup_cell(notebook, payload, dict(self.task, instance_id='different_task'))
         self.assertFalse((self.work / 'runtime').exists())
+
+    def test_unknown_wheel_fails_before_installation(self):
+        notebook, payload = self.fresh()
+        wheels = self.work / 'mounts/wheels'
+        wheels.mkdir(parents=True)
+        extra = wheels / 'unchecked_extra.whl'
+        extra.write_bytes(b'Not in the reviewed inventory')
+        with self.assertRaisesRegex(AssertionError, 'wheelhouse inventory changed'):
+            self.setup_cell(notebook, payload)
+        shutil.rmtree(self.work / 'runtime')
+        extra.unlink()
+        self.setup_cell(notebook, payload)
+        # Catch input changes between setup and installation, before pip or any deletion.
+        extra.write_bytes(b'Added after setup')
+        with patch('subprocess.run') as pip:
+            with self.assertRaisesRegex(AssertionError, 'wheelhouse inventory changed'):
+                exec(notebook['cells'][2]['source'], self.setup_namespace)
+            pip.assert_not_called()
+
+    def test_downloaded_kaggle_layout_passes_submission_dry_run(self):
+        notebook, payload = self.fresh()
+        runtime = self.setup_cell(notebook, payload)
+        self.command('verify_eval_run.py', '--run-dir', runtime)
+        # Tiny synthetic result records test the handoff, not model performance.
+        records = {
+            'compile/validation.json': {'status': 'compiled'},
+            'verify/empty/result.json': {'task_id': 'fixture_task', 'resolved': False,
+                                         'test_exit_code': 1, 'test_output': '1 failed'},
+            'verify/gold/result.json': {'task_id': 'fixture_task', 'resolved': True, 'test_exit_code': 0},
+            'verify/agent/result.json': {'task_id': 'fixture_task', 'resolved': True, 'test_exit_code': 0},
+            'infer/prediction.json': {'task_id': 'fixture_task', 'agent_patch': 'fixture patch', 'llm_calls': 1},
+        }
+        for name, record in records.items():
+            path = runtime / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(json.dumps(record))
+        result = self.command('submit_competition.py', '--run-dir', runtime)
+        self.assertEqual(json.loads(result.stdout)['sha256'], BASELINE_SHA)
+        self.assertFalse((runtime / 'competition-submission.json').exists())
+        task_path = runtime / 'inputs/tasks.jsonl'
+        original = task_path.read_text()
+        task_path.write_text(original.replace('Fix the public issue.', 'Changed task'))
+        failed = self.command('submit_competition.py', '--run-dir', runtime, succeeds=False)
+        self.assertIn('Frozen public task hash changed', failed.stderr)
+        task_path.write_text(original)
+        for name, record in records.items():
+            if 'task_id' in record:
+                (runtime / name).write_text(json.dumps(dict(record, task_id='other_task')))
+        failed = self.command('submit_competition.py', '--run-dir', runtime, succeeds=False)
+        self.assertIn('Smoke results differ from the prepared task', failed.stderr)
+
+    def test_frozen_agent_and_zip_changes_are_rejected(self):
+        run = self.frozen()
+        agent = run / 'inputs/agent/agent.yaml'
+        original = agent.read_bytes()
+        agent.write_bytes(original + b'\n# Changed after preparation\n')
+        failed = self.command('verify_eval_run.py', '--run-dir', run, succeeds=False)
+        self.assertIn('Agent source changed', failed.stderr)
+        agent.write_bytes(original)
+        archive = run / 'inputs/submission.zip'
+        archive.write_bytes(archive.read_bytes() + b'changed')
+        failed = self.command('verify_eval_run.py', '--run-dir', run, succeeds=False)
+        self.assertIn('Submission ZIP differs', failed.stderr)
+
+    def test_preparation_revision_and_embedded_scripts_are_separate_from_source_run(self):
+        run = self.frozen()
+        path = run / 'run-manifest.json'
+        manifest = json.loads(path.read_text())
+        manifest['git_revision'] = 'older-source-run-revision'
+        path.write_text(json.dumps(manifest))
+        self.generate('--run-dir', run)
+        _, payload = self.notebook()
+        self.assertEqual(payload['source_run_git_revision'], 'older-source-run-revision')
+        self.assertNotEqual(payload['git_revision'], payload['source_run_git_revision'])
+        self.assertEqual(payload['script_sha256'],
+                         {name: hashlib.sha256(source.encode()).hexdigest()
+                          for name, source in payload['scripts'].items()})
 
     def test_frozen_run_still_works_and_mounted_task_must_match(self):
         run = self.frozen()

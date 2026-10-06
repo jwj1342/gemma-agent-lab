@@ -3,9 +3,8 @@ import argparse
 from datetime import datetime, timezone
 import json
 from pathlib import Path
-import zipfile
 
-from build_submission import collect_files, sha256
+from verify_eval_run import verify_inputs
 from summarize_eval_smoke import summarize
 
 
@@ -13,27 +12,17 @@ COMPETITION = 'gemma-4-developer-agent'
 
 
 def check_run(run):
+    manifest = verify_inputs(run)
     result = summarize(run)
     if not result.get('pipeline_executed'):
         raise ValueError('Official compiler, controls, inference and agent tests must pass the pipeline checks')
-    manifest = json.loads((run / 'run-manifest.json').read_text())
+    if result['task_id'] != manifest['task_id']:
+        raise ValueError('Smoke results differ from the prepared task')
     bundle = run / 'inputs/submission.zip'
-    archive_manifest = json.loads(bundle.with_suffix('.manifest.json').read_text())
-    digest = sha256(bundle)
-    if digest != manifest['agent_archive_sha256'] or digest != archive_manifest['sha256']:
-        raise ValueError('Submission ZIP differs from the tested run')
-    root, files = collect_files(run / 'inputs/agent')
-    current = {p.relative_to(root).as_posix(): sha256(p) for p in files}
-    expected = {f['path']: f['sha256'] for f in archive_manifest['files']}
-    if current != expected:
-        raise ValueError('Agent source changed after the run was prepared')
-    with zipfile.ZipFile(bundle) as archive:
-        if archive.testzip() or set(archive.namelist()) != set(expected):
-            raise ValueError('ZIP member validation failed')
     return {'checked_at': datetime.now(timezone.utc).isoformat(), 'competition': COMPETITION,
-            'run_dir': str(run), 'archive': str(bundle), 'sha256': digest,
+            'run_dir': str(run), 'archive': str(bundle), 'sha256': manifest['agent_archive_sha256'],
             'bytes': bundle.stat().st_size, 'smoke': result,
-            'scope': 'One public-task H100 smoke. Full hidden scoring and L4 timing are determined by Kaggle.'}
+            'scope': 'One public-task smoke on the recorded platform. Full hidden scoring is determined by Kaggle.'}
 
 
 def main():

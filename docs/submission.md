@@ -106,17 +106,24 @@ bash -l scripts/kaggle.sh competitions submit --help
 bash -l scripts/kaggle.sh competitions submissions gemma-4-developer-agent -v
 ```
 
-`submit_competition.py` rechecks smoke evidence, frozen configuration, ZIP and file hashes, current
-submission route, and remaining allowance. It is a dry-run unless `--submit` is added:
+`submit_competition.py` rechecks smoke evidence, task identity and hash, frozen configuration, ZIP and
+member hashes. Upload mode additionally checks the current submission route and remaining allowance.
+The dry-run works on a laptop with Python 3.10+ and the standard library. Use the complete downloaded
+Kaggle `runtime-smoke/` directory or a completed H100 run:
 
 ```bash
-module load StdEnv/2023 python/3.12.4
-source /home/jwj/venvs/kaggle-cli/bin/activate
-python scripts/submit_competition.py --run-dir runs/<completed-experiment>
-python scripts/submit_competition.py --run-dir runs/<completed-experiment> --submit
+python3 scripts/submit_competition.py --run-dir runs/first-kaggle-smoke/output/runtime-smoke
+# After team selection, use your Python environment with Kaggle installed and authenticated.
+python3 scripts/submit_competition.py --run-dir runs/first-kaggle-smoke/output/runtime-smoke --submit
 # Query existing results without consuming another submission.
-python scripts/check_submission_status.py --submission-ref 56844353
+python3 scripts/check_submission_status.py --submission-ref 56844353
 ```
+
+For H100, replace the example run directory with `runs/<completed-experiment>`. The container runner
+also verifies frozen inputs before each phase. These checks detect accidental changes; they do not
+authenticate results against a maliciously rewritten set of manifests. Keep reviewed experiment
+receipts and artifact hashes. Historical October 5 L4 outputs predate the complete input layout;
+see [Kaggle output compatibility](kaggle-runtime.md#4-read-the-result-and-keep-the-evidence).
 
 Before upload it exclusively creates `competition-submission.json`, recording hash and request state.
 An existing receipt prevents duplicate upload. After a network error or missing ID, inspect Kaggle history

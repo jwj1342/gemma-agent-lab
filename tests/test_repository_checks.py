@@ -52,6 +52,45 @@ class RepositoryCheckTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn('untracked or missing local link: local-only.md', result.stderr)
 
+    def test_reference_outside_agent_bundle_fails(self):
+        self.write('configs/shared.md', 'Tracked, but absent from the agent ZIP.\n')
+        self.git('add', 'configs/shared.md')
+        self.write('configs/baseline/agent.yaml', 'instruction: !include ../shared.md\n')
+        result = self.check()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('escapes agent bundle', result.stderr)
+        self.write('configs/baseline/agent.yaml', 'config_path: ../shared.md\n')
+        self.assertIn('Non-portable config_path', self.check().stderr)
+
+    def test_nested_reference_resolution_matches_bundle_rules(self):
+        self.write('configs/baseline/agent.yaml', 'config_path: nested/child.yaml\n')
+        self.write('configs/baseline/nested/child.yaml',
+                   'instruction: !include ../prompt.md\nconfig_path: sibling.yaml\n')
+        self.write('configs/baseline/sibling.yaml', 'name: root_fallback\n')
+        self.git('add', 'configs')
+        result = self.check()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.write('configs/baseline/nested/sibling.yaml', 'name: directory_preferred\n')
+        self.git('add', 'configs')
+        result = self.check()
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_force_added_ignored_artifact_fails(self):
+        self.write('.gitignore', 'access_token\n')
+        self.write('access_token', 'DUMMY_TEST_VALUE\n')
+        self.git('add', '.gitignore')
+        self.git('add', '--force', 'access_token')
+        result = self.check()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('access_token: tracked file matches an ignore rule', result.stderr)
+
+    def test_broken_python_inside_agent_bundle_fails(self):
+        self.write('configs/baseline/callback.py', 'def broken(:\n')
+        self.git('add', 'configs/baseline/callback.py')
+        result = self.check()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('configs/baseline/callback.py', result.stderr)
+
     def test_missing_include_and_invalid_yaml_fail(self):
         self.write('configs/baseline/agent.yaml', 'instruction: !include missing.md\n')
         result = self.check()
