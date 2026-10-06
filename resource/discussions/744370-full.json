@@ -1,0 +1,187 @@
+{
+  "forumTopic": {
+    "authorId": 35931742,
+    "authorThumbnailName": "35931742-kg.jpg?t=2026-08-09-05-52-42",
+    "authorUserDisplayName": "Vivek K N",
+    "authorUserName": "vivekkn12221",
+    "comments": [
+      {
+        "id": 3530179,
+        "postDate": "2026-09-29T17:57:31.170Z",
+        "rawMarkdown": "I see the same, and it matches what I found when I ran every gold patch through the official harness (`Evaluator.evaluate_task` with the agent replaced by the patch) on 2026-09-25. Might have been updated.\n\n- In **Docker**: fastapi: 63 tasks fail at import, exactly as you describe: pydantic 2.13.4 arrives without `typing_inspection`. As far as I can tell, the harness unpacks the newest version of each small wheel straight into site-packages without resolving dependencies, which is how pydantic loses one. `dirty_equals` and `inline_snapshot`, which many fastapi tests import, are missing too.\n\n- In **Kaggle's notebook image** with the subprocess sandbox behaves differently. It ships pydantic 2.12.3 with typing-inspection 0.4.2, so fastapi imports work there, and 71 tasks pass with their gold patch (42 rich, 29 fastapi). The remaining fastapi failures there are the missing `inline_snapshot` and `dirty_equals` helpers. requests and httpx can't be tested there because of their src layout.\n\n\nThe leaderboard tasks come from private repositories, so this mainly distorts local CV. But if the scorer stages dependencies the same way, some hidden tasks could fail for the same reason whatever the agent does. It would be great if the hosts could confirm how dependencies are installed for the hidden tasks.",
+        "content": "<p>I see the same, and it matches what I found when I ran every gold patch through the official harness (<code>Evaluator.evaluate_task</code> with the agent replaced by the patch) on 2026-09-25. Might have been updated.</p>\n<ul>\n<li><p>In <strong>Docker</strong>: fastapi: 63 tasks fail at import, exactly as you describe: pydantic 2.13.4 arrives without <code>typing_inspection</code>. As far as I can tell, the harness unpacks the newest version of each small wheel straight into site-packages without resolving dependencies, which is how pydantic loses one. <code>dirty_equals</code> and <code>inline_snapshot</code>, which many fastapi tests import, are missing too.</p></li>\n<li><p>In <strong>Kaggle's notebook image</strong> with the subprocess sandbox behaves differently. It ships pydantic 2.12.3 with typing-inspection 0.4.2, so fastapi imports work there, and 71 tasks pass with their gold patch (42 rich, 29 fastapi). The remaining fastapi failures there are the missing <code>inline_snapshot</code> and <code>dirty_equals</code> helpers. requests and httpx can't be tested there because of their src layout.</p></li>\n</ul>\n<p>The leaderboard tasks come from private repositories, so this mainly distorts local CV. But if the scorer stages dependencies the same way, some hidden tasks could fail for the same reason whatever the agent does. It would be great if the hosts could confirm how dependencies are installed for the hidden tasks.</p>",
+        "replies": [
+          {
+            "id": 3530187,
+            "postDate": "2026-09-29T18:25:19.877Z",
+            "rawMarkdown": "I can confirm that the hidden tasks validate at 100% with a \"gold patch\" submission.",
+            "content": "<p>I can confirm that the hidden tasks validate at 100% with a \"gold patch\" submission.</p>",
+            "replies": [
+              {
+                "id": 3530263,
+                "postDate": "2026-09-29T20:56:51.750Z",
+                "rawMarkdown": "Could you please fix the training data, inline snapshots are missing in a lot of the fastapi tasks. ",
+                "content": "<p>Could you please fix the training data, inline snapshots are missing in a lot of the fastapi tasks. </p>",
+                "parent": {},
+                "author": {
+                  "displayName": "Ritwika Kancharla",
+                  "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/30571045-kg.png?t=2026-02-03-02-51-14",
+                  "url": "/ritwikakancharla",
+                  "tier": "CONTRIBUTOR",
+                  "id": 30571045,
+                  "progressionOptOut": false
+                },
+                "authorType": "COMMENT",
+                "votes": {
+                  "totalVotes": 1,
+                  "canUpvote": true,
+                  "totalUpvotes": 1
+                },
+                "kernelVersion": 0,
+                "competitionRanking": 100,
+                "feedbackTrackingData": {},
+                "isThankYou": false,
+                "teamUpInfo": {
+                  "teamLeader": {
+                    "displayName": "Ritwika Kancharla",
+                    "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/30571045-kg.png?t=2026-02-03-02-51-14",
+                    "url": "/ritwikakancharla",
+                    "userName": "ritwikakancharla",
+                    "tier": "CONTRIBUTOR",
+                    "id": 30571045,
+                    "profileUrl": "/ritwikakancharla",
+                    "performanceTier": "CONTRIBUTOR",
+                    "userId": 30571045,
+                    "progressionOptOut": false
+                  },
+                  "intro": ""
+                }
+              }
+            ],
+            "parent": {},
+            "author": {
+              "displayName": "Ryan Holbrook",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+              "url": "/ryanholbrook",
+              "tier": "STAFF",
+              "id": 2003505,
+              "progressionOptOut": false
+            },
+            "authorType": "ADMIN",
+            "votes": {
+              "totalVotes": 1,
+              "canUpvote": true,
+              "totalUpvotes": 1
+            },
+            "kernelVersion": 0,
+            "feedbackTrackingData": {},
+            "isThankYou": false,
+            "teamUpInfo": {
+              "teamLeader": {
+                "displayName": "Ryan Holbrook",
+                "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+                "url": "/ryanholbrook",
+                "userName": "ryanholbrook",
+                "tier": "STAFF",
+                "id": 2003505,
+                "profileUrl": "/ryanholbrook",
+                "performanceTier": "STAFF",
+                "userId": 2003505,
+                "progressionOptOut": false
+              },
+              "intro": ""
+            }
+          }
+        ],
+        "parent": {},
+        "author": {
+          "displayName": "Oleksii Zhukov",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/6082025-kg.png?t=2026-08-01-19-49-46",
+          "url": "/zhukovoleksiy",
+          "tier": "MASTER",
+          "id": 6082025,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "totalVotes": 1,
+          "canUpvote": true,
+          "totalUpvotes": 1
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 281,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Oleksii Zhukov",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/6082025-kg.png?t=2026-08-01-19-49-46",
+            "url": "/zhukovoleksiy",
+            "userName": "zhukovoleksiy",
+            "tier": "MASTER",
+            "id": 6082025,
+            "profileUrl": "/zhukovoleksiy",
+            "performanceTier": "MASTER",
+            "userId": 6082025,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3530115,
+      "postDate": "2026-09-29T15:39:00.920Z",
+      "rawMarkdown": "Hi all,\n\nI was going through the tasks to see which ones can actually pass in the local harness. For each task I skipped the agent and used the local harness to apply the reference patch that's included in tasks.jsonl in the competition data, then ran the tests.\n\nAll **19 fastapi** tasks I have locally failed this way. The tests don't even start. They crash while loading, because **pydantic 2.13.4** is installed but *typing_inspection* (which pydantic 2 needs) isn't in the wheels folder. So **importing pydantic fails, fastapi fails with it, and pytest stops at collection**. As far as I can tell my wheels match the competition data, so I think it's the same on the Kaggle side.\n\nIf that's right, nobody can solve the fastapi tasks at the moment, even with a perfect fix. That's around half of the 129 tasks.\n\nI also saw a few other tasks fail with the gold patch. Some of the requests tasks complain about a recursive httpbin fixture. Some rich tasks produce output that doesn't match the expected text in the tests, which looks like a pygments version difference.\n\nA couple of questions for the team:\n\n1. Could you confirm whether the scoring environment has the same problem?  \n2. If it does, is there a plan to fix it, or should we treat these tasks as unsolvable?\nAlso, if an agent notices the missing package and works around it by adding it into its own patch, would that be allowed, or would it count as breaking the rules? I'd rather ask now than find out at the end.\n\nThanks!",
+      "content": "<p>Hi all,</p>\n<p>I was going through the tasks to see which ones can actually pass in the local harness. For each task I skipped the agent and used the local harness to apply the reference patch that's included in tasks.jsonl in the competition data, then ran the tests.</p>\n<p>All <strong>19 fastapi</strong> tasks I have locally failed this way. The tests don't even start. They crash while loading, because <strong>pydantic 2.13.4</strong> is installed but <em>typing_inspection</em> (which pydantic 2 needs) isn't in the wheels folder. So <strong>importing pydantic fails, fastapi fails with it, and pytest stops at collection</strong>. As far as I can tell my wheels match the competition data, so I think it's the same on the Kaggle side.</p>\n<p>If that's right, nobody can solve the fastapi tasks at the moment, even with a perfect fix. That's around half of the 129 tasks.</p>\n<p>I also saw a few other tasks fail with the gold patch. Some of the requests tasks complain about a recursive httpbin fixture. Some rich tasks produce output that doesn't match the expected text in the tests, which looks like a pygments version difference.</p>\n<p>A couple of questions for the team:</p>\n<ol>\n<li>Could you confirm whether the scoring environment has the same problem?  </li>\n<li>If it does, is there a plan to fix it, or should we treat these tasks as unsolvable?\nAlso, if an agent notices the missing package and works around it by adding it into its own patch, would that be allowed, or would it count as breaking the rules? I'd rather ask now than find out at the end.</li>\n</ol>\n<p>Thanks!</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Vivek K N",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/35931742-kg.jpg?t=2026-08-09-05-52-42",
+        "url": "/vivekkn12221",
+        "tier": "CONTRIBUTOR",
+        "id": 35931742,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 2,
+        "canUpvote": true,
+        "totalUpvotes": 2
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 13,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Vivek K N",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/35931742-kg.jpg?t=2026-08-09-05-52-42",
+          "url": "/vivekkn12221",
+          "userName": "vivekkn12221",
+          "tier": "CONTRIBUTOR",
+          "id": 35931742,
+          "profileUrl": "/vivekkn12221",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 35931742,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3530115,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 744370,
+    "name": "FastApi tasks fail even with the gold patch, typing_inspection seems to be missing",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-29T15:39:00.921590800Z",
+    "totalVotes": 2,
+    "url": "/competitions/gemma-4-developer-agent/discussion/744370",
+    "totalMessages": 3,
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

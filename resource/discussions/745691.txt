@@ -1,0 +1,33 @@
+# [Multi-Agent SWE Architecture] Separating Bug Investigation from Surgical Patching with Gemma 4
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/745691
+
+## 3532492 /aryangupta85 TOPIC
+Hi Kagglers!
+
+While exploring the Google Gemma 4 Developer Agent Competition, we observed a common failure pattern in naive single-agent setups: when a single model tries to read large repositories, design the architecture, and edit files simultaneously, it often exceeds context budgets or makes broad changes that break existing test suites.
+
+To tackle this, we implemented a Hierarchical Multi-Agent Architecture following Google ADK's declarative standard:
+
+Architectural Overview:
+
+1.code_analyzer (The Investigator - Read-Only):
+-Never modifies files.
+-Leverages precomputed embeddings and fast AST symbol search (repo-scout) to extract the exact file, lines, and root cause without polluting the context window.
+-Outputs a strict structured fix plan (LOCATION, ROOT CAUSE, FIX PLAN).
+
+2.swe_coder (The Surgeon):
+-Receives the plan from code_analyzer.
+-Executes atomic edit_file replacements preserving existing APIs and backward compatibility.
+-Verifies syntax and targeted test sanity in the sandbox before concluding with submit_patch().
+
+3.Deterministic Packaging & ADK Compliance:
+-100% declarative YAML tree (agent.yaml, configs/sampling.yaml, eval_config.yaml).
+-Adheres to Google's single base model constraint (gemma-4-31b-it-qat-w4a16-ct) and fits cleanly under the size ceiling.
+
+Full code and packaging notebook is available here:
+https://www.kaggle.com/code/aryangupta85/gemma-4-developer-agent-swe-architecture
+
+Would love to hear how other teams are handling context management and multi-agent coordination under the 4x L4 GPU constraints! Any feedback or thoughts are welcome. If you find the approach interesting, please consider dropping an upvote!
+
+## 3532636 /omkarpawale COMMENT
+and what was your score on the leaderboard with this setup?

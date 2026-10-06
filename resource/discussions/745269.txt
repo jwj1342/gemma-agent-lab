@@ -1,0 +1,16 @@
+# Question: training an adapter on Colab with the Kaggle-hosted checkpoint
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/745269
+
+## 3531935 /amarimuthu TOPIC
+Hi,
+I would like to fine-tune a LoRA adapter for my entry, and i want to be sure i am following the rules before i  spend any time on it. Could you help with three quick questions?
+
+1. Training outside Kaggle: Can we train the adapter on Google Colab? That would mean downloading the Gemma 4 31B model from Kaggle, training there, and then putting the finished adapter in our submission. Is that okay, or does the model have to stay on Kaggle?
+
+2. Where the training data comes from: I read that training on Gemma 4 31B's own outputs is fine. I would run our my agent on issues from public GitHub projects, and keep only the attempts where the tests pass. Is that okay? i know the hidden tasks come from private repositories, so i just want to check that practising on public ones is allowed.
+
+3. Sharing: Do i have to publish my  training data, code or adapter at some point? And if so, when?
+
+Appreciate your response as the responses to the above questions will help us move forward.
+
+

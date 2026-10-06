@@ -1,0 +1,11 @@
+{
+  "id": 185265,
+  "slug": "default",
+  "framework": "MODEL_FRAMEWORK_TRANSFORMERS",
+  "fineTunable": true,
+  "versionId": 217271,
+  "versionNumber": 1,
+  "url": "https://www.kaggle.com/models/muhammadukasha09/bert-base-multilingual-cased/Transformers/default",
+  "licenseName": "Apache 2.0",
+  "totalUncompressedBytes": 717272069
+}

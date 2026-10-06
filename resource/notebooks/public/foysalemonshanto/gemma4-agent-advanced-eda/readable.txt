@@ -1,0 +1,801 @@
+# CELL 0 markdown
+# Gemma 4 Developer Agent: Advanced EDA
+
+This competition is **SWE-bench-style**: a declarative Gemma-4 ADK agent gets a repo snapshot plus a problem statement and must produce a patch.
+The score is the **resolution rate**, the share of tasks where the hidden `test_patch` passes under `pytest`.
+
+This notebook profiles every artifact the harness uses (tasks, gold patches, test patches, code graphs, embeddings, repo snapshots, wheels) and turns them into **agent-design decisions**.
+
+**Sections**
+1. Data inventory
+2. Tasks: repos, timeline, duplicates
+3. Problem statements: length, token cost, signal vs noise
+4. Gold-patch anatomy: files, hunks, churn, new files
+5. Test-patch anatomy: test targets, test functions
+6. Localization difficulty: does the issue name the code to change?
+7. Difficulty model: correlations and tiers
+8. Code-intelligence tools: graph and embedding coverage
+9. Repo snapshots: streamed scan, touched-file sizes vs the `read_file` budget
+10. Wheels and sandbox environment
+11. Key findings
+
+# CELL 1 code
+import os, re, io, json, glob, math, time, hashlib, tarfile, traceback, collections
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+import numpy as np, pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
+from IPython.display import display, Markdown
+
+pd.set_option('display.max_colwidth', 120); pd.set_option('display.width', 200)
+
+# EDA_INPUT / EDA_OUT let the same notebook run locally against a small fixture before it is pushed
+_c = glob.glob(os.environ.get('EDA_INPUT', '/kaggle/input') + '/**/tasks.jsonl', recursive=True)
+ROOT = os.path.dirname(_c[0])
+print('DATA ROOT:', ROOT)
+OUT = os.environ.get('EDA_OUT', '/kaggle/working')
+
+# ---- chart system: validated categorical order, recessive chrome ----
+SURF, INK, INK2, MUTED, GRID, AXIS = '#fcfcfb', '#0b0b0b', '#52514e', '#898781', '#e1e0d9', '#c3c2b7'
+SERIES = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300', '#4a3aa7', '#e34948']
+SEQ = '#2a78d6'
+DIVERGING = mcolors.LinearSegmentedColormap.from_list('div', ['#eb6834', '#f0efec', '#2a78d6'])
+plt.rcParams.update({
+    'figure.facecolor': SURF, 'axes.facecolor': SURF, 'savefig.facecolor': SURF,
+    'axes.edgecolor': AXIS, 'axes.labelcolor': INK2, 'xtick.color': MUTED, 'ytick.color': MUTED,
+    'text.color': INK, 'axes.titlecolor': INK, 'axes.titleweight': 'bold', 'axes.titlesize': 12,
+    'axes.titlelocation': 'left', 'axes.grid': True, 'grid.color': GRID, 'grid.linewidth': 0.6,
+    'axes.axisbelow': True, 'axes.spines.top': False, 'axes.spines.right': False,
+    'lines.linewidth': 2, 'lines.markersize': 7, 'legend.frameon': False, 'font.size': 10,
+    'figure.dpi': 110,
+})
+def section(title):
+    display(Markdown(f'### {title}'))
+
+# mirror every table and figure into /kaggle/working so the run can be reviewed offline
+os.makedirs(f'{OUT}/figs', exist_ok=True)
+_REPORT = open(f'{OUT}/eda_report.md', 'w', encoding='utf-8')
+_ipy_display, _plt_show, _fig_n = display, plt.show, [0]
+def display(*objs, **kw):
+    for o in objs:
+        if isinstance(o, (pd.DataFrame, pd.Series)): _REPORT.write('\n```\n' + o.to_string() + '\n```\n')
+        elif isinstance(o, Markdown): _REPORT.write('\n' + o.data + '\n')
+        else: _REPORT.write('\n' + str(o) + '\n')
+    _REPORT.flush()
+    _ipy_display(*objs, **kw)
+def _show(*a, **k):
+    fig = plt.gcf(); _fig_n[0] += 1
+    title = next((ax.get_title(loc='left') for ax in fig.axes if ax.get_title(loc='left')), 'fig')
+    fig.savefig(f"{OUT}/figs/{_fig_n[0]:02d}_{re.sub(r'[^a-z0-9]+', '_', title.lower())[:40].strip('_')}.png", bbox_inches='tight')
+    _REPORT.write(f'\n[figure {_fig_n[0]:02d}: {title}]\n')
+    _plt_show(*a, **k)
+plt.show = _show
+
+# CELL 2 markdown
+## 1. Data inventory
+
+# CELL 3 code
+rows = []
+for p in glob.glob(f'{ROOT}/**/*', recursive=True):
+    if os.path.isfile(p):
+        rel = os.path.relpath(p, ROOT).replace(os.sep, '/')
+        rows.append({'path': rel, 'folder': rel.split('/')[0] if '/' in rel else '(root)', 'bytes': os.path.getsize(p)})
+inv = pd.DataFrame(rows)
+summary = inv.groupby('folder').agg(files=('path', 'count'), MB=('bytes', lambda s: round(s.sum()/1e6, 1)),
+                                    empty_files=('bytes', lambda s: int((s == 0).sum()))).sort_values('MB', ascending=False)
+display(summary)
+print(f'Total: {len(inv)} files, {inv.bytes.sum()/1e9:.2f} GB')
+
+fig, ax = plt.subplots(figsize=(8, 3.2))
+s = summary['MB'].sort_values()
+ax.barh(s.index, s.values, color=SEQ, height=0.6)
+ax.set_xscale('log'); ax.set_xlim(right=s.max() * 8); ax.set_xlabel('MB (log scale)'); ax.set_title('Where the bytes are: snapshots dominate')
+for y, v in enumerate(s.values):
+    ax.text(v * 1.08, y, f'{v:,.1f}', va='center', color=INK2, fontsize=9)
+ax.grid(axis='y', visible=False); fig.subplots_adjust(left=0.22, right=0.97, bottom=0.18); plt.show()
+
+# CELL 4 markdown
+## 2. Tasks: repos, timeline, duplicates
+
+# CELL 5 code
+tasks = pd.read_json(f'{ROOT}/tasks.jsonl', lines=True)
+tasks['created_at'] = pd.to_datetime(tasks['created_at'])
+tasks['repo_short'] = tasks['instance_id'].str.split('_').str[0]
+tasks['pr_number'] = tasks['instance_id'].str.split('_').str[1].astype(int)
+REPO_ORDER = tasks['repo'].value_counts().index.tolist()
+RCOL = {r: SERIES[i] for i, r in enumerate(REPO_ORDER)}   # colour follows the repo, fixed order
+print(tasks.shape); print(tasks.dtypes)
+display(tasks['repo'].value_counts().to_frame('tasks').assign(share=lambda d: (d.tasks/d.tasks.sum()).round(3)))
+
+print('unique instance_id :', tasks.instance_id.nunique())
+print('unique base_commit :', tasks.base_commit.nunique())
+print('tasks with hints   :', (tasks.hints_text.str.strip() != '').sum())
+tasks['patch_md5'] = tasks.patch.map(lambda s: hashlib.md5(s.encode()).hexdigest())
+tasks['test_md5'] = tasks.test_patch.map(lambda s: hashlib.md5(s.encode()).hexdigest())
+dup_p = tasks[tasks.duplicated('patch_md5', keep=False)].sort_values('patch_md5')
+dup_t = tasks[tasks.duplicated('test_md5', keep=False)].sort_values('test_md5')
+print('duplicate gold patches:', len(dup_p), '| duplicate test patches:', len(dup_t))
+if len(dup_p): display(dup_p[['instance_id', 'repo', 'patch_md5']])
+if len(dup_t): display(dup_t[['instance_id', 'repo', 'test_md5']])
+
+# CELL 6 code
+fig, axes = plt.subplots(1, 2, figsize=(13, 3.8), gridspec_kw={'width_ratios': [1, 2.2]})
+vc = tasks['repo'].value_counts()
+axes[0].barh(vc.index[::-1], vc.values[::-1], color=[RCOL[r] for r in vc.index[::-1]], height=0.6)
+for y, v in enumerate(vc.values[::-1]):
+    axes[0].text(v + 1, y, str(v), va='center', color=INK2)
+axes[0].set_title('Tasks per repo'); axes[0].grid(axis='y', visible=False); axes[0].set_xlabel('tasks')
+
+for i, r in enumerate(REPO_ORDER):
+    d = tasks[tasks.repo == r]
+    axes[1].scatter(d.created_at, [i]*len(d), color=RCOL[r], s=40, edgecolor=SURF, linewidth=1.5, alpha=0.9)
+axes[1].set_yticks(range(len(REPO_ORDER))); axes[1].set_yticklabels(REPO_ORDER); axes[1].invert_yaxis()
+axes[1].set_title('When each task\'s PR was created'); axes[1].grid(axis='y', visible=False)
+plt.tight_layout(); plt.show()
+
+yr = pd.crosstab(tasks.created_at.dt.year, tasks.repo)[REPO_ORDER]
+display(yr)
+print('Share of tasks created in 2025 or later:', round((tasks.created_at.dt.year >= 2025).mean(), 3),
+      '(likely after most Gemma-4 pre-training cut-offs, so memorisation risk is lower)')
+
+# CELL 7 markdown
+## 3. Problem statements: length, token cost, signal vs noise
+
+# CELL 8 code
+ps = tasks.problem_statement
+tasks['ps_chars'] = ps.str.len()
+tasks['ps_lines'] = ps.str.count('\n') + 1
+tasks['ps_tok_est'] = (tasks.ps_chars / 3.8).round()       # rough chars-per-token for English plus code
+tasks['ps_has_codeblock'] = ps.str.contains('```')
+tasks['ps_has_traceback'] = ps.str.contains('Traceback|Error:|Exception', regex=True)
+tasks['ps_has_html_comment'] = ps.str.contains('<!--')
+tasks['ps_is_pr_template'] = ps.str.contains(r'## Pull Request|Checklist|- \[ ?x? ?\]', regex=True)
+# statements are PR descriptions, so many describe the fix itself rather than the bug
+tasks['ps_says_this_pr'] = ps.str.contains(r'\bthis (?:PR|pull request)\b', case=False, regex=True)
+tasks['ps_describes_change'] = ps.str.contains(r'\b(?:adds?|added|fix(?:es|ed)?|refactor(?:s|ed)?|removes?|removed|implements?|implemented|updates?|updated|deprecate[sd]?)\b', case=False, regex=True)
+tasks['ps_has_bug_words'] = ps.str.contains(r'\b(?:bug|error|exception|crash|fails?|broken|regression|unexpected)\b', case=False, regex=True)
+tasks['ps_n_urls'] = ps.str.count(r'https?://')
+tasks['ps_n_py_paths'] = ps.str.count(r'[\w/]+\.py\b')
+# share of the statement that is template boilerplate (HTML comments)
+tasks['ps_comment_share'] = ps.map(lambda s: sum(len(m) for m in re.findall(r'<!--.*?-->', s, flags=re.S)) / max(len(s), 1))
+
+cols = ['ps_chars', 'ps_lines', 'ps_tok_est', 'ps_n_urls', 'ps_n_py_paths', 'ps_comment_share']
+display(tasks.groupby('repo')[cols].median().round(2).loc[REPO_ORDER])
+display(tasks.groupby('repo')[['ps_has_codeblock', 'ps_has_traceback', 'ps_has_html_comment', 'ps_is_pr_template',
+                               'ps_says_this_pr', 'ps_describes_change', 'ps_has_bug_words']].mean().round(2).loc[REPO_ORDER])
+
+fig, axes = plt.subplots(1, 2, figsize=(13, 3.6))
+bins = np.logspace(np.log10(max(tasks.ps_chars.min(), 20)), np.log10(tasks.ps_chars.max()), 25)
+axes[0].hist([tasks.loc[tasks.repo == r, 'ps_chars'] for r in REPO_ORDER], bins=bins, stacked=True,
+             color=[RCOL[r] for r in REPO_ORDER], label=REPO_ORDER, edgecolor=SURF, linewidth=1)
+axes[0].set_xscale('log'); axes[0].set_xlabel('characters (log)'); axes[0].set_ylabel('tasks'); axes[0].legend()
+axes[0].set_title('Problem statement length')
+axes[1].hist(tasks.ps_comment_share, bins=20, color=SEQ, edgecolor=SURF, linewidth=1)
+axes[1].set_xlabel('fraction of statement inside <!-- --> template comments'); axes[1].set_ylabel('tasks')
+axes[1].set_title('Template boilerplate you can strip before prompting')
+plt.tight_layout(); plt.show()
+print('Longest statement (est tokens):', int(tasks.ps_tok_est.max()), '| context window: 32,768')
+
+# CELL 9 code
+display(Markdown('**Sample statements (first 600 chars), one per repo**'))
+for r in REPO_ORDER:
+    t = tasks[tasks.repo == r].iloc[0]
+    print(f'==== {t.instance_id} ({r}) ====\n{t.problem_statement[:600]}\n')
+
+# CELL 10 markdown
+## 4. Gold-patch anatomy
+
+# CELL 11 code
+HUNK_RE = re.compile(r'^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@ ?(.*)$')
+
+def parse_patch(text):
+    # count-aware unified-diff parser, so '---' content lines are never mistaken for headers
+    files, cur, lines, i = [], None, text.splitlines(), 0
+    old_hdr = None
+    while i < len(lines):
+        ln = lines[i]
+        if ln.startswith('--- ') and i + 1 < len(lines) and lines[i+1].startswith('+++ '):
+            old_hdr, new_hdr = ln[4:].split('\t')[0].strip(), lines[i+1][4:].split('\t')[0].strip()
+            path = new_hdr if new_hdr != '/dev/null' else old_hdr
+            path = re.sub(r'^[ab]/', '', path)
+            cur = dict(path=path, add=0, dele=0, hunks=0, is_new=old_hdr == '/dev/null', is_deleted=new_hdr == '/dev/null',
+                       ctx_symbols=[], added_defs=[], ranges=[])
+            files.append(cur); i += 2; continue
+        m = HUNK_RE.match(ln)
+        if m and cur is not None:
+            o_start, o_cnt = int(m.group(1)), int(m.group(2) or 1)
+            n_cnt = int(m.group(4) or 1)
+            if cur['hunks'] == 0 and o_start == 0 and o_cnt == 0:
+                cur['is_new'] = True
+            cur['hunks'] += 1
+            cur['ranges'].append((o_start, o_cnt))
+            if m.group(5).strip():
+                cur['ctx_symbols'].append(m.group(5).strip())
+            ro, rn, i = o_cnt, n_cnt, i + 1
+            while i < len(lines) and (ro > 0 or rn > 0):
+                l2 = lines[i]
+                if l2.startswith('+'):
+                    cur['add'] += 1; rn -= 1
+                    d = re.match(r'\+\s*(?:async\s+)?(?:def|class)\s+(\w+)', l2)
+                    if d: cur['added_defs'].append(d.group(1))
+                elif l2.startswith('-'):
+                    cur['dele'] += 1; ro -= 1
+                elif l2.startswith('\\'):
+                    pass
+                else:
+                    ro -= 1; rn -= 1
+                i += 1
+            continue
+        i += 1
+    return files
+
+def kind(path):
+    p = path.lower()
+    if re.search(r'(^|/)tests?/|test_[^/]*\.py$|_test\.py$|conftest\.py$', p): return 'test'
+    if p.startswith(('docs/', 'docs_src/')) or p.endswith(('.md', '.rst', '.txt')): return 'docs'
+    if p.startswith(('scripts/', '.github/')): return 'scripts/ci'
+    if p.endswith('.py'): return 'source'
+    return 'other'
+
+gold = tasks.patch.map(parse_patch)
+tests_parsed = tasks.test_patch.map(parse_patch)
+
+def agg(files):
+    return pd.Series(dict(
+        n_files=len(files), n_hunks=sum(f['hunks'] for f in files), add=sum(f['add'] for f in files),
+        dele=sum(f['dele'] for f in files), n_new_files=sum(f['is_new'] for f in files),
+        n_deleted_files=sum(f['is_deleted'] for f in files),
+        n_source_files=sum(kind(f['path']) == 'source' for f in files),
+        n_docs_files=sum(kind(f['path']) == 'docs' for f in files)))
+G = gold.apply(agg).add_prefix('gold_')
+T = tests_parsed.apply(agg).add_prefix('test_')
+tasks = pd.concat([tasks.drop(columns=[c for c in tasks if c.startswith(('gold_', 'test_n', 'test_add', 'test_dele', 'test_hunks'))], errors='ignore'), G, T], axis=1)
+tasks['gold_churn'] = tasks.gold_add + tasks.gold_dele
+tasks['test_churn'] = tasks.test_add + tasks.test_dele
+tasks['gold_only_new_files'] = (tasks.gold_n_new_files == tasks.gold_n_files) & (tasks.gold_n_files > 0)
+
+display(tasks.groupby('repo')[['gold_n_files', 'gold_n_hunks', 'gold_add', 'gold_dele', 'gold_churn', 'gold_n_new_files']].describe().T.round(1))
+print('Single-file gold patches     :', (tasks.gold_n_files == 1).mean().round(3))
+print('Single-hunk gold patches     :', (tasks.gold_n_hunks == 1).mean().round(3))
+print('Gold patch creates new file  :', (tasks.gold_n_new_files > 0).mean().round(3))
+print('Gold patch = only new files  :', tasks.gold_only_new_files.mean().round(3))
+print('Gold patch touches docs too  :', (tasks.gold_n_docs_files > 0).mean().round(3))
+
+# CELL 12 code
+fig, axes = plt.subplots(1, 3, figsize=(15, 3.8))
+mx = 10   # fold the long tail into a "10+" bucket
+bottom = np.zeros(mx)
+for r in REPO_ORDER:
+    c = tasks[tasks.repo == r].gold_n_files.clip(upper=mx).value_counts().reindex(range(1, mx+1), fill_value=0).values
+    axes[0].bar(range(1, mx+1), c, bottom=bottom, color=RCOL[r], label=r, edgecolor=SURF, linewidth=2, width=0.8)
+    bottom += c
+axes[0].set_xticks(range(1, mx+1)); axes[0].set_xticklabels([str(i) for i in range(1, mx)] + [f'{mx}+'])
+axes[0].grid(axis='x', visible=False)
+axes[0].set_xlabel('files changed in gold patch'); axes[0].set_ylabel('tasks'); axes[0].set_title('Most fixes touch 1 to 2 files'); axes[0].legend()
+
+for r in REPO_ORDER:
+    d = tasks[tasks.repo == r]
+    axes[1].scatter(d.gold_churn + 1, d.test_churn + 1, color=RCOL[r], s=45, edgecolor=SURF, linewidth=1.5, label=r, alpha=0.9)
+axes[1].set_xscale('log'); axes[1].set_yscale('log')
+axes[1].set_xlabel('gold churn +1 (lines, log)'); axes[1].set_ylabel('test churn +1 (lines, log)')
+axes[1].set_title('Fix size vs test size'); axes[1].legend()
+
+fk = collections.Counter(kind(f['path']) for fl in gold for f in fl)
+k = pd.Series(fk).sort_values()
+axes[2].barh(k.index, k.values, color=SEQ, height=0.6)
+for y, v in enumerate(k.values):
+    axes[2].text(v + k.max() * 0.02, y, str(v), va='center', color=INK2)
+axes[2].set_xlim(0, k.max() * 1.15)
+axes[2].set_title('What kind of files the gold patch edits'); axes[2].grid(axis='y', visible=False); axes[2].set_xlabel('file edits')
+plt.tight_layout(); plt.show()
+
+# most-edited files: a prior for where to look first
+ff = collections.Counter((t.repo, f['path']) for t, fl in zip(tasks.itertuples(), gold) for f in fl)
+top = pd.DataFrame([(r, p, c) for (r, p), c in ff.most_common(25)], columns=['repo', 'path', 'tasks_touching'])
+display(Markdown('**Top-25 most frequently edited files (a location prior for the agent)**')); display(top)
+
+# CELL 13 markdown
+## 5. Test-patch anatomy
+
+# CELL 14 code
+def test_funcs(text):
+    return re.findall(r'^\+\s*(?:async\s+)?def\s+(test_\w+)', text, flags=re.M)
+tasks['n_test_funcs_added'] = tasks.test_patch.map(lambda s: len(test_funcs(s)))
+tasks['n_parametrize'] = tasks.test_patch.str.count(r'\+\s*@pytest\.mark\.parametrize')
+tasks['test_files'] = tests_parsed.map(lambda fl: [f['path'] for f in fl])
+tasks['test_all_new'] = (tasks.test_n_new_files == tasks.test_n_files) & (tasks.test_n_files > 0)
+tasks['test_uses_snapshot'] = tasks.test_patch.str.contains(r'inline_snapshot|snapshot\(', regex=True)
+
+display(tasks.groupby('repo')[['test_n_files', 'test_add', 'n_test_funcs_added', 'n_parametrize']].median().loc[REPO_ORDER])
+print('Tasks whose tests live in brand-new test files :', tasks.test_all_new.mean().round(3))
+print('Tasks adding 0 new test functions (edit only)  :', (tasks.n_test_funcs_added == 0).mean().round(3))
+print('Tasks using inline_snapshot-style assertions   :', tasks.test_uses_snapshot.mean().round(3))
+
+# does the problem statement even name the tests? (agents cannot see test_patch)
+tasks['ps_mentions_test_name'] = [any(fn in p for fn in test_funcs(tp)) for p, tp in zip(tasks.problem_statement, tasks.test_patch)]
+print('Statement mentions a hidden test function name :', tasks.ps_mentions_test_name.mean().round(3))
+
+fig, ax = plt.subplots(figsize=(8, 3.4))
+cap = 20   # fold the tail into a "20+" bucket
+ax.hist([tasks.loc[tasks.repo == r, 'n_test_funcs_added'].clip(upper=cap) for r in REPO_ORDER], bins=np.arange(-0.5, cap + 1.5),
+        stacked=True, color=[RCOL[r] for r in REPO_ORDER], label=REPO_ORDER, edgecolor=SURF, linewidth=1)
+ax.set_xticks(range(0, cap + 1, 2)); ax.set_xticklabels([str(i) for i in range(0, cap, 2)] + [f'{cap}+'])
+ax.set_xlabel('new test functions in hidden test patch'); ax.set_ylabel('tasks'); ax.legend()
+ax.set_title('How many hidden tests must pass per task'); plt.tight_layout(); plt.show()
+
+# CELL 15 markdown
+## 6. Localization difficulty: does the issue name the code to change?
+
+# CELL 16 markdown
+The agent cannot see the gold patch, so its hardest step is often *finding where to edit*. For each task we check whether the problem statement names the gold file, its module, or any function or class the gold patch edits or adds. Caveat: symbols come from hunk-header context (the enclosing or preceding `def`/`class`) plus newly added definitions, so `symbol named` is an upper bound.
+
+# CELL 17 code
+def symbols_from(files):
+    syms = set()
+    for f in files:
+        for c in f['ctx_symbols']:
+            m = re.search(r'(?:def|class)\s+(\w+)', c)
+            if m: syms.add(m.group(1))
+        syms.update(f['added_defs'])
+    return {s for s in syms if len(s) > 3 and s not in {'__init__', 'test', 'main', 'self'}}
+
+loc = []
+for t, fl in zip(tasks.itertuples(), gold):
+    ps_l = t.problem_statement
+    src = [f for f in fl if kind(f['path']) in ('source', 'scripts/ci')] or fl
+    paths = [f['path'] for f in src]
+    base = [os.path.basename(p) for p in paths]
+    mods = [p[:-3].replace('/', '.') for p in paths if p.endswith('.py')]
+    syms = symbols_from(src)
+    loc.append(dict(
+        loc_path_named=any(p in ps_l for p in paths),
+        loc_file_named=any(re.search(r'\b' + re.escape(b) + r'\b', ps_l) for b in base),
+        loc_module_named=any(m in ps_l for m in mods),
+        loc_symbol_named=any(re.search(r'\b' + re.escape(s) + r'\b', ps_l) for s in syms),
+        n_gold_symbols=len(syms)))
+L = pd.DataFrame(loc, index=tasks.index)
+tasks = pd.concat([tasks.drop(columns=[c for c in L if c in tasks], errors='ignore'), L], axis=1)
+tasks['loc_any'] = tasks[['loc_path_named', 'loc_file_named', 'loc_module_named', 'loc_symbol_named']].any(axis=1)
+
+tab = tasks.groupby('repo')[['loc_path_named', 'loc_file_named', 'loc_module_named', 'loc_symbol_named', 'loc_any']].mean().round(2).loc[REPO_ORDER]
+tab.loc['ALL'] = tasks[tab.columns].mean().round(2)
+display(tab)
+
+fig, ax = plt.subplots(figsize=(9, 3.4))
+lbl = ['path named', 'file named', 'module named', 'symbol named', 'any hint']
+vals = tab.loc['ALL'].values
+ax.barh(lbl[::-1], vals[::-1], color=SEQ, height=0.6)
+for y, v in enumerate(vals[::-1]):
+    ax.text(v + 0.01, y, f'{v:.0%}', va='center', color=INK2)
+ax.set_xlim(0, 1.1); ax.set_xlabel('share of tasks'); ax.grid(axis='y', visible=False)
+ax.set_title('How often the issue text points at the code to change')
+plt.tight_layout(); plt.show()
+print(f"{(~tasks.loc_any).sum()} tasks give no lexical pointer, so they need search_similar_code, graph tools or grep.")
+
+# CELL 18 markdown
+## 7. Difficulty model: correlations and tiers
+
+# CELL 19 code
+num = ['ps_tok_est', 'ps_n_py_paths', 'gold_n_files', 'gold_n_hunks', 'gold_churn', 'gold_n_new_files',
+       'test_n_files', 'test_churn', 'n_test_funcs_added', 'n_gold_symbols', 'loc_any']
+C = tasks[num].astype(float).corr(method='spearman')
+fig, ax = plt.subplots(figsize=(8.5, 7))
+im = ax.imshow(C.values, cmap=DIVERGING, vmin=-1, vmax=1)
+ax.set_xticks(range(len(num))); ax.set_xticklabels(num, rotation=60, ha='right'); ax.set_yticks(range(len(num))); ax.set_yticklabels(num)
+ax.grid(False)
+for i in range(len(num)):
+    for j in range(len(num)):
+        if i != j and abs(C.values[i, j]) >= 0.4:
+            ax.text(j, i, f'{C.values[i, j]:.2f}', ha='center', va='center', fontsize=8, color=INK)
+fig.colorbar(im, ax=ax, fraction=0.04, label='Spearman rho'); ax.set_title('Spearman correlation of task features (|rho| >= 0.4 labelled)')
+plt.tight_layout(); plt.show()
+
+# heuristic difficulty: rank-average of structure features plus a localization penalty
+comp = ['gold_n_files', 'gold_n_hunks', 'gold_churn', 'n_test_funcs_added', 'test_n_files']
+tasks['difficulty'] = tasks[comp].rank(pct=True).mean(axis=1) * 0.8 + (~tasks.loc_any).astype(float) * 0.2
+tasks['tier'] = pd.qcut(tasks.difficulty, 3, labels=['easy', 'medium', 'hard'])
+display(pd.crosstab(tasks.repo, tasks.tier).loc[REPO_ORDER])
+cols = ['instance_id', 'gold_n_files', 'gold_churn', 'n_test_funcs_added', 'loc_any', 'difficulty']
+display(Markdown('**10 easiest (good smoke tests for a new agent config)**')); display(tasks.nsmallest(10, 'difficulty')[cols].round(3))
+display(Markdown('**10 hardest**')); display(tasks.nlargest(10, 'difficulty')[cols].round(3))
+
+# stratified dev split you can reuse for fast local iteration
+rng = np.random.RandomState(42)
+tasks['dev_split'] = 'train'
+for (_, _), g in tasks.groupby(['repo', 'tier'], observed=True):
+    n = max(1, round(len(g) * 0.25)) if len(g) >= 2 else 0
+    tasks.loc[rng.choice(g.index, n, replace=False) if n else [], 'dev_split'] = 'dev'
+print(tasks.dev_split.value_counts())
+
+# CELL 20 markdown
+## 8. Code-intelligence tools: graph and embedding coverage
+
+# CELL 21 code
+def nz(p): return os.path.exists(p) and os.path.getsize(p) > 100
+cov = []
+for t in tasks.itertuples():
+    by_id_g, by_id_e = f'{ROOT}/graphs/{t.instance_id}.json', f'{ROOT}/embeddings/{t.instance_id}.npz'
+    by_c_g, by_c_e = f'{ROOT}/graphs/{t.repo_short}_{t.base_commit}.json', f'{ROOT}/embeddings/{t.repo_short}_{t.base_commit}.npz'
+    cov.append(dict(graph_by_id=nz(by_id_g), emb_by_id=nz(by_id_e), graph_by_commit=nz(by_c_g), emb_by_commit=nz(by_c_e),
+                    graph_path=by_id_g if nz(by_id_g) else (by_c_g if nz(by_c_g) else None),
+                    emb_path=by_id_e if nz(by_id_e) else (by_c_e if nz(by_c_e) else None)))
+CV = pd.DataFrame(cov, index=tasks.index)
+tasks = pd.concat([tasks.drop(columns=[c for c in CV if c in tasks], errors='ignore'), CV], axis=1)
+tasks['has_graph'] = tasks.graph_path.notna(); tasks['has_emb'] = tasks.emb_path.notna()
+tasks['code_intel'] = tasks.has_graph & tasks.has_emb
+display(tasks.groupby('repo')[['graph_by_id', 'graph_by_commit', 'emb_by_id', 'emb_by_commit', 'has_graph', 'has_emb', 'code_intel']].mean().round(2).loc[REPO_ORDER])
+print('Tasks where the harness will ADVERTISE code-intel tools:', int(tasks.code_intel.sum()), '/', len(tasks))
+
+g_files = inv[inv.folder == 'graphs']; e_files = inv[inv.folder == 'embeddings']
+print('graph files by repo prefix:', g_files.path.str.extract(r'graphs/(\w+?)_')[0].value_counts().to_dict())
+print('graph files: non-empty', int((g_files.bytes > 100).sum()), '/ empty', int((g_files.bytes <= 100).sum()))
+print('Extra graph keys not matching any task:',
+      sorted(set(os.path.basename(p)[:-5] for p in g_files.path) - set(tasks.instance_id) -
+             set(tasks.repo_short + '_' + tasks.base_commit))[:10])
+# each task has two candidate graph files (by id and by commit); exactly one is expected to be non-empty
+both = (tasks.graph_by_id & tasks.graph_by_commit).sum(); neither = (~tasks.graph_by_id & ~tasks.graph_by_commit).sum()
+print(f'tasks with BOTH graph names non-empty: {both} | with NEITHER: {neither}')
+shared = tasks[tasks.duplicated('base_commit', keep=False)].sort_values('base_commit')
+display(Markdown('**Tasks sharing a base_commit (same snapshot state, different target PR)**'))
+display(shared[['instance_id', 'base_commit', 'graph_by_id', 'graph_by_commit', 'emb_by_id', 'emb_by_commit', 'code_intel']])
+
+# CELL 22 code
+def load_graph(path):
+    with open(path) as f:
+        g = json.load(f)
+    return g
+
+def describe_schema(obj, depth=0, maxd=3):
+    pad = '  ' * depth
+    if isinstance(obj, dict):
+        for k, v in list(obj.items())[:12]:
+            print(f'{pad}{k!r}: {type(v).__name__}' + (f' len={len(v)}' if hasattr(v, '__len__') and not isinstance(v, str) else f' = {str(v)[:80]!r}'))
+            if depth < maxd and isinstance(v, (dict, list)): describe_schema(v, depth + 1, maxd)
+    elif isinstance(obj, list) and obj:
+        print(f'{pad}[0] -> {type(obj[0]).__name__}')
+        if depth < maxd: describe_schema(obj[0], depth + 1, maxd)
+
+def graph_parts(g):
+    nodes = g.get('nodes', []) if isinstance(g, dict) else []
+    edges = (g.get('links') or g.get('edges') or []) if isinstance(g, dict) else []
+    if isinstance(nodes, dict): nodes = [dict(id=k, **(v if isinstance(v, dict) else {})) for k, v in nodes.items()]
+    return nodes, edges
+
+def first_key(d, keys):
+    for k in keys:
+        if isinstance(d, dict) and k in d: return d[k]
+    return None
+
+NTYPE = ['type', 'kind', 'node_type', 'label', 'category']
+ETYPE = ['type', 'edge_type', 'relation', 'rel', 'key', 'label']
+
+sample_graph = tasks.loc[tasks.has_graph, 'graph_path'].iloc[0]
+print('Schema of', os.path.basename(sample_graph)); G0 = load_graph(sample_graph); describe_schema(G0)
+
+# CELL 23 code
+def graph_stats(path):
+    g = load_graph(path); nodes, edges = graph_parts(g)
+    ids = [str(first_key(n, ['id', 'name', 'qualname']) or '') for n in nodes]
+    nt = collections.Counter(str(first_key(n, NTYPE)) for n in nodes)
+    et = collections.Counter(str(first_key(e, ETYPE)) for e in edges)
+    deg = collections.Counter()
+    for e in edges:
+        deg[str(first_key(e, ['source', 'from', 'src']))] += 1; deg[str(first_key(e, ['target', 'to', 'dst']))] += 1
+    return dict(n_nodes=len(nodes), n_edges=len(edges), node_types=nt, edge_types=et, deg=deg, ids=ids, nodes=nodes)
+
+gs = {}
+for t in tasks[tasks.has_graph].itertuples():
+    s = graph_stats(t.graph_path)
+    gs[t.instance_id] = s
+GS = pd.DataFrame({k: dict(n_nodes=v['n_nodes'], n_edges=v['n_edges']) for k, v in gs.items()}).T
+tasks = tasks.drop(columns=['graph_nodes', 'graph_edges'], errors='ignore').join(GS.rename(columns={'n_nodes': 'graph_nodes', 'n_edges': 'graph_edges'}), on='instance_id')
+display(GS.describe().round(0))
+
+any_s = next(iter(gs.values()))
+display(Markdown('**Node types / edge types (one graph)**'))
+display(pd.DataFrame(any_s['node_types'].most_common(15), columns=['node_type', 'count']))
+display(pd.DataFrame(any_s['edge_types'].most_common(15), columns=['edge_type', 'count']))
+
+fig, axes = plt.subplots(1, 2, figsize=(13, 3.6))
+d = np.array(sorted(any_s['deg'].values(), reverse=True))
+axes[0].loglog(np.arange(1, len(d)+1), d, color=SEQ, marker='o', markersize=3, linewidth=1.2)
+axes[0].set_xlabel('node rank (log)'); axes[0].set_ylabel('degree (log)'); axes[0].set_title('Degree distribution is heavy-tailed')
+sub = tasks[tasks.has_graph].sort_values('pr_number')
+axes[1].plot(sub.pr_number, sub.graph_nodes, color=SERIES[0], marker='o', markersize=4, label='nodes')
+axes[1].set_xlabel('PR number (fastapi)'); axes[1].set_ylabel('graph nodes'); axes[1].set_title('Graph size grows as the repo grows')
+plt.tight_layout(); plt.show()
+hubs = pd.DataFrame(any_s['deg'].most_common(15), columns=['node', 'degree'])
+display(Markdown('**Top hubs (one graph)**')); display(hubs)
+
+# CELL 24 code
+# Retrieval coverage: can the graph resolve the files and symbols the gold patch edits?
+def resolvable(query, ids, ids_lower):
+    if query in ids: return 'exact'
+    if any(i.endswith('.' + query) or i.endswith('/' + query) for i in ids): return 'suffix'
+    if query.lower() in ids_lower: return 'icase'
+    if any(query in i for i in ids): return 'substring'
+    return None
+
+def module_candidates(path):
+    # graph ids drop layout roots: src/requests/x.py -> requests.x, docs_src/a/b.py -> a.b
+    m = path[:-3].replace('/', '.')
+    if m.endswith('.__init__'): m = m[:-len('.__init__')]
+    c = {m}
+    for root in ('src.', 'docs_src.', 'lib.'):
+        if m.startswith(root): c.add(m[len(root):])
+    return c
+
+rc = []
+for t, fl in zip(tasks.itertuples(), gold):
+    if t.instance_id not in gs: continue
+    ids = gs[t.instance_id]['ids']; idset = set(ids); low = {i.lower() for i in ids}
+    prefixes = {'.'.join(i.split('.')[:k]) for i in ids for k in range(1, i.count('.') + 2)}
+    src = [f for f in fl if f['path'].endswith('.py') and kind(f['path']) != 'test']
+    existing = [f for f in src if not f['is_new']]
+    mod_hit = [bool(module_candidates(f['path']) & prefixes) for f in existing]
+    syms = symbols_from(src)
+    sym_res = [resolvable(s, idset, low) for s in syms]
+    rc.append(dict(instance_id=t.instance_id, repo=t.repo, n_mod=len(existing), mod_cov=np.mean(mod_hit) if mod_hit else np.nan,
+                   missing_mods=[f['path'] for f, h in zip(existing, mod_hit) if not h],
+                   n_sym=len(syms), sym_cov=np.mean([r is not None for r in sym_res]) if sym_res else np.nan,
+                   strict_sym_cov=np.mean([r in ('exact', 'suffix') for r in sym_res]) if sym_res else np.nan,
+                   tiers=collections.Counter(r for r in sym_res)))
+RC = pd.DataFrame(rc)
+display(RC.groupby('repo')[['mod_cov', 'sym_cov', 'strict_sym_cov']].mean().round(3))
+print('Mean share of gold MODULES present in the graph           :', round(RC.mod_cov.mean(), 3))
+print('Mean share of gold SYMBOLS resolvable (any tier)          :', round(RC.sym_cov.mean(), 3))
+print('Mean share of gold SYMBOLS resolvable (exact/suffix only) :', round(RC.strict_sym_cov.mean(), 3))
+miss = collections.Counter(p for l in RC.missing_mods for p in l)
+print('Gold source files with NO node in the graph (top 10):', miss.most_common(10))
+tiers = sum((r for r in RC.tiers), collections.Counter())
+display(pd.Series({str(k): v for k, v in tiers.items()}, name='symbol resolution tier').to_frame())
+print('Sample node ids:', gs[RC.instance_id.iloc[0]]['ids'][:15])
+
+# CELL 25 code
+# Embeddings: keys are node names, vectors are node embeddings
+def load_emb(path):
+    z = np.load(path, allow_pickle=False)
+    return z, list(z.keys())
+sample_emb = tasks.loc[tasks.has_emb, 'emb_path'].iloc[0]
+z, keys = load_emb(sample_emb)
+print(os.path.basename(sample_emb), '| #keys:', len(keys))
+for k in keys[:8]:
+    print(f'  {k!r}: shape={z[k].shape} dtype={z[k].dtype}')
+
+# collect 1-D vectors, or unpack a names + matrix layout
+if len(keys) <= 5:
+    arrs = {k: z[k] for k in keys}
+    mat_key = max(arrs, key=lambda k: arrs[k].size if arrs[k].dtype.kind == 'f' else -1)
+    E = arrs[mat_key].astype(np.float32)
+    name_key = next((k for k in arrs if arrs[k].dtype.kind in 'US' and len(arrs[k]) == len(E)), None)
+    names = [str(x) for x in arrs[name_key]] if name_key else [str(i) for i in range(len(E))]
+else:
+    names = [k for k in keys if z[k].ndim == 1 and z[k].dtype.kind == 'f']
+    E = np.stack([z[k] for k in names]).astype(np.float32)
+print('Embedding matrix:', E.shape)
+norms = np.linalg.norm(E, axis=1)
+print('norm: min %.3f median %.3f max %.3f | zero vectors: %d' % (norms.min(), np.median(norms), norms.max(), (norms < 1e-8).sum()))
+En = E / np.maximum(norms[:, None], 1e-8)
+
+# PCA to 2-D, coloured by top-level package
+X = En - En.mean(0); U, S, Vt = np.linalg.svd(X, full_matrices=False); P = X @ Vt[:2].T
+evr = (S**2 / (S**2).sum())[:10]
+top = pd.Series([re.split(r'[./:]', n)[0] or n for n in names]).value_counts()
+grp = pd.Series([re.split(r'[./:]', n)[0] for n in names]).where(lambda s: s.isin(top.index[:6]), 'other')
+fig, axes = plt.subplots(1, 2, figsize=(13, 4.2))
+for i, gname in enumerate(top.index[:6].tolist() + ['other']):
+    m = (grp == gname).values
+    if m.any(): axes[0].scatter(P[m, 0], P[m, 1], s=8, color=SERIES[i] if gname != 'other' else MUTED, label=f'{gname} ({m.sum()})', alpha=0.7, linewidth=0)
+axes[0].legend(markerscale=2, fontsize=8); axes[0].set_title('Node embeddings, PCA 2-D'); axes[0].set_xlabel('PC1'); axes[0].set_ylabel('PC2')
+axes[1].bar(range(1, 11), evr, color=SEQ, width=0.7); axes[1].set_xlabel('component'); axes[1].set_ylabel('explained variance')
+axes[1].set_title('Variance is spread out, so the space is high-rank'); plt.tight_layout(); plt.show()
+
+# Does the embedding space carry structure? Compare graph-linked pairs, same-module pairs and random pairs.
+uniq_rows = len(np.unique(En.round(5), axis=0))
+print(f'distinct vectors: {uniq_rows}/{len(En)} | graph and embedding node sets equal:',
+      set(names) == set(gs.get(tasks.loc[tasks.emb_path == sample_emb, 'instance_id'].iloc[0], {}).get('ids', [])))
+gpath = tasks.loc[tasks.emb_path == sample_emb, 'graph_path'].iloc[0]
+_, edges_ = graph_parts(load_graph(gpath))
+idx = {n: i for i, n in enumerate(names)}
+pairs = np.array([(idx[e['source']], idx[e['target']]) for e in edges_
+                  if e.get('source') in idx and e.get('target') in idx and e['source'] != e['target']])
+rs = np.random.RandomState(0)
+rnd = rs.randint(0, len(names), (max(len(pairs), 2000), 2)); rnd = rnd[rnd[:, 0] != rnd[:, 1]]
+mod_of = np.array(['.'.join(n.split('.')[:-1]) for n in names])
+same = []
+for a in rs.permutation(len(names)):
+    b = np.flatnonzero(mod_of == mod_of[a]); b = b[b != a]
+    if len(b): same.append((a, rs.choice(b)))
+    if len(same) >= 2000: break
+same = np.array(same)
+cos = lambda P: np.einsum('ij,ij->i', En[P[:, 0]], En[P[:, 1]])
+c_edge, c_same, c_rand = cos(pairs) if len(pairs) else np.array([]), cos(same), cos(rnd)
+print(f'mean cosine  graph-linked={c_edge.mean():.3f}  same-module={c_same.mean():.3f}  random={c_rand.mean():.3f}')
+k = 10; samp = rs.choice(len(names), min(500, len(names)), replace=False)
+nn_same = np.mean([np.mean(mod_of[np.argsort(-(En @ En[i]))[1:k+1]] == mod_of[i]) for i in samp])
+base = np.mean([np.mean(mod_of == mod_of[i]) for i in samp])
+print(f'top-{k} neighbours in the same module: {nn_same:.3f} vs chance {base:.3f} (lift x{nn_same / max(base, 1e-9):.1f})')
+fig, ax = plt.subplots(figsize=(9, 3.6))
+bins = np.linspace(-0.2, 1, 50)
+for arr, lab, col in [(c_rand, 'random pairs', MUTED), (c_same, 'same-module pairs', SERIES[1]), (c_edge, 'graph-linked pairs', SERIES[0])]:
+    if len(arr): ax.hist(arr, bins=bins, density=True, histtype='step', linewidth=2, color=col, label=f'{lab} (mean {arr.mean():.2f})')
+ax.set_xlabel('cosine similarity'); ax.set_ylabel('density'); ax.legend()
+ax.set_title('Embedding similarity: structurally related nodes vs random'); plt.tight_layout(); plt.show()
+
+# sanity check: nearest neighbours for a gold-patch symbol (what search_similar_code would return)
+for t0 in tasks[tasks.has_emb & (tasks.gold_n_files == 1)].itertuples():
+    z0 = np.load(t0.emb_path); names = [k for k in z0.keys() if z0[k].ndim == 1]
+    cands = [s for s in symbols_from(parse_patch(t0.patch)) if any(n.endswith('.' + s) for n in names)]
+    if cands: break
+En = np.stack([z0[k] for k in names]).astype(np.float32); En /= np.maximum(np.linalg.norm(En, axis=1, keepdims=True), 1e-8)
+if cands:
+    q = cands[0]; qi = next(i for i, n in enumerate(names) if n.endswith(q))
+    sims = En @ En[qi]; nn = np.argsort(-sims)[:8]
+    print(f'Query {q!r} in {t0.instance_id} -> top neighbours:')
+    for j in nn: print(f'   {sims[j]:.3f}  {names[j]}')
+
+# CELL 26 markdown
+## 9. Repo snapshots: streamed scan (nothing is extracted to disk)
+
+# CELL 27 markdown
+Each `.tgz` is streamed once. For each snapshot we record the file count, uncompressed size, and Python LOC, plus the **line count of every file the gold patch edits**. `read_file` returns at most 150 lines per call, so these line counts translate straight into tool-call budget.
+
+# CELL 28 code
+SNAP_TIME_LIMIT = 60 * 60   # seconds for the whole scan; bump if you fork
+snap_files = inv[inv.folder == 'snapshots'].copy()
+snap_files['instance_id'] = snap_files.path.str.replace('snapshots/', '').str.replace('.tgz', '')
+snap_files['MB'] = snap_files.bytes / 1e6
+snap_files = snap_files.merge(tasks[['instance_id', 'repo', 'pr_number']], on='instance_id', how='left')
+display(snap_files.groupby('repo').MB.describe().round(1))
+print('snapshot for every task:', set(tasks.instance_id) <= set(snap_files.instance_id))
+
+fig, ax = plt.subplots(figsize=(10, 3.6))
+for r in REPO_ORDER:
+    d = snap_files[snap_files.repo == r].sort_values('pr_number')
+    ax.plot(d.pr_number, d.MB, color=RCOL[r], marker='o', markersize=4, label=r, linewidth=1.5)
+ax.set_xlabel('PR number'); ax.set_ylabel('compressed MB'); ax.set_yscale('log'); ax.legend()
+ax.set_title('Snapshot size by PR (compressed, log)'); plt.tight_layout(); plt.show()
+
+# CELL 29 code
+GOLD_PATHS = {t.instance_id: sorted({f['path'] for f in fl} | set(t.test_files)) for t, fl in zip(tasks.itertuples(), gold)}
+
+def scan_snapshot(args):
+    iid, path, targets = args
+    t0 = time.time(); res = dict(instance_id=iid, n_files=0, bytes_unc=0, git_bytes=0, n_py=0, py_loc=0,
+                                 n_test_py=0, target_lines={}, target_chars={}, err=None)
+    tset = set(targets)
+    try:
+        with tarfile.open(path, mode='r|gz') as tf:
+            for m in tf:
+                if not m.isfile(): continue
+                name = m.name[2:] if m.name.startswith('./') else m.name
+                res['n_files'] += 1; res['bytes_unc'] += m.size
+                if name.startswith('.git/') or '/.git/' in name:
+                    res['git_bytes'] += m.size; continue
+                want = name in tset or any(name.endswith('/' + p) for p in tset)
+                if name.endswith('.py') or want:
+                    data = tf.extractfile(m).read()
+                    nl = data.count(b'\n')
+                    if name.endswith('.py'):
+                        res['n_py'] += 1; res['py_loc'] += nl
+                        if re.search(r'(^|/)tests?/', name): res['n_test_py'] += 1
+                    if want:
+                        key = next((p for p in tset if name == p or name.endswith('/' + p)), name)
+                        res['target_lines'][key] = nl
+                        res['target_chars'][key] = len(data.decode('utf-8', 'replace'))
+    except Exception as e:
+        res['err'] = repr(e)
+    res['secs'] = round(time.time() - t0, 1)
+    return res
+
+jobs = [(r.instance_id, f'{ROOT}/{r.path}', GOLD_PATHS.get(r.instance_id, [])) for r in snap_files.sort_values('bytes').itertuples()]
+t_start, scans = time.time(), []
+# processes on Linux/Kaggle (fork); threads elsewhere, since spawn cannot pickle notebook-defined functions
+Executor = ProcessPoolExecutor if os.name == 'posix' else ThreadPoolExecutor
+with Executor(max_workers=os.cpu_count()) as ex:
+    futs = [ex.submit(scan_snapshot, j) for j in jobs]
+    for f in futs:
+        try:
+            scans.append(f.result(timeout=max(1, SNAP_TIME_LIMIT - (time.time() - t_start))))
+        except Exception as e:
+            print('stopped scan:', repr(e)); break
+print(f'scanned {len(scans)}/{len(jobs)} snapshots in {time.time()-t_start:.0f}s')
+SC = pd.DataFrame(scans)
+print('errors:', SC.err.notna().sum(), '| snapshots unpack straight into /workspace (no wrapper directory)')
+
+# CELL 30 code
+SC = SC.merge(tasks[['instance_id', 'repo', 'pr_number']], on='instance_id')
+SC['GB_unc'] = SC.bytes_unc / 1e9; SC['git_share'] = SC.git_bytes / SC.bytes_unc.clip(lower=1)
+display(SC.groupby('repo')[['n_files', 'GB_unc', 'git_share', 'n_py', 'py_loc', 'n_test_py', 'secs']].median().round(3).loc[[r for r in REPO_ORDER if r in set(SC.repo)]])
+
+def window_calls(ranges, win=150):
+    # read_file calls needed to see every hunk if the agent jumps straight to it (greedy 150-line windows)
+    calls, end = 0, -1
+    for s, c in sorted(ranges):
+        e = s + max(c, 1) - 1
+        if s > end: calls += 1; end = s + win - 1
+        while e > end: calls += 1; end += win
+    return calls
+
+# touched-file size -> read_file calls needed (150 lines or 10,000 chars per call, whichever binds first)
+iid2idx = dict(zip(tasks.instance_id, tasks.index)); iid2repo = dict(zip(tasks.instance_id, tasks.repo))
+rows = []
+for s in scans:
+    for f in gold[iid2idx[s['instance_id']]]:
+        if f['is_new']: continue
+        n, ch = s['target_lines'].get(f['path']), s['target_chars'].get(f['path'])
+        rows.append(dict(instance_id=s['instance_id'], repo=iid2repo[s['instance_id']], path=f['path'], lines=n, chars=ch,
+                         kind=kind(f['path']), targeted_calls=window_calls(f['ranges'])))
+TL = pd.DataFrame(rows)
+TL['found'] = TL.lines.notna()
+TL['read_calls_full'] = np.maximum(np.ceil(TL.lines.fillna(0) / 150), np.ceil(TL.chars.fillna(0) / 10000)).astype(int)
+TL['char_cap_binds'] = np.ceil(TL.chars.fillna(0) / 10000) > np.ceil(TL.lines.fillna(0) / 150)
+print('gold (pre-existing) files found in snapshot:', TL.found.mean().round(3))
+print('files where the 10,000-char cap binds before the 150-line cap:', TL.char_cap_binds.mean().round(3))
+display(TL[TL.found].groupby('repo')[['lines', 'chars', 'read_calls_full', 'targeted_calls']].describe(percentiles=[.5, .9]).round(0).T)
+
+per_task = TL[TL.found].groupby('instance_id')[['read_calls_full', 'targeted_calls']].sum()
+tasks['read_calls_to_view_gold_files'] = tasks.instance_id.map(per_task.read_calls_full)
+tasks['targeted_read_calls'] = tasks.instance_id.map(per_task.targeted_calls)
+print('median read_file calls  full-file paging:', tasks.read_calls_to_view_gold_files.median(),
+      '| jump-to-hunk:', tasks.targeted_read_calls.median())
+fig, axes = plt.subplots(1, 2, figsize=(13, 3.8))
+present = [r for r in REPO_ORDER if ((TL.repo == r) & TL.found).any()]
+lb = np.logspace(np.log10(max(TL.lines.min(), 1)), np.log10(max(TL.lines.max(), 10)), 25)
+axes[0].hist([TL.loc[(TL.repo == r) & TL.found, 'lines'] for r in present], bins=lb, stacked=True,
+             color=[RCOL[r] for r in present], label=present, edgecolor=SURF, linewidth=1)
+axes[0].axvline(150, color=INK2, linestyle='--', linewidth=1); axes[0].text(160, axes[0].get_ylim()[1]*0.9, '150-line read_file cap', color=INK2, fontsize=9)
+axes[0].set_xscale('log'); axes[0].set_xlabel('lines in file the gold patch edits (log)'); axes[0].set_ylabel('files'); axes[0].legend()
+axes[0].set_title('Files to edit are usually far longer than one read_file call')
+v = tasks.read_calls_to_view_gold_files.dropna(); vt = tasks.targeted_read_calls.dropna()
+cap = 40   # fold the long tail into a "40+" bucket so the bulk stays readable
+b = np.arange(-0.5, cap + 1.5)
+axes[1].set_xticks(range(0, cap + 1, 5)); axes[1].set_xticklabels([str(i) for i in range(0, cap, 5)] + [f'{cap}+'])
+v, vt = v.clip(upper=cap), vt.clip(upper=cap)
+axes[1].hist(v, bins=b, histtype='step', linewidth=2, color=SERIES[0], label=f'page whole files (median {v.median():.0f})')
+axes[1].hist(vt, bins=b, histtype='step', linewidth=2, color=SERIES[1], label=f'jump to each hunk (median {vt.median():.0f})')
+axes[1].axvline(10, color=INK2, linestyle='--', linewidth=1); axes[1].text(10.5, axes[1].get_ylim()[1]*0.6, 'starter max_tool_calls=10', color=INK2, fontsize=9)
+axes[1].set_xlabel('read_file calls to see the code the gold patch edits'); axes[1].set_ylabel('tasks'); axes[1].legend()
+axes[1].set_title('Tool calls needed just to read the target code'); plt.tight_layout(); plt.show()
+print('Tasks where full reading of gold files alone needs >10 calls:', (v > 10).mean().round(3))
+
+# CELL 31 markdown
+## 10. Wheels and sandbox environment
+
+# CELL 32 code
+wh = inv[inv.folder == 'wheels'].path.str.replace('wheels/', '')
+W = wh.str.extract(r'^(?P<pkg>[A-Za-z0-9_.]+?)-(?P<ver>[0-9][^-]*)-(?P<py>[^-]+)-(?P<abi>[^-]+)-(?P<plat>.+)\.whl$')
+W['pkg'] = W.pkg.str.lower().str.replace('-', '_')
+vers = W.groupby('pkg').ver.agg(lambda s: sorted(set(s), key=lambda x: [int(p) if p.isdigit() else p for p in re.split(r'[.]', x)]))
+V = pd.DataFrame({'n_versions': vers.map(len), 'versions': vers.map(lambda v: ', '.join(v[:6]) + (' ...' if len(v) > 6 else ''))}).sort_values('n_versions', ascending=False)
+display(V.head(25))
+print('Python tags:', W.py.value_counts().to_dict())
+print('Offline sandbox: only these wheels (plus the Docker image) are available; the agent must never pip install.')
+for p in ['docker/Dockerfile.sandbox', 'sample_submission/agent.yaml', 'sample_submission/eval_config.yaml', 'sample_submission/configs/sampling.yaml']:
+    print(f'\n===== {p} =====\n' + open(f'{ROOT}/{p}').read())
+
+# CELL 33 markdown
+## 11. Key findings
+
+# CELL 34 code
+f = []
+f.append(f"- **{len(tasks)} tasks, 4 repos**: fastapi {int((tasks.repo=='fastapi/fastapi').sum())}, rich {int((tasks.repo=='Textualize/rich').sum())}, requests {int((tasks.repo=='psf/requests').sum())}, httpx {int((tasks.repo=='encode/httpx').sum())}. No task has `hints_text`.")
+f.append(f"- **{(tasks.created_at.dt.year>=2025).mean():.0%}** of tasks were created in 2025 or later.")
+f.append(f"- Gold patches are small: median **{tasks.gold_n_files.median():.0f} file(s)**, **{tasks.gold_churn.median():.0f} changed lines**; **{(tasks.gold_n_files==1).mean():.0%}** are single-file and **{(tasks.gold_n_new_files>0).mean():.0%}** create a new file.")
+f.append(f"- Hidden tests add a median of **{tasks.n_test_funcs_added.median():.0f}** test function(s); **{tasks.test_all_new.mean():.0%}** of tasks put them in brand-new test files.")
+f.append(f"- Issue text names the file, module or symbol to change in only **{tasks.loc_any.mean():.0%}** of tasks, so localization is the main bottleneck.")
+f.append(f"- Graph and embedding files are hard-linked pairs (`<instance_id>` and `<repo>_<base_commit>`). In this Kaggle copy one twin of each pair is 0 bytes, an upload artifact: usable code-intel data exists for **{int(tasks.code_intel.sum())}/{len(tasks)}** tasks. For local harness runs, copy the non-empty twin to both names, or the harness will not advertise the graph tools.")
+if 'c_rand' in globals():
+    shape = 'highly anisotropic (scores are compressed near 1)' if c_rand.mean() > 0.3 else 'reasonably spread out'
+    f.append(f"- Embeddings are {shape}: random node pairs have mean cosine **{c_rand.mean():.2f}** (graph-linked {c_edge.mean():.2f}, same-module {c_same.mean():.2f}). `search_similar_code` resolves only symbol names, not free text, so use it to find neighbours of a known symbol and use `grep` for discovery.")
+if 'read_calls_to_view_gold_files' in tasks and tasks.read_calls_to_view_gold_files.notna().any():
+    f.append(f"- Paging through the gold files alone takes a median **{tasks.read_calls_to_view_gold_files.median():.0f}** `read_file` calls, versus **{tasks.targeted_read_calls.median():.0f}** when jumping straight to each hunk. Teach the agent to `grep -n` first, then use `read_file` with `start_line`/`end_line`.")
+f.insert(2, f"- Problem statements are **PR titles and descriptions**, not issue reports: {tasks.ps_is_pr_template.mean():.0%} carry the PR template and {tasks.ps_says_this_pr.mean():.0%} say 'this PR'. {tasks.ps_describes_change.mean():.0%} use change verbs (add/fix/refactor...) while {tasks.ps_has_bug_words.mean():.0%} use bug words (error/fails/...). Median length is only ~{tasks.ps_tok_est.median():.0f} tokens.")
+_sh = set(tasks.loc[tasks.duplicated('base_commit', keep=False), 'instance_id']); _nc = set(tasks.loc[~tasks.code_intel, 'instance_id'])
+f.append(f"- {len(_sh)} tasks share a `base_commit` with another task; tasks without code-intel: {sorted(_nc)}; overlap with the shared-commit set: {sorted(_sh & _nc)}.")
+f.append("- The starter `eval_config.yaml` (10 tool calls, 1 minute) is far too tight for these tasks; budgets and thinking settings are the first knobs to tune.")
+display(Markdown('\n'.join(f)))
+
+keep = [c for c in tasks.columns if c not in ('patch', 'test_patch', 'problem_statement', 'hints_text', 'test_files')]
+tasks[keep].to_csv(f'{OUT}/task_features.csv', index=False)
+print('saved', f'{OUT}/task_features.csv', tasks[keep].shape)

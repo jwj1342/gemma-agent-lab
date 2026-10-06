@@ -1,0 +1,106 @@
+[
+  {
+    "path": "data/raw/gemma-4-developer-agent/sample_submission/adapters/main_lora/adapter_model.safetensors",
+    "bytes": 217672,
+    "sha256": "dcbedd989af34f5201a39606e0bd4014d351a29162dd96da418782cbbe487ad9",
+    "metadata": null,
+    "tensors": {
+      "base_model.model.model.language_model.layers.0.self_attn.o_proj.lora_A.weight": {
+        "dtype": "BF16",
+        "shape": [
+          4,
+          8192
+        ],
+        "data_offsets": [
+          0,
+          65536
+        ]
+      },
+      "base_model.model.model.language_model.layers.0.self_attn.o_proj.lora_B.weight": {
+        "dtype": "BF16",
+        "shape": [
+          5376,
+          4
+        ],
+        "data_offsets": [
+          65536,
+          108544
+        ]
+      },
+      "base_model.model.model.language_model.layers.0.self_attn.q_proj.lora_A.weight": {
+        "dtype": "BF16",
+        "shape": [
+          4,
+          5376
+        ],
+        "data_offsets": [
+          108544,
+          151552
+        ]
+      },
+      "base_model.model.model.language_model.layers.0.self_attn.q_proj.lora_B.weight": {
+        "dtype": "BF16",
+        "shape": [
+          8192,
+          4
+        ],
+        "data_offsets": [
+          151552,
+          217088
+        ]
+      }
+    }
+  },
+  {
+    "path": "data/raw/gemma-4-developer-agent/sample_submission/adapters/tool_lora/adapter_model.safetensors",
+    "bytes": 217672,
+    "sha256": "dcbedd989af34f5201a39606e0bd4014d351a29162dd96da418782cbbe487ad9",
+    "metadata": null,
+    "tensors": {
+      "base_model.model.model.language_model.layers.0.self_attn.o_proj.lora_A.weight": {
+        "dtype": "BF16",
+        "shape": [
+          4,
+          8192
+        ],
+        "data_offsets": [
+          0,
+          65536
+        ]
+      },
+      "base_model.model.model.language_model.layers.0.self_attn.o_proj.lora_B.weight": {
+        "dtype": "BF16",
+        "shape": [
+          5376,
+          4
+        ],
+        "data_offsets": [
+          65536,
+          108544
+        ]
+      },
+      "base_model.model.model.language_model.layers.0.self_attn.q_proj.lora_A.weight": {
+        "dtype": "BF16",
+        "shape": [
+          4,
+          5376
+        ],
+        "data_offsets": [
+          108544,
+          151552
+        ]
+      },
+      "base_model.model.model.language_model.layers.0.self_attn.q_proj.lora_B.weight": {
+        "dtype": "BF16",
+        "shape": [
+          8192,
+          4
+        ],
+        "data_offsets": [
+          151552,
+          217088
+        ]
+      }
+    }
+  }
+]

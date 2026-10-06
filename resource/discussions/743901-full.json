@@ -1,0 +1,128 @@
+{
+  "forumTopic": {
+    "authorId": 18419427,
+    "authorThumbnailName": "18419427-kg.png?t=2026-09-28-02-23-50",
+    "authorUserDisplayName": "Ahmed Almarwani",
+    "authorUserName": "ahmedalmarwani",
+    "comments": [
+      {
+        "id": 3529211,
+        "postDate": "2026-09-27T16:49:24.027Z",
+        "rawMarkdown": "my tpu run did start after 9 hrs. L4x4 are still on queue. so yeah the capacity is bad 😓.\n\n![](https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F14027805%2F916147fdf286b6f0842733e45f0284d2%2FScreenshot%202026-09-27%20at%208.44.35PM.png?generation=1790527715925123&alt=media)",
+        "content": "<p>my tpu run did start after 9 hrs. L4x4 are still on queue. so yeah the capacity is bad 😓.</p>\n<p><img src=\"https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F14027805%2F916147fdf286b6f0842733e45f0284d2%2FScreenshot%202026-09-27%20at%208.44.35PM.png?generation=1790527715925123&amp;alt=media\" alt=\"\"></p>",
+        "parent": {},
+        "author": {
+          "displayName": "Chandram Dutta",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/14027805-kg.jpg?t=2026-04-05-06-32-03",
+          "url": "/chandramdutta",
+          "tier": "CONTRIBUTOR",
+          "id": 14027805,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "totalVotes": 1,
+          "canUpvote": true,
+          "totalUpvotes": 1
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 188,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "reactions": [
+          {
+            "emoji": "THANK_YOU",
+            "featuredUserNames": [
+              "ttteon",
+              "connortynan",
+              "ahmedalmarwani"
+            ],
+            "userCount": 3
+          }
+        ],
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Chandram Dutta",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/14027805-kg.jpg?t=2026-04-05-06-32-03",
+            "url": "/chandramdutta",
+            "userName": "chandramdutta",
+            "tier": "CONTRIBUTOR",
+            "id": 14027805,
+            "profileUrl": "/chandramdutta",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 14027805,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3529204,
+      "postDate": "2026-09-27T16:14:21.373Z",
+      "rawMarkdown": "Two notebooks (Version #1 and #2) with GPU L4 x4 have been queued for about 8 hours without starting. Is anyone else seeing long L4 queue times, or is there a known capacity issue? Any guidance on expected wait times before the deadline would help. Thanks",
+      "content": "<p>Two notebooks (Version #1 and #2) with GPU L4 x4 have been queued for about 8 hours without starting. Is anyone else seeing long L4 queue times, or is there a known capacity issue? Any guidance on expected wait times before the deadline would help. Thanks</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Ahmed Almarwani",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/18419427-kg.png?t=2026-09-28-02-23-50",
+        "url": "/ahmedalmarwani",
+        "tier": "CONTRIBUTOR",
+        "id": 18419427,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 6,
+        "canUpvote": true,
+        "totalUpvotes": 6
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 207,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "reactions": [
+        {
+          "emoji": "SURPRISE",
+          "featuredUserNames": [
+            "cylik93",
+            "wangtf96",
+            "connortynan",
+            "rohithkodakandla",
+            "adaluvu"
+          ],
+          "userCount": 5
+        }
+      ],
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ahmed Almarwani",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/18419427-kg.png?t=2026-09-28-02-23-50",
+          "url": "/ahmedalmarwani",
+          "userName": "ahmedalmarwani",
+          "tier": "CONTRIBUTOR",
+          "id": 18419427,
+          "profileUrl": "/ahmedalmarwani",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 18419427,
+          "progressionOptOut": false
+        },
+        "intro": "Building a Gemma 4 SWE agent: ADK config, a read-only code-analyzer sub-agent, and prompts tuned for small-context patching. Looking for teammates with GPU access and LoRA/RL fine-tuning experience (TRL, PEFT, vLLM) to train adapters on agent trajectories"
+      }
+    },
+    "firstMessageId": 3529204,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 743901,
+    "name": "L4 x4 sessions stuck in \"Queued\" for 8+ hours",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-27T16:14:21.372959500Z",
+    "totalVotes": 6,
+    "url": "/competitions/gemma-4-developer-agent/discussion/743901",
+    "totalMessages": 1,
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

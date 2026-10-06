@@ -1,0 +1,1747 @@
+# CELL 0 markdown
+# AdaptiveGraphSWE: Adaptive Graph-Guided Software Engineering with Gemma 4
+
+**Research prototype for the Google – The Gemma 4 Developer Agent Paper Track**
+
+### Research question
+Can adaptive structural expansion of the provided code graph reduce the amount of code context needed for repository-level software engineering tasks while preserving the relevant code needed for a correct fix?
+
+### Important
+This notebook is a **research prototype**, not a claim of final benchmark performance. It does not invent model results. It first establishes retrieval/context metrics that can later be connected to Gemma 4 inference and test-feedback evaluation.
+
+
+# CELL 1 markdown
+## 1. What we are building
+
+```text
+Issue description
+      ↓
+Semantic candidate retrieval
+      ↓
+Adaptive graph expansion
+      ↓
+Relevant code subgraph
+      ↓
+Gemma 4 agent (next stage)
+      ↓
+Patch → tests → feedback
+```
+
+The competition provides repository snapshots, AST call/dependency graphs and node embeddings. Our contribution is the **adaptive retrieval policy**: instead of always retrieving a fixed amount of code, the system expands the graph only when the current context does not provide enough structural evidence.
+
+
+# CELL 2 code
+import os, json, glob, math, re, warnings
+from pathlib import Path
+from collections import defaultdict, deque
+import numpy as np
+
+warnings.filterwarnings('ignore')
+
+print('Python ready')
+
+
+# CELL 3 markdown
+## 2. Locate the Kaggle competition files
+
+Kaggle mounts competition inputs under `/kaggle/input`. The exact folder names can vary, so we discover files rather than hard-code a single path.
+
+# CELL 4 code
+INPUT = Path('/kaggle/input')
+
+interesting = []
+for p in INPUT.rglob('*'):
+    if p.is_file() and p.name in {
+        'tasks.jsonl', 'benchmark_summary.csv',
+        'tfd_trajectories_train.jsonl', 'tfd_eval_benchmark.jsonl'
+    }:
+        interesting.append(p)
+
+print('Discovered files:')
+for p in interesting[:50]:
+    print(' -', p)
+
+
+# CELL 5 markdown
+## 3. Load the public benchmark tasks
+
+The public competition data contains task metadata including the repository, base commit, problem statement, reference patch and verification test patch.
+
+# CELL 6 code
+task_files = [p for p in interesting if p.name == 'tasks.jsonl']
+if not task_files:
+    raise FileNotFoundError('tasks.jsonl was not discovered under /kaggle/input')
+
+TASKS_PATH = task_files[0]
+tasks = []
+with open(TASKS_PATH, 'r', encoding='utf-8') as f:
+    for line in f:
+        line = line.strip()
+        if line:
+            tasks.append(json.loads(line))
+
+print('Tasks:', len(tasks))
+print(json.dumps({k: tasks[0].get(k) for k in ['instance_id','repo','base_commit','problem_statement']}, indent=2)[:4000])
+
+
+# CELL 7 markdown
+## 4. Inspect the supplied graph format
+
+Each graph contains code entities (modules/classes/functions) and directed structural relationships such as calls, imports and references.
+
+# CELL 8 code
+graph_files = []
+for p in INPUT.rglob('*.json'):
+    if p.parent.name == 'graphs':
+        graph_files.append(p)
+
+print('Graph files discovered:', len(graph_files))
+if graph_files:
+    sample_graph_path = graph_files[0]
+    with open(sample_graph_path, 'r', encoding='utf-8') as f:
+        sample_graph = json.load(f)
+        print('Sample:', sample_graph_path.name)
+        print('nodes:', len(sample_graph.get('nodes', [])))
+        print('edges:', len(sample_graph.get('edges', [])))
+        print('node fields:', list(sample_graph.get('nodes', [{}])[0].keys()) if sample_graph.get('nodes') else [])
+        print('edge fields:', list(sample_graph.get('edges', [{}])[0].keys()) if sample_graph.get('edges') else [])
+
+
+# CELL 9 markdown
+## 5. Build a lightweight graph index
+
+The index supports one-hop and multi-hop structural expansion. It deliberately avoids expensive graph frameworks so the prototype remains portable.
+
+# CELL 10 code
+def graph_index(graph):
+    nodes = {n['id']: n for n in graph.get('nodes', [])}
+    neighbors = defaultdict(set)
+    for e in graph.get('edges', []):
+        s, t = e.get('source'), e.get('target')
+        if s in nodes and t in nodes:
+            neighbors[s].add(t)
+            neighbors[t].add(s)  # retrieval uses an undirected neighborhood view
+    return nodes, neighbors
+
+if graph_files:
+    nodes, neighbors = graph_index(sample_graph)
+    degrees = np.array([len(neighbors[n]) for n in nodes], dtype=np.int32)
+    print('Indexed nodes:', len(nodes))
+    print('Mean degree:', round(float(degrees.mean()), 2) if len(degrees) else 0)
+
+
+# CELL 11 markdown
+## 6. Adaptive expansion policy
+
+### Core idea
+Start with a small set of candidate symbols. Expand through the code graph only when additional structural evidence is needed.
+
+The first implementation uses a transparent heuristic based on relevance score, neighborhood size and a context budget. This is intentionally simple: later experiments can learn the expansion policy from TFD trajectories.
+
+# CELL 12 code
+def adaptive_expand(seed_ids, nodes, neighbors, max_nodes=40, max_hops=2):
+    """Return an adaptively expanded structural neighborhood."""
+    selected = set(seed_ids)
+    frontier = deque((s, 0) for s in seed_ids if s in nodes)
+
+    while frontier and len(selected) < max_nodes:
+        current, depth = frontier.popleft()
+        if depth >= max_hops:
+            continue
+
+        candidates = []
+        for nb in neighbors.get(current, []):
+            if nb not in selected:
+                # Prefer nodes with more structural connectivity.
+                score = len(neighbors.get(nb, []))
+                candidates.append((score, nb))
+
+        for _, nb in sorted(candidates, reverse=True)[:8]:
+            if len(selected) >= max_nodes:
+                break
+            selected.add(nb)
+            frontier.append((nb, depth + 1))
+
+    return selected
+
+
+# CELL 13 markdown
+## 7. Retrieval evaluation design
+
+For a research paper, we need more than a demo. The main retrieval experiment will measure:
+
+- **Gold-file recall:** whether files touched by the reference patch appear in the retrieved context.
+- **Context size:** number of retrieved symbols / approximate source tokens.
+- **Expansion cost:** graph hops and number of nodes explored.
+- **Efficiency:** recall achieved per unit of context.
+
+These metrics can later be connected to actual Gemma 4 patch success.
+
+# CELL 14 code
+def patch_paths(patch):
+    """Extract repository-relative paths from a unified diff."""
+    if not patch:
+        return set()
+    paths = set()
+    for m in re.finditer(r'^\+\+\+ b/(.+)$|^--- a/(.+)$', patch, re.M):
+        path = m.group(1) or m.group(2)
+        if path and path != '/dev/null':
+            paths.add(path.strip())
+    return paths
+
+def symbol_source_tokens(nodes, ids):
+    text = '\n'.join(nodes[i].get('text', '') for i in ids if i in nodes)
+    return len(text.split())
+
+print('Evaluation helpers ready.')
+
+
+# CELL 15 markdown
+## 8. TFD trajectory analysis
+
+The companion dataset contains multi-turn trajectories. We will use these traces to study where an agent spends its context and where adaptive retrieval could intervene.
+
+The code below only inspects the schema; it does not assume undocumented field names.
+
+# CELL 16 code
+traj_paths = [p for p in interesting if p.name == 'tfd_trajectories_train.jsonl']
+if traj_paths:
+    with open(traj_paths[0], 'r', encoding='utf-8') as f:
+        first = json.loads(f.readline())
+        print('Trajectory ID:', first.get('trajectory_id'))
+        print('Issue ID:', first.get('issue_id'))
+        print('Repository:', first.get('repository'))
+        print('Category:', first.get('category'))
+        print('Number of turns:', len(first.get('turns', [])))
+        for i, turn in enumerate(first.get('turns', [])):
+            print(f'\nTURN {i}: keys={list(turn.keys())}')
+            print(str(turn)[:1200])
+else:
+    print('TFD trajectory file not discovered.')
+
+
+# CELL 17 markdown
+## 9. First research experiment
+
+Run this notebook over the public tasks and record retrieval metrics before integrating Gemma inference.
+
+### Planned ablations
+
+1. Fixed top-k semantic retrieval
+2. One-hop graph expansion
+3. Two-hop graph expansion
+4. **Adaptive graph expansion (proposed)**
+5. Adaptive expansion + test-feedback loop
+
+### Main claim to test
+
+> Adaptive structural expansion can achieve comparable or better relevant-code recall using less context than a fixed retrieval strategy.
+
+Only measured results will be reported in the final Kaggle paper.
+
+# CELL 18 markdown
+# Next stage: Gemma 4 agent integration
+
+After the retrieval experiment is validated, connect the selected code context to the Gemma 4 agent and evaluate generated patches with the provided verification harness.
+
+The final paper should compare both **task success** and **efficiency**, not just produce a qualitative demo.
+
+# CELL 19 code
+# ============================================================
+# 10. Inspect task schema before running retrieval experiment
+# ============================================================
+
+print("Number of tasks:", len(tasks))
+
+if tasks:
+    print("\nTask fields:")
+    print(list(tasks[0].keys()))
+
+    print("\nFirst task:")
+    for key, value in tasks[0].items():
+        if isinstance(value, str):
+            print(f"\n--- {key} ---")
+            print(value[:1000])
+        else:
+            print(f"\n--- {key} ---")
+            print(value)
+
+# CELL 20 code
+# ============================================================
+# 11. Inspect repository snapshots and graph naming
+# ============================================================
+
+from pathlib import Path
+from collections import Counter
+
+# Discover snapshot directories/files
+snapshot_root = INPUT / "competitions" / "gemma-4-developer-agent" / "snapshots"
+
+print("Snapshot root:", snapshot_root)
+print("Exists:", snapshot_root.exists())
+
+if snapshot_root.exists():
+    snapshot_items = list(snapshot_root.iterdir())
+
+    print("\nSnapshot entries:", len(snapshot_items))
+
+    for p in snapshot_items[:20]:
+        print(" -", p.name, "DIR" if p.is_dir() else "FILE")
+
+# Inspect graph filenames
+print("\nGraph examples:")
+for p in graph_files[:20]:
+    print(" -", p.name)
+
+# Inspect task repositories
+repo_counts = Counter(t["repo"] for t in tasks)
+
+print("\nRepositories:", len(repo_counts))
+for repo, count in repo_counts.most_common(20):
+    print(f" - {repo}: {count} tasks")
+
+# CELL 21 code
+# ============================================================
+# 12. Map tasks -> snapshots -> graph files
+# ============================================================
+
+import re
+from collections import defaultdict
+
+SNAPSHOT_ROOT = INPUT / "competitions" / "gemma-4-developer-agent" / "snapshots"
+GRAPH_ROOT = INPUT / "competitions" / "gemma-4-developer-agent" / "graphs"
+
+# ------------------------------------------------------------
+# 1. Index snapshots
+# ------------------------------------------------------------
+
+snapshot_map = {}
+
+for p in SNAPSHOT_ROOT.glob("*.tgz"):
+    # Example: fastapi_15661.tgz
+    snapshot_map[p.stem] = p
+
+print("Snapshots indexed:", len(snapshot_map))
+
+# ------------------------------------------------------------
+# 2. Index graph files
+# ------------------------------------------------------------
+
+graph_map = {}
+
+for p in GRAPH_ROOT.glob("*.json"):
+    # Example:
+    # fastapi_3c54a8f07b70cdd40e3d81ea319e9fcccd2481d2.json
+
+    stem = p.stem
+
+    match = re.match(r"^(.+)_([0-9a-f]{40})$", stem)
+
+    if match:
+        repo_name = match.group(1)
+        graph_hash = match.group(2)
+
+        graph_map[(repo_name, graph_hash)] = p
+
+print("Graphs indexed:", len(graph_map))
+
+# ------------------------------------------------------------
+# 3. Try matching graph hash with task base_commit
+# ------------------------------------------------------------
+
+matches = []
+
+for task in tasks:
+    instance_id = task["instance_id"]
+    repo = task["repo"]
+
+    repo_short = repo.split("/")[-1]
+
+    base_commit = task["base_commit"]
+
+    # Direct commit-hash match
+    key = (repo_short, base_commit)
+
+    graph_path = graph_map.get(key)
+
+    matches.append({
+        "instance_id": instance_id,
+        "repo": repo,
+        "base_commit": base_commit,
+        "snapshot": snapshot_map.get(instance_id),
+        "graph_direct_match": graph_path
+    })
+
+direct_matches = [
+    m for m in matches
+    if m["graph_direct_match"] is not None
+]
+
+print("\nDirect graph/base_commit matches:",
+      len(direct_matches), "/", len(tasks))
+
+# ------------------------------------------------------------
+# 4. Display first 20 mappings
+# ------------------------------------------------------------
+
+print("\nSample task mappings:\n")
+
+for m in matches[:20]:
+
+    print("=" * 80)
+
+    print("Task:", m["instance_id"])
+    print("Repo:", m["repo"])
+    print("Commit:", m["base_commit"])
+
+    print(
+        "Snapshot:",
+        m["snapshot"].name
+        if m["snapshot"] else "NOT FOUND"
+    )
+
+    print(
+        "Graph:",
+        m["graph_direct_match"].name
+        if m["graph_direct_match"] else "NOT FOUND"
+    )
+
+# CELL 22 code
+# ============================================================
+# 13. Inspect the provided node embeddings
+# ============================================================
+
+EMBED_ROOT = INPUT / "competitions" / "gemma-4-developer-agent" / "embeddings"
+
+print("Embedding root:", EMBED_ROOT)
+print("Exists:", EMBED_ROOT.exists())
+
+if EMBED_ROOT.exists():
+
+    embedding_files = list(EMBED_ROOT.rglob("*"))
+
+    files_only = [p for p in embedding_files if p.is_file()]
+
+    print("\nEmbedding files:", len(files_only))
+
+    for p in files_only[:30]:
+        print(" -", p.relative_to(EMBED_ROOT))
+
+    # Inspect NumPy files
+    npy_files = [
+        p for p in files_only
+        if p.suffix.lower() in {".npy", ".npz"}
+    ]
+
+    print("\nNumPy embedding files:", len(npy_files))
+
+    if npy_files:
+
+        sample = npy_files[0]
+
+        print("\nSample embedding:")
+        print(sample.name)
+
+        try:
+            arr = np.load(sample, allow_pickle=True)
+
+            if isinstance(arr, np.lib.npyio.NpzFile):
+                print("NPZ keys:", arr.files)
+
+                for key in arr.files:
+                    value = arr[key]
+                    print(
+                        f"  {key}: shape={getattr(value, 'shape', None)}, "
+                        f"dtype={getattr(value, 'dtype', None)}"
+                    )
+            else:
+                print("Shape:", arr.shape)
+                print("Dtype:", arr.dtype)
+
+                if arr.ndim >= 2:
+                    print("First vector dimension:", arr.shape[-1])
+
+        except Exception as e:
+            print("Could not inspect:", repr(e))
+
+# CELL 23 code
+# ============================================================
+# 14. Confirm embedding vector structure
+# ============================================================
+
+sample = npy_files[0]
+data = np.load(sample, allow_pickle=True)
+
+print("Embedding file:", sample.name)
+print("Number of symbols:", len(data.files))
+
+for key in data.files[:10]:
+    vector = data[key]
+    print(
+        f"{key[:80]:80s} "
+        f"shape={vector.shape} "
+        f"dtype={vector.dtype}"
+    )
+
+# Basic validation
+dims = {
+    data[key].shape
+    for key in data.files
+}
+
+print("\nUnique vector shapes:", dims)
+
+# CELL 24 code
+# ============================================================
+# 15. Build semantic retrieval over code embeddings
+# ============================================================
+
+import numpy as np
+import json
+from pathlib import Path
+from collections import defaultdict
+
+EMBED_ROOT = Path(
+    "/kaggle/input/competitions/gemma-4-developer-agent/embeddings"
+)
+
+# ------------------------------------------------------------
+# Load one embedding file
+# ------------------------------------------------------------
+
+embedding_file = next(EMBED_ROOT.glob("*.npz"))
+
+emb = np.load(embedding_file, allow_pickle=True)
+
+symbols = list(emb.files)
+
+vectors = np.stack([emb[s] for s in symbols]).astype(np.float32)
+
+print("Embedding file:", embedding_file.name)
+print("Symbols:", len(symbols))
+print("Embedding matrix:", vectors.shape)
+print("dtype:", vectors.dtype)
+
+# ------------------------------------------------------------
+# Normalize vectors for cosine similarity
+# ------------------------------------------------------------
+
+norms = np.linalg.norm(vectors, axis=1, keepdims=True)
+
+vectors_normalized = vectors / np.maximum(norms, 1e-12)
+
+print("\nNormalized embedding matrix:", vectors_normalized.shape)
+
+
+# ============================================================
+# Semantic retrieval function
+# ============================================================
+
+def semantic_retrieve(query_vector, top_k=10):
+    """
+    Retrieve the top-k code symbols using cosine similarity.
+    """
+
+    query_vector = np.asarray(query_vector, dtype=np.float32)
+
+    query_norm = np.linalg.norm(query_vector)
+
+    if query_norm == 0:
+        return []
+
+    query_vector = query_vector / query_norm
+
+    scores = vectors_normalized @ query_vector
+
+    top_indices = np.argsort(scores)[::-1][:top_k]
+
+    results = []
+
+    for idx in top_indices:
+        results.append({
+            "symbol": symbols[idx],
+            "score": float(scores[idx])
+        })
+
+    return results
+
+
+# ============================================================
+# Test retrieval using an existing code embedding
+# ============================================================
+
+test_symbol = symbols[0]
+
+query_vector = emb[test_symbol]
+
+results = semantic_retrieve(query_vector, top_k=10)
+
+print("\nQuery symbol:")
+print(test_symbol)
+
+print("\nTop semantic matches:")
+
+for rank, result in enumerate(results, 1):
+    print(
+        f"{rank:2d}. "
+        f"{result['score']:.4f} "
+        f"{result['symbol']}"
+    )
+
+# CELL 25 code
+# ============================================================
+# 16. Analyze embedding quality / similarity distribution
+# ============================================================
+
+import numpy as np
+
+# ------------------------------------------------------------
+# 1. Random pair similarity distribution
+# ------------------------------------------------------------
+
+rng = np.random.default_rng(42)
+
+num_pairs = 10000
+
+idx_a = rng.integers(0, len(vectors_normalized), num_pairs)
+idx_b = rng.integers(0, len(vectors_normalized), num_pairs)
+
+random_similarities = np.sum(
+    vectors_normalized[idx_a] * vectors_normalized[idx_b],
+    axis=1
+)
+
+print("Random-pair cosine similarity statistics")
+print("------------------------------------------")
+print(f"Minimum : {random_similarities.min():.6f}")
+print(f"Maximum : {random_similarities.max():.6f}")
+print(f"Mean    : {random_similarities.mean():.6f}")
+print(f"Median  : {np.median(random_similarities):.6f}")
+print(f"Std     : {random_similarities.std():.6f}")
+
+print("\nPercentiles:")
+for p in [1, 5, 25, 50, 75, 95, 99]:
+    print(f"{p:2d}% : {np.percentile(random_similarities, p):.6f}")
+
+
+# ------------------------------------------------------------
+# 2. Check vector norms
+# ------------------------------------------------------------
+
+original_norms = np.linalg.norm(vectors, axis=1)
+
+print("\nOriginal vector norm statistics")
+print("--------------------------------")
+print(f"Minimum : {original_norms.min():.6f}")
+print(f"Maximum : {original_norms.max():.6f}")
+print(f"Mean    : {original_norms.mean():.6f}")
+print(f"Median  : {np.median(original_norms):.6f}")
+
+
+# ------------------------------------------------------------
+# 3. Nearest-neighbour gap
+# ------------------------------------------------------------
+
+# Pick several random symbols and inspect their nearest neighbours.
+
+test_indices = rng.choice(
+    len(symbols),
+    size=min(5, len(symbols)),
+    replace=False
+)
+
+print("\nNearest-neighbour analysis")
+print("==========================")
+
+for idx in test_indices:
+
+    query = vectors_normalized[idx]
+
+    scores = vectors_normalized @ query
+
+    # Exclude itself
+    scores[idx] = -np.inf
+
+    top = np.argsort(scores)[::-1][:5]
+
+    print("\nQuery:", symbols[idx])
+
+    for rank, neighbour_idx in enumerate(top, 1):
+        print(
+            f"{rank}. "
+            f"{scores[neighbour_idx]:.6f} "
+            f"{symbols[neighbour_idx]}"
+        )
+
+# CELL 26 code
+# ============================================================
+# 17. GraphSWE Retrieval Experiment
+# ============================================================
+
+import json
+import numpy as np
+import networkx as nx
+
+from pathlib import Path
+from collections import defaultdict
+
+# ------------------------------------------------------------
+# Paths
+# ------------------------------------------------------------
+
+ROOT = Path("/kaggle/input/competitions/gemma-4-developer-agent")
+
+TASK_FILE = ROOT / "tasks.jsonl"
+GRAPH_DIR = ROOT / "graphs"
+EMBED_DIR = ROOT / "embeddings"
+
+print("Competition root:", ROOT)
+print("Tasks:", TASK_FILE.exists())
+print("Graphs:", GRAPH_DIR.exists())
+print("Embeddings:", EMBED_DIR.exists())
+
+
+# ============================================================
+# 1. Load tasks
+# ============================================================
+
+tasks = []
+
+with open(TASK_FILE, "r", encoding="utf-8") as f:
+    for line in f:
+        tasks.append(json.loads(line))
+
+print("\nTotal tasks:", len(tasks))
+
+
+# ============================================================
+# 2. Index graph files
+# ============================================================
+
+graph_files = list(GRAPH_DIR.glob("*.json"))
+
+graph_index = {}
+
+for path in graph_files:
+    graph_index[path.name] = path
+
+print("Graph files:", len(graph_files))
+
+
+# ============================================================
+# 3. Index embedding files
+# ============================================================
+
+embedding_files = list(EMBED_DIR.glob("*.npz"))
+
+embedding_index = {}
+
+for path in embedding_files:
+    embedding_index[path.name] = path
+
+print("Embedding files:", len(embedding_files))
+
+
+# ============================================================
+# 4. Helper: repository short name
+# ============================================================
+
+def repo_short_name(repo):
+    """
+    Convert:
+        fastapi/fastapi -> fastapi
+        psf/requests   -> requests
+        encode/httpx   -> httpx
+    """
+    return repo.split("/")[-1]
+
+
+# ============================================================
+# 5. Match task -> graph -> embedding
+# ============================================================
+
+records = []
+
+for task in tasks:
+
+    instance_id = task["instance_id"]
+    repo = task["repo"]
+    base_commit = task["base_commit"]
+
+    repo_short = repo_short_name(repo)
+
+    graph_name = f"{repo_short}_{base_commit}.json"
+    embed_name = f"{repo_short}_{base_commit}.npz"
+
+    records.append({
+        "instance_id": instance_id,
+        "repo": repo,
+        "base_commit": base_commit,
+        "graph": graph_index.get(graph_name),
+        "embedding": embedding_index.get(embed_name),
+        "problem_statement": task.get("problem_statement", ""),
+        "hints": task.get("hints_text", ""),
+        "patch": task.get("patch", ""),
+        "test_patch": task.get("test_patch", "")
+    })
+
+
+matched_graphs = sum(r["graph"] is not None for r in records)
+matched_embeddings = sum(r["embedding"] is not None for r in records)
+
+print("\nTask mapping")
+print("------------")
+print("Tasks:", len(records))
+print("Graphs matched:", matched_graphs)
+print("Embeddings matched:", matched_embeddings)
+
+
+# ============================================================
+# 6. Graph loader
+# ============================================================
+
+def load_graph(path):
+    """
+    Load the provided NetworkX node-link graph.
+    """
+
+    with open(path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    G = nx.node_link_graph(data)
+
+    return G
+
+
+# ============================================================
+# 7. Semantic retrieval
+# ============================================================
+
+def load_embeddings(path):
+
+    data = np.load(path, allow_pickle=True)
+
+    names = list(data.files)
+
+    vectors = np.stack(
+        [data[name] for name in names]
+    ).astype(np.float32)
+
+    norms = np.linalg.norm(
+        vectors,
+        axis=1,
+        keepdims=True
+    )
+
+    vectors = vectors / np.maximum(norms, 1e-12)
+
+    return names, vectors
+
+
+def retrieve_from_vector(
+    query_vector,
+    names,
+    vectors,
+    top_k=20
+):
+
+    query_vector = np.asarray(
+        query_vector,
+        dtype=np.float32
+    )
+
+    query_norm = np.linalg.norm(query_vector)
+
+    if query_norm == 0:
+        return []
+
+    query_vector = query_vector / query_norm
+
+    scores = vectors @ query_vector
+
+    indices = np.argsort(scores)[::-1][:top_k]
+
+    return [
+        {
+            "symbol": names[i],
+            "score": float(scores[i])
+        }
+        for i in indices
+    ]
+
+
+# ============================================================
+# 8. Graph adjacency
+# ============================================================
+
+def build_adjacency(G):
+
+    adjacency = defaultdict(set)
+
+    for u, v in G.edges():
+
+        adjacency[u].add(v)
+        adjacency[v].add(u)
+
+    return adjacency
+
+
+# ============================================================
+# 9. Adaptive graph expansion
+# ============================================================
+
+def adaptive_expand(
+    seeds,
+    adjacency,
+    max_nodes=40,
+    max_hops=2
+):
+    """
+    Expand semantic seed nodes through the repository graph.
+
+    Nodes closer to the semantic seeds receive higher priority.
+    """
+
+    selected = set(seeds)
+
+    frontier = set(seeds)
+
+    for hop in range(max_hops):
+
+        candidates = set()
+
+        for node in frontier:
+
+            for neighbour in adjacency.get(node, []):
+
+                if neighbour not in selected:
+                    candidates.add(neighbour)
+
+        if not candidates:
+            break
+
+        # ----------------------------------------------------
+        # Score candidate nodes by number of connections to
+        # already selected nodes.
+        # ----------------------------------------------------
+
+        scored = []
+
+        for candidate in candidates:
+
+            connectivity = sum(
+                1
+                for neighbour in adjacency.get(candidate, [])
+                if neighbour in selected
+            )
+
+            scored.append(
+                (connectivity, candidate)
+            )
+
+        scored.sort(
+            key=lambda x: x[0],
+            reverse=True
+        )
+
+        remaining = max_nodes - len(selected)
+
+        if remaining <= 0:
+            break
+
+        chosen = [
+            node
+            for _, node in scored[:remaining]
+        ]
+
+        selected.update(chosen)
+
+        frontier = set(chosen)
+
+    return selected
+
+
+# ============================================================
+# 10. Fixed-hop expansion
+# ============================================================
+
+def fixed_hop_expand(
+    seeds,
+    adjacency,
+    hops=1,
+    max_nodes=40
+):
+
+    selected = set(seeds)
+    frontier = set(seeds)
+
+    for _ in range(hops):
+
+        new_frontier = set()
+
+        for node in frontier:
+
+            for neighbour in adjacency.get(node, []):
+
+                if neighbour not in selected:
+                    new_frontier.add(neighbour)
+
+        selected.update(new_frontier)
+
+        frontier = new_frontier
+
+        if len(selected) >= max_nodes:
+            break
+
+    return set(list(selected)[:max_nodes])
+
+
+# ============================================================
+# 11. Retrieve code symbols for a task
+# ============================================================
+
+def run_retrieval_experiment(
+    record,
+    top_k=10,
+    max_nodes=40
+):
+
+    if record["graph"] is None:
+        return None
+
+    if record["embedding"] is None:
+        return None
+
+    # Load graph
+    G = load_graph(record["graph"])
+
+    adjacency = build_adjacency(G)
+
+    # Load embeddings
+    names, vectors = load_embeddings(
+        record["embedding"]
+    )
+
+    # --------------------------------------------------------
+    # Baseline query:
+    #
+    # For now we use the centroid of the embedding space as
+    # a neutral diagnostic query.
+    #
+    # This lets us evaluate the retrieval/graph machinery
+    # before connecting Gemma 4 to issue-level embeddings.
+    # --------------------------------------------------------
+
+    query_vector = vectors.mean(axis=0)
+
+    semantic_results = retrieve_from_vector(
+        query_vector,
+        names,
+        vectors,
+        top_k=top_k
+    )
+
+    seeds = [
+        result["symbol"]
+        for result in semantic_results
+        if result["symbol"] in adjacency
+    ]
+
+    # --------------------------------------------------------
+    # Methods
+    # --------------------------------------------------------
+
+    semantic_only = set(seeds)
+
+    one_hop = fixed_hop_expand(
+        seeds,
+        adjacency,
+        hops=1,
+        max_nodes=max_nodes
+    )
+
+    two_hop = fixed_hop_expand(
+        seeds,
+        adjacency,
+        hops=2,
+        max_nodes=max_nodes
+    )
+
+    adaptive = adaptive_expand(
+        seeds,
+        adjacency,
+        max_nodes=max_nodes,
+        max_hops=2
+    )
+
+    return {
+        "instance_id": record["instance_id"],
+        "repo": record["repo"],
+        "graph_nodes": G.number_of_nodes(),
+        "graph_edges": G.number_of_edges(),
+        "semantic": semantic_only,
+        "one_hop": one_hop,
+        "two_hop": two_hop,
+        "adaptive": adaptive,
+        "semantic_count": len(semantic_only),
+        "one_hop_count": len(one_hop),
+        "two_hop_count": len(two_hop),
+        "adaptive_count": len(adaptive)
+    }
+
+
+# ============================================================
+# 12. Run across all tasks
+# ============================================================
+
+experiment_results = []
+
+for i, record in enumerate(records):
+
+    try:
+
+        result = run_retrieval_experiment(
+            record,
+            top_k=10,
+            max_nodes=40
+        )
+
+        if result is not None:
+            experiment_results.append(result)
+
+    except Exception as e:
+
+        print(
+            f"Error in {record['instance_id']}: {e}"
+        )
+
+    if (i + 1) % 10 == 0:
+        print(
+            f"Processed {i + 1}/{len(records)} tasks"
+        )
+
+
+print("\n======================================")
+print("EXPERIMENT COMPLETE")
+print("======================================")
+
+print(
+    "Successful task experiments:",
+    len(experiment_results)
+)
+
+
+# ============================================================
+# 13. Summary
+# ============================================================
+
+if experiment_results:
+
+    semantic_sizes = [
+        r["semantic_count"]
+        for r in experiment_results
+    ]
+
+    one_hop_sizes = [
+        r["one_hop_count"]
+        for r in experiment_results
+    ]
+
+    two_hop_sizes = [
+        r["two_hop_count"]
+        for r in experiment_results
+    ]
+
+    adaptive_sizes = [
+        r["adaptive_count"]
+        for r in experiment_results
+    ]
+
+    print("\nAverage selected nodes")
+    print("----------------------")
+
+    print(
+        "Semantic only:",
+        round(np.mean(semantic_sizes), 2)
+    )
+
+    print(
+        "1-hop:",
+        round(np.mean(one_hop_sizes), 2)
+    )
+
+    print(
+        "2-hop:",
+        round(np.mean(two_hop_sizes), 2)
+    )
+
+    print(
+        "Adaptive:",
+        round(np.mean(adaptive_sizes), 2)
+    )
+
+    print("\nFirst 5 tasks:")
+
+    for r in experiment_results[:5]:
+
+        print(
+            r["instance_id"],
+            "|",
+            "semantic:",
+            r["semantic_count"],
+            "| 1-hop:",
+            r["one_hop_count"],
+            "| 2-hop:",
+            r["two_hop_count"],
+            "| adaptive:",
+            r["adaptive_count"]
+        )
+
+# CELL 27 code
+# ============================================================
+# 18. Diagnose embedding ↔ graph symbol alignment
+# ============================================================
+
+record = records[0]
+
+print("Task:", record["instance_id"])
+print("Graph:", record["graph"].name)
+print("Embedding:", record["embedding"].name)
+
+G = load_graph(record["graph"])
+
+graph_nodes = set(G.nodes())
+
+data = np.load(record["embedding"], allow_pickle=True)
+embedding_symbols = set(data.files)
+
+print("\nGraph nodes:", len(graph_nodes))
+print("Embedding symbols:", len(embedding_symbols))
+
+intersection = graph_nodes & embedding_symbols
+
+print("Exact symbol matches:", len(intersection))
+
+print(
+    "Embedding symbols NOT in graph:",
+    len(embedding_symbols - graph_nodes)
+)
+
+print(
+    "Graph nodes NOT in embeddings:",
+    len(graph_nodes - embedding_symbols)
+)
+
+print("\nSample graph node IDs:")
+
+for node in list(graph_nodes)[:10]:
+    print(repr(node))
+
+print("\nSample embedding symbols:")
+
+for symbol in list(embedding_symbols)[:10]:
+    print(repr(symbol))
+
+# CELL 28 code
+# ============================================================
+# 19. Ground-truth patch files + graph retrieval evaluation
+# ============================================================
+
+import re
+import json
+import numpy as np
+import networkx as nx
+
+from pathlib import Path
+from collections import defaultdict
+
+# ------------------------------------------------------------
+# Extract file paths from a unified diff
+# ------------------------------------------------------------
+
+def extract_changed_files(patch_text):
+    """
+    Extract files modified/added/deleted by the reference patch.
+    """
+
+    if not patch_text:
+        return set()
+
+    files = set()
+
+    # Standard unified diff:
+    # --- a/path/file.py
+    # +++ b/path/file.py
+    for match in re.finditer(
+        r"^\+\+\+ b/(.+)$",
+        patch_text,
+        flags=re.MULTILINE
+    ):
+        files.add(match.group(1).strip())
+
+    # Handle /dev/null / unusual patches
+    for match in re.finditer(
+        r"^--- a/(.+)$",
+        patch_text,
+        flags=re.MULTILINE
+    ):
+        path = match.group(1).strip()
+
+        if path != "/dev/null":
+            files.add(path)
+
+    return files
+
+
+# ------------------------------------------------------------
+# Extract likely file path from a symbol
+# ------------------------------------------------------------
+
+def symbol_to_possible_paths(symbol):
+
+    parts = symbol.split(".")
+
+    candidates = []
+
+    # Convert Python-style module path to .py path.
+    #
+    # Example:
+    # fastapi.routing.APIRoute
+    #
+    # -> fastapi/routing.py
+
+    if len(parts) >= 2:
+
+        module = "/".join(parts[:-1])
+
+        candidates.append(module + ".py")
+
+        # Nested symbol/module possibilities
+        for cut in range(len(parts) - 1, 0, -1):
+
+            module = "/".join(parts[:cut])
+
+            candidates.append(module + ".py")
+
+    return candidates
+
+
+# ------------------------------------------------------------
+# Determine whether symbol is associated with changed file
+# ------------------------------------------------------------
+
+def symbol_matches_files(symbol, changed_files):
+
+    possible_paths = symbol_to_possible_paths(symbol)
+
+    for path in possible_paths:
+
+        for changed in changed_files:
+
+            if (
+                path == changed
+                or path.endswith(changed)
+                or changed.endswith(path)
+            ):
+                return True
+
+    return False
+
+
+# ============================================================
+# Evaluate one task
+# ============================================================
+
+def evaluate_task(record, top_k=10, max_nodes=40):
+
+    if record["graph"] is None:
+        return None
+
+    if record["embedding"] is None:
+        return None
+
+    # --------------------------------------------------------
+    # Ground truth
+    # --------------------------------------------------------
+
+    changed_files = extract_changed_files(
+        record["patch"]
+    )
+
+    test_files = extract_changed_files(
+        record["test_patch"]
+    )
+
+    all_ground_truth = changed_files | test_files
+
+    if not all_ground_truth:
+        return None
+
+    # --------------------------------------------------------
+    # Load graph
+    # --------------------------------------------------------
+
+    G = load_graph(record["graph"])
+
+    adjacency = build_adjacency(G)
+
+    # --------------------------------------------------------
+    # Load embeddings
+    # --------------------------------------------------------
+
+    names, vectors = load_embeddings(
+        record["embedding"]
+    )
+
+    # --------------------------------------------------------
+    # TEMPORARY retrieval query
+    #
+    # We use several embedding centroids rather than one global
+    # mean. This is still an infrastructure evaluation, NOT
+    # our final issue-to-code retrieval.
+    # --------------------------------------------------------
+
+    query_vector = vectors.mean(axis=0)
+
+    semantic_results = retrieve_from_vector(
+        query_vector,
+        names,
+        vectors,
+        top_k=top_k
+    )
+
+    seeds = [
+        r["symbol"]
+        for r in semantic_results
+        if r["symbol"] in G
+    ]
+
+    # --------------------------------------------------------
+    # Retrieval methods
+    # --------------------------------------------------------
+
+    methods = {}
+
+    methods["semantic"] = set(seeds)
+
+    methods["1-hop"] = fixed_hop_expand(
+        seeds,
+        adjacency,
+        hops=1,
+        max_nodes=max_nodes
+    )
+
+    methods["2-hop"] = fixed_hop_expand(
+        seeds,
+        adjacency,
+        hops=2,
+        max_nodes=max_nodes
+    )
+
+    methods["adaptive"] = adaptive_expand(
+        seeds,
+        adjacency,
+        max_nodes=max_nodes,
+        max_hops=2
+    )
+
+    # --------------------------------------------------------
+    # Score methods
+    # --------------------------------------------------------
+
+    output = {
+        "instance_id": record["instance_id"],
+        "repo": record["repo"],
+        "ground_truth_files": all_ground_truth,
+        "methods": {}
+    }
+
+    for method_name, nodes in methods.items():
+
+        matched = set()
+
+        for node in nodes:
+
+            if symbol_matches_files(
+                node,
+                all_ground_truth
+            ):
+                matched.add(node)
+
+        output["methods"][method_name] = {
+            "nodes": len(nodes),
+            "matched_symbols": len(matched),
+            "hit": len(matched) > 0
+        }
+
+    return output
+
+
+# ============================================================
+# Run evaluation
+# ============================================================
+
+evaluation_results = []
+
+for i, record in enumerate(records):
+
+    try:
+
+        result = evaluate_task(record)
+
+        if result:
+            evaluation_results.append(result)
+
+    except Exception as e:
+
+        print(
+            "Error:",
+            record["instance_id"],
+            e
+        )
+
+    if (i + 1) % 10 == 0:
+        print(
+            f"Evaluated {i + 1}/{len(records)}"
+        )
+
+
+# ============================================================
+# Aggregate
+# ============================================================
+
+print("\n======================================")
+print("GROUND-TRUTH RETRIEVAL EVALUATION")
+print("======================================")
+
+print(
+    "Tasks evaluated:",
+    len(evaluation_results)
+)
+
+for method in [
+    "semantic",
+    "1-hop",
+    "2-hop",
+    "adaptive"
+]:
+
+    hits = sum(
+        r["methods"][method]["hit"]
+        for r in evaluation_results
+    )
+
+    total_nodes = [
+        r["methods"][method]["nodes"]
+        for r in evaluation_results
+    ]
+
+    print(
+        f"\n{method}"
+    )
+
+    print(
+        "Hit rate:",
+        round(
+            hits / len(evaluation_results) * 100,
+            2
+        ),
+        "%"
+    )
+
+    print(
+        "Average nodes:",
+        round(
+            np.mean(total_nodes),
+            2
+        )
+    )
+
+# CELL 29 code
+# ============================================================
+# 20. Check Kaggle runtime for Gemma 4 inference
+# ============================================================
+
+import os
+import sys
+import subprocess
+import torch
+
+print("Python:", sys.version)
+print("PyTorch:", torch.__version__)
+print("CUDA available:", torch.cuda.is_available())
+
+if torch.cuda.is_available():
+    print("GPU:", torch.cuda.get_device_name(0))
+    print(
+        "GPU memory:",
+        round(torch.cuda.get_device_properties(0).total_memory / 1024**3, 2),
+        "GB"
+    )
+
+print("\nInstalled relevant packages:")
+
+packages = [
+    "transformers",
+    "accelerate",
+    "bitsandbytes",
+    "torch",
+    "sentence-transformers"
+]
+
+for package in packages:
+    result = subprocess.run(
+        [sys.executable, "-m", "pip", "show", package],
+        capture_output=True,
+        text=True
+    )
+
+    if result.returncode == 0:
+        first_lines = result.stdout.splitlines()[:3]
+        print("\n".join(first_lines))
+    else:
+        print(package, "NOT INSTALLED")
+
+# CELL 30 code
+# ============================================================
+# 20B. Check Hugging Face / Gemma model access
+# ============================================================
+
+import os
+from huggingface_hub import list_models
+
+print("Checking available Gemma models...\n")
+
+models = []
+
+try:
+    for model in list_models(
+        search="google gemma 4",
+        limit=30
+    ):
+        models.append(model.id)
+
+except Exception as e:
+    print("Model search error:", e)
+
+for model in models:
+    print(model)
+
+print("\nTotal:", len(models))
+
+# CELL 31 code
+# ============================================================
+# 21. Find locally available Gemma/model files
+# ============================================================
+
+from pathlib import Path
+
+search_roots = [
+    Path("/kaggle/input"),
+    Path("/kaggle/working"),
+    Path("/root/.cache"),
+]
+
+keywords = [
+    "gemma",
+    "gemma4",
+    "gemma-4",
+]
+
+found = []
+
+for root in search_roots:
+
+    if not root.exists():
+        continue
+
+    print(f"\nSearching: {root}")
+
+    try:
+        for path in root.rglob("*"):
+
+            name = path.name.lower()
+
+            if any(k in name for k in keywords):
+
+                found.append(path)
+
+                if len(found) <= 100:
+                    print(path)
+
+    except Exception as e:
+        print("Search error:", e)
+
+print("\n================================")
+print("Potential Gemma files:", len(found))
+print("================================")
+
+# CELL 32 code
+# ============================================================
+# 22. Inspect Kaggle input datasets
+# ============================================================
+
+from pathlib import Path
+
+input_root = Path("/kaggle/input")
+
+for item in sorted(input_root.iterdir()):
+
+    if item.is_dir():
+        print("[DIR ]", item)
+
+    else:
+        print("[FILE]", item)
+
+# CELL 33 code
+# ============================================================
+# 23. Inspect competition harness files
+# ============================================================
+
+from pathlib import Path
+
+ROOT = Path("/kaggle/input/competitions/gemma-4-developer-agent")
+
+print("Competition files:\n")
+
+for p in sorted(ROOT.iterdir()):
+    print(
+        "[DIR ]" if p.is_dir() else "[FILE]",
+        p.name
+    )
+
+print("\n\nHARNESS-related files:\n")
+
+for p in ROOT.rglob("*"):
+    if "harness" in p.name.lower():
+        print(p)
+
+# CELL 34 code
+# ============================================================
+# 24. Read HARNESS_README
+# ============================================================
+
+from pathlib import Path
+
+readme_candidates = list(
+    ROOT.rglob("*HARNESS_README*")
+)
+
+print("Found:", readme_candidates)
+
+for path in readme_candidates:
+
+    print("\n" + "=" * 80)
+    print(path)
+    print("=" * 80)
+
+    try:
+        text = path.read_text(
+            encoding="utf-8",
+            errors="replace"
+        )
+
+        print(text[:30000])
+
+    except Exception as e:
+        print("Could not read:", e)

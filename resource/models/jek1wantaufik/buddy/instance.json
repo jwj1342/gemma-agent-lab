@@ -1,0 +1,14 @@
+{
+  "id": 757208,
+  "slug": "gemma4",
+  "framework": "MODEL_FRAMEWORK_TRANSFORMERS",
+  "fineTunable": true,
+  "overview": "> A lightweight Gemma 4 software engineering agent designed for repository-level issue resolution. The notebook performs dataset and repository analysis, identifies relevant files and code symbols, evaluates repository structure and available agent tools, and builds an analyzer-plus-coder workflow. It uses targeted code localization, structured prompts, constrained sampling, patch validation, compilation checks, and strict submission-bundle validation. The final agent configuration, prompts, sub-agent setup, and sampling parameters are packaged into a reproducible `submission.zip` artifact.",
+  "usage": "```text\nCell 1 builds and validates the Gemma 4 SWE agent bundle and saves it as ${submission.zip}. Cell 2 reloads ${submission.zip}, verifies its integrity using the stored SHA-256 checksum, and confirms the final submission contents.\n```\n\n> **Run Cell 1 to build and save `${submission.zip}`. Then run Cell 2 to reload, verify, and inspect the final agent submission.**",
+  "versionId": 1011280,
+  "versionNumber": 1,
+  "url": "https://www.kaggle.com/models/jek1wantaufik/buddy/Transformers/gemma4",
+  "licenseName": "Other (specified in description)",
+  "modelInstanceType": "MODEL_INSTANCE_TYPE_BASE_MODEL",
+  "totalUncompressedBytes": 8989
+}

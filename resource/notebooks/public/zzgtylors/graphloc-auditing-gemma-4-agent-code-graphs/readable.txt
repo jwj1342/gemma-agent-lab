@@ -1,0 +1,2133 @@
+# CELL 0 markdown
+# GraphLoc: auditing the Gemma 4 Developer Agent code graphs for bug localization
+
+Companion notebook for the Paper Track writeup *"Where Does the Graph Help? A Localization Audit of the Gemma 4 Developer Agent Code Graphs"*. It reproduces every LLM-free number in the paper from the competition data (CPU only, about one hour):
+
+1. **GraphLoc-129 labels**: function- and file-level gold locations for the 129 public tasks, derived from the reference patches and the AST of each snapshot (`/kaggle/working/graphloc129_labels.jsonl`).
+2. **Graph anatomy**: the provided code graphs compared against the AST of every snapshot (coverage, edge semantics, nested-definition flattening).
+3. **Embedding probes**: what the provided 256-d node vectors encode, and whether that makes `search_similar_code` a useful localizer.
+4. **Localization study**: BM25, tool-faithful simulations of `search_similar_code` / `get_code_neighbors`, personalized PageRank on the provided graph (G0) and on a repaired graph (G+), navigability under an inspection budget, and transfer to SWE-bench Lite (300 tasks, 12 repositories).
+5. **graph-localize skill**: a stdlib-only localizer that runs inside the agent sandbox (`/kaggle/working/skills/graph_localize`).
+
+All code is in the `%%writefile` cells below; the run cell executes the pipeline in parallel and `report.py` prints the tables. Code released under Apache-2.0.
+
+# CELL 1 code
+%%writefile /kaggle/working/graphloc.py
+"""graphloc: gold localization labels, retrieval baselines and a repaired code
+graph (G+) for the Gemma 4 Developer Agent tasks.  Stdlib + numpy + scipy only.
+"""
+import ast, collections, gzip, json, math, os, pickle, re, tarfile
+import numpy as np
+import scipy.sparse as sp
+
+D = os.environ.get('GL_DATA', '/kaggle/input/competitions/gemma-4-developer-agent')
+
+# --------------------------------------------------------------------------- paths
+TEST_RE = re.compile(r'(^|/)(tests?|testing)/|(^|/)test_[^/]*\.py$|_test\.py$|(^|/)conftest\.py$')
+
+
+def is_test_path(p):
+    return bool(TEST_RE.search(p))
+
+
+def is_test_id(i):
+    parts = i.split('.')
+    return any(x in ('tests', 'test', 'testing', 'conftest') or x.startswith('test_') for x in parts[:3])
+
+
+# --------------------------------------------------------------------------- patches
+HUNK_RE = re.compile(r'^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@')
+
+
+def _strip_path(s):
+    s = s.split('\t')[0].strip()
+    if s == '/dev/null':
+        return None
+    if s[:2] in ('a/', 'b/'):
+        s = s[2:]
+    return s
+
+
+def parse_patch(patch):
+    """Return list of dicts: old, new, removed (old line numbers), added (new line numbers)."""
+    files, cur = [], None
+    lines = patch.splitlines()
+    rem_old = rem_new = 0
+    old_ln = new_ln = 0
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        if rem_old <= 0 and rem_new <= 0:
+            if line.startswith('--- ') and i + 1 < len(lines) and lines[i + 1].startswith('+++ '):
+                cur = {'old': _strip_path(line[4:]), 'new': _strip_path(lines[i + 1][4:]),
+                       'removed': set(), 'added': set()}
+                files.append(cur)
+                i += 2
+                continue
+            m = HUNK_RE.match(line)
+            if m and cur is not None:
+                old_ln, new_ln = int(m.group(1)), int(m.group(3))
+                rem_old = int(m.group(2)) if m.group(2) is not None else 1
+                rem_new = int(m.group(4)) if m.group(4) is not None else 1
+            i += 1
+            continue
+        if line.startswith('\\'):
+            i += 1
+            continue
+        if line.startswith('-'):
+            cur['removed'].add(old_ln); old_ln += 1; rem_old -= 1
+        elif line.startswith('+'):
+            cur['added'].add(new_ln); new_ln += 1; rem_new -= 1
+        else:  # context (' ' or empty line)
+            old_ln += 1; new_ln += 1; rem_old -= 1; rem_new -= 1
+        i += 1
+    return files
+
+
+def apply_patch_to_files(files_src, patch):
+    """Tiny unified-diff applier (exact line positions) -> dict path->new source.
+    Only used to reconstruct post-patch versions of the edited files."""
+    out = {}
+    lines = patch.splitlines()
+    i = 0
+    while i < len(lines):
+        if lines[i].startswith('--- ') and i + 1 < len(lines) and lines[i + 1].startswith('+++ '):
+            old, new = _strip_path(lines[i][4:]), _strip_path(lines[i + 1][4:])
+            src = files_src.get(old, '') if old else ''
+            olines = src.split('\n')
+            res, pos = [], 0  # pos: index into olines (0-based)
+            i += 2
+            while i < len(lines) and not (lines[i].startswith('--- ') and i + 1 < len(lines) and lines[i + 1].startswith('+++ ')):
+                m = HUNK_RE.match(lines[i])
+                if not m:
+                    i += 1
+                    continue
+                ostart = int(m.group(1))
+                ocnt = int(m.group(2)) if m.group(2) is not None else 1
+                ncnt = int(m.group(4)) if m.group(4) is not None else 1
+                start_idx = ostart - 1 if ocnt > 0 else ostart
+                res.extend(olines[pos:start_idx]); pos = start_idx
+                i += 1
+                ro, rn = ocnt, ncnt
+                while i < len(lines) and (ro > 0 or rn > 0):
+                    l = lines[i]
+                    if l.startswith('\\'):
+                        i += 1; continue
+                    if l.startswith('-'):
+                        pos += 1; ro -= 1
+                    elif l.startswith('+'):
+                        res.append(l[1:]); rn -= 1
+                    else:
+                        res.append(olines[pos] if pos < len(olines) else l[1:]); pos += 1; ro -= 1; rn -= 1
+                    i += 1
+            res.extend(olines[pos:])
+            if new:
+                out[new] = '\n'.join(res)
+            continue
+        i += 1
+    return out
+
+
+# --------------------------------------------------------------------------- AST definitions
+def extract_defs(src):
+    """All class/function definitions with qualified names relative to the module.
+    Each def: qual, kind (class|func|async), start, end, nested (inside a function), async_chain."""
+    try:
+        tree = ast.parse(src)
+    except (SyntaxError, ValueError):
+        return None, set(), None
+    out = []
+
+    def visit(node, prefix, in_func, async_chain):
+        for ch in ast.iter_child_nodes(node):
+            if isinstance(ch, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                q = prefix + [ch.name]
+                kind = 'class' if isinstance(ch, ast.ClassDef) else ('async' if isinstance(ch, ast.AsyncFunctionDef) else 'func')
+                ac = async_chain or kind == 'async'
+                start = min([d.lineno for d in ch.decorator_list] + [ch.lineno])
+                out.append({'qual': '.'.join(q), 'name': ch.name, 'kind': kind, 'start': start,
+                            'end': ch.end_lineno, 'nested': in_func, 'async_chain': ac, 'node': ch})
+                visit(ch, q, in_func or kind != 'class', ac)
+            else:
+                visit(ch, prefix, in_func, async_chain)
+
+    visit(tree, [], False, False)
+    imports = set()
+    for st in tree.body:
+        if isinstance(st, (ast.Import, ast.ImportFrom)):
+            imports.update(range(st.lineno, (st.end_lineno or st.lineno) + 1))
+    return out, imports, tree
+
+
+def enclosing_def(defs, line):
+    """Innermost non-nested definition containing `line` (1-based) or None."""
+    best = None
+    for d in defs:
+        if d['nested']:
+            continue
+        if d['start'] <= line <= d['end']:
+            if best is None or (d['end'] - d['start']) < (best['end'] - best['start']):
+                best = d
+    return best
+
+
+# --------------------------------------------------------------------------- module naming
+def module_candidates(path):
+    parts = path[:-3].split('/')
+    if parts[-1] == '__init__':
+        parts = parts[:-1]
+    return ['.'.join(parts[k:]) for k in range(0, max(1, min(3, len(parts))))] if parts else ['']
+
+
+def assign_modules(files_defs, graph_ids):
+    """Map each .py file to the module prefix that best matches graph node ids."""
+    modmap, strip_votes = {}, collections.defaultdict(collections.Counter)
+    for path, defs in files_defs.items():
+        if not defs:
+            continue
+        tops = [d['qual'] for d in defs if not d['nested'] and '.' not in d['qual']]
+        best, best_k, best_score = None, None, 0
+        for k, m in enumerate(module_candidates(path)):
+            sc = sum((m + '.' + q) in graph_ids for q in tops) if m else 0
+            if sc > best_score:
+                best, best_k, best_score = m, k, sc
+        if best is not None:
+            modmap[path] = best
+            strip_votes[path.split('/')[0]][best_k] += 1
+    for path in files_defs:
+        if path in modmap:
+            continue
+        votes = strip_votes.get(path.split('/')[0])
+        k = votes.most_common(1)[0][0] if votes else 0
+        c = module_candidates(path)
+        modmap[path] = c[min(k, len(c) - 1)]
+    return modmap
+
+
+# --------------------------------------------------------------------------- data loading
+def load_tasks():
+    return [json.loads(l) for l in open(f'{D}/tasks.jsonl')]
+
+
+def resource_path(task, tasks, kind):
+    ext = 'json' if kind == 'graphs' else 'npz'
+    short = task['instance_id'].split('_')[0]
+    names = [task['instance_id'], f"{short}_{task['base_commit']}"]
+    names += [t['instance_id'] for t in tasks if t['base_commit'] == task['base_commit']]
+    for n in names:
+        p = f'{D}/{kind}/{n}.{ext}'
+        if os.path.exists(p) and os.path.getsize(p) > 100:
+            return p
+    return None
+
+
+def load_snapshot_py(task_id, cache_dir='/kaggle/working/snapcache'):
+    os.makedirs(cache_dir, exist_ok=True)
+    cp = f'{cache_dir}/{task_id}.pkl.gz'
+    if os.path.exists(cp):
+        with gzip.open(cp, 'rb') as f:
+            return pickle.load(f)
+    files = {}
+    with tarfile.open(f'{D}/snapshots/{task_id}.tgz', 'r:gz') as tf:
+        for m in tf:
+            if not (m.isfile() and m.name.endswith('.py')):
+                continue
+            name = m.name[2:] if m.name.startswith('./') else m.name
+            if name.startswith('.git/') or '/.git/' in name:
+                continue
+            files[name] = tf.extractfile(m).read().decode('utf-8', 'replace')
+    with gzip.open(cp, 'wb') as f:
+        pickle.dump(files, f)
+    return files
+
+
+class Graph:
+    """Undirected view of a code graph + node texts."""
+
+    def __init__(self, ids, texts, edges):
+        self.ids = list(ids)
+        self.idx = {n: i for i, n in enumerate(self.ids)}
+        self.texts = list(texts)
+        rows, cols = [], []
+        for s, t in edges:
+            a, b = self.idx.get(s), self.idx.get(t)
+            if a is None or b is None or a == b:
+                continue
+            rows += [a, b]; cols += [b, a]
+        n = len(self.ids)
+        A = sp.csr_matrix((np.ones(len(rows), dtype=np.float32), (rows, cols)), shape=(n, n))
+        A.data[:] = 1.0
+        A.sum_duplicates(); A.data[:] = 1.0
+        self.A = A
+        self.deg = np.asarray(A.sum(1)).ravel()
+        self.n_edges = int(A.nnz // 2)
+
+    @classmethod
+    def from_json(cls, path):
+        g = json.load(open(path))
+        return cls([n['id'] for n in g['nodes']], [n.get('text') or '' for n in g['nodes']],
+                   [(e['source'], e['target']) for e in g['edges']])
+
+    def hops_from(self, seeds, max_hops=6):
+        dist = np.full(len(self.ids), np.inf)
+        frontier = [s for s in seeds]
+        for s in frontier:
+            dist[s] = 0
+        h = 0
+        indptr, indices = self.A.indptr, self.A.indices
+        while frontier and h < max_hops:
+            h += 1
+            nxt = []
+            for u in frontier:
+                for v in indices[indptr[u]:indptr[u + 1]]:
+                    if dist[v] == np.inf:
+                        dist[v] = h; nxt.append(v)
+            frontier = nxt
+        return dist
+
+    def ppr(self, seed_weights, alpha=0.3, iters=30):
+        n = len(self.ids)
+        p0 = np.zeros(n, dtype=np.float64)
+        for i, w in seed_weights.items():
+            p0[i] += w
+        if p0.sum() <= 0:
+            return p0
+        p0 /= p0.sum()
+        dinv = np.where(self.deg > 0, 1.0 / np.maximum(self.deg, 1), 0.0)
+        P = self.A.T.multiply(dinv).tocsr()  # column-normalised transition (x -> P x)
+        x = p0.copy()
+        for _ in range(iters):
+            x = alpha * p0 + (1 - alpha) * (P @ x)
+        return x
+
+
+# --------------------------------------------------------------------------- text & BM25
+STOP = set('''a an the and or not is are was were be been being to of in on for with as at by from into that this these those it its
+if else elif then than so such but can could should would will may might must do does did done have has had having we you i he she they
+them our your their my me us there here when where which who whom what why how all any some no nor only own same too very just also
+def class return import self cls none true false pass raise try except finally while lambda yield async await global nonlocal assert del
+use used using get set new like one two need needs want wants issue bug fix fixes fixed error errors problem example code python
+please thanks thank hi hello following see e g eg etc via make makes made would'''.split())
+CAMEL = re.compile(r'[A-Z]+(?=[A-Z][a-z])|[A-Z]?[a-z]+|[A-Z]+|\d+')
+WORD = re.compile(r'[A-Za-z_][A-Za-z0-9_]*')
+
+
+def tokenize(text):
+    toks = []
+    for w in WORD.findall(text):
+        lw = w.lower().strip('_')
+        if len(lw) > 1 and lw not in STOP:
+            toks.append(lw)
+        subs = [s.lower() for part in w.split('_') if part for s in CAMEL.findall(part)]
+        if len(subs) > 1:
+            toks.extend(s for s in subs if len(s) > 1 and s not in STOP)
+    return toks
+
+
+class BM25:
+    def __init__(self, docs, k1=1.2, b=0.75):
+        self.k1, self.b = k1, b
+        self.N = len(docs)
+        self.len = np.array([len(d) for d in docs], dtype=np.float64)
+        self.avg = self.len.mean() if self.N else 0.0
+        post = collections.defaultdict(list)
+        for i, d in enumerate(docs):
+            for t, c in collections.Counter(d).items():
+                post[t].append((i, c))
+        self.post = {t: (np.array([i for i, _ in v]), np.array([c for _, c in v], dtype=np.float64)) for t, v in post.items()}
+
+    def score(self, query):
+        s = np.zeros(self.N)
+        if not self.N:
+            return s
+        for t in set(query):
+            if t not in self.post:
+                continue
+            ids, tf = self.post[t]
+            idf = math.log(1 + (self.N - len(ids) + 0.5) / (len(ids) + 0.5))
+            s[ids] += idf * tf * (self.k1 + 1) / (tf + self.k1 * (1 - self.b + self.b * self.len[ids] / max(self.avg, 1e-9)))
+        return s
+
+
+def clean_issue(text):
+    text = re.sub(r'<!--.*?-->', ' ', text, flags=re.S)
+    text = re.sub(r'https?://\S+', ' ', text)
+    return text
+
+
+# --------------------------------------------------------------------------- anchors (symbol mentions)
+def extract_mentions(text):
+    text = clean_issue(text)
+    ms = set()
+    for code in re.findall(r'`{1,3}([^`]{1,400}?)`{1,3}', text, flags=re.S):
+        for w in re.findall(r'[A-Za-z_][\w]*(?:\.[A-Za-z_]\w*)*', code):
+            if len(w) >= 3 and w.lower() not in STOP:
+                ms.add(w)
+    ms.update(re.findall(r'\b[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)+\b', text))
+    for w in WORD.findall(text):
+        if len(w) >= 4 and ('_' in w.strip('_') or re.search(r'[a-z][A-Z]', w) or re.match(r'^[A-Z][a-z]+[A-Z]', w)):
+            ms.add(w)
+    ms.update(re.findall(r'\bin ([A-Za-z_]\w+)\s*$', text, flags=re.M))  # traceback frames
+    return {m.strip('.') for m in ms if not re.fullmatch(r'[\d.]+', m)}
+
+
+def resolve_symbol(q, ids, lower_map=None):
+    """Emulates the harness 4-tier resolution: exact -> '.'/'/' suffix -> case-insensitive -> substring.
+    Returns (tier, sorted matches)."""
+    if q in ids:
+        return 1, [q]
+    suf = [i for i in ids if i.endswith('.' + q) or i.endswith('/' + q)]
+    if suf:
+        return 2, sorted(suf, key=lambda s: (len(s), s))
+    ql = q.lower()
+    ci = [i for i in ids if i.lower() == ql or i.lower().endswith('.' + ql)]
+    if ci:
+        return 3, sorted(ci, key=lambda s: (len(s), s))
+    sub = [i for i in ids if q in i]
+    if sub:
+        return 4, sorted(sub, key=lambda s: (len(s), s))
+    return 0, []
+
+
+# --------------------------------------------------------------------------- G+ (repaired graph)
+def _import_table(tree, module, is_pkg):
+    tab = {}
+    pkg = module if is_pkg else module.rpartition('.')[0]
+    for st in ast.walk(tree):
+        if isinstance(st, ast.Import):
+            for a in st.names:
+                tab[a.asname or a.name.split('.')[0]] = a.name if a.asname else a.name.split('.')[0]
+        elif isinstance(st, ast.ImportFrom):
+            base = st.module or ''
+            if st.level:
+                p = pkg.split('.') if pkg else []
+                if st.level > 1:
+                    p = p[:len(p) - (st.level - 1)]
+                base = '.'.join([x for x in p if x] + ([base] if base else []))
+            for a in st.names:
+                if a.name == '*':
+                    continue
+                tab[a.asname or a.name] = (base + '.' + a.name) if base else a.name
+    return tab
+
+
+def build_gplus(files, modmap, include_tests=True):
+    """Build a repaired graph from source files: module/class/function (sync+async) nodes,
+    contains + imports + calls/references edges resolved by lightweight name analysis."""
+    nodes, texts, node_file, kinds = [], [], {}, {}
+    edges = []
+    per_file = {}
+    for path, src in files.items():
+        if not include_tests and is_test_path(path):
+            continue
+        res = extract_defs(src)
+        if res[0] is None:
+            continue
+        defs, _, tree = res
+        mod = modmap.get(path) or module_candidates(path)[0]
+        per_file[path] = (mod, defs, tree)
+        lines = src.split('\n')
+        nodes.append(mod); texts.append('\n'.join(lines[:60])); node_file[mod] = path; kinds[mod] = 'module'
+        for d in defs:
+            if d['nested']:
+                continue
+            nid = mod + '.' + d['qual']
+            nodes.append(nid); texts.append('\n'.join(lines[d['start'] - 1:d['end']])); node_file[nid] = path; kinds[nid] = d['kind']
+            parent = nid.rpartition('.')[0]
+            edges.append((parent, nid, 'contains'))
+    idset = set(nodes)
+    by_name = collections.defaultdict(list)
+    for n in nodes:
+        if kinds[n] != 'module':
+            by_name[n.rpartition('.')[2]].append(n)
+    modules = {n for n in nodes if kinds[n] == 'module'}
+    for path, (mod, defs, tree) in per_file.items():
+        imp = _import_table(tree, mod, path.endswith('__init__.py'))
+        for alias, tgt in imp.items():
+            t = tgt
+            while t and t not in idset:
+                t = t.rpartition('.')[0]
+            if t and t != mod:
+                edges.append((mod, t, 'imports'))
+        local_top = {d['qual'] for d in defs if not d['nested'] and '.' not in d['qual']}
+
+        def resolve_name(name):
+            if name in local_top:
+                return [mod + '.' + name]
+            if name in imp:
+                t = imp[name]
+                if t in idset:
+                    return [t]
+                cand = by_name.get(name, [])
+                return cand if len(cand) == 1 else []
+            return []
+
+        for d in defs:
+            if d['nested']:
+                continue
+            src_id = mod + '.' + d['qual']
+            cls_prefix = src_id.rpartition('.')[0] if d['kind'] != 'class' else src_id
+            targets = set()
+            body = d['node'].body if d['kind'] != 'class' else [s for s in d['node'].body if not isinstance(s, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))] + list(d['node'].bases) + list(d['node'].decorator_list)
+            for st in body:
+                for x in ast.walk(st):
+                    if isinstance(x, ast.Name) and isinstance(x.ctx, ast.Load):
+                        targets.update(resolve_name(x.id))
+                    elif isinstance(x, ast.Attribute):
+                        v = x.value
+                        if isinstance(v, ast.Name):
+                            if v.id in ('self', 'cls'):
+                                t = cls_prefix + '.' + x.attr
+                                if t in idset:
+                                    targets.add(t)
+                                    continue
+                            elif v.id in imp:
+                                t = imp[v.id] + '.' + x.attr
+                                if t in idset:
+                                    targets.add(t)
+                                    continue
+                        if isinstance(x.ctx, ast.Load):
+                            cand = by_name.get(x.attr, [])
+                            if 1 <= len(cand) <= 2 and not x.attr.startswith('__'):
+                                targets.update(cand)
+            if d['kind'] != 'class':
+                for dec in d['node'].decorator_list:
+                    for x in ast.walk(dec):
+                        if isinstance(x, ast.Name):
+                            targets.update(resolve_name(x.id))
+            for t in targets:
+                if t != src_id:
+                    edges.append((src_id, t, 'calls'))
+    return nodes, texts, edges, node_file, kinds
+
+
+# --------------------------------------------------------------------------- gold labels
+def gold_labels(task, files, modmap):
+    """Function-level and file-level gold for one task.
+    Returns dict with gold_files (existing non-test .py edited), symbols {id: category}, etc."""
+    pf = parse_patch(task['patch'])
+    new_src = apply_patch_to_files(files, task['patch'])
+    out = {'gold_files': [], 'new_files': [], 'symbols': {}, 'module_level_lines': 0, 'import_only_lines': 0,
+           'nonpy_files': []}
+    for f in pf:
+        old, new = f['old'], f['new']
+        path = old or new
+        if not path.endswith('.py'):
+            out['nonpy_files'].append(path)
+            continue
+        if is_test_path(path):
+            continue
+        if old is None:
+            out['new_files'].append(new)
+            continue
+        out['gold_files'].append(old)
+        mod = modmap.get(old) or module_candidates(old)[0]
+        res_old = extract_defs(files.get(old, ''))
+        odefs, oimps = (res_old[0] or []), res_old[1]
+        old_quals = {d['qual']: d for d in odefs if not d['nested']}
+        for ln in sorted(f['removed']):
+            d = enclosing_def(odefs, ln)
+            if d is None:
+                out['module_level_lines'] += 1
+                out['import_only_lines'] += ln in oimps
+                continue
+            out['symbols'].setdefault(mod + '.' + d['qual'], 'async' if d['async_chain'] else d['kind'])
+        if new and new in new_src:
+            res_new = extract_defs(new_src[new])
+            ndefs, nimps = (res_new[0] or []), res_new[1]
+            for ln in sorted(f['added']):
+                d = enclosing_def(ndefs, ln)
+                if d is None:
+                    out['module_level_lines'] += 1
+                    out['import_only_lines'] += ln in nimps
+                    continue
+                if d['qual'] in old_quals:
+                    od = old_quals[d['qual']]
+                    out['symbols'].setdefault(mod + '.' + d['qual'], 'async' if od['async_chain'] else od['kind'])
+                else:
+                    # new symbol: attribute the edit to its closest existing ancestor (class) if any
+                    q = d['qual']
+                    anc = q.rpartition('.')[0]
+                    while anc and anc not in old_quals:
+                        anc = anc.rpartition('.')[0]
+                    out.setdefault('new_symbols', []).append(mod + '.' + q)
+                    if anc:
+                        od = old_quals[anc]
+                        out['symbols'].setdefault(mod + '.' + anc, 'async' if od['async_chain'] else od['kind'])
+    return out
+
+
+# --------------------------------------------------------------------------- evaluation helpers
+def first_hit_rank(ranked, gold):
+    for r, x in enumerate(ranked):
+        if x in gold:
+            return r + 1
+    return None
+
+
+def rrf(rankings, k=60):
+    sc = collections.defaultdict(float)
+    for rk in rankings:
+        for r, x in enumerate(rk):
+            sc[x] += 1.0 / (k + r + 1)
+    return [x for x, _ in sorted(sc.items(), key=lambda kv: -kv[1])]
+
+
+def files_from_nodes(ranked_nodes, node_file):
+    seen, out = set(), []
+    for n in ranked_nodes:
+        f = node_file.get(n)
+        if f and f not in seen:
+            seen.add(f); out.append(f)
+    return out
+
+
+def node_file_map(ids, modmap):
+    """Map graph node ids to files through the longest module prefix."""
+    mod2file = {}
+    for f, m in modmap.items():
+        mod2file.setdefault(m, f)
+    out = {}
+    for i in ids:
+        p = i
+        while p:
+            if p in mod2file:
+                out[i] = mod2file[p]
+                break
+            p = p.rpartition('.')[0]
+    return out
+
+
+# CELL 2 code
+%%writefile /kaggle/working/exp_main.py
+"""Main localization experiment over the 129 public tasks.
+Writes one JSON row per task to /kaggle/working/results/main.jsonl and the
+GraphLoc-129 labels to /kaggle/working/graphloc129_labels.jsonl."""
+import json, os, sys, time, collections
+import numpy as np
+sys.path.insert(0, os.environ.get('GL_CODE', '/kaggle/working'))
+import graphloc as G
+
+OUT = os.environ.get('GL_OUT', '/kaggle/working/results')
+os.makedirs(OUT, exist_ok=True)
+tasks = G.load_tasks()
+ONLY = os.environ.get('ONLY')
+if ONLY:
+    tasks_run = [t for t in tasks if t['instance_id'] in ONLY.split(',')]
+else:
+    tasks_run = tasks
+NSH = int(os.environ.get('NSHARDS', 1)); SH = int(os.environ.get('SHARD', 0))
+tasks_run = tasks_run[SH::NSH]
+K_TOP = 20
+PPR_ALPHA = float(os.environ.get('PPR_ALPHA', 0.3))
+BM25_SEEDS = int(os.environ.get('BM25_SEEDS', 5))
+
+
+def anchors_for(mentions, ids_list, idset):
+    """tier<=3 resolutions with <=5 matches; returns dict mention->(tier, matches)."""
+    res = {}
+    for m in mentions:
+        tier, matches = G.resolve_symbol(m, ids_list)
+        res[m] = (tier, matches)
+    return res
+
+
+def rank_from_scores(scores, cand_idx, ids):
+    order = cand_idx[np.argsort(-scores[cand_idx], kind='stable')]
+    return [ids[i] for i in order if scores[i] > 0]
+
+
+def run_task(task):
+    t0 = time.time()
+    tid = task['instance_id']
+    files = G.load_snapshot_py(tid)
+    gpath, epath = G.resource_path(task, tasks, 'graphs'), G.resource_path(task, tasks, 'embeddings')
+    g0 = G.Graph.from_json(gpath)
+    ids0 = g0.ids
+    idset0 = set(ids0)
+    files_defs = {}
+    for p, src in files.items():
+        r = G.extract_defs(src)
+        files_defs[p] = r[0] or []
+    modmap = G.assign_modules(files_defs, idset0)
+    gold = G.gold_labels(task, files, modmap)
+    gold_syms = set(gold['symbols'])
+    gold_files = set(gold['gold_files'])
+    nf0 = G.node_file_map(ids0, modmap)
+    # ---------------- coverage of gold symbols by the provided graph
+    cov = {s: {'cat': c, 'in_g0': s in idset0} for s, c in gold['symbols'].items()}
+    # ---------------- G+
+    nodes_p, texts_p, edges_p, nfile_p, kinds_p = G.build_gplus(files, modmap)
+    gp = G.Graph(nodes_p, texts_p, [(s, t) for s, t, _ in edges_p])
+    idsp = gp.ids
+    for s in cov:
+        cov[s]['in_gp'] = s in gp.idx
+    # ---------------- candidates (non-test code)
+    cand0 = np.array([i for i, n in enumerate(ids0) if not G.is_test_id(n) and not G.is_test_path(nf0.get(n, ''))], dtype=int)
+    candp = np.array([i for i, n in enumerate(idsp) if kinds_p[n] != 'module' and not G.is_test_path(nfile_p.get(n, ''))], dtype=int)
+    query = G.clean_issue(task['problem_statement'] + '\n' + (task.get('hints_text') or ''))
+    qtok = G.tokenize(query)
+    # BM25 on node texts
+    bm0 = G.BM25([G.tokenize(ids0[i].replace('.', ' ') + ' ' + g0.texts[i]) for i in cand0])
+    s_bm0 = np.zeros(len(ids0)); s_bm0[cand0] = bm0.score(qtok)
+    bmp = G.BM25([G.tokenize(idsp[i].replace('.', ' ') + ' ' + gp.texts[i]) for i in candp])
+    s_bmp = np.zeros(len(idsp)); s_bmp[candp] = bmp.score(qtok)
+    r_bm0 = rank_from_scores(s_bm0, cand0, ids0)
+    r_bmp = rank_from_scores(s_bmp, candp, idsp)
+    # anchors
+    mentions = sorted(G.extract_mentions(query))
+    anc0 = anchors_for(mentions, ids0, idset0)
+    ancp = anchors_for(mentions, idsp, set(idsp))
+    seeds0 = sorted({m for _, (tier, ms) in anc0.items() if 1 <= tier <= 3 and len(ms) <= 5 for m in ms})
+    seedsp = sorted({m for _, (tier, ms) in ancp.items() if 1 <= tier <= 3 and len(ms) <= 5 for m in ms})
+    # harness-faithful single resolution (first match of any tier) for tool simulation
+    tool_anchor0 = sorted({ms[0] for _, (tier, ms) in anc0.items() if tier >= 1})
+
+    def ppr_rank(g, ids, seeds, s_bm, cand):
+        sw = {}
+        if seeds:
+            for s in seeds:
+                sw[g.idx[s]] = sw.get(g.idx[s], 0) + 0.5 / len(seeds)
+        top = [i for i in cand[np.argsort(-s_bm[cand], kind='stable')][:BM25_SEEDS] if s_bm[i] > 0]
+        mass = 0.5 if seeds else 1.0
+        if top:
+            w = np.array([1.0 / (r + 1) for r in range(len(top))]); w = w / w.sum() * mass
+            for i, wi in zip(top, w):
+                sw[i] = sw.get(i, 0) + wi
+        if not sw:
+            return []
+        x = g.ppr(sw, alpha=PPR_ALPHA)
+        return rank_from_scores(x, cand, ids)
+
+    r_ppr0 = ppr_rank(g0, ids0, seeds0, s_bm0, cand0)
+    r_pprp = ppr_rank(gp, idsp, seedsp, s_bmp, candp)
+    # embeddings (provided)
+    z = np.load(epath)
+    E = np.stack([z[n] if n in z.files else np.zeros(256, np.float32) for n in ids0]).astype(np.float32)
+    En = E / np.maximum(np.linalg.norm(E, axis=1, keepdims=True), 1e-9)
+    r_emb0 = []
+    if seeds0:
+        S = En[[g0.idx[s] for s in seeds0]] @ En.T
+        s_emb = S.max(0)
+        s_emb[[g0.idx[s] for s in seeds0]] += 1.0  # the anchor itself first
+        s_emb_c = np.full(len(ids0), -9.0); s_emb_c[cand0] = s_emb[cand0]
+        order = cand0[np.argsort(-s_emb_c[cand0], kind='stable')]
+        r_emb0 = [ids0[i] for i in order]
+    r_fuse0 = G.rrf([r for r in (r_bm0, r_ppr0, r_emb0) if r])
+    r_fusep = G.rrf([r for r in (r_bmp, r_pprp) if r])
+    r_fusep_e = G.rrf([r for r in (r_bmp, r_pprp, [x for x in r_emb0 if x in gp.idx]) if r])
+    # ---------------- tool-faithful simulation on G0
+    sim_hits = {}
+    tool_seen = []
+    for a in tool_anchor0[:10]:
+        i = g0.idx[a]
+        nb = g0.A.indices[g0.A.indptr[i]:g0.A.indptr[i + 1]][:50]
+        sims = En[i] @ En.T
+        knn = [j for j in np.argsort(-sims) if j != i][:10]
+        tool_seen.append({'anchor': a, 'neighbors': [ids0[j] for j in nb], 'similar': [ids0[j] for j in knn]})
+    seen_nb = {a['anchor'] for a in tool_seen} | {n for a in tool_seen for n in a['neighbors']}
+    seen_sim = {a['anchor'] for a in tool_seen} | {n for a in tool_seen for n in a['similar']}
+    sim_hits = {'anchor_only': bool({a['anchor'] for a in tool_seen} & gold_syms),
+                'neighbors': bool(seen_nb & gold_syms), 'similar': bool(seen_sim & gold_syms),
+                'both': bool((seen_nb | seen_sim) & gold_syms), 'n_calls': 2 * len(tool_seen)}
+    # hop distances anchors -> gold
+    def min_hops(g, seeds, gold_set):
+        if not seeds:
+            return None
+        gi = [g.idx[s] for s in gold_set if s in g.idx]
+        if not gi:
+            return None
+        d = g.hops_from([g.idx[s] for s in seeds], max_hops=8)
+        v = min(d[j] for j in gi)
+        return None if np.isinf(v) else int(v)
+    hops0 = min_hops(g0, seeds0, gold_syms)
+    hopsp = min_hops(gp, seedsp, gold_syms)
+    # ---------------- file level
+    pyfiles = sorted(p for p in files if not G.is_test_path(p))
+    fbm = G.BM25([G.tokenize(p.replace('/', ' ').replace('_', ' ') + ' ' + files[p]) for p in pyfiles])
+    fs = fbm.score(qtok)
+    r_file_bm = [pyfiles[i] for i in np.argsort(-fs, kind='stable') if fs[i] > 0]
+    nf0_all = nf0
+    methods_nodes = {'bm25_g0': r_bm0, 'ppr_g0': r_ppr0, 'emb_g0': r_emb0, 'fuse_g0': r_fuse0,
+                     'bm25_gp': r_bmp, 'ppr_gp': r_pprp, 'fuse_gp': r_fusep, 'fuse_gp_emb': r_fusep_e}
+    ranks, file_ranks, tops = {}, {}, {}
+    for k, r in methods_nodes.items():
+        ranks[k] = G.first_hit_rank(r, gold_syms)
+        nf = nf0_all if k.endswith('g0') else nfile_p
+        file_ranks[k] = G.first_hit_rank(G.files_from_nodes(r, nf), gold_files)
+        tops[k] = r[:K_TOP]
+    file_ranks['file_bm25'] = G.first_hit_rank(r_file_bm, gold_files)
+    file_ranks['fuse_file'] = G.first_hit_rank(G.rrf([r_file_bm, G.files_from_nodes(r_fusep, nfile_p)]), gold_files)
+    tops['file_bm25'] = r_file_bm[:K_TOP]
+    row = {
+        'id': tid, 'repo': task['repo'], 'n_nodes_g0': len(ids0), 'n_edges_g0': g0.n_edges,
+        'n_nodes_gp': len(idsp), 'n_edges_gp': gp.n_edges,
+        'edge_types_gp': dict(collections.Counter(t for _, _, t in edges_p)),
+        'n_cand_g0': int(len(cand0)), 'n_cand_gp': int(len(candp)),
+        'gold_files': sorted(gold_files), 'new_files': gold['new_files'], 'nonpy_files': gold['nonpy_files'],
+        'gold_symbols': cov, 'new_symbols': gold.get('new_symbols', []),
+        'module_level_lines': gold['module_level_lines'], 'import_only_lines': gold['import_only_lines'],
+        'n_mentions': len(mentions), 'mentions': mentions[:60],
+        'anchor_tiers_g0': dict(collections.Counter(tier for tier, _ in anc0.values())),
+        'seeds_g0': seeds0[:30], 'seeds_gp': seedsp[:30],
+        'hops_g0': hops0, 'hops_gp': hopsp, 'tool_sim': sim_hits,
+        'rank': ranks, 'file_rank': file_ranks, 'top': tops,
+        'modmap_sample': dict(list((p, m) for p, m in modmap.items() if p in gold_files)),
+        'secs': round(time.time() - t0, 1),
+    }
+    return row
+
+
+if __name__ == '__main__':
+    out_path = f"{OUT}/{os.environ.get('OUTNAME', 'main')}.jsonl"
+    done = set()
+    if os.path.exists(out_path) and not os.environ.get('FRESH'):
+        done = {json.loads(l)['id'] for l in open(out_path)}
+    with open(out_path, 'a') as f:
+        for k, task in enumerate(tasks_run):
+            if task['instance_id'] in done:
+                continue
+            try:
+                row = run_task(task)
+            except Exception as e:
+                import traceback
+                row = {'id': task['instance_id'], 'error': repr(e), 'tb': traceback.format_exc()[-1500:]}
+            f.write(json.dumps(row) + '\n'); f.flush()
+            print(k, task['instance_id'], row.get('secs'), row.get('rank', row.get('error')), flush=True)
+
+
+# CELL 3 code
+%%writefile /kaggle/working/exp_anatomy.py
+"""Anatomy of the provided code graphs vs. the source they were built from (per unique commit)."""
+import json, os, sys, collections
+import numpy as np
+sys.path.insert(0, os.environ.get('GL_CODE', '/kaggle/working'))
+import graphloc as G
+
+OUT = os.environ.get('GL_OUT', '/kaggle/working/results')
+tasks = G.load_tasks()
+seen, per_commit = set(), []
+for t in tasks:
+    if t['base_commit'] in seen:
+        continue
+    seen.add(t['base_commit']); per_commit.append(t)
+rows = []
+for t in per_commit:
+    files = G.load_snapshot_py(t['instance_id'])
+    gp_path = G.resource_path(t, tasks, 'graphs')
+    raw = json.load(open(gp_path))
+    ids = [n['id'] for n in raw['nodes']]
+    idset = set(ids)
+    g0 = G.Graph(ids, [n.get('text') or '' for n in raw['nodes']], [(e['source'], e['target']) for e in raw['edges']])
+    E = [(e['source'], e['target']) for e in raw['edges']]
+    Eset = set(E)
+    contain_like = sum(1 for s, d in E if d.startswith(s + '.') or s.startswith(d + '.'))
+    recip = sum(1 for s, d in E if (d, s) in Eset)
+    selfl = sum(1 for s, d in E if s == d)
+    dangling = sum(1 for s, d in E if s not in idset or d not in idset)
+    fd = {}
+    for p, src in files.items():
+        r = G.extract_defs(src)
+        fd[p] = r[0] or []
+    mm = G.assign_modules(fd, idset)
+    c = collections.Counter()
+    exact_ids = set()
+    flat_hits = collections.Counter()
+    for p, defs in fd.items():
+        area = 'test' if G.is_test_path(p) else ('docs' if p.startswith('docs') else 'lib')
+        mod = mm[p]
+        qual_kind = {d['qual']: d for d in defs}
+        for d in defs:
+            full = mod + '.' + d['qual']
+            if not d['nested']:
+                exact_ids.add(full)
+                key = f"{area}_{d['kind']}"
+                c[key + '_n'] += 1
+                c[key + '_in'] += full in idset
+            else:
+                parts = d['qual'].split('.')
+                # candidate flattenings
+                outer_cls = []
+                for k in range(1, len(parts)):
+                    q = '.'.join(parts[:k])
+                    if qual_kind.get(q, {}).get('kind') == 'class':
+                        outer_cls = parts[:k]
+                    else:
+                        break
+                cand_a = mod + '.' + d['name']
+                cand_b = mod + '.' + '.'.join(outer_cls + [d['name']]) if outer_cls else None
+                c[f'{area}_nested_n'] += 1
+                c[f'{area}_nested_exact'] += full in idset
+                c[f'{area}_nested_flat_mod'] += cand_a in idset
+                c[f'{area}_nested_flat_cls'] += bool(cand_b and cand_b in idset and cand_b != full)
+                if full not in idset:
+                    flat_hits[cand_b if (cand_b and cand_b in idset) else cand_a] += 1
+    nonexact = [i for i in ids if i not in exact_ids]
+    collisions = sum(1 for k, v in flat_hits.items() if k in idset and (v > 1 or k in exact_ids))
+    module_nodes = sum(1 for i in ids if i in set(mm.values()))
+    row = {'id': t['instance_id'], 'repo': t['repo'], 'nodes': len(ids), 'raw_edges': len(E),
+           'undirected_edges': g0.n_edges, 'isolated': int((g0.deg == 0).sum()),
+           'edge_types': dict(collections.Counter(e.get('type') for e in raw['edges'])),
+           'contain_like_edges': contain_like, 'reciprocal_edges': recip, 'self_loops': selfl, 'dangling': dangling,
+           'nonexact_ids': len(nonexact), 'nonexact_sample': nonexact[:8], 'flat_collisions': collisions,
+           'module_nodes': module_nodes, 'counts': dict(c),
+           'mean_deg': float(g0.deg.mean()), 'max_deg': int(g0.deg.max())}
+    rows.append(row)
+    print(row['id'], row['nodes'], row['undirected_edges'], row['isolated'], dict(c).get('lib_async_n'), dict(c).get('lib_async_in'), flush=True)
+with open(f'{OUT}/anatomy.jsonl', 'w') as f:
+    for r in rows:
+        f.write(json.dumps(r) + '\n')
+
+
+# CELL 4 code
+%%writefile /kaggle/working/exp_emb.py
+"""What do the provided 256-d node embeddings encode?  Probe on all unique commits."""
+import json, os, sys, collections, random
+import numpy as np
+sys.path.insert(0, os.environ.get('GL_CODE', '/kaggle/working'))
+import graphloc as G
+from scipy.stats import spearmanr
+
+OUT = os.environ.get('GL_OUT', '/kaggle/working/results')
+tasks = G.load_tasks()
+rng = np.random.default_rng(0)
+seen, per_commit = set(), []
+for t in sorted(tasks, key=lambda t: t['created_at']):
+    if t['base_commit'] in seen:
+        continue
+    seen.add(t['base_commit']); per_commit.append(t)
+
+
+def load(t):
+    g = G.Graph.from_json(G.resource_path(t, tasks, 'graphs'))
+    z = np.load(G.resource_path(t, tasks, 'embeddings'))
+    E = np.stack([z[n] for n in g.ids]).astype(np.float32)
+    return g, E
+
+
+def tfidf(texts):
+    from sklearn.feature_extraction.text import TfidfVectorizer
+    v = TfidfVectorizer(tokenizer=G.tokenize, lowercase=False, token_pattern=None, min_df=1)
+    X = v.fit_transform(texts)
+    return X
+
+
+rows = []
+prev = {}
+for t in per_commit:
+    g, E = load(t)
+    n = len(g.ids)
+    norms = np.linalg.norm(E, axis=1)
+    En = E / np.maximum(norms[:, None], 1e-9)
+    texts = g.texts
+    # (1) identical text -> identical vector?
+    by_text = collections.defaultdict(list)
+    for i, tx in enumerate(texts):
+        by_text[tx].append(i)
+    dup_cos = []
+    for tx, members in by_text.items():
+        if len(members) > 1 and tx.strip():
+            a = members[0]
+            for b in members[1:4]:
+                dup_cos.append(float(En[a] @ En[b]))
+    # (2) cross-commit stability within repo (vs previous commit of same repo)
+    repo = t['repo']
+    cross_same, cross_diff = [], []
+    if repo in prev:
+        pg, pE = prev[repo]
+        pEn = pE / np.maximum(np.linalg.norm(pE, axis=1, keepdims=True), 1e-9)
+        common = [i for i in g.ids if i in pg.idx]
+        for nid in common[:3000]:
+            i, j = g.idx[nid], pg.idx[nid]
+            c = float(En[i] @ pEn[j])
+            (cross_same if texts[i] == pg.texts[j] else cross_diff).append(c)
+    prev[repo] = (g, E)
+    # (3) neighbourhood agreement of top-10 cosine neighbours
+    X = tfidf([nid.replace('.', ' ') + ' ' + tx for nid, tx in zip(g.ids, texts)])
+    mods = [nid.rsplit('.', 1)[0] for nid in g.ids]
+    parent = mods
+    names = [nid.rsplit('.', 1)[-1] for nid in g.ids]
+    sample = rng.choice(n, size=min(400, n), replace=False)
+    S = En[sample] @ En.T
+    agree = collections.Counter(); tot = 0
+    rand = collections.Counter(); rtot = 0
+    indptr, indices = g.A.indptr, g.A.indices
+    Xs = X[sample] @ X.T
+    kocc = np.zeros(n)
+    for r, i in enumerate(sample):
+        s = S[r].copy(); s[i] = -9
+        nn = np.argpartition(-s, 10)[:10]
+        kocc[nn] += 1
+        tf_row = Xs[r].toarray().ravel(); tf_row[i] = -9
+        tf_nn = set(np.argpartition(-tf_row, 10)[:10].tolist())
+        nb1 = set(indices[indptr[i]:indptr[i + 1]].tolist())
+        d = g.hops_from([i], max_hops=2)
+        rnd = rng.choice(n, size=10, replace=False)
+        for group, cnt, T in ((nn, agree, 'e'), (rnd, rand, 'r')):
+            for j in group:
+                if j == i:
+                    continue
+                cnt['same_parent'] += parent[j] == parent[i]
+                cnt['same_top_pkg'] += mods[j].split('.')[0] == mods[i].split('.')[0]
+                cnt['hop1'] += j in nb1
+                cnt['hop2'] += d[j] <= 2
+                cnt['tfidf_top10'] += j in tf_nn
+                cnt['same_name'] += names[j] == names[i]
+                cnt['n'] += 1
+    # (4) rank correlation on random pairs
+    a = rng.integers(0, n, 4000); b = rng.integers(0, n, 4000)
+    m = a != b
+    a, b = a[m], b[m]
+    ecos = np.einsum('ij,ij->i', En[a], En[b])
+    tcos = np.asarray(X[a].multiply(X[b]).sum(1)).ravel()
+    rho_text = spearmanr(ecos, tcos).correlation
+    dists = []
+    for ai, bi in zip(a[:400], b[:400]):
+        dd = g.hops_from([ai], max_hops=6)[bi]
+        dists.append(7 if np.isinf(dd) else dd)
+    rho_hops = spearmanr(ecos[:400], dists).correlation
+    lens = np.array([len(x) for x in texts])
+    rho_len_norm = spearmanr(lens, norms).correlation
+    # (5) effective dimensionality
+    C = np.cov(En.T)
+    ev = np.clip(np.linalg.eigvalsh(C), 0, None)
+    eff_rank = float(np.exp(-(ev / ev.sum() * np.log(ev / ev.sum() + 1e-12)).sum()))
+    mean_cos = float((En[a] * En[b]).sum(1).mean())
+    rows.append({'id': t['instance_id'], 'repo': repo, 'n': n,
+                 'dup_groups': len(dup_cos), 'dup_cos_mean': float(np.mean(dup_cos)) if dup_cos else None,
+                 'dup_cos_min': float(np.min(dup_cos)) if dup_cos else None,
+                 'cross_same_n': len(cross_same), 'cross_same_mean': float(np.mean(cross_same)) if cross_same else None,
+                 'cross_same_frac_exact': float(np.mean(np.array(cross_same) > 0.9999)) if cross_same else None,
+                 'cross_diff_n': len(cross_diff), 'cross_diff_mean': float(np.mean(cross_diff)) if cross_diff else None,
+                 'agree': {k: v / max(agree['n'], 1) for k, v in agree.items() if k != 'n'},
+                 'rand': {k: v / max(rand['n'], 1) for k, v in rand.items() if k != 'n'},
+                 'rho_text': float(rho_text), 'rho_hops': float(rho_hops), 'rho_len_norm': float(rho_len_norm),
+                 'kocc_skew': float(((kocc - kocc.mean()) ** 3).mean() / (kocc.std() ** 3 + 1e-12)),
+                 'kocc_max': int(kocc.max()), 'eff_rank': eff_rank, 'mean_rand_cos': mean_cos,
+                 'norm_mean': float(norms.mean()), 'norm_std': float(norms.std())})
+    print(rows[-1]['id'], n, rows[-1]['dup_cos_mean'], rows[-1]['cross_same_mean'], round(rows[-1]['rho_text'], 3), round(rows[-1]['rho_hops'], 3), flush=True)
+
+with open(f'{OUT}/emb_probe.jsonl', 'w') as f:
+    for r in rows:
+        f.write(json.dumps(r) + '\n')
+
+
+# CELL 5 code
+%%writefile /kaggle/working/exp_emb2.py
+"""Follow-up probe: are the provided embeddings a function of (id, text) only, or do they depend on graph structure?"""
+import json, os, sys, collections
+import numpy as np
+sys.path.insert(0, os.environ.get('GL_CODE', '/kaggle/working'))
+import graphloc as G
+
+OUT = os.environ.get('GL_OUT', '/kaggle/working/results')
+tasks = G.load_tasks()
+seen, per_commit = set(), []
+for t in sorted(tasks, key=lambda t: t['created_at']):
+    if t['base_commit'] not in seen:
+        seen.add(t['base_commit']); per_commit.append(t)
+prev = {}
+acc = collections.defaultdict(list)
+for t in per_commit:
+    raw = json.load(open(G.resource_path(t, tasks, 'graphs')))
+    z = np.load(G.resource_path(t, tasks, 'embeddings'))
+    text = {n['id']: n.get('text') or '' for n in raw['nodes']}
+    nb = collections.defaultdict(set)
+    for e in raw['edges']:
+        nb[e['source']].add(e['target']); nb[e['target']].add(e['source'])
+    vec = {k: z[k] / max(np.linalg.norm(z[k]), 1e-9) for k in text}
+    if t['repo'] in prev:
+        ptext, pnb, pvec = prev[t['repo']]
+        for k in text:
+            if k in ptext:
+                c = float(vec[k] @ pvec[k])
+                same_text = text[k] == ptext[k]
+                same_nb = nb[k] == pnb[k]
+                acc[f'text{int(same_text)}_nb{int(same_nb)}'].append(c)
+    prev[t['repo']] = (text, nb, vec)
+    # same short name, different node: how similar?
+    by_name = collections.defaultdict(list)
+    for k in text:
+        by_name[k.rsplit('.', 1)[-1]].append(k)
+    rng = np.random.default_rng(len(text))
+    keys = list(text)
+    for name, ks in by_name.items():
+        if len(ks) > 1 and not name.startswith('test'):
+            acc['same_name'].append(float(vec[ks[0]] @ vec[ks[1]]))
+            r = keys[rng.integers(len(keys))]
+            acc['random_pair'].append(float(vec[ks[0]] @ vec[r]))
+    # class vs its own methods
+    for k in text:
+        parent = k.rsplit('.', 1)[0]
+        if parent in text and text[parent].startswith('class '):
+            acc['class_method'].append(float(vec[k] @ vec[parent]))
+out = {k: {'n': len(v), 'mean': round(float(np.mean(v)), 4), 'frac_identical': round(float(np.mean(np.array(v) > 0.9999)), 4)} for k, v in acc.items()}
+json.dump(out, open(f'{OUT}/emb_probe2.json', 'w'), indent=1)
+print(json.dumps(out))
+
+
+# CELL 6 code
+%%writefile /kaggle/working/exp_emb3.py
+"""Does fixing embedding anisotropy (centering / removing top PCs) make search_similar_code a better localizer?"""
+import glob, json, os, sys, collections
+import numpy as np
+sys.path.insert(0, os.environ.get('GL_CODE', '/kaggle/working'))
+import graphloc as G
+
+OUT = os.environ.get('GL_OUT', '/kaggle/working/results')
+tasks = {t['instance_id']: t for t in G.load_tasks()}
+tl = list(tasks.values())
+rows = []
+for p in glob.glob(f'{OUT}/main_*.jsonl'):
+    rows += [json.loads(l) for l in open(p)]
+rows = [r for r in rows if 'error' not in r and r['gold_symbols']]
+
+
+def transforms(E):
+    En = E / np.maximum(np.linalg.norm(E, axis=1, keepdims=True), 1e-9)
+    mu = E.mean(0)
+    C = E - mu
+    Cn = C / np.maximum(np.linalg.norm(C, axis=1, keepdims=True), 1e-9)
+    U, S, Vt = np.linalg.svd(C - C.mean(0), full_matrices=False)
+    A = C - (C @ Vt[:3].T) @ Vt[:3]
+    An = A / np.maximum(np.linalg.norm(A, axis=1, keepdims=True), 1e-9)
+    return {'raw': En, 'centered': Cn, 'abtt3': An}
+
+
+def kocc_skew(X, k=10, m=400, rng=np.random.default_rng(0)):
+    n = len(X)
+    idx = rng.choice(n, size=min(m, n), replace=False)
+    S = X[idx] @ X.T
+    S[np.arange(len(idx)), idx] = -9
+    occ = np.zeros(n)
+    for r in range(len(idx)):
+        occ[np.argpartition(-S[r], k)[:k]] += 1
+    return float(((occ - occ.mean()) ** 3).mean() / (occ.std() ** 3 + 1e-12)), float(np.mean(np.sort(occ)[::-1][:max(1, n // 100)]) / max(occ.mean(), 1e-9))
+
+
+res = collections.defaultdict(lambda: collections.Counter())
+hub = collections.defaultdict(list)
+n_with = 0
+for r in rows:
+    t = tasks[r['id']]
+    seeds = r['seeds_g0']
+    raw = json.load(open(G.resource_path(t, tl, 'graphs')))
+    ids = [n['id'] for n in raw['nodes']]
+    idx = {n: i for i, n in enumerate(ids)}
+    z = np.load(G.resource_path(t, tl, 'embeddings'))
+    E = np.stack([z[n] for n in ids]).astype(np.float64)
+    V = transforms(E)
+    if len(hub['raw']) < 40:
+        for k, X in V.items():
+            hub[k].append(kocc_skew(X))
+    gold = set(r['gold_symbols'])
+    cand = np.array([i for i, n in enumerate(ids) if not G.is_test_id(n)])
+    if not seeds:
+        continue
+    n_with += 1
+    si = [idx[s] for s in seeds if s in idx]
+    for k, X in V.items():
+        s = (X[si] @ X.T).max(0)
+        s[si] += 1.0
+        order = cand[np.argsort(-s[cand], kind='stable')]
+        rk = G.first_hit_rank([ids[i] for i in order], gold)
+        for kk in (1, 5, 10):
+            res[k][f'H@{kk}'] += bool(rk and rk <= kk)
+        # tool-faithful: union of top-10 neighbours of each anchor (anchor excluded)
+        seen = set()
+        for a in si[:10]:
+            sa = X[a] @ X.T; sa[a] = -9
+            seen.update(ids[j] for j in np.argpartition(-sa, 10)[:10])
+        res[k]['tool_similar_hit'] += bool(seen & gold)
+out = {'n_tasks_with_anchors': n_with,
+       'retrieval': {k: {m: round(v / n_with, 3) for m, v in c.items()} for k, c in res.items()},
+       'hubness': {k: {'kocc_skew': round(float(np.mean([a for a, _ in v])), 3), 'top1pct_occ_ratio': round(float(np.mean([b for _, b in v])), 2)} for k, v in hub.items()}}
+json.dump(out, open(f'{OUT}/emb_probe3.json', 'w'), indent=1)
+print(json.dumps(out))
+
+
+# CELL 7 code
+%%writefile /kaggle/working/exp_emb4.py
+"""What do nodes that receive (near-)identical embedding vectors have in common?"""
+import json, os, sys, collections
+import numpy as np
+sys.path.insert(0, os.environ.get('GL_CODE', '/kaggle/working'))
+import graphloc as G
+
+OUT = os.environ.get('GL_OUT', '/kaggle/working/results')
+tasks = G.load_tasks()
+seen, per_commit = set(), []
+for t in tasks:
+    if t['base_commit'] not in seen:
+        seen.add(t['base_commit']); per_commit.append(t)
+C = collections.Counter()
+examples = []
+for t in per_commit:
+    raw = json.load(open(G.resource_path(t, tasks, 'graphs')))
+    z = np.load(G.resource_path(t, tasks, 'embeddings'))
+    ids = [n['id'] for n in raw['nodes']]
+    text = {n['id']: n.get('text') or '' for n in raw['nodes']}
+    E = np.stack([z[i] for i in ids]).astype(np.float64)
+    En = E / np.maximum(np.linalg.norm(E, axis=1, keepdims=True), 1e-9)
+    key = collections.defaultdict(list)
+    for i, v in enumerate(np.round(En, 4)):
+        key[v.tobytes()].append(i)
+    groups = [g for g in key.values() if len(g) > 1]
+    C['nodes'] += len(ids)
+    C['nodes_in_identical_groups'] += sum(len(g) for g in groups)
+    C['groups'] += len(groups)
+    for g in groups:
+        a, b = ids[g[0]], ids[g[1]]
+        C['pairs'] += 1
+        C['same_short_name'] += a.rsplit('.', 1)[-1] == b.rsplit('.', 1)[-1]
+        C['same_text'] += text[a] == text[b]
+        C['same_module'] += a.rsplit('.', 1)[0] == b.rsplit('.', 1)[0]
+        C['same_name_diff_text'] += (a.rsplit('.', 1)[-1] == b.rsplit('.', 1)[-1]) and text[a] != text[b]
+        if len(examples) < 12 and text[a] != text[b]:
+            examples.append([a, b, text[a][:80], text[b][:80]])
+    # among same-short-name pairs: identical vs text equality
+    by = collections.defaultdict(list)
+    for i, n in enumerate(ids):
+        by[n.rsplit('.', 1)[-1]].append(i)
+    for nm, g in by.items():
+        if len(g) > 1:
+            i, j = g[0], g[1]
+            ident = float(En[i] @ En[j]) > 0.9999
+            st = text[ids[i]] == text[ids[j]]
+            C[f'samename_textsame{int(st)}_n'] += 1
+            C[f'samename_textsame{int(st)}_ident'] += ident
+out = {'counts': dict(C), 'examples': examples}
+json.dump(out, open(f'{OUT}/emb_probe4.json', 'w'), indent=1)
+print(json.dumps(out)[:4000])
+
+
+# CELL 8 code
+%%writefile /kaggle/working/exp_variants.py
+"""Dev-set study of graph-aware localizers (G0 = provided graph, G+ = repaired graph).
+Adds: test/doc-bridged retrieval, neighbourhood smoothing, file prior, navigability oracles."""
+import json, os, sys, time, collections
+import numpy as np
+sys.path.insert(0, os.environ.get('GL_CODE', '/kaggle/working'))
+import graphloc as G
+
+OUT = os.environ.get('GL_OUT', '/kaggle/working/results')
+tasks = G.load_tasks()
+NSH = int(os.environ.get('NSHARDS', 1)); SH = int(os.environ.get('SHARD', 0))
+ONLY = os.environ.get('ONLY')
+run_tasks = [t for t in tasks if (not ONLY or t['instance_id'] in ONLY.split(','))][SH::NSH]
+
+
+def is_bridge_path(p):
+    return G.is_test_path(p)
+
+
+def ranked(scores, cand, ids, positive=True):
+    order = cand[np.argsort(-scores[cand], kind='stable')]
+    return [ids[i] for i in order if (scores[i] > 0 or not positive)]
+
+
+def norm01(x, idx):
+    v = x[idx]
+    if len(v) == 0 or v.max() <= 0:
+        return np.zeros_like(x)
+    y = np.zeros_like(x); y[idx] = v / v.max()
+    return y
+
+
+def propagate(g, s, steps=1):
+    """Mean-neighbour aggregation of a score vector over the undirected graph."""
+    dinv = np.where(g.deg > 0, 1.0 / np.maximum(g.deg, 1), 0.0)
+    out = s.copy()
+    cur = s
+    for _ in range(steps):
+        cur = dinv * (g.A @ cur)
+        out = out + cur
+    return out
+
+
+def variants_for(g, ids, texts, node_file, is_cand, qtok, seeds, gold, gold_files):
+    n = len(ids)
+    cand = np.array([i for i in range(n) if is_cand[i]], dtype=int)
+    bridge = np.array([i for i in range(n) if not is_cand[i] and (is_bridge_path(node_file.get(ids[i], '')) or G.is_test_id(ids[i]))], dtype=int)
+    docs = [G.tokenize(ids[i].replace('.', ' ') + ' ' + texts[i]) for i in range(n)]
+    bm = G.BM25([docs[i] for i in cand])
+    s_bm = np.zeros(n); s_bm[cand] = bm.score(qtok)
+    # bridge BM25 (tests/docs), scored within the bridge corpus
+    s_br = np.zeros(n)
+    if len(bridge):
+        bb = G.BM25([docs[i] for i in bridge]); s_br[bridge] = bb.score(qtok)
+    R = {}
+    R['bm25'] = ranked(s_bm, cand, ids)
+    # PPR from BM25 top-5 (+ anchors)
+    def ppr_from(weights):
+        if not weights:
+            return np.zeros(n)
+        return g.ppr(weights, alpha=0.3)
+    top5 = [i for i in cand[np.argsort(-s_bm[cand], kind='stable')][:5] if s_bm[i] > 0]
+    w_bm = {i: 1.0 / (r + 1) for r, i in enumerate(top5)}
+    w_anc = {g.idx[s]: 1.0 for s in seeds if s in g.idx}
+    x_bm = ppr_from(w_bm)
+    R['ppr_bm25'] = ranked(x_bm, cand, ids)
+    # bridge: PPR seeded by the top-10 tests/docs that match the issue
+    topb = [i for i in bridge[np.argsort(-s_br[bridge], kind='stable')][:10] if s_br[i] > 0] if len(bridge) else []
+    x_br = ppr_from({i: 1.0 / (r + 1) for r, i in enumerate(topb)})
+    R['bridge'] = ranked(x_br, cand, ids)
+    x_anc = ppr_from(w_anc)
+    R['anchor_ppr'] = ranked(x_anc, cand, ids)
+    R['fuse_bm25_bridge'] = G.rrf([r for r in (R['bm25'], R['bridge']) if r])
+    R['fuse_bm25_anchor'] = G.rrf([r for r in (R['bm25'], R['anchor_ppr']) if r])
+    R['fuse_all'] = G.rrf([r for r in (R['bm25'], R['bridge'], R['anchor_ppr'], R['ppr_bm25']) if r])
+    # neighbourhood smoothing of normalised BM25 (text + structure in one score)
+    nb = norm01(s_bm, cand)
+    for lam in (0.25, 0.5):
+        sm = nb + lam * (propagate(g, nb, 1) - nb)
+        R[f'smooth{lam}'] = ranked(sm, cand, ids)
+    # score-level combination: BM25 + bridge + anchor diffusion (normalised, equal weights)
+    comb = norm01(s_bm, cand) + norm01(x_br, cand) + norm01(x_anc, cand)
+    R['sum3'] = ranked(comb, cand, ids)
+    # file prior: node BM25 x file BM25 (hierarchical)
+    fscore = collections.defaultdict(float)
+    for i in cand:
+        f = node_file.get(ids[i])
+        if f:
+            fscore[f] = max(fscore[f], s_bm[i])
+    ranks = {k: G.first_hit_rank(v, gold) for k, v in R.items()}
+    franks = {k: G.first_hit_rank(G.files_from_nodes(v, node_file), gold_files) for k, v in R.items()}
+    # navigability oracles: gold within 1/2 hops of BM25 top-k
+    nav = {}
+    gi = {g.idx[s] for s in gold if s in g.idx}
+    for k in (1, 5, 10):
+        topk = [g.idx[x] for x in R['bm25'][:k]]
+        if not topk or not gi:
+            nav[f'n1_top{k}'] = nav[f'n2_top{k}'] = False
+            continue
+        d = g.hops_from(topk, max_hops=2)
+        nav[f'n0_top{k}'] = any(d[j] == 0 for j in gi)
+        nav[f'n1_top{k}'] = any(d[j] <= 1 for j in gi)
+        nav[f'n2_top{k}'] = any(d[j] <= 2 for j in gi)
+        # size of the 1-hop / 2-hop inspection pools, counted over candidate (non-test) code only
+        nav[f'pool1_top{k}'] = int(sum(1 for j in np.where(d <= 1)[0] if is_cand[j]))
+        nav[f'pool2_top{k}'] = int(sum(1 for j in np.where(d <= 2)[0] if is_cand[j]))
+    if len(bridge):
+        tb = [i for i in bridge[np.argsort(-s_br[bridge], kind='stable')][:10] if s_br[i] > 0]
+        d = g.hops_from(tb, max_hops=2) if tb else np.full(n, np.inf)
+        nav['bridge_n1'] = bool(gi) and any(d[j] <= 1 for j in gi)
+        nav['bridge_n2'] = bool(gi) and any(d[j] <= 2 for j in gi)
+    return ranks, franks, nav, {k: v[:20] for k, v in R.items() if k in ('bm25', 'fuse_bm25_bridge', 'sum3', 'fuse_all')}
+
+
+def run(task):
+    t0 = time.time()
+    files = G.load_snapshot_py(task['instance_id'])
+    g0 = G.Graph.from_json(G.resource_path(task, tasks, 'graphs'))
+    fd = {p: (G.extract_defs(s)[0] or []) for p, s in files.items()}
+    mm = G.assign_modules(fd, set(g0.ids))
+    gold = G.gold_labels(task, files, mm)
+    gs, gf = set(gold['symbols']), set(gold['gold_files'])
+    nf0 = G.node_file_map(g0.ids, mm)
+    nodes, texts, edges, nfp, kinds = G.build_gplus(files, mm)
+    gp = G.Graph(nodes, texts, [(s, t) for s, t, _ in edges])
+    query = G.clean_issue(task['problem_statement'] + '\n' + (task.get('hints_text') or ''))
+    qtok = G.tokenize(query)
+    mentions = G.extract_mentions(query)
+
+    def seeds_for(ids):
+        out = set()
+        for m in mentions:
+            tier, ms = G.resolve_symbol(m, ids)
+            if 1 <= tier <= 3 and len(ms) <= 5:
+                out.update(ms)
+        return sorted(out)
+    c0 = [not G.is_test_id(i) and not is_bridge_path(nf0.get(i, '')) for i in g0.ids]
+    cp = [kinds[i] != 'module' and not is_bridge_path(nfp.get(i, '')) for i in gp.ids]
+    r0 = variants_for(g0, g0.ids, g0.texts, nf0, c0, qtok, seeds_for(g0.ids), gs, gf)
+    rp = variants_for(gp, gp.ids, gp.texts, nfp, cp, qtok, seeds_for(gp.ids), gs, gf)
+    return {'id': task['instance_id'], 'repo': task['repo'], 'gold_n': len(gs), 'gold_files': sorted(gf),
+            'rank_g0': r0[0], 'file_g0': r0[1], 'nav_g0': r0[2], 'rank_gp': rp[0], 'file_gp': rp[1], 'nav_gp': rp[2],
+            'top_gp': rp[3], 'top_g0': r0[3], 'secs': round(time.time() - t0, 1)}
+
+
+if __name__ == '__main__':
+    path = f"{OUT}/variants_{SH}.jsonl"
+    with open(path, 'w') as f:
+        for k, t in enumerate(run_tasks):
+            try:
+                row = run(t)
+            except Exception as e:
+                import traceback
+                row = {'id': t['instance_id'], 'error': repr(e), 'tb': traceback.format_exc()[-1200:]}
+            f.write(json.dumps(row) + '\n'); f.flush()
+            print(k, t['instance_id'], row.get('secs'), row.get('error', ''), flush=True)
+
+
+# CELL 9 code
+%%writefile /kaggle/working/prep_swebench.py
+import json, os, subprocess
+from concurrent.futures import ThreadPoolExecutor
+OUT = '/kaggle/working/results'; REPOS = '/kaggle/working/repos'
+os.makedirs(OUT, exist_ok=True); os.makedirs(REPOS, exist_ok=True)
+try:
+    from datasets import load_dataset
+    ds = list(load_dataset('princeton-nlp/SWE-bench_Lite', split='test'))
+except Exception as e:
+    import pandas as pd
+    print('datasets failed', e)
+    ds = pd.read_parquet('https://huggingface.co/datasets/princeton-nlp/SWE-bench_Lite/resolve/main/data/test-00000-of-00001.parquet').to_dict('records')
+with open(f'{OUT}/swebench_lite.jsonl', 'w') as f:
+    for r in ds:
+        f.write(json.dumps({k: r[k] for k in ['instance_id', 'repo', 'base_commit', 'patch', 'problem_statement', 'created_at']}) + '\n')
+repos = sorted({r['repo'] for r in ds})
+print(len(ds), repos)
+def clone(repo):
+    d = f"{REPOS}/{repo.replace('/', '__')}"
+    if not os.path.exists(d):
+        r = subprocess.run(['git', 'clone', '-q', f'https://github.com/{repo}.git', d], capture_output=True, text=True)
+        return repo, r.returncode, r.stderr[-200:]
+    return repo, 0, 'exists'
+with ThreadPoolExecutor(6) as ex:
+    for res in ex.map(clone, repos):
+        print(res, flush=True)
+print(subprocess.run(f'du -sh {REPOS}/*; df -h /kaggle/working', shell=True, capture_output=True, text=True).stdout)
+
+
+# CELL 10 code
+%%writefile /kaggle/working/exp_swebench.py
+"""Transfer study: the same LLM-free localizers on SWE-bench Lite (no provided graphs; G+ built from source)."""
+import io, json, os, subprocess, sys, tarfile, time, collections
+import numpy as np
+sys.path.insert(0, os.environ.get('GL_CODE', '/kaggle/working'))
+import graphloc as G
+
+OUT = os.environ.get('GL_OUT', '/kaggle/working/results')
+REPOS = os.environ.get('REPOS', '/kaggle/working/repos')
+NSH = int(os.environ.get('NSHARDS', 1)); SH = int(os.environ.get('SHARD', 0))
+BM25_SEEDS, PPR_ALPHA = 5, 0.3
+os.makedirs(REPOS, exist_ok=True)
+tasks = [json.loads(l) for l in open(f'{OUT}/swebench_lite.jsonl')]
+tasks = tasks[SH::NSH]
+
+
+def repo_dir(repo):
+    d = f"{REPOS}/{repo.replace('/', '__')}"
+    return d
+
+
+def files_at(d, commit):
+    raw = subprocess.run(['git', 'archive', commit], cwd=d, capture_output=True, check=True).stdout
+    files = {}
+    with tarfile.open(fileobj=io.BytesIO(raw)) as tf:
+        for m in tf:
+            if m.isfile() and m.name.endswith('.py'):
+                files[m.name] = tf.extractfile(m).read().decode('utf-8', 'replace')
+    return files
+
+
+def modmap_for(files):
+    mm = {}
+    for p in files:
+        c = G.module_candidates(p)
+        k = 1 if p.split('/')[0] in ('src', 'lib') and len(c) > 1 else 0
+        mm[p] = c[k]
+    return mm
+
+
+def rank_from_scores(scores, cand_idx, ids):
+    order = cand_idx[np.argsort(-scores[cand_idx], kind='stable')]
+    return [ids[i] for i in order if scores[i] > 0]
+
+
+def run(task):
+    t0 = time.time()
+    d = repo_dir(task['repo'])
+    files = files_at(d, task['base_commit'])
+    files = {p: s for p, s in files.items() if not G.is_test_path(p)}  # tractability: library code only
+    mm = modmap_for(files)
+    gold = G.gold_labels({'patch': task['patch']}, files, mm)
+    gold_syms, gold_files = set(gold['symbols']), set(gold['gold_files'])
+    nodes, texts, edges, nfile, kinds = G.build_gplus(files, mm)
+    gp = G.Graph(nodes, texts, [(s, t) for s, t, _ in edges])
+    ids = gp.ids
+    cand = np.array([i for i, n in enumerate(ids) if kinds[n] != 'module'], dtype=int)
+    query = G.clean_issue(task['problem_statement'])
+    qtok = G.tokenize(query)
+    bm = G.BM25([G.tokenize(ids[i].replace('.', ' ') + ' ' + gp.texts[i]) for i in cand])
+    s_bm = np.zeros(len(ids)); s_bm[cand] = bm.score(qtok)
+    r_bm = rank_from_scores(s_bm, cand, ids)
+    mentions = sorted(G.extract_mentions(query))
+    seeds = set()
+    for m in mentions:
+        tier, ms = G.resolve_symbol(m, ids)
+        if 1 <= tier <= 3 and len(ms) <= 5:
+            seeds.update(ms)
+    seeds = sorted(seeds)
+    sw = {}
+    for s in seeds:
+        sw[gp.idx[s]] = sw.get(gp.idx[s], 0) + 0.5 / len(seeds)
+    top = [i for i in cand[np.argsort(-s_bm[cand], kind='stable')][:BM25_SEEDS] if s_bm[i] > 0]
+    mass = 0.5 if seeds else 1.0
+    if top:
+        w = np.array([1.0 / (r + 1) for r in range(len(top))]); w = w / w.sum() * mass
+        for i, wi in zip(top, w):
+            sw[i] = sw.get(i, 0) + wi
+    r_ppr = rank_from_scores(gp.ppr(sw, alpha=PPR_ALPHA), cand, ids) if sw else []
+    r_fuse = G.rrf([r for r in (r_bm, r_ppr) if r])
+    # "no-graph" ablation: same seeds, but PPR on a graph with only containment edges
+    gc = G.Graph(nodes, texts, [(s, t) for s, t, k in edges if k == 'contains'])
+    r_ppr_c = rank_from_scores(gc.ppr(sw, alpha=PPR_ALPHA), cand, ids) if sw else []
+    r_fuse_c = G.rrf([r for r in (r_bm, r_ppr_c) if r])
+    pyfiles = sorted(files)
+    fbm = G.BM25([G.tokenize(p.replace('/', ' ').replace('_', ' ') + ' ' + files[p]) for p in pyfiles])
+    fs = fbm.score(qtok)
+    r_file = [pyfiles[i] for i in np.argsort(-fs, kind='stable') if fs[i] > 0]
+    ranks = {k: G.first_hit_rank(v, gold_syms) for k, v in (('bm25', r_bm), ('ppr', r_ppr), ('fuse', r_fuse), ('fuse_contains_only', r_fuse_c))}
+    franks = {k: G.first_hit_rank(G.files_from_nodes(v, nfile), gold_files) for k, v in (('bm25', r_bm), ('ppr', r_ppr), ('fuse', r_fuse), ('fuse_contains_only', r_fuse_c))}
+    franks['file_bm25'] = G.first_hit_rank(r_file, gold_files)
+    franks['fuse_file'] = G.first_hit_rank(G.rrf([r_file, G.files_from_nodes(r_fuse, nfile)]), gold_files)
+    hops = None
+    gi = [gp.idx[s] for s in gold_syms if s in gp.idx]
+    if seeds and gi:
+        dd = gp.hops_from([gp.idx[s] for s in seeds], max_hops=8)
+        v = min(dd[j] for j in gi)
+        hops = None if np.isinf(v) else int(v)
+    return {'id': task['instance_id'], 'repo': task['repo'], 'n_nodes': len(ids), 'n_edges': gp.n_edges,
+            'gold_files': sorted(gold_files), 'gold_symbols': {s: {'cat': c, 'in_gp': s in gp.idx} for s, c in gold['symbols'].items()},
+            'n_seeds': len(seeds), 'hops': hops, 'rank': ranks, 'file_rank': franks,
+            'async_gold': sum(c == 'async' for c in gold['symbols'].values()), 'secs': round(time.time() - t0, 1)}
+
+
+if __name__ == '__main__':
+    path = f'{OUT}/swebench_{SH}.jsonl'
+    done = {json.loads(l)['id'] for l in open(path)} if os.path.exists(path) else set()
+    with open(path, 'a') as f:
+        for k, t in enumerate(tasks):
+            if t['instance_id'] in done:
+                continue
+            try:
+                row = run(t)
+            except Exception as e:
+                import traceback
+                row = {'id': t['instance_id'], 'error': repr(e), 'tb': traceback.format_exc()[-1200:]}
+            f.write(json.dumps(row) + '\n'); f.flush()
+            print(k, t['instance_id'], row.get('secs'), row.get('rank', row.get('error')), flush=True)
+
+
+# CELL 11 code
+import os; os.makedirs('/kaggle/working/skills/graph_localize/scripts', exist_ok=True); os.makedirs('/kaggle/working/results', exist_ok=True)
+
+# CELL 12 code
+%%writefile /kaggle/working/skills/graph_localize/scripts/localize.py
+#!/usr/bin/env python3
+"""graph-localize: stdlib-only, offline issue -> code localizer for SWE agents.
+
+Ranks functions/methods/classes (sync AND async) of a Python repository for a natural
+language issue: BM25 over definition source + personalized PageRank over a repaired
+code graph (containment + imports + name-resolved references), fused by reciprocal rank.
+
+Usage inside an agent sandbox:
+    python localize.py --issue-file /tmp/issue.txt --root /workspace --k 15
+    python localize.py --issue "text ..." --root .
+Prints `rank  score  path:line  qualified.name` lines. No third-party packages needed.
+"""
+import argparse, ast, collections, math, os, re, sys
+
+TEST_RE = re.compile(r'(^|/)(tests?|testing)/|(^|/)test_[^/]*\.py$|_test\.py$|(^|/)conftest\.py$')
+SKIP_DIRS = {'.git', '.hg', '.tox', '.venv', 'venv', 'env', 'node_modules', 'build', 'dist', '__pycache__', 'site-packages'}
+STOP = set('''a an the and or not is are was were be been being to of in on for with as at by from into that this these those it its
+if else elif then than so such but can could should would will may might must do does did done have has had having we you i he she they
+them our your their my me us there here when where which who whom what why how all any some no nor only own same too very just also
+def class return import self cls none true false pass raise try except finally while lambda yield async await global nonlocal assert del
+use used using get set new like one two need needs want wants issue bug fix fixes fixed error errors problem example code python
+please thanks thank hi hello following see e g eg etc via make makes made would'''.split())
+CAMEL = re.compile(r'[A-Z]+(?=[A-Z][a-z])|[A-Z]?[a-z]+|[A-Z]+|\d+')
+WORD = re.compile(r'[A-Za-z_][A-Za-z0-9_]*')
+
+
+def tokenize(text):
+    out = []
+    for w in WORD.findall(text):
+        lw = w.lower().strip('_')
+        if len(lw) > 1 and lw not in STOP:
+            out.append(lw)
+        subs = [s.lower() for part in w.split('_') if part for s in CAMEL.findall(part)]
+        if len(subs) > 1:
+            out.extend(s for s in subs if len(s) > 1 and s not in STOP)
+    return out
+
+
+def module_name(path):
+    parts = path[:-3].split('/')
+    if parts[-1] == '__init__':
+        parts = parts[:-1]
+    if len(parts) > 1 and parts[0] in ('src', 'lib'):
+        parts = parts[1:]
+    return '.'.join(parts)
+
+
+def read_repo(root):
+    files = {}
+    for d, dirs, fs in os.walk(root):
+        dirs[:] = [x for x in dirs if x not in SKIP_DIRS and not x.startswith('.')]
+        for f in fs:
+            if f.endswith('.py'):
+                p = os.path.relpath(os.path.join(d, f), root).replace(os.sep, '/')
+                try:
+                    with open(os.path.join(d, f), encoding='utf-8', errors='replace') as fh:
+                        files[p] = fh.read()
+                except OSError:
+                    pass
+    return files
+
+
+def build(files):
+    """Nodes: module + non-nested defs (sync+async). Edges: contains, imports, references."""
+    nodes, meta = [], {}
+    edges = []
+    per = []
+    for path, src in files.items():
+        try:
+            tree = ast.parse(src)
+        except (SyntaxError, ValueError):
+            continue
+        mod = module_name(path)
+        lines = src.split('\n')
+        nodes.append(mod); meta[mod] = (path, 1, 'module', '\n'.join(lines[:40]))
+        defs = []
+
+        def visit(node, prefix):
+            for ch in ast.iter_child_nodes(node):
+                if isinstance(ch, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                    q = prefix + [ch.name]
+                    nid = mod + '.' + '.'.join(q)
+                    start = min([d.lineno for d in ch.decorator_list] + [ch.lineno])
+                    kind = 'class' if isinstance(ch, ast.ClassDef) else 'def'
+                    nodes.append(nid); meta[nid] = (path, start, kind, '\n'.join(lines[start - 1:ch.end_lineno]))
+                    edges.append((nid.rpartition('.')[0], nid))
+                    defs.append((nid, ch, kind))
+                    if kind == 'class':
+                        visit(ch, q)
+                elif not isinstance(ch, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)):
+                    visit(ch, prefix)
+        visit(tree, [])
+        per.append((path, mod, tree, defs))
+    idset = set(nodes)
+    by_name = collections.defaultdict(list)
+    for n in nodes:
+        if meta[n][2] != 'module':
+            by_name[n.rpartition('.')[2]].append(n)
+    for path, mod, tree, defs in per:
+        imp = {}
+        pkg = mod if path.endswith('__init__.py') else mod.rpartition('.')[0]
+        for st in ast.walk(tree):
+            if isinstance(st, ast.Import):
+                for a in st.names:
+                    imp[a.asname or a.name.split('.')[0]] = a.name if a.asname else a.name.split('.')[0]
+            elif isinstance(st, ast.ImportFrom):
+                base = st.module or ''
+                if st.level:
+                    p = pkg.split('.') if pkg else []
+                    p = p[:len(p) - (st.level - 1)] if st.level > 1 else p
+                    base = '.'.join([x for x in p if x] + ([base] if base else []))
+                for a in st.names:
+                    if a.name != '*':
+                        imp[a.asname or a.name] = (base + '.' + a.name) if base else a.name
+        for alias, tgt in imp.items():
+            t = tgt
+            while t and t not in idset:
+                t = t.rpartition('.')[0]
+            if t and t != mod:
+                edges.append((mod, t))
+        local = {n.rpartition('.')[2]: n for n, _, _ in defs if n.count('.') == mod.count('.') + 1}
+        for nid, node, kind in defs:
+            cls = nid.rpartition('.')[0] if kind != 'class' else nid
+            body = node.body if kind != 'class' else [s for s in node.body if not isinstance(s, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))] + list(node.bases)
+            tg = set()
+            for st in body + list(node.decorator_list):
+                for x in ast.walk(st):
+                    if isinstance(x, ast.Name) and isinstance(x.ctx, ast.Load):
+                        if x.id in local:
+                            tg.add(local[x.id])
+                        elif x.id in imp and imp[x.id] in idset:
+                            tg.add(imp[x.id])
+                    elif isinstance(x, ast.Attribute) and isinstance(x.value, ast.Name):
+                        if x.value.id in ('self', 'cls') and cls + '.' + x.attr in idset:
+                            tg.add(cls + '.' + x.attr)
+                        elif x.value.id in imp and imp[x.value.id] + '.' + x.attr in idset:
+                            tg.add(imp[x.value.id] + '.' + x.attr)
+                        elif not x.attr.startswith('__') and 1 <= len(by_name.get(x.attr, ())) <= 2:
+                            tg.update(by_name[x.attr])
+            edges.extend((nid, t) for t in tg if t != nid)
+    return nodes, meta, edges
+
+
+def bm25(docs, query, k1=1.2, b=0.75):
+    N = len(docs)
+    if not N:
+        return []
+    avg = sum(len(d) for d in docs) / N
+    df = collections.Counter(t for d in docs for t in set(d))
+    q = set(query)
+    out = []
+    for d in docs:
+        tf = collections.Counter(t for t in d if t in q)
+        s = 0.0
+        for t, c in tf.items():
+            idf = math.log(1 + (N - df[t] + 0.5) / (df[t] + 0.5))
+            s += idf * c * (k1 + 1) / (c + k1 * (1 - b + b * len(d) / avg))
+        out.append(s)
+    return out
+
+
+def mentions(text):
+    ms = set(re.findall(r'\b[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)+\b', text))
+    for code in re.findall(r'`{1,3}([^`]{1,400}?)`{1,3}', text, flags=re.S):
+        ms.update(w for w in re.findall(r'[A-Za-z_][\w]*(?:\.[A-Za-z_]\w*)*', code) if len(w) >= 3 and w.lower() not in STOP)
+    ms.update(w for w in WORD.findall(text) if len(w) >= 4 and ('_' in w.strip('_') or re.search(r'[a-z][A-Z]', w)))
+    return {m.strip('.') for m in ms}
+
+
+def rank(files, issue, k=15, alpha=0.3, iters=30, include_tests=False):
+    issue = re.sub(r'<!--.*?-->', ' ', issue, flags=re.S)
+    nodes, meta, edges = build(files)
+    idx = {n: i for i, n in enumerate(nodes)}
+    cand = [i for i, n in enumerate(nodes) if meta[n][2] != 'module' and (include_tests or not TEST_RE.search(meta[n][0]))]
+    q = tokenize(issue)
+    sc = bm25([tokenize(nodes[i].replace('.', ' ') + ' ' + meta[nodes[i]][3]) for i in cand], q)
+    s_bm = {i: s for i, s in zip(cand, sc) if s > 0}
+    r_bm = sorted(s_bm, key=lambda i: -s_bm[i])
+    # seeds: symbols named in the issue (exact / suffix / case-insensitive match, <=5 matches) + BM25 top-5
+    seeds = collections.Counter()
+    lower = collections.defaultdict(list)
+    for n in nodes:
+        lower[n.rpartition('.')[2].lower()].append(n)
+    anchors = set()
+    for m in mentions(issue):
+        hits = [m] if m in idx else [n for n in nodes if n.endswith('.' + m)] or lower.get(m.lower(), [])
+        if 1 <= len(hits) <= 5:
+            anchors.update(hits)
+    for a in anchors:
+        seeds[idx[a]] += 0.5 / len(anchors)
+    top = r_bm[:5]
+    mass = 0.5 if anchors else 1.0
+    z = sum(1.0 / (r + 1) for r in range(len(top)))
+    for r, i in enumerate(top):
+        seeds[i] += mass * (1.0 / (r + 1)) / z
+    adj = collections.defaultdict(set)
+    for s, t in edges:
+        if s in idx and t in idx and s != t:
+            adj[idx[s]].add(idx[t]); adj[idx[t]].add(idx[s])
+    x = dict(seeds)
+    for _ in range(iters if seeds else 0):
+        nx = collections.defaultdict(float)
+        for i, v in x.items():
+            nb = adj.get(i)
+            if nb:
+                share = (1 - alpha) * v / len(nb)
+                for j in nb:
+                    nx[j] += share
+        for i, v in seeds.items():
+            nx[i] += alpha * v
+        x = nx
+    candset = set(cand)
+    r_ppr = sorted((i for i in x if i in candset and x[i] > 0), key=lambda i: -x[i])
+    fused = collections.defaultdict(float)
+    for rk in (r_bm, r_ppr):
+        for r, i in enumerate(rk):
+            fused[i] += 1.0 / (61 + r)
+    order = sorted(fused, key=lambda i: -fused[i])[:k]
+    return [(nodes[i], meta[nodes[i]][0], meta[nodes[i]][1], round(fused[i], 5)) for i in order]
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__.split('\n')[0])
+    ap.add_argument('--root', default='.')
+    ap.add_argument('--issue')
+    ap.add_argument('--issue-file')
+    ap.add_argument('--k', type=int, default=15)
+    ap.add_argument('--include-tests', action='store_true')
+    a = ap.parse_args()
+    issue = a.issue or (open(a.issue_file, encoding='utf-8', errors='replace').read() if a.issue_file else sys.stdin.read())
+    for r, (nid, path, line, s) in enumerate(rank(read_repo(a.root), issue, k=a.k, include_tests=a.include_tests), 1):
+        print(f'{r:>2}  {s:.4f}  {path}:{line}  {nid}')
+
+
+if __name__ == '__main__':
+    main()
+
+
+# CELL 13 code
+%%writefile /kaggle/working/skills/graph_localize/SKILL.md
+---
+name: graph-localize
+description: Rank the functions, methods and classes most likely to need a change for the current issue (BM25 + personalized PageRank over an AST-built code graph that, unlike the provided graph, includes async definitions and containment/import edges). Run it before reading files.
+---
+# graph-localize
+
+Offline, stdlib-only issue-to-code localizer (Python >= 3.8, no network, ~1-5 s on repositories with ~1k files).
+
+Usage (from the repository root, e.g. /workspace):
+
+    printf '%s' "<issue text>" > /tmp/issue.txt
+    python scripts/localize.py --root /workspace --issue-file /tmp/issue.txt --k 15
+
+Output: one line per candidate, `rank score path:line qualified.name`, most likely first.
+
+How to use the output:
+1. Read the top 3-5 entries with read_file (use the printed line numbers).
+2. Candidates below rank ~10 are low precision; prefer reading further down this list over expanding graph neighbours (in our study, lexical depth beat 1-hop graph expansion at equal inspection budget).
+3. The provided graph tools (get_code_neighbors, search_similar_code) omit every async def; do not conclude that an async function does not exist because the graph tools cannot find it.
+4. Keep scratch files in /tmp so they do not leak into the patch.
+
+
+# CELL 14 code
+%%writefile /kaggle/working/exp_skill.py
+"""Evaluate the stdlib-only graph-localize skill (localize.py) on the 129 public tasks."""
+import json, os, sys, time
+import numpy as np
+sys.path.insert(0, os.environ.get('GL_CODE', '/kaggle/working'))
+import graphloc as G
+sys.path.insert(0, '/kaggle/working/skills/graph_localize/scripts')
+import localize as L
+
+OUT = os.environ.get('GL_OUT', '/kaggle/working/results')
+NSH = int(os.environ.get('NSHARDS', 1)); SH = int(os.environ.get('SHARD', 0))
+tasks = G.load_tasks()[SH::NSH]
+with open(f'{OUT}/skill_{SH}.jsonl', 'w') as f:
+    for t in tasks:
+        files = G.load_snapshot_py(t['instance_id'])
+        mm = {p: L.module_name(p) for p in files}
+        gold = G.gold_labels(t, files, mm)
+        gs, gf = set(gold['symbols']), set(gold['gold_files'])
+        t0 = time.time()
+        res = L.rank(files, t['problem_statement'] + '\n' + (t.get('hints_text') or ''), k=50)
+        dt = time.time() - t0
+        ids = [r[0] for r in res]
+        fl = []
+        for r in res:
+            if r[1] not in fl:
+                fl.append(r[1])
+        row = {'id': t['instance_id'], 'n_gold': len(gs), 'rank': G.first_hit_rank(ids, gs), 'file_rank': G.first_hit_rank(fl, gf), 'secs': round(dt, 2), 'n_files': len(files)}
+        f.write(json.dumps(row) + '\n'); f.flush()
+        print(row, flush=True)
+
+
+# CELL 15 code
+%%writefile /kaggle/working/agg_main.py
+"""Aggregate main.jsonl rows into the paper's tables (prints compact text + writes summary.json)."""
+import json, glob, os, sys, collections
+import numpy as np
+
+OUT = os.environ.get('GL_OUT', '/kaggle/working/results')
+PAT = os.environ.get('PAT', 'main_*.jsonl')
+rows = []
+for p in sorted(glob.glob(f'{OUT}/{PAT}')):
+    rows += [json.loads(l) for l in open(p)]
+rows = [r for r in rows if 'error' not in r]
+rows.sort(key=lambda r: r['id'])
+rng = np.random.default_rng(0)
+S = {'n_tasks': len(rows)}
+
+
+def hit(rank, k):
+    return rank is not None and rank <= k
+
+
+def mrr(rank):
+    return 0.0 if rank is None else 1.0 / rank
+
+
+def table(sub, key, methods, ks=(1, 5, 10)):
+    out = {}
+    for m in methods:
+        rk = [r[key].get(m) for r in sub]
+        out[m] = {f'H@{k}': round(float(np.mean([hit(x, k) for x in rk])), 3) for k in ks}
+        out[m]['MRR'] = round(float(np.mean([mrr(x) for x in rk])), 3)
+    return out
+
+
+def paired_boot(sub, key, a, b, k, B=2000):
+    xa = np.array([hit(r[key].get(a), k) for r in sub], float)
+    xb = np.array([hit(r[key].get(b), k) for r in sub], float)
+    d = xb - xa
+    bs = [d[rng.integers(0, len(d), len(d))].mean() for _ in range(B)]
+    only_a, only_b = int(((xa == 1) & (xb == 0)).sum()), int(((xa == 0) & (xb == 1)).sum())
+    return {'delta': round(float(d.mean()), 3), 'ci95': [round(float(np.percentile(bs, 2.5)), 3), round(float(np.percentile(bs, 97.5)), 3)],
+            'only_a': only_a, 'only_b': only_b}
+
+
+# ------------------------------------------------ labels & coverage
+cat = collections.Counter(); cat_in0 = collections.Counter(); cat_inp = collections.Counter()
+tf = [r for r in rows if r['gold_symbols']]
+for r in rows:
+    for s, v in r['gold_symbols'].items():
+        cat[v['cat']] += 1; cat_in0[v['cat']] += v['in_g0']; cat_inp[v['cat']] += v['in_gp']
+S['labels'] = {
+    'tasks_with_gold_file': sum(bool(r['gold_files']) for r in rows),
+    'tasks_new_file_only': sum((not r['gold_files']) and bool(r['new_files']) for r in rows),
+    'tasks_with_symbol_gold': len(tf),
+    'gold_files_per_task_mean': round(float(np.mean([len(r['gold_files']) for r in rows if r['gold_files']])), 2),
+    'gold_symbols_per_task_mean': round(float(np.mean([len(r['gold_symbols']) for r in tf])), 2),
+    'symbols_by_cat': dict(cat), 'in_g0_by_cat': dict(cat_in0), 'in_gp_by_cat': dict(cat_inp),
+    'tasks_any_gold_in_g0': sum(any(v['in_g0'] for v in r['gold_symbols'].values()) for r in tf),
+    'tasks_all_gold_in_g0': sum(all(v['in_g0'] for v in r['gold_symbols'].values()) for r in tf),
+    'tasks_any_async_gold': sum(any(v['cat'] == 'async' for v in r['gold_symbols'].values()) for r in tf),
+    'tasks_any_gold_in_gp': sum(any(v['in_gp'] for v in r['gold_symbols'].values()) for r in tf),
+    'tasks_with_new_symbols': sum(bool(r['new_symbols']) for r in rows),
+    'tasks_nonpy_edits': sum(bool(r['nonpy_files']) for r in rows),
+}
+by_repo = collections.defaultdict(list)
+for r in tf:
+    by_repo[r['repo']].append(r)
+S['labels']['by_repo'] = {k: {'n': len(v), 'any_in_g0': sum(any(x['in_g0'] for x in r['gold_symbols'].values()) for r in v),
+                               'any_async': sum(any(x['cat'] == 'async' for x in r['gold_symbols'].values()) for r in v)} for k, v in by_repo.items()}
+# ------------------------------------------------ graph sizes
+S['graph'] = {'g0_nodes_mean': round(float(np.mean([r['n_nodes_g0'] for r in rows])), 1),
+              'g0_edges_mean': round(float(np.mean([r['n_edges_g0'] for r in rows])), 1),
+              'gp_nodes_mean': round(float(np.mean([r['n_nodes_gp'] for r in rows])), 1),
+              'gp_edges_mean': round(float(np.mean([r['n_edges_gp'] for r in rows])), 1),
+              'cand_g0_mean': round(float(np.mean([r['n_cand_g0'] for r in rows])), 1),
+              'cand_gp_mean': round(float(np.mean([r['n_cand_gp'] for r in rows])), 1)}
+# ------------------------------------------------ anchors & tool simulation
+S['anchors'] = {
+    'tasks_with_mentions': sum(r['n_mentions'] > 0 for r in rows),
+    'tasks_with_any_resolution': sum(any(int(k) >= 1 for k in r['anchor_tiers_g0']) for r in rows),
+    'tasks_with_seeds_g0': sum(bool(r['seeds_g0']) for r in rows),
+    'tasks_with_seeds_gp': sum(bool(r['seeds_gp']) for r in rows),
+    'tier_counts': dict(sum((collections.Counter(r['anchor_tiers_g0']) for r in rows), collections.Counter())),
+}
+S['tool_sim'] = {k: sum(r['tool_sim'][k] for r in tf) for k in ('anchor_only', 'neighbors', 'similar', 'both')}
+S['tool_sim']['n_tasks'] = len(tf)
+S['tool_sim']['mean_calls'] = round(float(np.mean([r['tool_sim']['n_calls'] for r in tf])), 1)
+hops0 = collections.Counter(r['hops_g0'] for r in tf)
+hopsp = collections.Counter(r['hops_gp'] for r in tf)
+S['hops'] = {'g0': {str(k): v for k, v in sorted(hops0.items(), key=lambda kv: (kv[0] is None, kv[0] or 0))},
+             'gp': {str(k): v for k, v in sorted(hopsp.items(), key=lambda kv: (kv[0] is None, kv[0] or 0))}}
+# ------------------------------------------------ retrieval
+M = ['bm25_g0', 'emb_g0', 'ppr_g0', 'fuse_g0', 'bm25_gp', 'ppr_gp', 'fuse_gp', 'fuse_gp_emb']
+S['func_all'] = table(tf, 'rank', M)
+tf0 = [r for r in tf if any(v['in_g0'] for v in r['gold_symbols'].values())]
+S['func_g0_representable'] = {'n': len(tf0), **table(tf0, 'rank', M)}
+tff = [r for r in rows if r['gold_files']]
+S['file'] = {'n': len(tff), **table(tff, 'file_rank', M + ['file_bm25', 'fuse_file'])}
+S['by_repo_func_H5'] = {repo: {m: round(float(np.mean([hit(r['rank'].get(m), 5) for r in v])), 3) for m in ('bm25_g0', 'fuse_g0', 'bm25_gp', 'fuse_gp')} | {'n': len(v)} for repo, v in by_repo.items()}
+S['tests'] = {
+    'func_H5_bm25_g0_vs_fuse_gp': paired_boot(tf, 'rank', 'bm25_g0', 'fuse_gp', 5),
+    'func_H10_bm25_g0_vs_fuse_gp': paired_boot(tf, 'rank', 'bm25_g0', 'fuse_gp', 10),
+    'func_H5_fuse_g0_vs_fuse_gp': paired_boot(tf, 'rank', 'fuse_g0', 'fuse_gp', 5),
+    'func_H5_bm25_gp_vs_fuse_gp': paired_boot(tf, 'rank', 'bm25_gp', 'fuse_gp', 5),
+    'func_H5_bm25_g0_vs_bm25_gp': paired_boot(tf, 'rank', 'bm25_g0', 'bm25_gp', 5),
+    'func_H5_bm25_g0_vs_fuse_g0': paired_boot(tf, 'rank', 'bm25_g0', 'fuse_g0', 5),
+    'file_H1_file_bm25_vs_fuse_gp': paired_boot(tff, 'file_rank', 'file_bm25', 'fuse_gp', 1),
+    'file_H5_file_bm25_vs_fuse_gp': paired_boot(tff, 'file_rank', 'file_bm25', 'fuse_gp', 5),
+}
+json.dump(S, open(f'{OUT}/summary_{PAT.split("_")[0].replace("*", "")}.json', 'w'), indent=1)
+print(json.dumps(S, separators=(',', ':')))
+
+
+# CELL 16 code
+%%writefile /kaggle/working/agg_more.py
+"""Aggregate variants_*.jsonl (dev study) and swebench_*.jsonl (transfer) into compact JSON."""
+import glob, json, os, collections
+import numpy as np
+
+OUT = os.environ.get('GL_OUT', '/kaggle/working/results')
+rng = np.random.default_rng(0)
+
+
+def load(pat):
+    rows = []
+    for p in sorted(glob.glob(f'{OUT}/{pat}')):
+        rows += [json.loads(l) for l in open(p)]
+    return [r for r in rows if 'error' not in r], [r for r in rows if 'error' in r]
+
+
+def hit(x, k):
+    return x is not None and x <= k
+
+
+def tab(rows, key, methods):
+    out = {}
+    for m in methods:
+        v = [r[key].get(m) for r in rows]
+        out[m] = [round(float(np.mean([hit(x, k) for x in v])), 3) for k in (1, 5, 10)] + [round(float(np.mean([0 if x is None else 1 / x for x in v])), 3)]
+    return out
+
+
+def boot(rows, key, a, b, k, B=2000):
+    xa = np.array([hit(r[key].get(a), k) for r in rows], float); xb = np.array([hit(r[key].get(b), k) for r in rows], float)
+    d = xb - xa
+    bs = [d[rng.integers(0, len(d), len(d))].mean() for _ in range(B)]
+    return [round(float(d.mean()), 3), round(float(np.percentile(bs, 2.5)), 3), round(float(np.percentile(bs, 97.5)), 3), int(((xa == 1) & (xb == 0)).sum()), int(((xa == 0) & (xb == 1)).sum())]
+
+
+S = {}
+V, Ve = load('variants_*.jsonl')
+if V:
+    Vf = [r for r in V if r['gold_n']]
+    M = list(V[0]['rank_gp'].keys())
+    S['variants'] = {'n': len(Vf), 'errors': len(Ve), 'fields': 'H@1,H@5,H@10,MRR',
+                     'g0': tab(Vf, 'rank_g0', M), 'gp': tab(Vf, 'rank_gp', M),
+                     'file_g0': tab(V, 'file_g0', M), 'file_gp': tab(V, 'file_gp', M)}
+    nav = {}
+    for g in ('nav_g0', 'nav_gp'):
+        nav[g] = {k: round(float(np.mean([bool(r[g].get(k)) for r in Vf])), 3) for k in ('n0_top1', 'n1_top1', 'n0_top5', 'n1_top5', 'n2_top5', 'n0_top10', 'n1_top10', 'bridge_n1', 'bridge_n2')}
+        nav[g]['pool1_top5_mean'] = round(float(np.mean([r[g].get('pool1_top5', 0) for r in Vf])), 1)
+        nav[g]['pool1_top5_median'] = float(np.median([r[g].get('pool1_top5', 0) for r in Vf]))
+        nav[g]['pool2_top5_median'] = float(np.median([r[g].get('pool2_top5', 0) for r in Vf]))
+        rk = 'rank_' + g[4:]
+        nav[g]['bm25_same_budget_as_n1_top5'] = round(float(np.mean([hit(r[rk].get('bm25'), r[g].get('pool1_top5', 0)) for r in Vf])), 3)
+        nav[g]['bm25_same_budget_as_n2_top5'] = round(float(np.mean([hit(r[rk].get('bm25'), r[g].get('pool2_top5', 0)) for r in Vf])), 3)
+    S['nav'] = nav
+    S['variants_tests'] = {f'gp_{a}_vs_{b}@{k}': boot(Vf, 'rank_gp', a, b, k) for a, b, k in
+                           [('bm25', 'fuse_bm25_bridge', 5), ('bm25', 'fuse_all', 5), ('bm25', 'sum3', 5), ('bm25', 'sum3', 1), ('bm25', 'sum3', 10), ('bm25', 'fuse_all', 10), ('bm25', 'bridge', 5)]}
+W, We = load('swebench_[0-9].jsonl')
+if W:
+    Wf = [r for r in W if r['gold_symbols']]
+    M = list(W[0]['rank'].keys())
+    S['swebench'] = {'n': len(W), 'n_func': len(Wf), 'errors': len(We), 'err_sample': [e['error'][:120] for e in We[:3]],
+                     'func': tab(Wf, 'rank', M), 'file': tab([r for r in W if r['gold_files']], 'file_rank', list(W[0]['file_rank'].keys())),
+                     'async_tasks': sum(r['async_gold'] > 0 for r in W),
+                     'seeded': sum(r['n_seeds'] > 0 for r in W),
+                     'hops': dict(collections.Counter(str(r['hops']) for r in Wf)),
+                     'by_repo_H5': {rp: {m: round(float(np.mean([hit(r['rank'].get(m), 5) for r in Wf if r['repo'] == rp])), 3) for m in ('bm25', 'fuse')} | {'n': sum(r['repo'] == rp for r in Wf)} for rp in sorted({r['repo'] for r in Wf})},
+                     'tests': {f'{a}_vs_{b}@{k}': boot(Wf, 'rank', a, b, k) for a, b, k in [('bm25', 'fuse', 1), ('bm25', 'fuse', 5), ('bm25', 'fuse', 10), ('bm25', 'ppr', 5), ('fuse_contains_only', 'fuse', 5)]}}
+json.dump(S, open(f'{OUT}/summary_more.json', 'w'), indent=1)
+print(json.dumps(S, separators=(',', ':')))
+
+
+# CELL 17 code
+%%writefile /kaggle/working/export_labels.py
+"""Export GraphLoc-129: function/file-level localization labels for the 129 public tasks."""
+import glob, json, os, sys
+sys.path.insert(0, os.environ.get('GL_CODE', '/kaggle/working'))
+import graphloc as G
+OUT = os.environ.get('GL_OUT', '/kaggle/working/results')
+tasks = {t['instance_id']: t for t in G.load_tasks()}
+rows = [json.loads(l) for p in sorted(glob.glob(f'{OUT}/main_*.jsonl')) for l in open(p)]
+rows = sorted((r for r in rows if 'error' not in r), key=lambda r: r['id'])
+with open('/kaggle/working/graphloc129_labels.jsonl', 'w') as f:
+    for r in rows:
+        t = tasks[r['id']]
+        f.write(json.dumps({
+            'instance_id': r['id'], 'repo': r['repo'], 'base_commit': t['base_commit'],
+            'gold_files': r['gold_files'], 'new_files': r['new_files'],
+            'gold_symbols': [{'id': s, 'kind': v['cat'], 'in_provided_graph': v['in_g0'], 'in_repaired_graph': v['in_gp']}
+                             for s, v in sorted(r['gold_symbols'].items())],
+            'new_symbols': r['new_symbols'], 'module_level_changed_lines': r['module_level_lines'],
+            'import_changed_lines': r['import_only_lines'], 'issue_symbol_mentions': r['mentions'],
+            'anchors_provided_graph': r['seeds_g0'], 'anchor_to_gold_hops_provided': r['hops_g0'],
+            'anchor_to_gold_hops_repaired': r['hops_gp']}) + '\n')
+print('wrote', len(rows), 'labels')
+
+
+# CELL 18 code
+%%writefile /kaggle/working/report.py
+"""Print the paper's tables from the result files (markdown) and draw two figures."""
+import glob, json, os, collections
+import numpy as np
+OUT = os.environ.get('GL_OUT', '/kaggle/working/results')
+J = lambda p: json.load(open(f'{OUT}/{p}'))
+S, M = J('summary_main.json'), J('summary_more.json')
+A = [json.loads(l) for l in open(f'{OUT}/anatomy.jsonl')]
+E = [json.loads(l) for l in open(f'{OUT}/emb_probe.jsonl')]
+E2, E3, E4 = J('emb_probe2.json'), J('emb_probe3.json'), J('emb_probe4.json')
+print('## Table 1: provided graph anatomy (mean over commit snapshots)')
+print('| repo | graphs | nodes | undirected edges | isolated | lib async defs present |')
+print('|---|---|---|---|---|---|')
+by = collections.defaultdict(list)
+for r in A:
+    by[r['repo']].append(r)
+for k, v in sorted(by.items()):
+    print(f"| {k} | {len(v)} | {np.mean([r['nodes'] for r in v]):.0f} | {np.mean([r['undirected_edges'] for r in v]):.0f} | {np.mean([r['isolated']/r['nodes'] for r in v]):.1%} | {sum(r['counts'].get('lib_async_in',0) for r in v)}/{sum(r['counts'].get('lib_async_n',0) for r in v)} |")
+tot = collections.Counter()
+for r in A:
+    tot.update(r['counts'])
+print('reciprocal edge fraction', np.mean([r['reciprocal_edges']/max(r['raw_edges'],1) for r in A]).round(3),
+      '| containment-like', np.mean([r['contain_like_edges']/max(r['raw_edges'],1) for r in A]).round(3),
+      '| self-loops/graph', np.mean([r['self_loops'] for r in A]).round(1), '| module nodes', sum(r['module_nodes'] for r in A),
+      '| collisions/graph', np.mean([r['flat_collisions'] for r in A]).round(1))
+print('coverage lib func', tot['lib_func_in'], '/', tot['lib_func_n'], '| lib class', tot['lib_class_in'], '/', tot['lib_class_n'],
+      '| nested exact', tot['lib_nested_exact'], '/', tot['lib_nested_n'], '| nested flattened', tot['lib_nested_flat_mod'] + tot['lib_nested_flat_cls'])
+print('\n## Embedding probe')
+f = lambda k: np.nanmean([r[k] for r in E if r.get(k) is not None])
+print(f"eff_rank {f('eff_rank'):.2f} | mean random cos {f('mean_rand_cos'):.3f} | rho(text) {f('rho_text'):.3f} | kocc skew {f('kocc_skew'):.2f}")
+for k in E[0]['agree']:
+    print(f"kNN@10 {k}: {np.mean([r['agree'][k] for r in E]):.3f} vs random {np.mean([r['rand'][k] for r in E]):.4f}")
+print(json.dumps(E2)); print(json.dumps(E3)); print(json.dumps(E4['counts']))
+print('\n## Retrieval (function level) H@1/H@5/H@10/MRR, n =', S['labels']['tasks_with_symbol_gold'])
+for m, v in S['func_all'].items():
+    print(f"| {m} | {v['H@1']:.3f} | {v['H@5']:.3f} | {v['H@10']:.3f} | {v['MRR']:.3f} |")
+print('file level'); [print(f"| {m} | {v['H@1']:.3f} | {v['H@5']:.3f} | {v['H@10']:.3f} | {v['MRR']:.3f} |") for m, v in S['file'].items() if m != 'n']
+print('labels', json.dumps(S['labels'])); print('anchors', json.dumps(S['anchors'])); print('tool_sim', json.dumps(S['tool_sim'])); print('hops', json.dumps(S['hops']))
+print('tests', json.dumps(S['tests']))
+print('\n## Variants / navigability'); print(json.dumps(M.get('variants', {}).get('gp'))); print(json.dumps(M.get('nav'))); print(json.dumps(M.get('variants_tests')))
+print('\n## SWE-bench Lite'); print(json.dumps(M.get('swebench')))
+sk = [json.loads(l) for p in glob.glob(f'{OUT}/skill_*.jsonl') for l in open(p)]
+sk = [r for r in sk if r['n_gold']]
+if sk:
+    h = lambda k: np.mean([r['rank'] is not None and r['rank'] <= k for r in sk])
+    print(f"\n## graph-localize skill: n={len(sk)} H@1 {h(1):.3f} H@5 {h(5):.3f} H@10 {h(10):.3f} median secs {np.median([r['secs'] for r in sk]):.2f} max {max(r['secs'] for r in sk):.2f}")
+try:
+    import matplotlib; matplotlib.use('Agg'); import matplotlib.pyplot as plt
+    os.makedirs('/kaggle/working/figures', exist_ok=True)
+    ms = ['bm25_g0', 'emb_g0', 'fuse_g0', 'bm25_gp', 'fuse_gp']
+    fig, ax = plt.subplots(figsize=(7, 3.2))
+    for j, k in enumerate(['H@1', 'H@5', 'H@10']):
+        ax.bar(np.arange(len(ms)) + (j - 1) * 0.27, [S['func_all'][m][k] for m in ms], 0.27, label=k)
+    ax.set_xticks(range(len(ms))); ax.set_xticklabels(ms); ax.set_ylabel('tasks with a gold function in top-k'); ax.legend(frameon=False)
+    fig.tight_layout(); fig.savefig('/kaggle/working/figures/retrieval.png', dpi=160)
+    V = [json.loads(l) for p in glob.glob(f'{OUT}/variants_*.jsonl') for l in open(p)]
+    V = [r for r in V if 'error' not in r and r['gold_n']]
+    fig, ax = plt.subplots(figsize=(6, 3.4))
+    ks = np.arange(1, 151)
+    for g, lab in (('gp', 'G+'), ('g0', 'G0')):
+        rk = [r['rank_' + g]['bm25'] for r in V]
+        curve = [np.mean([x is not None and x <= k for x in rk]) for k in ks]
+        print(f'bm25 {lab} recall@k', {int(k): round(float(curve[k - 1]), 3) for k in (1, 5, 10, 20, 30, 50, 75, 100, 150)})
+        ax.plot(ks, curve, label=f'BM25 list ({lab})')
+        for hop in (1, 2):
+            px = np.median([r['nav_' + g].get(f'pool{hop}_top5', 0) for r in V])
+            py = np.mean([bool(r['nav_' + g].get(f'n{hop}_top5')) for r in V])
+            print(f'{lab} top5+{hop}hop: median pool {px}, recall {py:.3f}')
+            ax.scatter([px], [py], marker='o' if hop == 1 else 's', label=f'top-5 + {hop}-hop ({lab})')
+    ax.set_xscale('log'); ax.set_xlabel('candidates inspected'); ax.set_ylabel('tasks with a gold function found'); ax.legend(frameon=False, fontsize=7)
+    fig.tight_layout(); fig.savefig('/kaggle/working/figures/budget.png', dpi=160)
+except Exception as e:
+    print('figure failed', e)
+
+
+# CELL 19 code
+# checksums of the code written above (for provenance)
+import hashlib, glob
+for p in sorted(glob.glob('/kaggle/working/*.py') + glob.glob('/kaggle/working/skills/graph_localize/scripts/*.py') + ['/kaggle/working/skills/graph_localize/SKILL.md']):
+    print(hashlib.md5(open(p, 'rb').read()).hexdigest(), p)
+
+# CELL 20 code
+# Run the whole pipeline (4 CPUs, ~1 h). Logs: /kaggle/working/results/log_*.txt
+import subprocess, time
+W = '/kaggle/working'
+t0 = time.time()
+
+def launch(jobs):
+    ps = [(n, subprocess.Popen(c, shell=True, cwd=W, stdout=open(f'{W}/results/log_{n}.txt', 'w'), stderr=subprocess.STDOUT)) for n, c in jobs]
+    for n, p in ps:
+        p.wait(); print(f'{n}: exit {p.returncode} ({time.time() - t0:.0f}s)', flush=True)
+
+# 1) GraphLoc-129 labels + main localization study (4 shards); SWE-bench Lite is fetched meanwhile
+launch([(f'main{s}', f'NSHARDS=4 SHARD={s} OUTNAME=main_{s} FRESH=1 python exp_main.py') for s in range(4)] + [('prep_swebench', 'python prep_swebench.py')])
+# 2) graph anatomy, embedding probes, dev-set variants, SWE-bench Lite transfer, skill evaluation
+launch([('anatomy', 'python exp_anatomy.py'), ('emb', 'python exp_emb.py'), ('emb234', 'python exp_emb2.py && python exp_emb3.py && python exp_emb4.py'),
+        ('var0', 'NSHARDS=2 SHARD=0 python exp_variants.py'), ('var1', 'NSHARDS=2 SHARD=1 python exp_variants.py'), ('skill', 'python exp_skill.py')]
+       + [(f'swe{s}', f'NSHARDS=4 SHARD={s} python exp_swebench.py') for s in range(4)])
+# 3) aggregate + export labels
+launch([('agg', 'python agg_main.py > results/summary_main.txt && python agg_more.py > results/summary_more.txt && python export_labels.py')])
+print('total', round(time.time() - t0), 's')
+
+# CELL 21 code
+# Tables and figures used in the paper
+print(subprocess.run('cd /kaggle/working && python report.py', shell=True, capture_output=True, text=True).stdout)
+from IPython.display import Image, display
+for f in ['retrieval.png', 'budget.png']:
+    display(Image(f'/kaggle/working/figures/{f}'))
+# keep the output small: drop caches, keep results/, labels, skill and figures
+subprocess.run('rm -rf /kaggle/working/snapcache /kaggle/working/repos', shell=True)
+print(subprocess.run('du -sh /kaggle/working/*; wc -l /kaggle/working/graphloc129_labels.jsonl', shell=True, capture_output=True, text=True).stdout)

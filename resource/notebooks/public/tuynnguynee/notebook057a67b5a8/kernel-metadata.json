@@ -1,0 +1,24 @@
+{
+  "id": "tuynnguynee/notebook057a67b5a8",
+  "id_no": 135658387,
+  "title": "notebook057a67b5a8",
+  "code_file": "notebook057a67b5a8.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": false,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "enable_internet": false,
+  "keywords": [],
+  "dataset_sources": [
+    "",
+    "tuyennguyen21pt/dataset-apc"
+  ],
+  "kernel_sources": [],
+  "competition_sources": [
+    "gemma-4-developer-agent"
+  ],
+  "model_sources": [],
+  "docker_image": "",
+  "machine_shape": "NvidiaL4"
+}

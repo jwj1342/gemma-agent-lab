@@ -1,0 +1,19 @@
+# Local eval with docker sandbox, Error Module not found
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743566
+
+## 3528582 /bharat0 TOPIC
+I'm trying to run the swegemma eval in local. I'm using ollama(cloud) for inference.
+I've created the docker image using the Dockefile.public
+
+`docker build -t swebench-sandbox:latest -f Dockerfile.public .`
+
+When I ran the eval, for fastapi tasks it is giving 
+
+`ModuleNotFoundError: No module named 'typing_inspection'`
+
+and the whl is not there for typing_inspection. So I've to add the wheels manually and run it.
+
+Did anyone face the same issue?
+
+
+

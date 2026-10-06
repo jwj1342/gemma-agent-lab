@@ -1,0 +1,100 @@
+{
+  "forumTopic": {
+    "authorId": 29236084,
+    "authorThumbnailName": "default-thumb.png",
+    "authorUserDisplayName": "Hitesh Kumar",
+    "authorUserName": "erhiteshkumar",
+    "comments": [
+      {
+        "id": 3530082,
+        "postDate": "2026-09-29T14:04:39.260Z",
+        "rawMarkdown": "There are ~120 tasks in the test set, or about 60 in each of the public and private splits. They are scored during the same 12-hour run.",
+        "content": "<p>There are ~120 tasks in the test set, or about 60 in each of the public and private splits. They are scored during the same 12-hour run.</p>",
+        "parent": {},
+        "author": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "progressionOptOut": false
+        },
+        "authorType": "ADMIN",
+        "votes": {
+          "totalVotes": 2,
+          "canUpvote": true,
+          "totalUpvotes": 2
+        },
+        "kernelVersion": 0,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Ryan Holbrook",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+            "url": "/ryanholbrook",
+            "userName": "ryanholbrook",
+            "tier": "STAFF",
+            "id": 2003505,
+            "profileUrl": "/ryanholbrook",
+            "performanceTier": "STAFF",
+            "userId": 2003505,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3529882,
+      "postDate": "2026-09-29T05:46:51.417Z",
+      "rawMarkdown": "Hi @elanlearns,\nI have following query related to scoring. \nDoes one scoring run cover both hidden partitions (~240 tasks) within the 12-hour window, or is each partition a separate run? It decides the safe per-task time limit: about 4.5 minutes for 120 tasks, 2 minutes for 240. ",
+      "content": "<p>Hi <a href=\"/elanlearns\" target=\"_blank\">@elanlearns</a>,\nI have following query related to scoring. \nDoes one scoring run cover both hidden partitions (~240 tasks) within the 12-hour window, or is each partition a separate run? It decides the safe per-task time limit: about 4.5 minutes for 120 tasks, 2 minutes for 240. </p>",
+      "parent": {},
+      "author": {
+        "displayName": "Hitesh Kumar",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+        "url": "/erhiteshkumar",
+        "tier": "CONTRIBUTOR",
+        "id": 29236084,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "canUpvote": true
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 615,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Hitesh Kumar",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/erhiteshkumar",
+          "userName": "erhiteshkumar",
+          "tier": "CONTRIBUTOR",
+          "id": 29236084,
+          "profileUrl": "/erhiteshkumar",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 29236084,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3529882,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 744258,
+    "name": "Does one scoring run cover both hidden partitions (~240 tasks) in the 12-hour window?",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-29T05:46:51.416259900Z",
+    "url": "/competitions/gemma-4-developer-agent/discussion/744258",
+    "totalMessages": 1,
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

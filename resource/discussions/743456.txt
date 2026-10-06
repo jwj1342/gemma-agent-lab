@@ -1,0 +1,5 @@
+# Does events compaction ever trigger before the context limit?
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743456
+
+## 3528441 /narendarkumarale TOPIC
+Hi team, quick question on HARNESS_README §7.2 — EventsCompactionConfig sets token_threshold = 32,768, which matches max_model_len. Since every request already has to fit prompt + max_output_tokens inside that same 32,768-token window, is there a code path where compaction fires before a session hits ContextWindowExceededError? Or is the threshold measured against something narrower (e.g. just the events history, not the full request)? Trying to understand whether long agent sessions are expected to self-compact or just need to stay well under the limit on their own. Thanks!

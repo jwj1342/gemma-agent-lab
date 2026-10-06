@@ -1,0 +1,22 @@
+# Rules: Only LORA allowed?
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743383
+
+## 3528312 /vladradd TOPIC
+Hello! I was curious whether the rules allow only LoRA adapters, or whether we can use other methods as long as the base model is the correct one?
+
+thanks
+
+## 3528316 /ryanholbrook ADMIN
+Our evaluation system in this competition is only able to accept LoRA adapters.
+
+## 3528317 /vladradd TOPIC
+So If I pre-train and post-train a 120B coder variant of gemma 4 you would not allow it into the competition? 
+
+## 3528363 /mjustinscott COMMENT
+I'm a competitor but here are the [Gemma Docs](https://ai.google.dev/gemma/docs/tune) on tuning. Using Lora with swappable heads is likely the best path. 
+
+## 3528430 /vladradd TOPIC
+I have my own methods ive been working on for about a year now. I can provide weights.
+
+## 3528749 /ryanholbrook ADMIN
+It's not against the rules per se, it's just that our system isn't configured to run it. For one, we don't have the GPUs. The system is configured to accept LoRA adapters, so if you tried to submit it, the script would just throw an error. We chose to accept LoRA adapters to allow some amount of finetuning while also keeping submission file sizes moderate and for being more accessible under the hardware people are likely to have access to.

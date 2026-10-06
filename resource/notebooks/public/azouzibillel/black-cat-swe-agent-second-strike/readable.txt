@@ -1,0 +1,47 @@
+# CELL 0 code
+import os, shutil, zipfile
+
+# تنظيف
+for p in ["/kaggle/working/submission.zip", "agent_build"]:
+    if os.path.exists(p):
+        shutil.rmtree(p) if os.path.isdir(p) else os.remove(p)
+os.makedirs("agent_build", exist_ok=True)
+
+agent_yaml = """name: nour-medea-blackcat
+model: gemma-4-31b-it-qat-w4a16-ct
+description: One focused agent from Medea - Algeria
+instruction: |
+  You are an expert SWE agent from Medea, Algeria.
+  Use get_code_neighbors, fix bug, verify with run_command, then MUST call submit_patch.
+tools:
+    - name: run_command
+    - name: submit_patch
+    - name: get_status
+    - name: read_file
+    - name: edit_file
+    - name: write_file
+    - name: get_code_neighbors
+    - name: search_similar_code
+    - name: get_code_subgraph
+"""
+
+open("agent_build/agent.yaml", "w", encoding="utf-8").write(agent_yaml)
+shutil.make_archive("/kaggle/working/submission", 'zip', 'agent_build')
+
+print("✅ واجد باسمك!")
+
+# CELL 1 code
+MODEL_ID = "google/gemma/pyTorch/2b-it"
+
+
+# CELL 2 code
+import os
+
+file_path = "submission.json"
+if os.path.exists(file_path):
+    file_size = os.path.getsize(file_path)
+    print(f"الملف موجود وجاهز للتحميل.")
+    print(f"حجم الملف: {file_size} بايت")
+else:
+    print("الملف غير موجود، تأكد من تشغيل خلية التوليد أولاً.")
+    

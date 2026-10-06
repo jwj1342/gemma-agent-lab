@@ -1,0 +1,21 @@
+{
+  "checked_at": "2026-10-05T18:30:44.022909+00:00",
+  "competition": "gemma-4-developer-agent",
+  "submission": {
+    "ref": 56844353,
+    "file_name": "submission.zip",
+    "date": "2026-10-05T06:08:15.820000",
+    "description": "Baseline v1 no LoRA. Official compiler and rich_3454 smoke passed. ZIP 02bb939095de.",
+    "status": "COMPLETE",
+    "public_score": "0.12",
+    "private_score": "",
+    "error_description": "",
+    "total_bytes": 81077
+  },
+  "private_runtime_notebook": {
+    "ref": "jwj1342/gemma4-official-runtime-smoke",
+    "status": "COMPLETE",
+    "failure_message": ""
+  },
+  "scope": "Authenticated remote status snapshot. A notebook COMPLETE status requires output-log verification; official public score is distinct from private/final score."
+}

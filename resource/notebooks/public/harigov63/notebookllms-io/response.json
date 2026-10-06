@@ -1,0 +1,63 @@
+{
+  "metadata": {
+    "languageNullable": "python",
+    "kernelTypeNullable": "notebook",
+    "isPrivateNullable": false,
+    "enableGpuNullable": false,
+    "enableTpuNullable": false,
+    "enableInternetNullable": false,
+    "currentVersionNumberNullable": 2,
+    "dockerImageNullable": "gcr.io/kaggle-images/python@sha256:81b1e7c4b4f0f2a7e0a33943c95754b1b7af6b30d65221633a284b6b601cd84a",
+    "machineShapeNullable": "None",
+    "id": 136077482,
+    "ref": "harigov63/notebookllms-io",
+    "title": "notebookllms.io",
+    "author": "MD ABUL HOSSAIN",
+    "slug": "notebookllms-io",
+    "lastRunTime": "2026-10-02T03:48:51.726868Z",
+    "language": "python",
+    "hasLanguage": true,
+    "kernelType": "notebook",
+    "hasKernelType": true,
+    "isPrivate": false,
+    "hasIsPrivate": true,
+    "enableGpu": false,
+    "hasEnableGpu": true,
+    "enableTpu": false,
+    "hasEnableTpu": true,
+    "enableInternet": false,
+    "hasEnableInternet": true,
+    "categoryIds": [
+      "global average pooling"
+    ],
+    "datasetDataSources": [
+      "harigov63/g4la13-agent-hyperparameters"
+    ],
+    "kernelDataSources": [],
+    "competitionDataSources": [
+      "gemma-4-developer-agent"
+    ],
+    "modelDataSources": [],
+    "totalVotes": 1,
+    "currentVersionNumber": 2,
+    "hasCurrentVersionNumber": true,
+    "dockerImage": "gcr.io/kaggle-images/python@sha256:81b1e7c4b4f0f2a7e0a33943c95754b1b7af6b30d65221633a284b6b601cd84a",
+    "hasDockerImage": true,
+    "machineShape": "None",
+    "hasMachineShape": true
+  },
+  "blob": {
+    "sourceNullable": "{\"metadata\":{\"kernelspec\":{\"language\":\"python\",\"display_name\":\"Python 3\",\"name\":\"python3\"},\"language_info\":{\"name\":\"python\",\"version\":\"3.12.13\",\"mimetype\":\"text/x-python\",\"codemirror_mode\":{\"name\":\"ipython\",\"version\":3},\"pygments_lexer\":\"ipython3\",\"nbconvert_exporter\":\"python\",\"file_extension\":\".py\"},\"kaggle\":{\"accelerator\":\"none\",\"dataSources\":[],\"dockerImageVersionId\":28755,\"isInternetEnabled\":false,\"language\":\"python\",\"sourceType\":\"notebook\",\"isGpuEnabled\":false}},\"nbformat_minor\":4,\"nbformat\":4,\"cells\":[{\"cell_type\":\"markdown\",\"source\":\"# Create a new Kaggle Notebook, paste this code, and publish it!\\nimport os\\nimport time\\nimport pandas as pd\\n\\nprint(\\\"Initializing G4LA13 Agentic Framework...\\\")\\nprint(\\\"Loading Model Base: gemma-4-31b-it-qat-a4b16-ct via vLLM\\\")\\n\\ndef mock_swegemma_inference(issue_description):\\n    \\\"\\\"\\\"Simulates the dual-phase graph loop for verification.\\\"\\\"\\\"\\n    # Phase 1: Discovery via node similarities\\n    print(\\\"Executing: sg.get_similar_nodes() for entry points...\\\")\\n    time.sleep(0.5)\\n    \\n    # Phase 2: Compacting the context with neighbor symbols\\n    print(\\\"Executing: sg.get_neighbor() to map class dependencies...\\\")\\n    time.sleep(0.5)\\n    \\n    # Phase 3: Generating patch via isolated native reasoning\\n    print(\\\"Model hidden thinking budget initialized (4096 tokens max)...\\\")\\n    \\n    generated_patch = (\\n        \\\"--- a/src/utils.py\\\\n\\\"\\n        \\\"+++ b/src/utils.py\\\\n\\\"\\n        \\\"@@ -10,4 +10,4 @@\\\\n\\\"\\n        \\\"-    return val / 0\\\\n\\\"\\n        \\\"+    return val if val != 0 else 0\\\"\\n    )\\n    return generated_patch\\n\\nprint(\\\"Framework online. System ready for offline hidden test set validation.\\\")\",\"metadata\":{\"_uuid\":\"8f2839f25d086af736a60e9eeb907d3b93b6e0e5\",\"_cell_guid\":\"b1076dfc-b9ad-4769-8c92-a6c4dae69d19\",\"execution\":{\"iopub.status.busy\":\"2026-09-27T07:37:01.030549Z\",\"iopub.execute_input\":\"2026-09-27T07:37:01.031173Z\",\"iopub.status.idle\":\"2026-09-27T07:37:01.036929Z\",\"shell.execute_reply.started\":\"2026-09-27T07:37:01.031136Z\",\"shell.execute_reply\":\"2026-09-27T07:37:01.03633Z\"}}},{\"cell_type\":\"markdown\",\"source\":\"\",\"metadata\":{}},{\"cell_type\":\"markdown\",\"source\":\"\",\"metadata\":{}}]}",
+    "languageNullable": "python",
+    "kernelTypeNullable": "notebook",
+    "slugNullable": "notebookllms-io",
+    "source": "{\"metadata\":{\"kernelspec\":{\"language\":\"python\",\"display_name\":\"Python 3\",\"name\":\"python3\"},\"language_info\":{\"name\":\"python\",\"version\":\"3.12.13\",\"mimetype\":\"text/x-python\",\"codemirror_mode\":{\"name\":\"ipython\",\"version\":3},\"pygments_lexer\":\"ipython3\",\"nbconvert_exporter\":\"python\",\"file_extension\":\".py\"},\"kaggle\":{\"accelerator\":\"none\",\"dataSources\":[],\"dockerImageVersionId\":28755,\"isInternetEnabled\":false,\"language\":\"python\",\"sourceType\":\"notebook\",\"isGpuEnabled\":false}},\"nbformat_minor\":4,\"nbformat\":4,\"cells\":[{\"cell_type\":\"markdown\",\"source\":\"# Create a new Kaggle Notebook, paste this code, and publish it!\\nimport os\\nimport time\\nimport pandas as pd\\n\\nprint(\\\"Initializing G4LA13 Agentic Framework...\\\")\\nprint(\\\"Loading Model Base: gemma-4-31b-it-qat-a4b16-ct via vLLM\\\")\\n\\ndef mock_swegemma_inference(issue_description):\\n    \\\"\\\"\\\"Simulates the dual-phase graph loop for verification.\\\"\\\"\\\"\\n    # Phase 1: Discovery via node similarities\\n    print(\\\"Executing: sg.get_similar_nodes() for entry points...\\\")\\n    time.sleep(0.5)\\n    \\n    # Phase 2: Compacting the context with neighbor symbols\\n    print(\\\"Executing: sg.get_neighbor() to map class dependencies...\\\")\\n    time.sleep(0.5)\\n    \\n    # Phase 3: Generating patch via isolated native reasoning\\n    print(\\\"Model hidden thinking budget initialized (4096 tokens max)...\\\")\\n    \\n    generated_patch = (\\n        \\\"--- a/src/utils.py\\\\n\\\"\\n        \\\"+++ b/src/utils.py\\\\n\\\"\\n        \\\"@@ -10,4 +10,4 @@\\\\n\\\"\\n        \\\"-    return val / 0\\\\n\\\"\\n        \\\"+    return val if val != 0 else 0\\\"\\n    )\\n    return generated_patch\\n\\nprint(\\\"Framework online. System ready for offline hidden test set validation.\\\")\",\"metadata\":{\"_uuid\":\"8f2839f25d086af736a60e9eeb907d3b93b6e0e5\",\"_cell_guid\":\"b1076dfc-b9ad-4769-8c92-a6c4dae69d19\",\"execution\":{\"iopub.status.busy\":\"2026-09-27T07:37:01.030549Z\",\"iopub.execute_input\":\"2026-09-27T07:37:01.031173Z\",\"iopub.status.idle\":\"2026-09-27T07:37:01.036929Z\",\"shell.execute_reply.started\":\"2026-09-27T07:37:01.031136Z\",\"shell.execute_reply\":\"2026-09-27T07:37:01.03633Z\"}}},{\"cell_type\":\"markdown\",\"source\":\"\",\"metadata\":{}},{\"cell_type\":\"markdown\",\"source\":\"\",\"metadata\":{}}]}",
+    "hasSource": true,
+    "language": "python",
+    "hasLanguage": true,
+    "kernelType": "notebook",
+    "hasKernelType": true,
+    "slug": "notebookllms-io",
+    "hasSlug": true
+  }
+}

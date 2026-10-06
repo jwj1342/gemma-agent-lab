@@ -1,0 +1,18 @@
+# gemma4-swe-kit: open-source local evaluation tools that behave like the scorer's vLLM
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/745143
+
+## 3531718 /adesolanke TOPIC
+I have published the tools we use to test agents locally before spending a submission: https://github.com/damsolanke/gemma4-swe-kit (Apache 2.0). I am posting it here because the rules ask that publicly shared competition code also be shared on this forum.
+
+What is in it:
+
+- **g4kit-proxy**: an OpenAI-compatible endpoint over Ollama (raw mode) or MLX that renders requests with the Gemma 4 chat template the way vLLM 0.19 does and parses calls with vLLM's gemma4 parser. A malformed call stays in the content, so the harness nudges exactly as on the scorer. A prompt plus max_tokens over 32,768 is rejected as vLLM rejects it, so a sub-agent overflow empties the patch locally too. thinking_budget is enforced as a hard cap.
+- **g4kit-fake-llm**: a scripted model that walks every agent and the core harness tools of a submission through the real harness in seconds, without a GPU.
+- **g4kit-scorer-time**: projects scorer hours for about 120 tasks from the per-call token counts of a local run.
+- **g4kit-replay** and **g4kit-log-stats**: resend logged decision points under prompt or sampling changes with paired tests, and count loops, failed edits, malformed calls and overflows in proxy logs.
+- **g4kit-convert-openhands** and **g4kit-render-distill**: turn nebius/SWE-rebench-openhands-trajectories (CC BY 4.0, attribution in NOTICE) into training windows rendered as the scorer would render them.
+
+The kit does not ship the chat template or vLLM's parser file. g4kit-assets downloads and fingerprints both. The README lists what we measured with these tools. One example: with shell commands written as examples in the prompt, 31% of replayed calls at known failure points came out as malformed tool names, against 5% with the commands described in prose. The vLLM parser hang from topic 745138 is detected by the proxy.
+
+Bug reports and pull requests are welcome.
+

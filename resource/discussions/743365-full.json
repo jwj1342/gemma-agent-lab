@@ -1,0 +1,58 @@
+{
+  "forumTopic": {
+    "authorId": 6082025,
+    "authorThumbnailName": "6082025-kg.png?t=2026-08-01-19-49-46",
+    "authorUserDisplayName": "Oleksii Zhukov",
+    "authorUserName": "zhukovoleksiy",
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3528279,
+      "postDate": "2026-09-25T18:40:54.427Z",
+      "rawMarkdown": "**Topics: max_time_minutes, thinking, and what the harness code does**\n\nHey everyone,\n\nI'd love to compare notes and see your ideas as well since limited resources and number of submissions make it harder to make all experiments on your own. \n\nWe know tasks run one after another, and a run that passes 12 hours currently errors (confirmed Ryan's answer in [743063](https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743063#3527819). So the per-task budget matters as much as the prompt. Here is what I have so far:\n\n**My runs so far**\n\nCurrently I am running them public in this [notebook](https://www.kaggle.com/code/zhukovoleksiy/gemma-4-walkthrough-first-submission/notebook?scriptVersionId=352770658)\n\n| Run | Per-task budget | Thinking | Result |\n| :--- | :--- | :--- | :--- |\n| Starter kit, adapters removed | `max_time_minutes: 5` | on (`thinking_level: high`, as the sample had it then) | 0.00, scored about 80 minutes after submitting |\n| Own agent: coder plus read-only analyzer | none (no `eval_config.yaml`) | off (`include_thoughts: false`) | 0.10, no error |\n| Same agent plus memory handling and fixes: issue repeated in both agents' instructions, tail-first logs, notes as text, 4,096 output tokens | `max_time_minutes: 12`, `timeout_seconds: 300` | off (`include_thoughts: false`) | Queued: waiting for submission slot to reset |\n\n- The first run averaged well under a minute per task. Since the hosts have removed `thinking_level` from the sample, I suspect many of those tasks failed early rather than used their time.\n- The second run had no cap and did not error, so ~120 sequential tasks averaged under about 6 minutes each, including sandbox setup.\n- The third run: TBD\n\n[Gemma 4 Developer Agent Wheelhouse] (https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse)\nwas released a couple hours ago. \n\n**What the released code does** (swegemma 0.2.7, adk_submission 0.2.11; the scoring script itself isn't in the wheelhouse, so this is the `Evaluator` path the hosts' [notebook](https://www.kaggle.com/code/ryanholbrook/getting-started-gemma-4-developer-agent) uses)\n\n- `include_thoughts: false` sends `enable_thinking: false`, so thinking is fully off; `include_thoughts: true` or any `thinking_level` turns it on.\n- `thinking_budget` is never forwarded to vLLM, so with thinking on, only `max_output_tokens` (16,384 by default) limits each turn's reasoning. That's where I'd expect time per task to grow significantly.\n- The per-task time limit cancels the model call in flight, and each command's timeout shrinks to the time left, so a task overshoots its cap only slightly.\n- `EvalConfig` defaults are 60 minutes, unlimited tool calls and 500 model calls per task; Ryan says the scorer's default is no limit. Either way, nothing stops one runaway task from eating all the budget so safeguards are important.\n- The Phase 2 verification pytest uses the same command timeout as `timeout_seconds` (`swegemma/harness/verification.py`), so the sample's 60 seconds could fail a correct patch whose tests run longer.\n\n**What I'm trying next:** `max_time_minutes: 12` as a failsafe, `timeout_seconds: 300`, thinking still off.\n\n**Questions**\n- Has anyone timed tasks with thinking on versus off, or are you planning to do so and willing to share results? Either locally or from submission timing?\n- What caps are you using, and has anyone hit the 12-hour error?\n- Any per-task time distributions from local runs (median, long tail)?\n ",
+      "content": "<p><strong>Topics: max_time_minutes, thinking, and what the harness code does</strong></p>\n<p>Hey everyone,</p>\n<p>I'd love to compare notes and see your ideas as well since limited resources and number of submissions make it harder to make all experiments on your own. </p>\n<p>We know tasks run one after another, and a run that passes 12 hours currently errors (confirmed Ryan's answer in <a href=\"https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743063#3527819\" target=\"_blank\">743063</a>. So the per-task budget matters as much as the prompt. Here is what I have so far:</p>\n<p><strong>My runs so far</strong></p>\n<p>Currently I am running them public in this <a href=\"https://www.kaggle.com/code/zhukovoleksiy/gemma-4-walkthrough-first-submission/notebook?scriptVersionId=352770658\" target=\"_blank\">notebook</a></p>\n<table>\n<thead>\n<tr>\n<th>Run</th>\n<th>Per-task budget</th>\n<th>Thinking</th>\n<th>Result</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Starter kit, adapters removed</td>\n<td><code>max_time_minutes: 5</code></td>\n<td>on (<code>thinking_level: high</code>, as the sample had it then)</td>\n<td>0.00, scored about 80 minutes after submitting</td>\n</tr>\n<tr>\n<td>Own agent: coder plus read-only analyzer</td>\n<td>none (no <code>eval_config.yaml</code>)</td>\n<td>off (<code>include_thoughts: false</code>)</td>\n<td>0.10, no error</td>\n</tr>\n<tr>\n<td>Same agent plus memory handling and fixes: issue repeated in both agents' instructions, tail-first logs, notes as text, 4,096 output tokens</td>\n<td><code>max_time_minutes: 12</code>, <code>timeout_seconds: 300</code></td>\n<td>off (<code>include_thoughts: false</code>)</td>\n<td>Queued: waiting for submission slot to reset</td>\n</tr>\n</tbody>\n</table>\n<ul>\n<li>The first run averaged well under a minute per task. Since the hosts have removed <code>thinking_level</code> from the sample, I suspect many of those tasks failed early rather than used their time.</li>\n<li>The second run had no cap and did not error, so ~120 sequential tasks averaged under about 6 minutes each, including sandbox setup.</li>\n<li>The third run: TBD</li>\n</ul>\n<p><a href=\"https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse\" target=\"_blank\">Gemma 4 Developer Agent Wheelhouse</a>\nwas released a couple hours ago. </p>\n<p><strong>What the released code does</strong> (swegemma 0.2.7, adk_submission 0.2.11; the scoring script itself isn't in the wheelhouse, so this is the <code>Evaluator</code> path the hosts' <a href=\"https://www.kaggle.com/code/ryanholbrook/getting-started-gemma-4-developer-agent\" target=\"_blank\">notebook</a> uses)</p>\n<ul>\n<li><code>include_thoughts: false</code> sends <code>enable_thinking: false</code>, so thinking is fully off; <code>include_thoughts: true</code> or any <code>thinking_level</code> turns it on.</li>\n<li><code>thinking_budget</code> is never forwarded to vLLM, so with thinking on, only <code>max_output_tokens</code> (16,384 by default) limits each turn's reasoning. That's where I'd expect time per task to grow significantly.</li>\n<li>The per-task time limit cancels the model call in flight, and each command's timeout shrinks to the time left, so a task overshoots its cap only slightly.</li>\n<li><code>EvalConfig</code> defaults are 60 minutes, unlimited tool calls and 500 model calls per task; Ryan says the scorer's default is no limit. Either way, nothing stops one runaway task from eating all the budget so safeguards are important.</li>\n<li>The Phase 2 verification pytest uses the same command timeout as <code>timeout_seconds</code> (<code>swegemma/harness/verification.py</code>), so the sample's 60 seconds could fail a correct patch whose tests run longer.</li>\n</ul>\n<p><strong>What I'm trying next:</strong> <code>max_time_minutes: 12</code> as a failsafe, <code>timeout_seconds: 300</code>, thinking still off.</p>\n<p><strong>Questions</strong></p>\n<ul>\n<li>Has anyone timed tasks with thinking on versus off, or are you planning to do so and willing to share results? Either locally or from submission timing?</li>\n<li>What caps are you using, and has anyone hit the 12-hour error?</li>\n<li>Any per-task time distributions from local runs (median, long tail)?</li>\n</ul>",
+      "parent": {},
+      "author": {
+        "displayName": "Oleksii Zhukov",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/6082025-kg.png?t=2026-08-01-19-49-46",
+        "url": "/zhukovoleksiy",
+        "tier": "MASTER",
+        "id": 6082025,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "canUpvote": true
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 281,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Oleksii Zhukov",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/6082025-kg.png?t=2026-08-01-19-49-46",
+          "url": "/zhukovoleksiy",
+          "userName": "zhukovoleksiy",
+          "tier": "MASTER",
+          "id": 6082025,
+          "profileUrl": "/zhukovoleksiy",
+          "performanceTier": "MASTER",
+          "userId": 6082025,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3528279,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 743365,
+    "name": "Budgeting the 12-hour run",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-25T18:40:54.426585900Z",
+    "url": "/competitions/gemma-4-developer-agent/discussion/743365",
+    "authorPerformanceTier": "MASTER",
+    "authorProgressionOptOut": false
+  }
+}

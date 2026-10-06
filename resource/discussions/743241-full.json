@@ -1,0 +1,42 @@
+{
+  "forumTopic": {
+    "authorId": 36514879,
+    "authorThumbnailName": "default-thumb.png",
+    "authorUserDisplayName": "Said Sucu",
+    "authorUserName": "saidsucu",
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3528088,
+      "postDate": "2026-09-25T10:36:17.100Z",
+      "rawMarkdown": "Dear Competition Organizers,\n\nMy name is Said Sucu, founder of SCalmora Digital Systems in Türkiye. As a participant with a disability, I would like to request an accessible way to communicate directly with the team organizing the Google – The Gemma 4 Developer Agent Competition.\n\nEmail is the most accessible and manageable communication channel for me. Could you please provide an official organizer email address, or ask Kaggle Support to forward my existing correspondence to the appropriate team and arrange a reply by email?\n\nMy Kaggle Support case number is #261909.\n\nAt SCalmora, I am developing an approach to AI-supported task completion, workflow continuity, and cognitive load reduction to help people participate more independently in digital work and economic opportunities. I would appreciate guidance on participation and any available accessibility support.\n\nThank you for your understanding and assistance.\n\nKind regards,\nSaid Sucu\nFounder | SCalmora Digital Systems\nTürkiye",
+      "content": "<p>Dear Competition Organizers,</p>\n<p>My name is Said Sucu, founder of SCalmora Digital Systems in Türkiye. As a participant with a disability, I would like to request an accessible way to communicate directly with the team organizing the Google – The Gemma 4 Developer Agent Competition.</p>\n<p>Email is the most accessible and manageable communication channel for me. Could you please provide an official organizer email address, or ask Kaggle Support to forward my existing correspondence to the appropriate team and arrange a reply by email?</p>\n<p>My Kaggle Support case number is #261909.</p>\n<p>At SCalmora, I am developing an approach to AI-supported task completion, workflow continuity, and cognitive load reduction to help people participate more independently in digital work and economic opportunities. I would appreciate guidance on participation and any available accessibility support.</p>\n<p>Thank you for your understanding and assistance.</p>\n<p>Kind regards,\nSaid Sucu\nFounder | SCalmora Digital Systems\nTürkiye</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Said Sucu",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+        "url": "/saidsucu",
+        "tier": "CONTRIBUTOR",
+        "id": 36514879,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "canUpvote": true
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false
+    },
+    "firstMessageId": 3528088,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 743241,
+    "name": "Accessibility request: direct email contact with competition organizers — Support #261909",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-25T10:36:17.099534Z",
+    "url": "/competitions/gemma-4-developer-agent/discussion/743241",
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

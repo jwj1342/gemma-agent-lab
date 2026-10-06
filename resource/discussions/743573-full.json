@@ -1,0 +1,111 @@
+{
+  "forumTopic": {
+    "authorId": 34567520,
+    "authorThumbnailName": "default-thumb.png",
+    "authorUserDisplayName": "M.A.P.L.E MAGI Labs",
+    "authorUserName": "doaimabt",
+    "comments": [
+      {
+        "id": 3528747,
+        "postDate": "2026-09-26T11:38:42.687Z",
+        "rawMarkdown": "Include them as scripts in a skill. They will be available in the sandbox and your agent can execute them there.",
+        "content": "<p>Include them as scripts in a skill. They will be available in the sandbox and your agent can execute them there.</p>",
+        "parent": {},
+        "author": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "progressionOptOut": false
+        },
+        "authorType": "ADMIN",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "reactions": [
+          {
+            "emoji": "THANK_YOU",
+            "featuredUserNames": [
+              "doaimabt",
+              "ajithsudo"
+            ],
+            "userCount": 2
+          }
+        ],
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Ryan Holbrook",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+            "url": "/ryanholbrook",
+            "userName": "ryanholbrook",
+            "tier": "STAFF",
+            "id": 2003505,
+            "profileUrl": "/ryanholbrook",
+            "performanceTier": "STAFF",
+            "userId": 2003505,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3528591,
+      "postDate": "2026-09-26T08:40:56.273Z",
+      "rawMarkdown": "Hi everyone and the competition organizers,\n\nThe competition overview states:\n> *\"You must provide a zip archive (submission.zip) that contains your Agent Config, comprising system prompts, **custom tools**, skills, and LoRA adapters. An agent.yaml file must be located at the root of the archive.\"*\n\nHowever, in `HARNESS_README.md` (Section 2.1 — Declarative-Only Security Model), it states:\n> *\"Competitors **do not** submit Python code entrypoints (`agent.py` or `agent_fn`). Standard ADK's `from_config()` permits arbitrary dynamic Python imports; **`adk-submission` replaces it with a sandboxed YAML compiler (`compile_submission`). All agents, sub-agents, workflows, tools, and generation parameters are declared in YAML and resolved against closed host registries (`ToolRegistry`, `ModelRegistry`, `SkillRegistry`, `CallbackRegistry`). `importlib` is never used**.\"*\n\nFurthermore, Section 6 specifies that `SwegemmaContext.create_tools()` only registers **9 built-in tools** into `ToolRegistry` (`run_command`, `submit_patch`, `read_file`, `edit_file`, `write_file`, `get_status`, and 3 code graph tools).\n\nThis creates an important technical question regarding custom tools:\n\n1. **How should a custom Python tool function be packaged and registered?**\n   If we write custom tools in Python (for example, AST-based symbol extractors, specialized symmetric diff patchers, or token-capped search utilities) under a `custom_tools/` or `tools/` folder in `submission.zip`, how can they be registered into `ToolRegistry` if `importlib` is disallowed? What is the expected YAML declaration syntax in `agent.yaml` to bind a custom tool file/callable?\n\n2. **Is \"custom tools\" strictly intended as `AgentTool` (sub-agents)?**\n   In the schema, `agent_tool: {config_path: ..., skip_summarization: true}` wraps a sub-agent as a tool. Does the mention of \"custom tools\" in the rules refer solely to sub-agents wrapped as `AgentTool`, or is there a supported path for standalone Python tool functions?\n\n3. **Running inside Sandbox vs Host:**\n   If standalone custom tool functions cannot run on the Host, the only alternative is invoking them inside the sandbox container via `run_command` (e.g. `python3 /path/to/tool.py ...`). However, this incurs substantial token bloat (bash escaping, quoting, and process overhead) compared to direct native tool calling, which heavily impacts the 12-hour evaluation budget.\n\nCould the organizers provide a minimal schema example or demo snippet showing how a custom Python tool is expected to be declared in `agent.yaml` and resolved during evaluation?\n\nThank you for your support and clarification!",
+      "content": "<p>Hi everyone and the competition organizers,</p>\n<p>The competition overview states:</p>\n<blockquote>\n  <p><em>\"You must provide a zip archive (submission.zip) that contains your Agent Config, comprising system prompts, <strong>custom tools</strong>, skills, and LoRA adapters. An agent.yaml file must be located at the root of the archive.\"</em></p>\n</blockquote>\n<p>However, in <code>HARNESS_README.md</code> (Section 2.1 — Declarative-Only Security Model), it states:</p>\n<blockquote>\n  <p><em>\"Competitors <strong>do not</strong> submit Python code entrypoints (<code>agent.py</code> or <code>agent_fn</code>). Standard ADK's <code>from_config()</code> permits arbitrary dynamic Python imports; <strong><code>adk-submission</code> replaces it with a sandboxed YAML compiler (<code>compile_submission</code>). All agents, sub-agents, workflows, tools, and generation parameters are declared in YAML and resolved against closed host registries (<code>ToolRegistry</code>, <code>ModelRegistry</code>, <code>SkillRegistry</code>, <code>CallbackRegistry</code>). <code>importlib</code> is never used</strong>.\"</em></p>\n</blockquote>\n<p>Furthermore, Section 6 specifies that <code>SwegemmaContext.create_tools()</code> only registers <strong>9 built-in tools</strong> into <code>ToolRegistry</code> (<code>run_command</code>, <code>submit_patch</code>, <code>read_file</code>, <code>edit_file</code>, <code>write_file</code>, <code>get_status</code>, and 3 code graph tools).</p>\n<p>This creates an important technical question regarding custom tools:</p>\n<ol>\n<li><p><strong>How should a custom Python tool function be packaged and registered?</strong>\nIf we write custom tools in Python (for example, AST-based symbol extractors, specialized symmetric diff patchers, or token-capped search utilities) under a <code>custom_tools/</code> or <code>tools/</code> folder in <code>submission.zip</code>, how can they be registered into <code>ToolRegistry</code> if <code>importlib</code> is disallowed? What is the expected YAML declaration syntax in <code>agent.yaml</code> to bind a custom tool file/callable?</p></li>\n<li><p><strong>Is \"custom tools\" strictly intended as <code>AgentTool</code> (sub-agents)?</strong>\nIn the schema, <code>agent_tool: {config_path: ..., skip_summarization: true}</code> wraps a sub-agent as a tool. Does the mention of \"custom tools\" in the rules refer solely to sub-agents wrapped as <code>AgentTool</code>, or is there a supported path for standalone Python tool functions?</p></li>\n<li><p><strong>Running inside Sandbox vs Host:</strong>\nIf standalone custom tool functions cannot run on the Host, the only alternative is invoking them inside the sandbox container via <code>run_command</code> (e.g. <code>python3 /path/to/tool.py ...</code>). However, this incurs substantial token bloat (bash escaping, quoting, and process overhead) compared to direct native tool calling, which heavily impacts the 12-hour evaluation budget.</p></li>\n</ol>\n<p>Could the organizers provide a minimal schema example or demo snippet showing how a custom Python tool is expected to be declared in <code>agent.yaml</code> and resolved during evaluation?</p>\n<p>Thank you for your support and clarification!</p>",
+      "parent": {},
+      "author": {
+        "displayName": "M.A.P.L.E MAGI Labs",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+        "url": "/doaimabt",
+        "tier": "CONTRIBUTOR",
+        "id": 34567520,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 1,
+        "canUpvote": true,
+        "totalUpvotes": 1
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 1661,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "M.A.P.L.E MAGI Labs",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/doaimabt",
+          "userName": "doaimabt",
+          "tier": "CONTRIBUTOR",
+          "id": 34567520,
+          "profileUrl": "/doaimabt",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 34567520,
+          "progressionOptOut": false
+        },
+        "intro": "Ðu?c r?i ... tôi mu?n tìm d?ng d?i (ngu?i Vi?t gi?ng tôi) cung dang tham gia cu?c thi này.\nVà c?m on b?n dã d?c nó!"
+      }
+    },
+    "firstMessageId": 3528591,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 743573,
+    "name": "How to package and resolve custom Python tools in submission.zip given adk-submission's closed ToolRegistry?",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-26T08:40:56.274259200Z",
+    "totalVotes": 1,
+    "url": "/competitions/gemma-4-developer-agent/discussion/743573",
+    "totalMessages": 1,
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

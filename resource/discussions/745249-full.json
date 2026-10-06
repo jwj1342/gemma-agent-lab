@@ -1,0 +1,58 @@
+{
+  "forumTopic": {
+    "authorId": 12607271,
+    "authorThumbnailName": "12607271-kg.png?t=2026-04-07-19-13-07",
+    "authorUserDisplayName": "RISHAV KUMAR",
+    "authorUserName": "atomstack001",
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3531910,
+      "postDate": "2026-10-02T19:56:12.583Z",
+      "rawMarkdown": "Is omitting python-multipart from the provided wheels intentional or an oversight? FastAPI task fastapi_14616 uses Form(), but the offline sandbox has no python-multipart wheel, so the reproduction fails.",
+      "content": "<p>Is omitting python-multipart from the provided wheels intentional or an oversight? FastAPI task fastapi_14616 uses Form(), but the offline sandbox has no python-multipart wheel, so the reproduction fails.</p>",
+      "parent": {},
+      "author": {
+        "displayName": "RISHAV KUMAR",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/12607271-kg.png?t=2026-04-07-19-13-07",
+        "url": "/atomstack001",
+        "tier": "CONTRIBUTOR",
+        "id": 12607271,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "canUpvote": true
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "enabled": true,
+        "teamLeader": {
+          "displayName": "RISHAV KUMAR",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/12607271-kg.png?t=2026-04-07-19-13-07",
+          "url": "/atomstack001",
+          "userName": "atomstack001",
+          "tier": "CONTRIBUTOR",
+          "id": 12607271,
+          "profileUrl": "/atomstack001",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 12607271,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3531910,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 745249,
+    "name": "Missing python-multipart dependency in the FastAPI task environment",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-10-02T19:56:12.582721Z",
+    "url": "/competitions/gemma-4-developer-agent/discussion/745249",
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

@@ -1,0 +1,78 @@
+# Tool results reach the model double-JSON-encoded: a line of code with quotes turns into a wall of backslashes
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/744272
+
+## 3529916 /whisperlast TOPIC
+While reading our local traces (official swegemma 0.2.7 + adk-submission 0.2.11 + the wheelhouse vLLM 0.19.1), we noticed that every tool result reaches the model JSON-encoded **twice**. For code with quotes or backslashes it becomes hard to read. Here is one real `read_file` result, `tabulate.py` lines 140-170.
+
+**The file:**
+
+```python
+LATEX_ESCAPE_RULES = {r"&": r"\&", r"%": r"\%", r"$": r"\$", r"#": r"\#",
+                      r"_": r"\_", r"^": r"\^{}", r"{": r"\{", r"}": r"\}",
+                      r"~": r"\textasciitilde{}", "\\": r"\textbackslash{}",
+                      r"<": r"\ensuremath{<}", r">": r"\ensuremath{>}"}
+```
+
+**What Gemma 4 actually sees in the tool message (same four lines):**
+
+```
+LATEX_ESCAPE_RULES = {r\\\"&\\\": r\\\"\\\\&\\\", r\\\"%\\\": r\\\"\\\\%\\\", r\\\"$\\\": r\\\"\\\\$\\\", r\\\"#\\\": r\\\"\\\\#\\\",\\n                      r\\\"_\\\": r\\\"\\\\_\\\", r\\\"^\\\": r\\\"\\\\^{}\\\", r\\\"{\\\": r\\\"\\\\{\\\", r\\\"}\\\": r\\\"\\\\}\\\",\\n                      r\\\"~\\\": r\\\"\\\\textasciitilde{}\\\", \\\"\\\\\\\\\\\": r\\\"\\\\textbackslash{}\\\",\\n                      r\\\"<\\\": r\\\"\\\\ensuremath{<}\\\", r\\\">\\\": r\\\"\\\\ensuremath{>}\\\"}
+```
+
+Each `"` in the file becomes `\\\"`, each backslash becomes `\\\\`, and each newline becomes `\\n`.
+
+**Where it comes from.** 
+- The swegemma tools return a JSON *string* (`{"status": "ok", "content": "..."}`). Because the return value is not a dict, ADK wraps it as `{"result": <that string>}` (Gemini function responses must be dicts): that is the first level. - LiteLLM then has to serialize the dict into the OpenAI `content` string, since OpenAI tool messages are strings: that is the second level. The Gemma 4 chat template finally puts the string verbatim into `<|tool_response>response:read_file{value:<|"|>...<|"|>}<tool_response|>`.
+
+**Why it matters.**
+- `edit_file` requires `old_string` to match the file byte for byte, but the model only ever sees the escaped form. In our runs it regularly copies escapes into `old_string` and gets `old_string not found`. For example, in `arrow/locales.py` it wrote `"\u064a\u0648\u0645"` instead of the Arabic characters, twice in a row.
+- It costs extra tokens on every step, and on the 4xL4 scorer every step is precious.
+
+**A typical failure, and how often it happens.** `more_itertools/more.py`, the model wants to edit `chunked()`:
+
+- The file has: `"""Break *iterable* into lists of length *n*:`
+- `read_file` showed it (inside the tool message) as: `\\\"\\\"\\\"Break *iterable* into lists of length *n*:\\n\\n`
+- The model un-escaped one level, not two, and sent `old_string` starting with: `\"\"\"Break *iterable* ...`
+- Result: `Failed to replace: old_string not found. Ensure you're not escaping content incorrectly ...`. It sent the identical call again 43 s later and got the same error. The same task's edit to `more.pyi` (a line without quotes) went through on the first try.
+
+Across our local runs, 62 of 299 `edit_file` calls failed with `old_string not found`. For 39 of them (in 18 different tasks) the cause is provably the escaping: un-escaping the model's `old_string` gives text that is present verbatim in what the model had just read. Python docstrings (`"""`) are the most common trigger; the Arabic-locale case above is another.
+
+**Possible fixes (organizer side; submissions can't touch this layer):**
+1. Cheapest: have the swegemma tools return a dict instead of a JSON string. ADK then passes it through without the `{"result": ...}` wrapper, and the model sees a single level of escaping (`\n` instead of `\\n`).
+2. Cleanest: also let the dict reach the chat template as a mapping (e.g. parse JSON tool content back into a dict before templating in vLLM). Gemma 4's `format_tool_response_block` then renders raw text inside `<|"|>` with no escaping at all.
+
+Each piece of this chain is reasonable on its own. But submissions have no way to touch this layer (no custom tools, no pre- or post-processing of tool output), so the only lever we have is to spend prompt and training effort teaching the model to cope with backslashes. **That feels somewhat removed from what this competition sets out to measure.**   @ryanholbrook I don't know whether this is a bug or a feature, or whether it should be fixed, but we're happy to share full traces if that helps.
+
+
+## 3531712 /adesolanke COMMENT
+Following up for anyone tracking this: the fix is live in the 09-30 wheelhouse. Tool results now reach the model as one level of JSON, and `edit_file` gained a fallback that retries the match with escapes removed.
+
+We re-scored the replay from my earlier comment against that fallback. Edits that failed only because the model copied escaped text into `old_string` now succeed. What still fails is a call that loses an argument because a string was closed with a backtick: 4 of 45 edit calls with the old double encoding and 7 of 40 with a single level.
+
+Thanks for turning this around quickly, @ryanholbrook.
+
+
+## 3530351 /adesolanke COMMENT
+Thanks for addressing this. One data point that may help choose between the two fixes proposed above: we held 30 real edit contexts fixed (same system prompt, issue, analyzer answer and a read_file of the lines to change) and varied only how the read_file observation was encoded, sampling the next call three times per condition through the official chat template and vLLM's gemma4 parser at temperature 0.2:
+
+| Observation encoding | edit_file calls | failed (old_string not found or argument lost) |
+|---|---|---|
+| current harness (JSON inside JSON) | 45 | 22% |
+| one level of JSON | 40 | 62% |
+| raw text | 43 | 0% |
+
+A single level of escaping was worse than two in these contexts: sequences like a backslash followed by n look like ordinary Python escapes and get copied into old_string, while the doubled form was more often recognized as an artifact. Rendering the result as raw text (the second option in the post, a mapping reaching the chat template so the tool response block holds unescaped text) removed the failures entirely. So if only one change is possible, the raw-text path looks much safer than returning a dict that still arrives as one level of JSON.
+
+One implementation detail we hit while testing the raw path: a dict passed as the content of a role "tool" message does not reach the mapping branch of format_tool_response_block. Jinja treats a dict as a sequence, so the template's content-parts branch iterates its keys and fails ('str object' has no attribute 'get'). The unescaped rendering needs the response to arrive through a path where the template sees a mapping (or the content-parts branch to check for a mapping first).
+
+## 3530081 /ryanholbrook ADMIN
+Thanks for the report. Addressing now.
+
+## 3531043 /marcinstecki COMMENT
+hi, what's the latest on this? this has a major influence on how training data is generated, it's important to address before people sink too much time into this competition 
+
+## 3531343 /ryanholbrook ADMIN
+The latest wheelhouse should have this fixed.
+
+## 3529983 /shengkaisu COMMENT
+I’ve encountered the same issue. In my view, the model is weak, and the harness environment and tools are also a bit problematic. However, I suspect this might be a "feature" (or you can call it a "bug"), and I am currently working around it. If the organizers fix it, we are happy to see it, but some participants might have to redo their work, given that the competition has already been started for several days.

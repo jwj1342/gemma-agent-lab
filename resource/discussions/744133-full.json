@@ -1,0 +1,199 @@
+{
+  "forumTopic": {
+    "authorId": 12607271,
+    "authorThumbnailName": "12607271-kg.png?t=2026-04-07-19-13-07",
+    "authorUserDisplayName": "RISHAV KUMAR",
+    "authorUserName": "atomstack001",
+    "comments": [
+      {
+        "id": 3529698,
+        "postDate": "2026-09-28T19:19:31.903Z",
+        "rawMarkdown": "Yes. See www.kaggle.com/competitions/gemma-4-developer-agent/overview/evaluation\n\nEach skill is a folder under skills/ containing a SKILL.md.",
+        "content": "<p>Yes. See <a href=\"http://www.kaggle.com/competitions/gemma-4-developer-agent/overview/evaluation\" target=\"_blank\">www.kaggle.com/competitions/gemma-4-developer-agent/overview/evaluation</a></p>\n<p>Each skill is a folder under skills/ containing a SKILL.md.</p>",
+        "parent": {},
+        "author": {
+          "displayName": "Connor Tynan",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/8859571-kg.jpg?t=2026-07-06-13-39-24",
+          "url": "/connortynan",
+          "tier": "CONTRIBUTOR",
+          "id": 8859571,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "totalVotes": 1,
+          "canUpvote": true,
+          "totalUpvotes": 1
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 824,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "reactions": [
+          {
+            "emoji": "THANK_YOU",
+            "featuredUserNames": [
+              "atomstack001"
+            ],
+            "userCount": 1
+          }
+        ],
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Connor Tynan",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/8859571-kg.jpg?t=2026-07-06-13-39-24",
+            "url": "/connortynan",
+            "userName": "connortynan",
+            "tier": "CONTRIBUTOR",
+            "id": 8859571,
+            "profileUrl": "/connortynan",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 8859571,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3530344,
+        "postDate": "2026-09-30T01:58:53.737Z",
+        "rawMarkdown": "whats stopping someone from putting up a whole submission bloated with skills",
+        "content": "<p>whats stopping someone from putting up a whole submission bloated with skills</p>",
+        "replies": [
+          {
+            "id": 3530451,
+            "postDate": "2026-09-30T07:53:16.997Z",
+            "rawMarkdown": "Nothing stops it: the harness allows up to 1,000 skills, 50 MiB each, within the 3 GiB limit. That said, the ADK puts every skill's name and description into each model call, so a large library will eat through the 32k context window fast and trigger compaction sooner.",
+            "content": "<p>Nothing stops it: the harness allows up to 1,000 skills, 50 MiB each, within the 3 GiB limit. That said, the ADK puts every skill's name and description into each model call, so a large library will eat through the 32k context window fast and trigger compaction sooner.</p>",
+            "parent": {},
+            "author": {
+              "displayName": "Connor Tynan",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/8859571-kg.jpg?t=2026-07-06-13-39-24",
+              "url": "/connortynan",
+              "tier": "CONTRIBUTOR",
+              "id": 8859571,
+              "progressionOptOut": false
+            },
+            "authorType": "COMMENT",
+            "votes": {
+              "totalVotes": 1,
+              "canUpvote": true,
+              "totalUpvotes": 1
+            },
+            "kernelVersion": 0,
+            "competitionRanking": 824,
+            "feedbackTrackingData": {},
+            "isThankYou": false,
+            "reactions": [
+              {
+                "emoji": "THANK_YOU",
+                "featuredUserNames": [
+                  "atomstack001"
+                ],
+                "userCount": 1
+              }
+            ],
+            "teamUpInfo": {
+              "teamLeader": {
+                "displayName": "Connor Tynan",
+                "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/8859571-kg.jpg?t=2026-07-06-13-39-24",
+                "url": "/connortynan",
+                "userName": "connortynan",
+                "tier": "CONTRIBUTOR",
+                "id": 8859571,
+                "profileUrl": "/connortynan",
+                "performanceTier": "CONTRIBUTOR",
+                "userId": 8859571,
+                "progressionOptOut": false
+              },
+              "intro": ""
+            }
+          }
+        ],
+        "parent": {},
+        "author": {
+          "displayName": "Shivam_2212",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/18852515-kg.png?t=2026-08-10-17-15-30",
+          "url": "/shivam2212",
+          "tier": "CONTRIBUTOR",
+          "id": 18852515,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 534,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Shivam_2212",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/18852515-kg.png?t=2026-08-10-17-15-30",
+            "url": "/shivam2212",
+            "userName": "shivam2212",
+            "tier": "CONTRIBUTOR",
+            "id": 18852515,
+            "profileUrl": "/shivam2212",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 18852515,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3529688,
+      "postDate": "2026-09-28T18:58:01.397Z",
+      "rawMarkdown": "can anyone answer this question?\n",
+      "content": "<p>can anyone answer this question?</p>",
+      "parent": {},
+      "author": {
+        "displayName": "RISHAV KUMAR",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/12607271-kg.png?t=2026-04-07-19-13-07",
+        "url": "/atomstack001",
+        "tier": "CONTRIBUTOR",
+        "id": 12607271,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "canUpvote": true
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "enabled": true,
+        "teamLeader": {
+          "displayName": "RISHAV KUMAR",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/12607271-kg.png?t=2026-04-07-19-13-07",
+          "url": "/atomstack001",
+          "userName": "atomstack001",
+          "tier": "CONTRIBUTOR",
+          "id": 12607271,
+          "profileUrl": "/atomstack001",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 12607271,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3529688,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 744133,
+    "name": "We can submit skills correct ?",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-28T18:58:01.396662Z",
+    "url": "/competitions/gemma-4-developer-agent/discussion/744133",
+    "totalMessages": 3,
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

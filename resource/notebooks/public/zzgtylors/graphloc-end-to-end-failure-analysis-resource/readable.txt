@@ -1,0 +1,435 @@
+# CELL 0 markdown
+# GraphLoc end to end, part 2: why the Gemma 4 agent fails, how much one run varies, and the GraphLoc-129 resource
+
+Companion notebook to the Paper Track writeup *Where Does the Graph Help? A Localization Audit of Gemma 4 Agent Code Graphs*. CPU only.
+
+* **Inputs.** The outputs of the end-to-end notebook [GraphLoc end-to-end: Gemma 4 agent + skill](https://www.kaggle.com/code/zzgtylors/graphloc-end-to-end-gemma-4-agent-skill) and of its repeat runs (identical copies of it), the labels written by [GraphLoc: auditing Gemma 4 agent code graphs](https://www.kaggle.com/code/zzgtylors/graphloc-auditing-gemma-4-agent-code-graphs), and the competition data (tasks and snapshots, to locate every agent edit).
+* **Failure taxonomy.** For every run of both agents on every task: where the patch edits (no patch, wrong file, a gold file, a gold function) and why an unresolved run failed (time, tool or turn budget; the patch did not apply; tests could not run; a test added by the task's `test_patch` fails; only other tests fail). Also whether the agent ran tests itself and whether the skill's list contained a gold function.
+* **Variance.** Resolved counts per run, overlap between runs, and the run-to-run standard deviation implied by per-task success rates.
+* **Resource.** `/kaggle/working/graphloc129/`: the GraphLoc-129 labels, the `graph-localize` ADK skill, the `graphloc` library, both agent submissions and one row per run, agent and task.
+
+
+# CELL 1 code
+%%writefile /kaggle/working/analyze_e2e.py
+"""GraphLoc end to end, part 2: why the agents fail, how much a single run varies, and the GraphLoc-129 resource.
+
+Reads the outputs of the end-to-end notebook(s) (one directory per run, each with e2e/records and e2e/results)
+and the competition data; writes /kaggle/working/e2e_analysis.json, e2e_runs.csv and the resource folder.
+"""
+import collections, csv, glob, json, os, re, shutil, sys
+import numpy as np
+
+INP = os.environ.get('GL_INPUT', '/kaggle/input')
+OUT = os.environ.get('GL_OUT', '/kaggle/working')
+BUDGET = {'max_tool_calls': 40, 'max_time_minutes': 25, 'max_turns': 60}
+ARMS = ('base', 'skill')
+TOOL_NAMES = {'run_command', 'read_file', 'edit_file', 'write_file', 'get_status', 'submit_patch', 'get_code_neighbors',
+              'search_similar_code', 'get_code_subgraph', 'run_skill_script', 'load_skill', 'load_skill_resource',
+              'list_skills', 'search_skills'}
+
+
+# ----------------------------------------------------------------------------------------------- inputs
+def find_runs():
+    """[(run_label, e2e_root)] for every mounted end-to-end output (run 1 = the original notebook)."""
+    roots = sorted(set(os.path.dirname(p) for pat in (f'{INP}/notebooks/*/*/e2e/records', f'{INP}/*/e2e/records',
+                                                       f'{INP}/*/*/e2e/records') for p in glob.glob(pat)))
+    runs = []
+    for root in roots:
+        slug = os.path.basename(os.path.dirname(root))
+        m = re.search(r'run-(\d+)$', slug)
+        runs.append((f'run{m.group(1) if m else 1}', root))
+    return sorted(runs)
+
+
+def load_records(root):
+    recs = {}
+    for p in sorted(glob.glob(f'{root}/records/*.jsonl')):
+        for line in open(p):
+            try:
+                r = json.loads(line)
+            except ValueError:
+                continue
+            key = (r['arm'], r['id'])
+            if key not in recs or recs[key].get('crash') or not r.get('crash'):
+                recs[key] = r
+    return recs
+
+
+def local_path(root, p):
+    return p.replace('/kaggle/working/e2e', root) if p else ''
+
+
+def read(p, default=''):
+    try:
+        with open(p, errors='replace') as f:
+            return f.read()
+    except OSError:
+        return default
+
+
+# ----------------------------------------------------------------------------------------------- traces
+def walk(o):
+    if isinstance(o, dict):
+        yield o
+        for v in o.values():
+            yield from walk(v)
+    elif isinstance(o, list):
+        for v in o:
+            yield from walk(v)
+
+
+def strings(o):
+    if isinstance(o, str):
+        yield o
+    elif isinstance(o, dict):
+        for v in o.values():
+            yield from strings(v)
+    elif isinstance(o, list):
+        for v in o:
+            yield from strings(v)
+
+
+def trace_info(path):
+    """Tool calls (name, arguments as text) and every skill output block found in a SessionTrace JSON."""
+    try:
+        tr = json.load(open(path))
+    except (OSError, ValueError):
+        return None
+    calls, seen = [], set()
+    for d in walk(tr):
+        name = d.get('function_name') or d.get('tool_name') or d.get('name')
+        if name not in TOOL_NAMES:
+            continue
+        args = d.get('arguments', d.get('args', d.get('input')))
+        if args is None:
+            continue
+        a = args if isinstance(args, str) else json.dumps(args, sort_keys=True, default=str)
+        key = (name, a, d.get('tool_call_id') or d.get('id'))
+        if key in seen:
+            continue
+        seen.add(key)
+        calls.append((name, a))
+    outs = []
+    for s in strings(tr):
+        if '# graph-localize: top' in s:
+            s = s.replace('\\n', '\n')
+            outs.append(s[s.index('# graph-localize: top'):])
+    return {'calls': calls, 'skill_outputs': outs}
+
+
+CAND_RE = re.compile(r'^\s*(\d+)\s+([\d.]+)\s+(\S+?):(\d+)\s+(\S+)\s*$', re.M)
+
+
+# ----------------------------------------------------------------------------------------------- pytest logs
+NODE_RE = re.compile(r'^(FAILED|ERROR)\s+(\S+)', re.M)
+SUMMARY_RE = re.compile(r'(\d+)\s+(failed|passed|errors?|skipped|xfailed|xpassed|deselected|warnings?)')
+
+
+def parse_pytest(log):
+    bad = sorted(set(m.group(2) for m in NODE_RE.finditer(log)))
+    counts = collections.Counter()
+    for line in log.splitlines()[::-1]:
+        if re.search(r'\d+ (passed|failed|errors?)', line) and ' in ' in line:
+            for n, k in SUMMARY_RE.findall(line):
+                counts[k.rstrip('s') if k.startswith('error') else k] += int(n)
+            break
+    collect_err = bool(re.search(r'ERROR collecting|errors? during collection|ImportError while|SyntaxError', log))
+    return bad, counts, collect_err
+
+
+def target_tests(G, task, files):
+    """(test files, {qualified test names}) added or modified by the task's test_patch."""
+    tp = task.get('test_patch', '')
+    new_src = G.apply_patch_to_files(files, tp)
+    tfiles, quals = set(), set()
+    for f in G.parse_patch(tp):
+        path = f['new'] or f['old']
+        if not path or not path.endswith('.py'):
+            continue
+        tfiles.add(path)
+        defs = (G.extract_defs(new_src.get(path, ''))[0] or [])
+        for ln in f['added']:
+            d = G.enclosing_def(defs, ln)
+            if d is not None:
+                quals.add(d['qual'])
+    return tfiles, quals
+
+
+def node_matches(node, tfiles, quals):
+    path, _, rest = node.partition('::')
+    rest = re.sub(r'\[.*$', '', rest).replace('::', '.')
+    if path not in tfiles:
+        return False
+    return any(rest == q or rest.startswith(q + '.') or q.endswith('.' + rest) or q == rest.split('.')[-1] for q in quals)
+
+
+# ----------------------------------------------------------------------------------------------- per-run analysis
+def classify(rec, pat, gold_sym, gold_files, log, tfiles, tquals):
+    """(where the patch edits, why the run failed) for one run of one agent on one task."""
+    err = (rec.get('error') or '') + ' ' + (rec.get('crash') or '')
+    if not (rec.get('patch') or '').strip():
+        if rec.get('resolved'):
+            return 'no_patch', 'resolved'
+        if rec.get('guard_timeout') or re.search(r'time ?out|timed out|max_time|time limit', err, re.I) or \
+                (rec.get('duration') or 0) >= BUDGET['max_time_minutes'] * 60 * 0.97:
+            return 'no_patch', 'time budget'
+        if (rec.get('tool_calls') or 0) >= BUDGET['max_tool_calls']:
+            return 'no_patch', 'tool budget'
+        if (rec.get('llm_calls') or 0) >= BUDGET['max_turns']:
+            return 'no_patch', 'turn budget'
+        return 'no_patch', ('error' if err.strip() else 'stopped without a patch')
+    loc = ('gold_function' if pat['symbols'] & gold_sym else
+           'gold_file' if pat['files'] & gold_files else 'wrong_file')
+    if rec.get('resolved'):
+        return loc, 'resolved'
+    if re.search(r'apply agent patch|failed to apply|patch does not apply', err, re.I):
+        return loc, 'patch did not apply'
+    bad, counts, collect_err = parse_pytest(log)
+    if collect_err and not bad:
+        return loc, 'tests could not run'
+    if bad:
+        target = [b for b in bad if node_matches(b, tfiles, tquals)]
+        return loc, 'target tests fail' if target else 'only other tests fail'
+    if counts.get('failed') or counts.get('error'):
+        return loc, 'target tests fail'
+    return loc, 'other'
+
+
+def main():
+    runs = find_runs()
+    assert runs, 'no end-to-end outputs mounted'
+    print('runs:', runs)
+    sys.path.insert(0, runs[0][1])
+    import graphloc as G
+    tasks = {t['instance_id']: t for t in G.load_tasks()}
+    per = {}  # (run, arm, id) -> row
+    cache, gold, tgt = {}, {}, {}
+    snap = lambda tid: cache.setdefault(tid, G.load_snapshot_py(tid, cache_dir=os.environ.get('GL_CACHE', '/tmp/glcache')))
+    first_trace_keys = None
+    for run, root in runs:
+        recs = load_records(root)
+        ids = sorted({t for (a, t) in recs if a in ARMS and (('base', t) in recs and ('skill', t) in recs)})
+        print(run, root, len(recs), 'records,', len(ids), 'paired tasks')
+        for tid in ids:
+            files = snap(tid)
+            if tid not in gold:
+                gl = G.gold_labels(tasks[tid], files, {})
+                gold[tid] = (set(gl['symbols']), set(gl['gold_files']))
+                tgt[tid] = target_tests(G, tasks[tid], files)
+            gs, gf = gold[tid]
+            for arm in ARMS:
+                r = recs[(arm, tid)]
+                patch = r.get('patch') or ''
+                if patch.strip():
+                    lab = G.gold_labels({'patch': patch}, files, {})
+                    pat = {'symbols': set(lab['symbols']), 'files': set(lab['gold_files'])}
+                    touched = {f['old'] or f['new'] for f in G.parse_patch(patch)}
+                else:
+                    pat, touched = {'symbols': set(), 'files': set()}, set()
+                log = read(f"{root}/results/{arm}/w{r.get('worker', 0)}/test_outputs/{tid}.log", r.get('test_tail') or '')
+                loc, why = classify(r, pat, gs, gf, log, *tgt[tid])
+                ti = trace_info(local_path(root, r.get('trace'))) if r.get('trace') else None
+                if ti is not None and first_trace_keys is None:
+                    try:
+                        tr = json.load(open(local_path(root, r['trace'])))
+                        first_trace_keys = {'top': sorted(tr)[:20] if isinstance(tr, dict) else type(tr).__name__}
+                    except Exception as e:  # noqa
+                        first_trace_keys = repr(e)
+                calls = ti['calls'] if ti else []
+                names = [c[0] for c in calls]
+                cands = []
+                for out in (ti['skill_outputs'] if ti else [])[:1]:
+                    for m in CAND_RE.finditer(out):
+                        path, line = m.group(3), int(m.group(4))
+                        defs = (G.extract_defs(files.get(path, ''))[0] or [])
+                        d = G.enclosing_def(defs, line)
+                        if d is not None:
+                            cands.append(G.module_candidates(path)[0] + '.' + d['qual'])
+                per[(run, arm, tid)] = {
+                    'run': run, 'arm': arm, 'instance_id': tid, 'repo': tid.split('_')[0],
+                    'resolved': int(bool(r.get('resolved'))), 'patch': int(bool(patch.strip())),
+                    'edits_gold_file': int(bool(pat['files'] & gf)), 'edits_gold_function': int(bool(pat['symbols'] & gs)),
+                    'task_has_function_gold': int(bool(gs)), 'edits_tests': int(any(G.is_test_path(p or '') for p in touched)),
+                    'location': loc, 'failure': why,
+                    'tool_calls': r.get('tool_calls') or 0, 'llm_calls': r.get('llm_calls') or 0,
+                    'minutes': round((r.get('duration') or r.get('wall') or 0) / 60, 2),
+                    'ran_tests': int(any(n == 'run_command' and re.search(r'pytest|unittest', a) for n, a in calls)),
+                    'skill_ran': int('run_skill_script' in names), 'trace_ok': int(ti is not None),
+                    'skill_top15_has_gold': (int(bool(set(cands) & gs)) if cands and gs else ''),
+                    'skill_top5_has_gold': (int(bool(set(cands[:5]) & gs)) if cands and gs else ''),
+                    'edits_skill_candidate': (int(bool(set(cands) & pat['symbols'])) if cands else ''),
+                }
+    rows = list(per.values())
+    run_names = sorted({r['run'] for r in rows})
+    common = sorted(set.intersection(*[{r['instance_id'] for r in rows if r['run'] == rn} for rn in run_names]))
+    rows = [r for r in rows if r['instance_id'] in common]
+    print('tasks common to all runs:', len(common), 'first trace:', first_trace_keys)
+
+    # ---------------- failure taxonomy (all runs pooled, per arm)
+    tax = {}
+    for arm in ARMS:
+        rs = [r for r in rows if r['arm'] == arm]
+        c = collections.Counter((r['location'], r['failure']) for r in rs)
+        locs = collections.Counter(r['location'] for r in rs)
+        tax[arm] = {'n': len(rs), 'resolved': sum(r['resolved'] for r in rs),
+                    'categories': {f'{a} | {b}': n for (a, b), n in sorted(c.items())},
+                    'by_location': {k: {'n': v, 'resolved': sum(r['resolved'] for r in rs if r['location'] == k)}
+                                    for k, v in sorted(locs.items())},
+                    'failure_if_gold_function': dict(collections.Counter(r['failure'] for r in rs
+                                                                         if r['location'] == 'gold_function' and not r['resolved'])),
+                    'no_patch_reasons': dict(collections.Counter(r['failure'] for r in rs if r['location'] == 'no_patch')),
+                    'ran_tests': float(np.mean([r['ran_tests'] for r in rs])),
+                    'resolved_if_ran_tests': float(np.mean([r['resolved'] for r in rs if r['ran_tests']] or [0])),
+                    'resolved_if_no_tests': float(np.mean([r['resolved'] for r in rs if not r['ran_tests']] or [0])),
+                    'edits_tests': float(np.mean([r['edits_tests'] for r in rs])),
+                    'tool_budget_hit': float(np.mean([r['tool_calls'] >= BUDGET['max_tool_calls'] for r in rs])),
+                    'mean_minutes': float(np.mean([r['minutes'] for r in rs]))}
+        sk = [r for r in rs if r['skill_top15_has_gold'] != '']
+        if sk:
+            tax[arm]['skill_list_n'] = len(sk)
+            tax[arm]['skill_top15_has_gold'] = float(np.mean([r['skill_top15_has_gold'] for r in sk]))
+            tax[arm]['skill_top5_has_gold'] = float(np.mean([r['skill_top5_has_gold'] for r in sk]))
+            tax[arm]['gold_function_if_list_has_gold'] = float(np.mean([r['edits_gold_function'] for r in sk if r['skill_top15_has_gold']] or [0]))
+            tax[arm]['gold_function_if_list_misses'] = float(np.mean([r['edits_gold_function'] for r in sk if not r['skill_top15_has_gold']] or [0]))
+            ec = [r for r in rs if r['edits_skill_candidate'] != '']
+            tax[arm]['edits_a_listed_candidate'] = float(np.mean([r['edits_skill_candidate'] for r in ec])) if ec else None
+
+    # ---------------- run-to-run variance
+    idx = {(r['run'], r['arm'], r['instance_id']): r['resolved'] for r in rows}
+    var = {'runs': run_names, 'n_tasks': len(common), 'resolved': {}, 'pairwise': {}}
+    for arm in ARMS:
+        var['resolved'][arm] = {rn: sum(idx[(rn, arm, t)] for t in common) for rn in run_names}
+    cells = [(rn, arm) for rn in run_names for arm in ARMS]
+    for i, a in enumerate(cells):
+        for b in cells[i + 1:]:
+            x = np.array([idx[(a[0], a[1], t)] for t in common]); y = np.array([idx[(b[0], b[1], t)] for t in common])
+            var['pairwise'][f'{a[0]}:{a[1]} vs {b[0]}:{b[1]}'] = {'both': int((x & y).sum()), 'only_first': int((x & ~y).sum()),
+                                                                 'only_second': int((~x & y).sum()), 'diff_points': round(100 * (y.mean() - x.mean()), 1)}
+    P = {arm: np.array([[idx[(rn, arm, t)] for rn in run_names] for t in common], float) for arm in ARMS}
+    R = len(run_names)
+    for arm in ARMS:
+        p = P[arm].mean(1)
+        var[arm] = {'always': int((p == 1).sum()), 'sometimes': int(((p > 0) & (p < 1)).sum()), 'never': int((p == 0).sum()),
+                    'rate_per_run': [round(float(v), 3) for v in P[arm].mean(0)]}
+        if R > 1:
+            # unbiased per-task Bernoulli variance -> expected SD of one run's resolved rate and of the gap between two runs
+            v = P[arm].var(1, ddof=1)
+            var[arm]['sd_one_run_points'] = round(100 * float(np.sqrt(v.sum())) / len(common), 2)
+            var[arm]['sd_between_two_runs_points'] = round(100 * float(np.sqrt(2 * v.sum())) / len(common), 2)
+    pb = np.concatenate([P['base'], P['skill']], 1)
+    if R > 1:
+        v = pb.var(1, ddof=1)
+        var['pooled_sd_between_two_runs_points'] = round(100 * float(np.sqrt(2 * v.sum())) / len(common), 2)
+    d = P['skill'].mean(1) - P['base'].mean(1)
+    rng = np.random.default_rng(0)
+    draw = rng.integers(0, len(d), size=(4000, len(d)))
+    bs = d[draw].mean(1)
+    var['skill_minus_base_all_runs'] = [round(100 * float(d.mean()), 1), round(100 * float(np.percentile(bs, 2.5)), 1),
+                                        round(100 * float(np.percentile(bs, 97.5)), 1)]
+    # every outcome pooled over runs: mean rate per agent, paired task bootstrap of the per-task mean difference
+    # (same resamples as above), and the skill-minus-base difference within each run
+    full = {(r['run'], r['arm'], r['instance_id']): r for r in rows}
+    var['pooled'] = {}
+    for col in ('resolved', 'patch', 'edits_gold_file', 'edits_gold_function'):
+        M = {arm: np.array([[full[(rn, arm, t)][col] for rn in run_names] for t in common], float) for arm in ARMS}
+        dd = M['skill'].mean(1) - M['base'].mean(1)
+        bb = dd[draw].mean(1)
+        var['pooled'][col] = {'base': round(float(M['base'].mean()), 3), 'skill': round(float(M['skill'].mean()), 3),
+                              'skill_minus_base': [round(100 * float(dd.mean()), 1), round(100 * float(np.percentile(bb, 2.5)), 1),
+                                                   round(100 * float(np.percentile(bb, 97.5)), 1)],
+                              'per_run_skill_minus_base': [round(100 * float(M['skill'][:, i].mean() - M['base'][:, i].mean()), 1)
+                                                           for i in range(R)]}
+    # resolution given where the patch lands, pooled over runs
+    for arm in ARMS:
+        rs = [r for r in rows if r['arm'] == arm]
+        hit = [r['resolved'] for r in rs if r['edits_gold_function']]
+        miss = [r['resolved'] for r in rs if not r['edits_gold_function']]
+        miss_fg = [r['resolved'] for r in rs if not r['edits_gold_function'] and r['task_has_function_gold']]
+        var[arm]['resolved_if_gold_function'] = [sum(hit), len(hit)]
+        var[arm]['resolved_if_no_gold_function'] = [sum(miss), len(miss)]
+        var[arm]['resolved_if_no_gold_function_on_function_tasks'] = [sum(miss_fg), len(miss_fg)]
+
+    # ---------------- write outputs
+    res = {'taxonomy': tax, 'variance': var, 'budget': BUDGET}
+    json.dump(res, open(f'{OUT}/e2e_analysis.json', 'w'), indent=1)
+    keys = list(rows[0].keys())
+    with open(f'{OUT}/e2e_runs.csv', 'w', newline='') as f:
+        w = csv.DictWriter(f, fieldnames=keys)
+        w.writeheader()
+        for r in sorted(rows, key=lambda r: (r['run'], r['arm'], r['instance_id'])):
+            w.writerow(r)
+    print(json.dumps(res, indent=1))
+    build_resource(runs, rows)
+    return res
+
+
+# ----------------------------------------------------------------------------------------------- resource
+def build_resource(runs, rows):
+    dst = f'{OUT}/graphloc129'
+    shutil.rmtree(dst, ignore_errors=True)
+    os.makedirs(f'{dst}/skill/graph-localize/scripts', exist_ok=True)
+    root = runs[0][1]
+    shutil.copy(f'{root}/skill_src/SKILL.md', f'{dst}/skill/graph-localize/SKILL.md')
+    shutil.copy(f'{root}/skill_src/scripts/localize.py', f'{dst}/skill/graph-localize/scripts/localize.py')
+    shutil.copy(f'{root}/graphloc.py', f'{dst}/graphloc.py')
+    for arm in ARMS:
+        src = f'{root}/agents/{arm}'
+        if os.path.isdir(src):
+            shutil.copytree(src, f'{dst}/agents/{arm}')
+    labels = sorted(glob.glob(f'{INP}/notebooks/*/*/graphloc129_labels.jsonl') + glob.glob(f'{INP}/*/graphloc129_labels.jsonl'))
+    if labels:
+        shutil.copy(labels[0], f'{dst}/graphloc129_labels.jsonl')
+    shutil.copy(f'{OUT}/e2e_runs.csv', f'{dst}/e2e_runs.csv')
+    shutil.copy(f'{OUT}/e2e_analysis.json', f'{dst}/e2e_analysis.json')
+    open(f'{dst}/README.md', 'w').write(README.format(n_runs=len(runs), n_rows=len(rows)))
+    print('resource files:', sorted(os.path.relpath(os.path.join(a, f), dst) for a, _, fs in os.walk(dst) for f in fs))
+
+
+README = """# GraphLoc-129
+
+Function-level localization labels, an offline localization skill and end-to-end agent outcomes for the 129 public
+tasks of the Google Gemma 4 Developer Agent Competition. Companion resource of the Paper Track writeup
+*Where Does the Graph Help? A Localization Audit of Gemma 4 Agent Code Graphs*.
+
+## Files
+
+- `graphloc129_labels.jsonl`: one line per task. `gold_files` (non-test .py files the reference patch edits),
+  `gold_symbols` (pre-existing functions, methods and classes it edits, with kind and whether each is present in the
+  provided graph and in the repaired graph G+), `new_symbols`, counts of module-level and import-only changed lines,
+  code-like mentions in the issue, anchors resolved in the provided graph, and anchor-to-gold hop distances.
+- `skill/graph-localize/`: the ADK skill (`SKILL.md` + `scripts/localize.py`, standard library only). Add
+  `skills: [skills/graph-localize]` to an `agent.yaml` and call `run_skill_script` with
+  `args={{"issue": "...", "k": 15}}`; it prints the 15 most likely functions as `rank score path:line name`.
+- `graphloc.py`: the library behind the study (gold labels, BM25, repaired graph G+, personalized PageRank, fusion).
+- `agents/base`, `agents/skill`: the two agent submissions compared end to end (sample-submission prompt and tools,
+  Getting Started sampling; the skill agent adds the skill and one workflow step).
+- `e2e_runs.csv`: one row per run, agent and task ({n_rows} rows, {n_runs} independent run(s) of both agents on the
+  tasks whose reference patch passes in the Kaggle subprocess sandbox): resolved, patch submitted, whether the patch
+  edits a gold file or gold function, failure category, tool and LLM calls, minutes, whether the agent ran tests, and
+  for the skill agent whether the skill's top 5 / top 15 contained a gold function.
+- `e2e_analysis.json`: failure taxonomy and run-to-run variance computed from `e2e_runs.csv`.
+
+Gold labels map every changed line of the reference patch to the innermost enclosing definition that existed before
+the patch (nested functions fold into their parent; test files excluded). Symbol ids are `module.Qualified.name`
+with the module named after the file path. No problem statements, patches or repository files are included.
+
+License: Apache 2.0.
+"""
+
+
+if __name__ == '__main__':
+    main()
+
+
+# CELL 2 code
+import subprocess, sys
+r = subprocess.run([sys.executable, '/kaggle/working/analyze_e2e.py'], capture_output=True, text=True)
+print(r.stdout[-30000:])
+print(r.stderr[-5000:])
+assert r.returncode == 0
+
+# CELL 3 code
+import pandas as pd
+df = pd.read_csv('/kaggle/working/e2e_runs.csv')
+print(pd.crosstab([df.arm, df.location], df.failure, margins=True))
+print(df.groupby(['run', 'arm']).resolved.agg(['sum', 'mean']))

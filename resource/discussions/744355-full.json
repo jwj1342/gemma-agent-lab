@@ -1,0 +1,60 @@
+{
+  "forumTopic": {
+    "authorId": 2212893,
+    "authorThumbnailName": "2212893-kg.jpg?t=2023-09-12-07-15-57",
+    "authorUserDisplayName": "Ayush Thakur",
+    "authorUserName": "ayuraj",
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3530091,
+      "postDate": "2026-09-29T14:13:47.550Z",
+      "rawMarkdown": "I am writing to see if the hosts of this competition would like to release official public images per tasks. This might be easier to use with sandboxes. ",
+      "content": "<p>I am writing to see if the hosts of this competition would like to release official public images per tasks. This might be easier to use with sandboxes. </p>",
+      "parent": {},
+      "author": {
+        "displayName": "Ayush Thakur",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2212893-kg.jpg?t=2023-09-12-07-15-57",
+        "url": "/ayuraj",
+        "tier": "MASTER",
+        "id": 2212893,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 2,
+        "canUpvote": true,
+        "totalUpvotes": 2
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ayush Thakur",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2212893-kg.jpg?t=2023-09-12-07-15-57",
+          "url": "/ayuraj",
+          "userName": "ayuraj",
+          "tier": "MASTER",
+          "id": 2212893,
+          "profileUrl": "/ayuraj",
+          "performanceTier": "MASTER",
+          "userId": 2212893,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3530091,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 744355,
+    "name": "Official images per task?",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-29T14:13:47.549828Z",
+    "totalVotes": 2,
+    "url": "/competitions/gemma-4-developer-agent/discussion/744355",
+    "authorPerformanceTier": "MASTER",
+    "authorProgressionOptOut": false
+  }
+}

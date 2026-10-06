@@ -1,0 +1,589 @@
+# CELL 0 code
+# This Python 3 environment comes with many helpful analytics libraries installed
+# It is defined by the kaggle/python Docker image: https://github.com/kaggle/docker-python
+# For example, here's several helpful packages to load
+
+import numpy as np # linear algebra
+import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
+
+# Input data files are available in the read-only "../input/" directory
+# For example, running this (by clicking run or pressing Shift+Enter) will list all files under the input directory
+
+import os
+for dirname, _, filenames in os.walk('/kaggle/input'):
+    for filename in filenames:
+        print(os.path.join(dirname, filename))
+
+# You can write up to 20GB to the current directory (/kaggle/working/) that gets preserved as output when you create a version using "Save & Run All" 
+# You can also write temporary files to /kaggle/temp/, but they won't be saved outside of the current session
+
+# Use the kagglehub client library to attach Kaggle resources like competitions, datasets, and models to your session
+# Learn more about kagglehub: https://github.com/Kaggle/kagglehub/blob/main/README.md
+
+import kagglehub
+# kagglehub.dataset_download('<owner>/<dataset-slug>')
+
+# CELL 1 markdown
+ How a submission is scored¶
+The metric is brutally simple, and that simplicity should drive every design choice:
+
+Resolution Rate
+=
+#
+{
+tasks where pytest exits 0
+}
+#
+{
+tasks in the eval split
+}
+A task is worth exactly 1.0 or 0.0. There is no partial credit. A task is resolved iff the hermetic pytest run in the verification sandbox exits with return code 0. Consequences worth internalising:
+
+A patch that "almost works" scores the same as no patch at all. Optimise for a small number of confidently correct fixes, not broad speculative edits.
+Fixing one test while breaking another fails the whole task. The verification run must be fully green, including tests you did not intend to touch.
+You cannot farm the grader. The harness force-resets every test file named in the hidden test_patch (git checkout HEAD + git clean -f) before applying it, so editing test expectations is discarded. Only library-code changes under /workspace survive.
+Two-phase lifecycle
+Each task runs in two separate containers, so nothing leaks between "doing the work" and "grading the work":
+
+Container A  (agent sandbox)                        Container B  (verification sandbox)
+------------------------------                      ------------------------------------
+repo snapshot at base_commit                        fresh snapshot, same bootstrap
+.git/info/exclude + pip install -e .                apply agent_patch (4 fallback passes)
+pytest.ini + conftest.py written by harness         hard-reset the target test files
+git commit -m "baseline"                            apply hidden task.test_patch
+        |                                           run hermetic pytest
+  agent loop (tools, nudges, budgets)                       |
+        |                                           exit_code == 0  ->  resolved = 1.0
+  git add -N . && git diff HEAD  ->  agent_patch
+Three details that catch people out:
+
+The patch is extracted with git add -N . && git diff HEAD from /workspace. Any scratch file you leave in /workspace is therefore part of your submission. Put repro scripts in /tmp, not /workspace.
+The repo snapshot has zero future git history. Commits after base_commit do not exist in .git, so the agent cannot find the upstream fix. No git archaeology.
+The sandbox is air-gapped (network_mode="none"). No pip, no PyPI, no downloads. Everything needed is pre-installed, and claiming otherwise in a prompt only burns budget.
+Budgets
+Limit	Default	Notes
+Wall-clock time in the agent loop	60 min	container setup is excluded
+Tool calls	unlimited unless set	submit_patch and get_status are free
+Reasoning turns	500	
+Single command timeout	300 s	a timeout does not end the session
+Output per command	5,000 chars	truncated
+read_file	150 lines / 10,000 chars	truncated
+Container resources	4 GiB RAM / 2 vCPU	exceeding RAM is SIGKILL (exit 137)
+The context window is 32,768 tokens total (prompt + reasoning + output), because that is vLLM's max_model_len on 4x L4. ADK compacts events every 15 steps and caches prefixes, but the ceiling is real - see the design notes in section 4.
+
+2. The submission contract
+Your submission.zip unpacks to a directory with exactly one root config:
+
+submission/
+├── agent.yaml              # REQUIRED - exactly one of agent.yaml / agent.yml /
+│                           #            root_agent.yaml / root_agent.yml
+├── prompts/
+│   └── system.md           # loaded into `instruction` via !include
+├── configs/
+│   └── sampling.yaml       # generation parameters via !include
+├── sub_agents/
+│   └── code_analyzer.yaml  # optional sub-agents / AgentTool configs
+├── adapters/               # optional PEFT LoRA: adapter_config.json + *.safetensors
+└── skills/<name>/SKILL.md  # optional ADK skills
+The rules that shape your design
+Declarative only - no Python entrypoint. You cannot ship agent.py. The harness compiles your YAML against closed host registries (ToolRegistry, ModelRegistry, SkillRegistry) and never calls importlib on your code. Tool names must come from the harness's own fixed set of nine.
+
+One base model per submission. Every agent in the tree must resolve to the same model alias; two distinct models raises ParticipantVisibleError. Registered aliases:
+
+gemma-4-31b-it-qat-w4a16-ct   <- starter default: W4A16 INT4, ~16-18 GB, fastest, most KV headroom
+gemma-4-31b-it   / gemma-4-31b
+gemma-4-27b-it   / gemma-4-27b
+gemma-4-26b-a4b-it / gemma-4-26b-a4b / diffusiongemma-26b-a4b-it   (MoE)
+gemma-4-12b-it   / gemma-4-12b
+gemma-4-9b-it    / gemma-4-9b
+gemma-4-e4b-it   / gemma-4-e4b
+gemma-4-e2b-it   / gemma-4-e2b
+Model choice matters more than you would expect. A 31B model in bfloat16 needs ~54-62 GB of the 96 GB, leaving only ~6-8 GB per GPU for a 32k KV cache - tight. The default QAT w4a16 variant needs ~16-18 GB and leaves ~17 GB per GPU. On a resolution-rate metric, the quantised default is usually the right starting point, because a tight KV budget means more aggressive compaction and more truncated steps.
+
+Hard size limit: < 3 GiB unpacked total, including LoRA adapters. Adapters are .safetensors only (no .bin / .pt / .pth). vLLM is configured with max_loras=8, max_lora_rank=128, so you can attach a different adapter to different agents - e.g. a specialist adapter on a read-only analyzer sub-agent.
+
+Generation config: max_output_tokens is capped at 32,768; thinking_config accepts thinking_budget (1-32,768), thinking_level (MINIMAL/LOW/MEDIUM/HIGH/NONE), and include_thoughts. temperature, top_p, top_k, penalties, seed, and stop_sequences are unrestricted.
+
+Sandboxed !include: !include prompts/system.md inlines a .md/.txt as raw text, or recursively parses a .yaml. Absolute paths, .., null bytes, and escaping symlinks raise PathTraversalError.
+
+3. The nine tools, and which ones to actually use
+Tool names are the only ones the harness will resolve. Behaviour that matters:
+
+Tool	Budget	What to know
+read_file(filepath, start_line?, end_line?)	counts	hard-capped at 150 lines / 10,000 chars per call
+edit_file(filepath, old_string, new_string, allow_multiple?)	counts	3-tier matching: exact -> whitespace-flexible (auto re-indent) -> regex-ish. Fails if old_string is ambiguous and allow_multiple=False
+write_file(filepath, content)	counts	creates parent dirs; overwrites
+run_command(command)	counts	bash -c in /workspace, 300 s cap, 5,000-char output cap
+submit_patch()	free	git add -N . && git diff HEAD; ends the session once the turn completes
+get_status()	free	live budget and patch state
+search_similar_code(query, k?)	counts	offline; query is matched against symbol names, not natural language
+get_code_neighbors(node, edge_type?, max_neighbors?)	counts	callers/callees/definitions
+get_code_subgraph(nodes)	counts	induced subgraph
+Two properties of submit_patch deserve emphasis: it does not count against the tool-call budget, and it terminates the session as soon as the current turn ends. So the correct pattern is: verify first, clean /workspace, then call it last.
+
+Note also that search_similar_code has no live embedding server. It resolves your query string against node keys already stored in the .npz archive. Passing a sentence like "where is the header parser" returns noise; passing "parse_header" or "HTTPConnection" works.
+
+The graph data is already published
+The Data tab ships 256 graph/embedding pairs under graphs/ and embeddings/, named by SWE-bench instance ID - either a PR number (fastapi_14605, rich_3486) or a commit SHA (fastapi_1b3bea8b...). A large share are zero-byte placeholders: in an earlier count of the first 195 archives, 100 of 195 were empty. The harness injects the graph tools only when a non-empty .json graph and a >100 byte .npz both exist for the task's repo.
+
+So never let your agent depend on the graph tools. Treat them as a bonus and key the prompt on read_file and run_command. A baseline that assumes graph navigation exists will silently lose those tools on roughly half the tasks.
+
+These 256 archives are not the graded task list. They cover more instances than the 129 published tasks, so they say nothing reliable about the graded split's composition. For the actual distribution, read tasks.jsonl - see the next section.
+
+3b. What the Data tab actually publishes
+The dataset is far richer than the first page of the file listing suggests - the listing is paginated at 200 entries, and the interesting parts are on pages 2-4. The full tab is 782 files:
+
+Path	Contents
+tasks.jsonl	129 graded tasks, each with problem_statement, base_commit, gold patch, test_patch, repo
+snapshots/*.tgz	one full repository snapshot per task (~50 GB total)
+sample_submission/	the official starter kit, including eval_config.yaml
+graphs/*.json, embeddings/*.npz	prebuilt code-intelligence data, 256 instances (~half empty)
+wheels/*.whl	the offline wheel cache baked into the sandbox image
+sandbox/setup.py, docker/*	the container bootstrap
+The real task distribution
+Repo	Tasks	Share
+fastapi/fastapi	67	51.9%
+Textualize/rich	48	37.2%
+psf/requests	13	10.1%
+encode/httpx	1	0.8%
+FastAPI and Rich together are 89% of the task set. Tuning for those two repositories is not a heuristic, it is the whole game.
+
+The single most important constraint: Stage 1 budgets
+The starter kit ships eval_config.yaml, and it is severe:
+
+evaluation:
+  timeout_seconds: 60
+  max_tool_calls: 10
+  max_time_minutes: 1
+  max_turns: 50
+Ten tool calls and one minute per task. That is not enough to explore a repository. It is barely enough to read two files, make one edit, and submit. Contrast this with the harness defaults documented in the guide (60 minutes, unlimited tool calls) - the competition's Stage 1 settings are roughly two orders of magnitude tighter.
+
+This reframes the entire problem. The winning skill is not thoroughness; it is locating the target from the problem statement alone and committing to a minimal edit. A patient, methodical agent that greps broadly and runs a test sweep will exhaust its budget before it patches anything, and score zero regardless of how well it reasons.
+
+The organisers' own prompt says exactly this, and it is worth taking literally:
+
+Aim to understand, resolve, and submit the fix in the minimum number of tool calls (under 8-10 turns). ... STRICT RULE: NEVER Run Bare Pytest or Full-Repo Sweeps.
+
+Two things about the starter kit worth knowing
+Its LoRA adapters are demonstrators, not trained weights. adapters/main_lora and adapters/tool_lora are byte-identical (same SHA256, 217,672 bytes), configured as r: 4, lora_alpha: 8, targeting only q_proj/o_proj on layer 0, with init_lora_weights: true. They exist to show you the packaging format and the adapter: <name> wiring. Do not expect them to carry any capability - and note that the reference agent still declares adapter: main_lora, so the format is required even when the contents are inert.
+
+Its sampling config differs from a "safe" default: temperature: 0.2, top_p: 0.95, thinking_level: high, thinking_budget: 4096. My baseline below uses temperature: 0.0 for reproducibility, which is the right choice for measuring changes; the organisers' mild sampling may be better for scoring, because it lets the model escape a bad early decision. Treat that as an A/B test to run, not a settled question.
+
+4. Baseline design: the reasoning behind the YAML below
+The baseline in this notebook is deliberately small, but each choice is load-bearing - and the 10-tool-call Stage 1 budget is what makes them load-bearing.
+
+One LlmAgent, six tools. The organisers' reference agent uses all nine tools plus an agent_tool-wrapped analyzer sub-agent. That is the right ceiling, but the wrong floor: every extra hop and every graph query spends from a budget of ten. The baseline keeps six cheap, predictable tools and no hierarchy, so the budget goes into reading and editing rather than orchestration.
+
+No graph tools in the baseline. Beyond the budget cost, graph archives exist for only about half the instances, and the harness injects those tools only when a non-empty graph and embedding exist for the task's repo. A prompt that depends on them silently loses them on the other half.
+
+Thinking on, but modest. Localising from a short problem statement rewards deliberation, so thinking earns its tokens. But a large thought block followed by a big edit_file payload is the classic failure: the response hits max_output_tokens mid call and the <|tool_call|> tag is never closed, burning an entire turn on a nudge. So thinking_budget: 4096 with generous max_output_tokens: 16384 - room to think and headroom for the payload.
+
+Determinism. temperature: 0.0 and a fixed seed make runs comparable, which is the whole point of a baseline. You cannot tell whether a prompt change helped if sampling noise exceeds the effect. The organisers ship temperature: 0.2; that is a variable to test, not a default to copy.
+
+The prompt encodes the budget, not just the goal. The instructions below are written for a ten-call world: go from the problem statement straight to the target file, read in slices, make one minimal edit, verify against a single targeted test file, never run a full-repo sweep, never touch tests, and call submit_patch() last. Most zero-score runs fail on protocol - a patch never submitted, a scratch file that broke git apply, or a test file edited and then reset by the grader.
+
+What this baseline will not fix
+Be honest about the floor. It will not: carry a persistent repo map, isolate exploration in a sub-agent, use graph navigation, or fine-tune a LoRA. In ascending order of effort:
+
+Rework the prompt loop for the 10-call budget and tune thinking_budget.
+Add an AgentTool-wrapped read-only analyzer, as the starter kit does, so search output never lands in the root agent's context.
+Add the graph tools behind a capability check.
+Train real LoRA adapters - the shipped ones are inert placeholders.
+Specialise separately for FastAPI and Rich, which fail in different ways.
+5. Build the baseline submission
+Everything below is self-contained and creates the real submission directory, then zips it. Nothing here needs the competition data or a GPU - this is the artefact you would upload.
+
+The cells are written to run both locally and as a Kaggle kernel. That matters more than it sounds: a Kaggle kernel runs with a read-only working directory, so every path below resolves to a run directory (/kaggle/working on Kaggle, the current directory locally). A notebook that hardcodes relative paths works on your machine and fails on Kaggle.
+
+5.1 Environment check
+Confirm the toolchain before writing files, and record what actually ran so results stay reproducible.
+
+5.2 The submission files
+Three files. agent.yaml is the compiled entrypoint, prompts/system.md is the agent's protocol, and configs/sampling.yaml holds generation parameters.
+
+# CELL 2 code
+"""Record the environment this notebook was executed in."""
+import platform
+import sys
+
+print(f"python   {sys.version.split()[0]}")
+print(f"platform {platform.platform()}")
+
+try:
+    import yaml
+    print(f"pyyaml   {yaml.__version__}")
+except ImportError:
+    print("pyyaml   MISSING - run: pip install pyyaml")
+
+# CELL 3 code
+"""Write the baseline submission into the run directory."""
+import pathlib
+
+# Kaggle kernels run with a read-only CWD, so everything writable goes to a run dir.
+RUN = pathlib.Path("/kaggle/working") if pathlib.Path("/kaggle").exists() else pathlib.Path(".")
+SUB = RUN / "submission"
+(SUB / "prompts").mkdir(parents=True, exist_ok=True)
+(SUB / "configs").mkdir(parents=True, exist_ok=True)
+print(f"writing submission to {SUB.resolve()}")
+
+# Root agent: one LlmAgent, six core tools, deterministic sampling.
+AGENT_YAML = """name: swe_gemma_coder
+description: Minimal baseline SWE agent for the Gemma 4 Developer Agent competition.
+model: gemma-4-31b-it-qat-w4a16-ct
+instruction: !include prompts/system.md
+tools:
+  - read_file
+  - edit_file
+  - write_file
+  - run_command
+  - submit_patch
+  - get_status
+generate_content_config: !include configs/sampling.yaml
+"""
+
+# Deterministic decoding so prompt changes can be compared across runs.
+SAMPLING_YAML = """temperature: 0.0
+top_p: 1.0
+top_k: 1
+max_output_tokens: 16384
+seed: 20261202
+thinking_config:
+  thinking_budget: 4096
+  include_thoughts: true
+"""
+
+# The protocol the agent must follow. Stage 1 allows only 10 tool calls and 1 minute,
+# so the prompt is written for a hard budget rather than for thoroughness.
+SYSTEM_MD = """\
+You are an autonomous software engineer fixing a real bug in a Python repository at
+`/workspace`. You are graded by one thing only: whether the repository's hidden test
+suite passes after your change. There is no partial credit.
+
+## Your budget is tiny
+
+You have roughly **10 tool calls**. Spend them like this:
+
+1. Read the target source file. (1-2 calls)
+2. Identify the exact lines to change.
+3. Make one focused edit. (1-2 calls)
+4. Optionally run one targeted test file. (1 call)
+5. Call `submit_patch()`. It is free and ends the session.
+
+Do NOT explore the repository. Do NOT run `pytest` with no arguments, `pytest .`, or any
+whole-repo test sweep - it will consume your entire budget and time out. Do NOT attempt
+to fix unrelated pre-existing test failures.
+
+## Locating the fix fast
+
+- Extract file paths, function names, class names, and error strings directly from the
+  problem statement. Usually the target is named outright.
+- `read_file` returns at most 150 lines and 10,000 characters per call, so read slices,
+  not whole files.
+- Use one `run_command` with `grep -rn` only if the problem statement gives you no path.
+- Many repositories have pre-existing breakages and missing fixtures. Ignore them; they
+  are not your task.
+
+## Hard rules
+
+- Never create, modify, or delete test files (`test_*.py`, `*_test.py`, anything under
+  `tests/`). The grader resets the files it grades, so such edits are discarded and only
+  waste budget.
+- Never modify `/workspace/pytest.ini` or `/workspace/conftest.py`.
+- Work only inside `/workspace`. The environment is offline - no network, no pip.
+- Write scratch files to `/tmp`, never inside `/workspace`. Anything untracked in
+  `/workspace` becomes part of your submitted patch.
+- Make the smallest change that addresses the root cause. Do not refactor or reformat
+  unrelated code.
+- Keep `old_string` in `edit_file` short and unique. One oversized edit call can be
+  truncated mid-tag.
+- Always finish with a non-empty patch. Concluding that no change is needed is always
+  wrong - every task requires a source modification.
+"""
+
+# Write the files.
+(SUB / "agent.yaml").write_text(AGENT_YAML, encoding="utf-8")
+(SUB / "configs" / "sampling.yaml").write_text(SAMPLING_YAML, encoding="utf-8")
+(SUB / "prompts" / "system.md").write_text(SYSTEM_MD, encoding="utf-8")
+
+for p in sorted(SUB.rglob("*")):
+    if p.is_file():
+        print(f"{p.stat().st_size:>7,} bytes  {p.as_posix()}")
+
+# CELL 4 code
+"""Validate the submission against the documented contract. No GPU needed."""
+import pathlib
+
+import yaml
+
+# Same run-dir rule as the writer cell.
+RUN = pathlib.Path("/kaggle/working") if pathlib.Path("/kaggle").exists() else pathlib.Path(".")
+SUB = RUN / "submission"
+SUB_ROOT = SUB.resolve()
+
+# Only these extensions may appear anywhere in the archive.
+ALLOWED_EXT = {".yaml", ".yml", ".md", ".txt", ".py", ".json", ".safetensors"}
+MAX_TOTAL_BYTES = 3_221_225_472  # 3 GiB unpacked, adapters included
+ROOT_NAMES = {"agent.yaml", "agent.yml", "root_agent.yaml", "root_agent.yml"}
+
+
+class _Loader(yaml.SafeLoader):
+    """SafeLoader plus the harness's sandboxed !include directive."""
+
+    def __init__(self, stream):
+        super().__init__(stream)
+        if not hasattr(self, "include_stack"):
+            self.include_stack = []
+
+
+def _include(loader, node):
+    rel = loader.construct_scalar(node)
+    # The harness blocks absolute paths and traversal, so mirror both rules.
+    if pathlib.PurePosixPath(rel).is_absolute():
+        raise ValueError(f"!include must be relative: {rel}")
+    target = (SUB_ROOT / rel).resolve()
+    if not target.is_relative_to(SUB_ROOT):
+        raise ValueError(f"!include escapes the submission root: {rel}")
+    if not target.exists():
+        raise ValueError(f"!include target does not exist: {rel}")
+    # Match the harness: depth limit 10, with cycle detection.
+    stack = loader.include_stack
+    if target in stack:
+        raise ValueError(f"!include cycle detected: {rel}")
+    if len(stack) >= 10:
+        raise ValueError(f"!include nesting exceeds depth 10 at: {rel}")
+    if target.suffix in {".yaml", ".yml"}:
+        loader.include_stack = stack + [target]
+        try:
+            return yaml.load(target.read_text(encoding="utf-8"), Loader=_Loader)
+        finally:
+            loader.include_stack = stack
+    # .md / .txt are inlined verbatim as strings.
+    return target.read_text(encoding="utf-8")
+
+
+yaml.add_constructor("!include", _include, Loader=_Loader)
+
+problems = []
+
+# 1. Exactly one root config.
+roots = [p for p in SUB.iterdir() if p.name in ROOT_NAMES]
+if len(roots) != 1:
+    problems.append(f"expected exactly 1 root config, found {len(roots)}: {[p.name for p in roots]}")
+
+# 2. Packaged files stay within the allowed extensions.
+files = [p for p in SUB.rglob("*") if p.is_file()]
+for p in files:
+    if p.suffix not in ALLOWED_EXT:
+        problems.append(f"disallowed extension: {p.as_posix()}")
+
+# 3. Total unpacked size.
+total = sum(p.stat().st_size for p in files)
+if total >= MAX_TOTAL_BYTES:
+    problems.append(f"submission is {total:,} bytes, limit is {MAX_TOTAL_BYTES:,}")
+
+# 4. Parse the tree and collect every declared model.
+config = yaml.load((SUB / "agent.yaml").read_text(encoding="utf-8"), Loader=_Loader)
+print(f"root agent     : {config['name']}")
+print(f"declared model : {config['model']}")
+print(f"tools          : {', '.join(config['tools'])}")
+print(f"instruction    : {len(config['instruction'])} chars, inlined from prompts/system.md")
+print(f"sampling       : {config['generate_content_config']}")
+
+# Walk sub_agents / agent_tools the way validate_single_declared_model does.
+models = {config["model"]}
+
+
+def _load(rel):
+    path = (SUB / rel).resolve()
+    loader = _Loader(path.read_text(encoding="utf-8"))
+    # Seed the include stack so a config cannot !include itself.
+    loader.include_stack = [path]
+    return loader.get_single_data()
+
+
+def _walk(node):
+    for ref in node.get("tools", []) or []:
+        if isinstance(ref, dict) and "agent_tool" in ref:
+            sub = _load(ref["agent_tool"]["config_path"])
+            if sub.get("model"):
+                models.add(sub["model"])
+            _walk(sub)
+    for ref in node.get("sub_agents", []) or []:
+        sub = _load(ref["config_path"])
+        if sub.get("model"):
+            models.add(sub["model"])
+        _walk(sub)
+
+
+_walk(config)
+if len(models) != 1:
+    problems.append(f"single-model rule violated, found {sorted(models)}")
+
+print(f"total size     : {total:,} bytes ({total / 1024:.1f} KiB), limit {MAX_TOTAL_BYTES:,}")
+print()
+if problems:
+    print("CONTRACT VIOLATIONS:")
+    for p in problems:
+        print(f"  - {p}")
+else:
+    print("PASS - submission satisfies every documented contract check.")
+
+# Fail loudly rather than letting a bad archive reach the leaderboard.
+assert not problems, problems
+
+# CELL 5 code
+"""Package the submission the way the competition expects."""
+import hashlib
+import pathlib
+import shutil
+import sys
+import zipfile
+
+def make_stdout_safe():
+    """Best-effort: stop non-ASCII output from crashing on a narrow console.
+
+    Kaggle runs notebooks under papermill, where sys.stdout is an IPython OutStream
+    with no reconfigure(); a plain local run has a real TextIOWrapper. Handle both.
+    """
+    stream = getattr(sys, "stdout", None)
+    reconfigure = getattr(stream, "reconfigure", None)
+    if callable(reconfigure):
+        try:
+            reconfigure(errors="replace")
+        except (ValueError, OSError):
+            pass
+
+
+make_stdout_safe()
+
+RUN = pathlib.Path("/kaggle/working") if pathlib.Path("/kaggle").exists() else pathlib.Path(".")
+SUB = RUN / "submission"
+
+# Zip the submission root so agent.yaml lands at the archive root.
+archive = shutil.make_archive(str(RUN / "submission"), "zip", root_dir=str(SUB))
+path = pathlib.Path(archive)
+digest = hashlib.sha256(path.read_bytes()).hexdigest()
+
+print(f"wrote   : {path.resolve()}")
+print(f"size    : {path.stat().st_size:,} bytes")
+print(f"sha256  : {digest}")
+
+# Reopen it: a submission that does not contain exactly one root config is rejected.
+with zipfile.ZipFile(path) as zf:
+    names = sorted(zf.namelist())
+roots = [n for n in names if n in {"agent.yaml", "agent.yml", "root_agent.yaml", "root_agent.yml"}]
+print(f"entries : {len(names)}")
+print(f"root cfg: {roots}")
+assert len(roots) == 1, f"expected exactly 1 root config, found {roots}"
+
+# In a code competition the graded artefact must sit at the output root.
+if path.parent == pathlib.Path("/kaggle/working"):
+    print("location: correct - /kaggle/working/submission.zip is the graded output")
+
+# CELL 6 code
+"""Final gate: prove the graded artefact exists and is well formed."""
+import pathlib
+import zipfile
+
+RUN = pathlib.Path("/kaggle/working") if pathlib.Path("/kaggle").exists() else pathlib.Path(".")
+archive = RUN / "submission.zip"
+
+assert archive.exists(), f"missing graded artefact: {archive}"
+
+with zipfile.ZipFile(archive) as zf:
+    names = sorted(zf.namelist())
+
+# The harness requires exactly one root config at the archive root.
+root_names = {"agent.yaml", "agent.yml", "root_agent.yaml", "root_agent.yml"}
+roots = [n for n in names if n in root_names]
+assert len(roots) == 1, f"expected exactly 1 root config, found {roots}"
+
+print(f"artefact : {archive.resolve()}")
+print(f"entries  : {len(names)}")
+print(f"root cfg : {roots[0]}")
+for n in names:
+    print(f"  {n}")
+print()
+print("READY - this kernel output can be submitted with:")
+print(f'  kaggle competitions submit gemma-4-developer-agent -k <kernel> -f submission.zip -m "baseline"')
+
+# CELL 7 code
+"""Task statistics, computed from the published tasks.jsonl."""
+import collections
+import json
+import pathlib
+import statistics
+import sys
+
+def make_stdout_safe():
+    """Best-effort: stop non-ASCII output from crashing on a narrow console.
+
+    Kaggle runs notebooks under papermill, where sys.stdout is an IPython OutStream
+    with no reconfigure(); a plain local run has a real TextIOWrapper. Handle both.
+    """
+    stream = getattr(sys, "stdout", None)
+    reconfigure = getattr(stream, "reconfigure", None)
+    if callable(reconfigure):
+        try:
+            reconfigure(errors="replace")
+        except (ValueError, OSError):
+            pass
+
+
+make_stdout_safe()
+
+CANDIDATES = [
+    pathlib.Path("/kaggle/input/competitions/gemma-4-developer-agent"),
+    pathlib.Path("/kaggle/input/gemma-4-developer-agent"),
+    pathlib.Path("published"),
+    pathlib.Path("."),
+    pathlib.Path("../published"),
+]
+DATA = next((c for c in CANDIDATES if (c / "tasks.jsonl").exists()), None)
+
+if DATA is None:
+    print("tasks.jsonl not found; attach the competition data to run this cell.")
+else:
+    tasks = [
+        json.loads(line)
+        for line in (DATA / "tasks.jsonl").read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+
+    print(f"tasks: {len(tasks)}")
+    print()
+    print("by repository")
+    for repo, n in collections.Counter(t["repo"] for t in tasks).most_common():
+        print(f"  {repo:<22} {n:>4}  {n / len(tasks):>6.1%}")
+
+    print()
+    print("field sizes (characters)")
+    for label, key in (
+        ("problem_statement", "problem_statement"),
+        ("gold patch", "patch"),
+        ("test_patch", "test_patch"),
+    ):
+        vals = [len(t[key] or "") for t in tasks]
+        print(
+            f"  {label:<18} median {int(statistics.median(vals)):>7,}"
+            f"   mean {int(statistics.mean(vals)):>7,}   max {max(vals):>8,}"
+        )
+
+    print()
+    files = [len([l for l in (t["patch"] or "").splitlines() if l.startswith("+++ b/")]) for t in tasks]
+    added = [len([l for l in (t["patch"] or "").splitlines() if l.startswith("+")]) for t in tasks]
+    single = sum(1 for f in files if f == 1)
+    print(f"gold patches touching 1 file : {single}/{len(tasks)}  ({single / len(tasks):.0%})")
+    print(f"gold patch files touched     : median {int(statistics.median(files))}, max {max(files)}")
+    print(f"lines added per gold patch   : median {int(statistics.median(added))}, max {max(added)}")
+    print(f"tasks with hints_text        : {sum(1 for t in tasks if (t.get('hints_text') or '').strip())}/{len(tasks)}")
+
+    # Which test files get created rather than edited? Those cannot be found on disk.
+    created = sum(
+        1
+        for t in tasks
+        if any(l.startswith("--- /dev/null") for l in (t["test_patch"] or "").splitlines())
+    )
+    print(f"test_patch creates new files : {created}/{len(tasks)}")
+
+# CELL 8 code

@@ -1,0 +1,10 @@
+# Does one scoring run cover both hidden partitions (~240 tasks) in the 12-hour window?
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/744258
+
+## 3529882 /erhiteshkumar TOPIC
+Hi @elanlearns,
+I have following query related to scoring. 
+Does one scoring run cover both hidden partitions (~240 tasks) within the 12-hour window, or is each partition a separate run? It decides the safe per-task time limit: about 4.5 minutes for 120 tasks, 2 minutes for 240. 
+
+## 3530082 /ryanholbrook ADMIN
+There are ~120 tasks in the test set, or about 60 in each of the public and private splits. They are scored during the same 12-hour run.

@@ -1,0 +1,718 @@
+# CELL 0 markdown
+## 1. Official offline setup (retained from the supplied notebook)
+
+# CELL 1 code
+import glob
+import importlib
+import os
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+# Configure environment variables for offline vLLM serving and LiteLLM routing
+os.environ['LITELLM_LOCAL_MODEL_COST_MAP'] = 'True'
+os.environ['TRANSFORMERS_NO_TF'] = '1'
+os.environ['VLLM_WORKER_MULTIPROC_METHOD'] = 'spawn'
+os.environ['VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS'] = '1'
+os.environ['VLLM_ENGINE_READY_TIMEOUT_S'] = '1200'
+os.environ['VLLM_NO_USAGE_STATS'] = '1'
+os.environ['OTEL_SDK_DISABLED'] = 'true'
+os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
+
+WHEELHOUSE_DIR = Path('/kaggle/input/datasets/nihilisticneuralnet/gemma4developeragentversioned')
+
+# Remove broken cutlass .pth hooks if present
+for pth_pattern in (
+    '/usr/local/lib/python*/dist-packages/*cutlass*.pth',
+    '/usr/local/lib/python*/site-packages/*cutlass*.pth',
+):
+    for pth in glob.glob(pth_pattern):
+        try:
+            os.unlink(pth)
+        except OSError:
+            pass
+
+# Restore PEP 440 '+cu128' wheel filenames stripped by Kaggle dataset uploads
+tmp_whl = Path('/tmp/wheelhouse')
+tmp_whl.mkdir(parents=True, exist_ok=True)
+for w in WHEELHOUSE_DIR.glob('*.whl'):
+    if 'cutlass' in w.name.lower():
+        continue
+    target_name = (
+        w.name.replace('cu128', '+cu128')
+        if ('cu128' in w.name and '+' not in w.name)
+        else w.name
+    )
+    target = tmp_whl / target_name
+    if not target.exists():
+        os.symlink(w, target)
+
+wheels = sorted(str(w) for w in tmp_whl.glob('*.whl'))
+print(f'Installing {len(wheels)} wheels from {WHEELHOUSE_DIR}...')
+subprocess.run(
+    [sys.executable, '-m', 'pip', 'install', '-q', '--no-deps', '--force-reinstall', *wheels],
+    check=True,
+)
+importlib.invalidate_caches()
+print('Wheelhouse installation complete.')
+
+# CELL 2 markdown
+## 2. Load official data and inspect public task distribution
+
+# CELL 3 code
+import collections
+import json
+import random
+from swegemma.models import load_tasks
+
+DATA_DIR = Path('/kaggle/input/competitions/gemma-4-developer-agent')
+WORKING_DIR = Path('/kaggle/working')
+WORKING_DIR.mkdir(parents=True, exist_ok=True)
+SAMPLE_SUBMISSION_SRC = DATA_DIR / 'sample_submission'
+TASKS_PATH = DATA_DIR / 'tasks.jsonl'
+GRAPH_DIR = str(DATA_DIR / 'graphs')
+EMBEDDINGS_DIR = str(DATA_DIR / 'embeddings')
+MODEL_PATH = Path('/kaggle/input/models/google/gemma-4/other/gemma-4-31b-it-qat-w4a16-ct/2')
+TARGET_MODEL_NAME = 'gemma-4-31b-it-qat-w4a16-ct'
+
+for required in (SAMPLE_SUBMISSION_SRC, TASKS_PATH, MODEL_PATH, DATA_DIR / 'snapshots'):
+    if not required.exists():
+        raise FileNotFoundError(f'Missing Kaggle input: {required}')
+tasks = load_tasks(TASKS_PATH)
+print('Public instances:', len(tasks))
+print('Repositories:', dict(collections.Counter(t.repo for t in tasks)))
+print('Input model:', MODEL_PATH)
+# Critical: reference patches and test_patch may exist in the public task records,
+# but neither is read or serialized into our submitted agent configuration.
+
+# CELL 4 markdown
+## 3. Available graph tools (official demonstration, with corrected query guidance)
+
+# CELL 5 code
+from swegemma import graph as sg
+
+sample_task = tasks[0]
+GRAPH_DIR = str(DATA_DIR / 'graphs')
+EMBEDDINGS_DIR = str(DATA_DIR / 'embeddings')
+
+# Load the pre-computed repository code graph and node embeddings for the sample task
+repo_graph = sg.get_graph(
+    repo_name=sample_task.repo,
+    graph_dir=GRAPH_DIR,
+    embeddings_dir=EMBEDDINGS_DIR,
+    base_commit=sample_task.base_commit,
+)
+sample_nodes = list(repo_graph.nodes())
+print(f'Graph for {sample_task.repo} ({sample_task.instance_id}):')
+print(f'  Nodes: {repo_graph.number_of_nodes()}, Edges: {repo_graph.number_of_edges()}')
+
+# Select a connected symbol and query structural neighbors (callers, callees, definitions)
+query_node = next((n for n, deg in repo_graph.degree() if deg >= 5), sample_nodes[0])
+neighbors = sg.get_neighbor(
+    node=query_node,
+    graph=repo_graph,
+    max_neighbors=10,
+)
+print(f'\nNeighbors of {query_node!r} (showing up to 5):')
+for n in neighbors[:5]:
+    print(f'  - {n}')
+
+# Search for semantically similar code nodes using pre-computed vector embeddings
+similar = sg.get_similar_nodes(
+    node=query_node,
+    repo_name=sample_task.repo,
+    k=5,
+    graph=repo_graph,
+    graph_dir=GRAPH_DIR,
+    embeddings_dir=EMBEDDINGS_DIR,
+    base_commit=sample_task.base_commit,
+)
+print(f'\nTop similar nodes to {query_node!r}:')
+for item in similar:
+    print(f"  - {item['node_name']} (similarity={item['similarity']:.4f})")
+
+# Extract an induced subgraph connecting the query symbol and its neighbors
+focal_nodes = [query_node, *neighbors[:4]]
+subgraph = sg.get_induced_subgraph(repo_graph, focal_nodes)
+print(
+    f'\nInduced subgraph over {len(focal_nodes)} focal nodes: '
+    f'{subgraph.number_of_nodes()} nodes, {subgraph.number_of_edges()} edges'
+)
+
+# CELL 6 markdown
+`search_similar_code(query)` resolves a **Python symbol** against stored graph nodes; a natural-language bug report is not embedded live. Start with exact strings and names from the issue using `rg -n`; use graph neighbors for a resolved symbol when the call path is unclear.
+
+## 4. Build rapid control and source-only editing candidate
+
+The rapid control matches the previous submission. The source-only candidate has a different tool surface and edit method. Both use the supported base model. The sample's nonexistent LoRA reference is removed and `!include` paths are checked before evaluation.
+
+# CELL 7 code
+import textwrap
+import yaml
+
+PROMPT = textwrap.dedent('''\
+You are an autonomous software engineer fixing one issue in /workspace.
+Implement the described behavior in SOURCE code and call submit_patch.
+
+ACT EARLY: Identify one implementation site and attempt a defensible first
+edit within 90 seconds. You have about four and a half minutes. Keep your
+reasoning brief. Do not spend the whole session gathering context.
+
+LOCALIZE: Search exact names and error strings from the issue with bounded
+`rg -n -F -m 8 'literal' source/directory`. If needed first use `rg --files`
+to find names. Read one relevant function and a neighboring test. Avoid
+`rg | grep`, recursive grep, and repeated reads of identical lines. Query
+get_code_neighbors once if a known symbol's callers matter.
+search_similar_code accepts a CODE SYMBOL, not a prose bug report. Never
+search git history for an issue number: future fixes are absent.
+
+EDIT: Fix the underlying implementation, never tests or fixtures. Use
+edit_file with ALL THREE required inputs: filepath, old_string, new_string.
+Choose a short unique old_string read from the source. A malformed tool call
+gets ONE corrected retry; if it fails again, run a short `python3` script
+using Path.read_text(), asserting text.count(old_string)==1, replacing it,
+and Path.write_text(). Do not keep retrying the same broken tool schema.
+Preserve public interfaces and unrelated behavior. Avoid scratch files under
+/workspace, especially scripts or test_*.py; use `python3 -c` or /tmp.
+
+VERIFY: Immediately compile changed Python and run `git diff --check` and
+`git diff -- path/to/source.py`. After editing, run a focused existing test
+if appropriate: `timeout 20s python3 -m pytest -q path/to/test.py -k name`.
+Never run a full suite or a blocking reproducer. Correct a failure caused
+by your edit once. Ignore unrelated preexisting dependency failures.
+
+DEADLINE: At 60 seconds remaining, stop exploring, verify the current
+source diff, and submit. If tests cannot run, submit a coherent source fix.
+`get_status` provides time remaining without spending a tool call. Do not
+call submit_patch on an empty diff. A text-only response never submits.
+''')
+
+RAPID_PROMPT = textwrap.dedent('''\
+Fix the given issue inside /workspace by editing implementation code.
+Submit a coherent nonempty patch using submit_patch. Do not just explain.
+
+FIRST: Use the issue's exact function, file, error string or feature name.
+Search with `rg -n -F -m 6 'literal' package/ tests/` on existing paths,
+then read a narrow region of the most relevant source file. Avoid searches
+through git history, README files, and irrelevant folders. No broad grep
+pipeline and no repeated reads of the same lines. If the task statement
+already names the file, read it immediately. Think for a few sentences,
+then make a source edit within the first 60 seconds when feasible.
+
+EDIT: Prefer one concrete minimal fix over speculation. Call edit_file with
+filepath, old_string and new_string; all three keys are REQUIRED. Copy the
+unique old_string from source you just saw. After two tool schema errors,
+switch to run_command with Python pathlib: read file, assert old text occurs
+exactly once, replace and write it. For new implementation files only, use
+run_command with a safely quoted heredoc. Do not create tests, repro scripts
+or other untracked workspace files. Never alter tests to make them pass.
+
+CHECK AFTER EDIT: `python3 -m py_compile affected.py && git diff --check`.
+Inspect `git diff -- affected.py`. If a nearby focused test exists and more
+than 90 seconds remain, run `timeout 15s python3 -m pytest -q tests/test_x.py
+-k relevant_name`. Run no baseline pytest before editing, no full suite and
+no slow multi-case reproducer. Fix a regression from your edit once.
+
+At 60 seconds remaining, submit the current source fix instead of further
+research. get_status reports remaining time for free. submit_patch is your
+final tool call and does not use the tool-call budget. Never submit an empty
+diff. Preserve public API and error behavior; account for issue edge cases.
+''')
+
+GUARD_PROMPT = textwrap.dedent('''\
+Fix the given software issue by changing implementation files in /workspace.
+The benchmark applies your source patch and then applies its own verification
+test patch. You may READ existing tests but MUST NOT edit/create/delete any
+test file, including paths under tests/, test_*.py, *_test.py, conftest.py,
+or pytest.ini. Test changes can make the verification test patch fail to apply.
+
+SEARCH: Use one bounded rg search for an identifier or error string from
+the issue, then inspect the relevant source block with read_file. If the
+issue only cites an external discussion, work from existing source/tests;
+do not search git history for unavailable future commits. Start a source
+edit early; do not run pytest or write repro files before the first edit.
+
+EDIT SOURCE: You have run_command and read_file, not edit_file. This avoids
+ambiguous fuzzy replacements and malformed edit_file tool arguments. Use
+run_command with a Python heredoc that reads and replaces an EXACT unique
+string; use this form, supplying real observed code and a real source path:
+
+python3 - <<'PY'
+from pathlib import Path
+p = Path('package/implementation.py')
+assert p.suffix == '.py' and p.is_file()
+assert 'tests' not in p.parts and not p.name.startswith('test_')
+old = 'an exact old substring read from this file'
+new = 'the corrected replacement'
+data = p.read_text()
+assert data.count(old) == 1, 'old substring must occur exactly once'
+p.write_text(data.replace(old, new, 1))
+PY
+
+For multiline code use triple-quoted Python strings with valid quoting;
+keep the old substring small and uniquely identifiable. If the match count
+is not one, re-read just the affected function and widen old context once.
+Do not use sed on tests, and do not retry the same invalid replacement.
+
+CHECK AND CLEAN: Compile changed Python source, check git diff --check, and
+inspect git diff --stat. Run a focused `timeout 15s python3 -m pytest -q`
+only after a source edit if time remains. BEFORE submit_patch run this
+command to restore tracked test files accidentally changed:
+`git restore -- tests/ 2>/dev/null || true`.
+Check git status --short for new scratch/test files; delete them. Confirm
+git diff HEAD contains only intended implementation changes. If a test
+was changed outside tests/, restore it too. If you have a source fix,
+call submit_patch as your last action. Never submit a test-only patch.
+''')
+
+EVAL_BUDGET = {
+    'evaluation': {
+        'timeout_seconds': 60,        # per shell command, not overall task
+        'max_tool_calls': 48,
+        'max_time_minutes': 4.5,       # ~9h agent time for 120 issues, remaining for setup
+        'max_turns': 100,
+    }
+}
+
+SAMPLING = {
+    'temperature': 0.1,
+    'top_p': 0.95,
+    'max_output_tokens': 8192,
+    'thinking_config': {'thinking_budget': 1024, 'include_thoughts': True},
+}
+RAPID_SAMPLING = {
+    'temperature': 0.05,
+    'top_p': 0.9,
+    'max_output_tokens': 6144,
+    'thinking_config': {'thinking_budget': 384, 'include_thoughts': True},
+}
+RAPID_BUDGET = {
+    'evaluation': {
+        'timeout_seconds': 30,
+        'max_tool_calls': 32,
+        'max_time_minutes': 4.5,
+        'max_turns': 75,
+    }
+}
+GUARD_SAMPLING = {
+    'temperature': 0.05,
+    'top_p': 0.9,
+    'max_output_tokens': 8192,
+    'thinking_config': {'thinking_budget': 512, 'include_thoughts': True},
+}
+GUARD_BUDGET = {
+    'evaluation': {
+        'timeout_seconds': 30,
+        'max_tool_calls': 36,
+        'max_time_minutes': 4.5,
+        'max_turns': 75,
+    }
+}
+
+VARIANTS_ROOT = WORKING_DIR / 'agent_experiments'
+VARIANTS_ROOT.mkdir(exist_ok=True)
+VARIANTS = {}
+
+def build_variant(name: str, guard: bool = False) -> Path:
+    dest = VARIANTS_ROOT / name
+    if dest.exists():
+        shutil.rmtree(dest)
+    shutil.copytree(SAMPLE_SUBMISSION_SRC, dest)
+    # Ship only config used by this candidate. Sample adapters can refer to
+    # non-existent weights; stale files would contaminate registry discovery.
+    for subdir in ('adapters', 'skills', 'sub_agents'):
+        shutil.rmtree(dest / subdir, ignore_errors=True)
+    for path in dest.rglob('*'):
+        if path.is_symlink():
+            raise ValueError(f'Submission cannot contain symlink: {path}')
+
+    (dest / 'prompts').mkdir(exist_ok=True)
+    (dest / 'configs').mkdir(exist_ok=True)
+    (dest / 'prompts' / 'system.md').write_text(
+        GUARD_PROMPT if guard else RAPID_PROMPT, encoding='utf-8')
+    (dest / 'configs' / 'sampling.yaml').write_text(
+        yaml.safe_dump(GUARD_SAMPLING if guard else RAPID_SAMPLING, sort_keys=False),
+        encoding='utf-8'
+    )
+    (dest / 'eval_config.yaml').write_text(
+        yaml.safe_dump(GUARD_BUDGET if guard else RAPID_BUDGET, sort_keys=False),
+        encoding='utf-8'
+    )
+    # Write !include declarations literally: ordinary yaml.safe_dump would
+    # quote them, which prevents the sandboxed config loader from including.
+    root = '''name: gemma_repository_engineer
+model: gemma-4-31b-it-qat-w4a16-ct
+instruction: !include prompts/system.md
+tools:
+  - run_command
+  - read_file
+'''
+    if not guard:
+        root += '  - edit_file\n'
+    root += '''  - get_status
+  - submit_patch
+'''
+    root += 'generate_content_config: !include configs/sampling.yaml\n'
+    (dest / 'agent.yaml').write_text(root, encoding='utf-8')
+    return dest
+
+def check_includes(root: Path):
+    # ADK resolves !include relative to the YAML file containing it.
+    import re
+    for config_file in root.rglob('*.yaml'):
+        for name in re.findall(r'!include\s+([^\s#]+)', config_file.read_text()):
+            resolved = (config_file.parent / name).resolve()
+            if not resolved.is_relative_to(root.resolve()) or not resolved.is_file():
+                raise FileNotFoundError(f'{config_file.relative_to(root)} -> {name}: {resolved}')
+
+for variant_name, use_guard in [('rapid', False), ('guard', True)]:
+    VARIANTS[variant_name] = build_variant(variant_name, use_guard)
+    check_includes(VARIANTS[variant_name])
+    # ADK substitutes {state_key} inside static prompt strings. An example
+    # Python f-string in the system prompt would become a missing-state error.
+    import re
+    for prompt_file in (VARIANTS[variant_name] / 'prompts' / 'system.md',):
+        assert not re.search(r'\{[^{}]+\}', prompt_file.read_text()), prompt_file
+    print(variant_name, VARIANTS[variant_name],
+          sorted(p.relative_to(VARIANTS[variant_name]).as_posix()
+                 for p in VARIANTS[variant_name].rglob('*') if p.is_file()))
+
+# CELL 8 markdown
+## 5. Start the **official** Gemma 4 vLLM server once
+
+This is the server configuration from the supplied starter. Both agent variants point at the same supported QAT model. Set `enable_lora` only if genuine adapter files exist. Startup is deliberately performed once before running the paired issue evaluations.
+
+# CELL 9 code
+import litellm
+import torch
+from adk_submission import VllmConfig, VllmServer, discover_adapters
+from swegemma.config import ALLOWED_ADAPTER_EXTENSIONS
+from swegemma.models.discovery import validate_single_declared_model
+
+litellm.drop_params = True
+INFERENCE_API_KEY = 'EMPTY'
+assert validate_single_declared_model(VARIANTS['rapid']) == TARGET_MODEL_NAME
+assert validate_single_declared_model(VARIANTS['guard']) == TARGET_MODEL_NAME
+adapters = discover_adapters(str(VARIANTS['rapid']),
+                             adapter_extensions=ALLOWED_ADAPTER_EXTENSIONS)
+gpu_count = torch.cuda.device_count() if torch.cuda.is_available() else 1
+tp_size = 4 if gpu_count >= 4 else (2 if gpu_count >= 2 else 1)
+vllm_cfg = VllmConfig(
+    model=str(MODEL_PATH),
+    port=8000,
+    host='127.0.0.1',
+    tool_call_parser='gemma4',
+    reasoning_parser='gemma4',
+    default_chat_template_kwargs={'enable_thinking': True},
+    max_model_len=32768,
+    dtype='bfloat16' if (torch.cuda.is_available() and torch.cuda.is_bf16_supported()) else 'auto',
+    gpu_memory_utilization=0.90,
+    enable_auto_tool_choice=True,
+    enable_lora=bool(adapters),
+    max_loras=8,
+    max_lora_rank=128,
+    tensor_parallel_size=tp_size,
+    startup_timeout=60 * 20,
+)
+server_instance = VllmServer(vllm_cfg, adapter_manifest=adapters)
+server_instance.start()
+print(f'vLLM ready on {server_instance.base_url}; GPU tensor parallelism={tp_size}')
+models = server_instance.create_model_registry(
+    aliases=[TARGET_MODEL_NAME], model_prefix='openai/', api_key=INFERENCE_API_KEY,
+)
+
+# CELL 10 markdown
+## 6. Paired public evaluation with the official two-phase verifier
+
+Both candidates are evaluated on the same sixteen public issues in two fixed batches. The official sandbox applies the agent patch and verification tests in a fresh repository. Each result records test-file edits and whether an agent-patch or test-patch application failed. A candidate must gain verified fixes without modifying tests before it replaces the control.
+
+The one HTTPX task is placed in the second batch. Split membership is deterministic and does not depend on outcomes.
+
+# CELL 11 code
+def choose_split(all_tasks, quotas, seed, excluded=()):
+    excluded = set(excluded)
+    buckets = collections.defaultdict(list)
+    for t in all_tasks:
+        if t.instance_id not in excluded:
+            buckets[t.repo].append(t)
+    picked = []
+    for repo, count in quotas.items():
+        if len(buckets[repo]) < count:
+            raise ValueError(f'Insufficient tasks for {repo}: need {count}')
+        rng = random.Random(f'{seed}:{repo}')
+        picked.extend(rng.sample(sorted(buckets[repo], key=lambda t: t.instance_id), count))
+    return picked
+
+DEV_TASKS = choose_split(tasks, {
+    'fastapi/fastapi': 4, 'Textualize/rich': 3, 'psf/requests': 1,
+}, seed=4207)
+CONFIRM_TASKS = choose_split(tasks, {
+    'fastapi/fastapi': 3, 'Textualize/rich': 3,
+    'psf/requests': 1, 'encode/httpx': 1,
+}, seed=9182, excluded=(t.instance_id for t in DEV_TASKS))
+assert not ({t.instance_id for t in DEV_TASKS} &
+            {t.instance_id for t in CONFIRM_TASKS})
+print('Development:', [(t.instance_id, t.repo) for t in DEV_TASKS])
+print('Confirmation:', [(t.instance_id, t.repo) for t in CONFIRM_TASKS])
+
+# CELL 12 code
+import asyncio
+import concurrent.futures
+import dataclasses
+import re
+import time
+from datetime import datetime, timezone
+import pandas as pd
+from google.adk.agents.context_cache_config import ContextCacheConfig
+from google.adk.apps._configs import EventsCompactionConfig
+from swegemma.config import EvalConfig, build_submission_limits
+from swegemma.evaluate import Evaluator
+
+def run_sync(coro_or_fn, *args, **kwargs):
+    """Official notebook's event-loop-safe coroutine runner."""
+    fn = (lambda: coro_or_fn(*args, **kwargs)) if callable(coro_or_fn) else (lambda: coro_or_fn)
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
+    if loop is not None and loop.is_running():
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+            return pool.submit(lambda: asyncio.run(fn())).result()
+    return asyncio.run(fn())
+
+limits, gen_constraints = build_submission_limits()
+
+def patch_paths(patch):
+    """Extract changed paths from a git diff without exposing patch contents."""
+    return [b for a, b in re.findall(r'^diff --git a/(.*?) b/(.*?)$',
+                                     patch, flags=re.MULTILINE)]
+
+def is_test_path(path):
+    parts = Path(path).parts
+    name = Path(path).name
+    return ('tests' in parts or name.startswith('test_') or
+            name.endswith('_test.py') or name in {'conftest.py', 'pytest.ini'})
+
+def make_evaluator(agent_dir, result_tag):
+    section = yaml.safe_load((agent_dir / 'eval_config.yaml').read_text())['evaluation']
+    submission_adapters = discover_adapters(str(agent_dir),
+        adapter_extensions=ALLOWED_ADAPTER_EXTENSIONS)
+    config = EvalConfig(
+        tasks_path=TASKS_PATH,
+        snapshots_dir=DATA_DIR / 'snapshots',
+        results_dir=WORKING_DIR / 'results' / result_tag,
+        submission_dir=agent_dir,
+        models=models,
+        sandbox='subprocess',
+        timeout_seconds=int(section['timeout_seconds']),
+        max_time_minutes=float(section['max_time_minutes']),
+        max_tool_calls=int(section['max_tool_calls']),
+        max_turns=int(section['max_turns']),
+        limits=limits,
+        generation_constraints=gen_constraints,
+        adapter_manifest=submission_adapters,
+        context_cache_config=ContextCacheConfig(
+            min_tokens=2048, ttl_seconds=1800, cache_intervals=10),
+        events_compaction_config=EventsCompactionConfig(
+            compaction_interval=15, overlap_size=2,
+            token_threshold=14336, event_retention_size=5),
+        graph_dir=GRAPH_DIR,
+        embeddings_dir=EMBEDDINGS_DIR,
+        wheels_dir=DATA_DIR / 'wheels',
+        verbose=False,
+    )
+    return Evaluator(config)
+
+def eval_tasks(label, agent_dir, subset):
+    evaluator = make_evaluator(agent_dir, label)
+    rows = []
+    for i, task in enumerate(subset, start=1):
+        print(f'[{label} {i}/{len(subset)}] {task.instance_id}', flush=True)
+        started = time.monotonic()
+        try:
+            result = run_sync(evaluator.evaluate_task, task=task,
+                              task_index=i, total_tasks=len(subset))
+            patch = result.agent_patch or ''
+            changed = patch_paths(patch)
+            bad_paths = [p for p in changed if is_test_path(p)]
+            agent_problem = str(getattr(result, 'agent_error', '') or '')
+            evaluator_problem = str(getattr(result, 'error', '') or '')
+            problem = (agent_problem + ' ' + evaluator_problem).strip()[:800]
+            config_failure = bool(re.search(
+                r'Context variable not found|SubmissionValidationError|'
+                r'MissingRootConfigError', problem))
+            test_patch_conflict = bool(re.search(
+                r'Failed to apply test.patch|test.patch.*does not apply',
+                problem, re.IGNORECASE))
+            agent_patch_conflict = bool(re.search(
+                r'Failed to apply agent.patch', problem, re.IGNORECASE))
+            row = dict(variant=label, id=task.instance_id, repo=task.repo,
+                       resolved=bool(result.resolved), patch_chars=len(patch),
+                       tool_calls=result.tool_calls,
+                       test_exit_code=result.test_exit_code,
+                       duration_seconds=result.duration_seconds,
+                       test_files_touched=int(bool(bad_paths)),
+                       test_paths=','.join(bad_paths)[:300],
+                       agent_error=problem,
+                       failure_stage=('resolved' if result.resolved else
+                                      'agent_config' if config_failure else
+                                      'test_patch_conflict' if test_patch_conflict else
+                                      'agent_patch_conflict' if agent_patch_conflict else
+                                      'no_patch' if not patch else 'verification'),
+                       infra_error=config_failure, error='')
+        except Exception as exc:
+            row = dict(variant=label, id=task.instance_id, repo=task.repo,
+                       resolved=False, patch_chars=0, tool_calls=None,
+                       test_exit_code=None, duration_seconds=round(time.monotonic()-started, 1),
+                       test_files_touched=0, test_paths='',
+                       agent_error='', failure_stage='infrastructure',
+                       infra_error=True, error=f'{type(exc).__name__}: {exc}'[:400])
+            print('  Infrastructure/evaluation error:', row['error'], flush=True)
+        rows.append(row)
+        print('  resolved={resolved} patch={patch_chars} chars tools={tool_calls} '
+              'seconds={duration_seconds:.1f} stage={failure_stage} '
+              'test_edit={test_files_touched}'.format(**row), flush=True)
+        pd.DataFrame(rows).to_json(WORKING_DIR / f'{label}_progress.json',
+                                   orient='records', indent=2)
+    return pd.DataFrame(rows)
+
+def summary(frame):
+    return dict(n=len(frame), resolved=int(frame.resolved.sum()),
+                rate=float(frame.resolved.mean()),
+                no_patch=int((frame.patch_chars == 0).sum()),
+                test_edits=int(frame.test_files_touched.sum()),
+                test_patch_conflicts=int((frame.failure_stage == 'test_patch_conflict').sum()),
+                agent_patch_conflicts=int((frame.failure_stage == 'agent_patch_conflict').sum()),
+                mean_seconds=float(frame.duration_seconds.mean()),
+                infra_errors=int(frame.infra_error.sum()),
+                agent_errors=int(frame.agent_error.astype(bool).sum()))
+
+# CELL 13 markdown
+## 7. Run the first paired batch
+
+# CELL 14 code
+experiment_started = datetime.now(timezone.utc).isoformat()
+DEV_RESULTS = {}
+for name in ('rapid', 'guard'):
+    DEV_RESULTS[name] = eval_tasks('dev_' + name, VARIANTS[name], DEV_TASKS)
+    print(name, summary(DEV_RESULTS[name]))
+
+dev_table = pd.DataFrame([
+    {'candidate': name, **summary(DEV_RESULTS[name])}
+    for name in ('rapid', 'guard')
+]).sort_values(['rate', 'infra_errors', 'mean_seconds'],
+               ascending=[False, True, True])
+if all(frame.infra_error.all() for frame in DEV_RESULTS.values()):
+    raise RuntimeError('Both candidates failed to run. Check Kaggle sandbox setup.')
+print('First batch:')
+display(dev_table)
+display(pd.DataFrame({
+    'id': [t.instance_id for t in DEV_TASKS],
+    'guard_pass': DEV_RESULTS['guard'].resolved.tolist(),
+    'rapid_pass': DEV_RESULTS['rapid'].resolved.tolist(),
+}))
+
+# CELL 15 markdown
+## 8. Second paired batch, candidate selection and experiment card
+
+Evaluate both candidates on new issue IDs. Select the source-only candidate only with at least two additional verified fixes, no test-file edits, and no infrastructure errors. The experiment card stays outside the archive.
+
+# CELL 16 code
+CONFIRM_RESULTS = {}
+for name in ('rapid', 'guard'):
+    CONFIRM_RESULTS[name] = eval_tasks('confirm_' + name,
+                                       VARIANTS[name], CONFIRM_TASKS)
+    print('Second batch', name, summary(CONFIRM_RESULTS[name]))
+
+ALL_RESULTS = {name: pd.concat([DEV_RESULTS[name], CONFIRM_RESULTS[name]],
+                                ignore_index=True) for name in ('rapid', 'guard')}
+eligible = [name for name in ALL_RESULTS if
+            int(ALL_RESULTS[name].infra_error.sum()) < len(ALL_RESULTS[name])]
+if not eligible:
+    raise RuntimeError('Both candidates failed on all tasks; inspect evaluator errors.')
+SELECTED = ('guard' if 'guard' in eligible
+            and int(ALL_RESULTS['guard'].infra_error.sum()) == 0
+            and int(ALL_RESULTS['guard'].test_files_touched.sum()) == 0
+            and (('rapid' not in eligible) or
+                 int(ALL_RESULTS['guard'].resolved.sum()) >=
+                 int(ALL_RESULTS['rapid'].resolved.sum()) + 2)
+            else 'rapid')
+print('Selected agent:', SELECTED)
+display(pd.DataFrame([{'candidate': name, **summary(frame)}
+                      for name, frame in ALL_RESULTS.items()]))
+
+def records_for_log(df):
+    result = df.where(pd.notnull(df), None).to_dict(orient='records')
+    for r in result:
+        for k, v in r.items():
+            if hasattr(v, 'item'):
+                r[k] = v.item()
+    return result
+
+experiment_card = {
+    'timestamp_utc': experiment_started,
+    'source_notebook': 'gemma-4-developer-agent-testing (1).ipynb',
+    'supported_model': TARGET_MODEL_NAME,
+    'decision_rule': 'guard requires >=2 more resolved of 16, zero test-file edits and no infrastructure errors; else rapid',
+    'selection': SELECTED,
+    'budget': {'guard': GUARD_BUDGET, 'rapid': RAPID_BUDGET},
+    'sampling': {'guard': GUARD_SAMPLING, 'rapid': RAPID_SAMPLING},
+    'development': {name: {'summary': summary(frame),
+                           'instances': records_for_log(frame)}
+                    for name, frame in DEV_RESULTS.items()},
+    'second_batch': {name: {'summary': summary(frame),
+                           'instances': records_for_log(frame)}
+                     for name, frame in CONFIRM_RESULTS.items()},
+    'all_16': {name: summary(frame) for name, frame in ALL_RESULTS.items()},
+}
+(WORKING_DIR / 'experiment_card.json').write_text(
+    json.dumps(experiment_card, indent=2, default=str) + '\n', encoding='utf-8')
+display(pd.DataFrame([{'split': 'first batch ' + n, **summary(f)}
+                      for n, f in DEV_RESULTS.items()] +
+                     [{'split': 'second batch ' + n, **summary(f)}
+                      for n, f in CONFIRM_RESULTS.items()]))
+
+# CELL 17 markdown
+## 9. Package and validate the official submission archive
+
+`submission.zip` contains only the selected **executable ADK config**. Validate permitted extensions, total uncompressed size, no traversal or symlinks, valid include targets and the model declaration. No local generated patch or scorer artifact is included. The competition's inference script reads this zip and creates `/kaggle/working/submission.parquet` itself.
+
+# CELL 18 code
+import zipfile
+from swegemma.config import ALLOWED_SUBMISSION_EXTENSIONS, MAX_SUBMISSION_SIZE_BYTES
+
+AGENT_DIR = VARIANTS[SELECTED]
+assert validate_single_declared_model(AGENT_DIR) == TARGET_MODEL_NAME
+assert not (AGENT_DIR / 'adapters').exists()
+for relative in ('agent.yaml', 'eval_config.yaml', 'configs/sampling.yaml',
+                 'prompts/system.md'):
+    assert (AGENT_DIR / relative).is_file(), relative
+check_includes(AGENT_DIR)
+if SELECTED == 'guard':
+    agent_text = (AGENT_DIR / 'agent.yaml').read_text()
+    assert '- edit_file' not in agent_text and '- write_file' not in agent_text
+    assert 'git restore -- tests/' in (AGENT_DIR / 'prompts/system.md').read_text()
+
+zip_base = WORKING_DIR / 'submission'
+zip_path = Path(shutil.make_archive(str(zip_base), 'zip', root_dir=AGENT_DIR))
+with zipfile.ZipFile(zip_path) as archive:
+    infos = archive.infolist()
+    names = {info.filename for info in infos}
+    assert 'agent.yaml' in names
+    total_size = sum(info.file_size for info in infos)
+    assert total_size <= MAX_SUBMISSION_SIZE_BYTES, total_size
+    for info in infos:
+        if info.is_dir():
+            continue
+        parts = Path(info.filename).parts
+        assert info.filename[0] != '/' and '..' not in parts, info.filename
+        assert Path(info.filename).suffix.lower() in ALLOWED_SUBMISSION_EXTENSIONS, info.filename
+        assert (info.external_attr >> 16) & 0o170000 != 0o120000, info.filename
+    assert 'prompts/system.md' in names and 'configs/sampling.yaml' in names
+    assert 'sub_agents/patch_reviewer.yaml' not in names
+
+print(f'Validated {zip_path} ({zip_path.stat().st_size:,} compressed bytes); '
+      f'{len(infos)} entries; selected={SELECTED}')
+print('Public development:', {k: summary(v) for k, v in DEV_RESULTS.items()})
+print('Public paired 16:', {k: summary(v) for k, v in ALL_RESULTS.items()})

@@ -1,0 +1,14 @@
+# GPU Access
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743106
+
+## 3527878 /jitik2004 TOPIC
+Hi, could the organisers clarify how participants are expected to access the GPU environment for local evaluation? The harness documentation mentions running Gemma 4 with vLLM on 4× NVIDIA L4 GPUs. Are these GPUs available to participants through Kaggle Notebooks/competition sessions, or are we expected to provision our own GPU infrastructure?
+
+
+## 3527888 /josephadamski91 COMMENT
+You select them in a notebook under session options.
+
+
+## 3527937 /johnparkerson COMMENT
+Yeah + gotta attach comp dataset. Otherwise won't work. 
+

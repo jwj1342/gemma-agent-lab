@@ -1,0 +1,226 @@
+{
+  "forumTopic": {
+    "authorId": 34029687,
+    "authorThumbnailName": "default-thumb.png",
+    "authorUserDisplayName": "Jason Wold",
+    "authorUserName": "jasonwold",
+    "comments": [
+      {
+        "id": 3527654,
+        "postDate": "2026-09-24T10:39:42.147Z",
+        "rawMarkdown": "Hi @jasonwold,\n\nThanks for the report. We will investigate and get back to you.",
+        "content": "<p>Hi <a href=\"/jasonwold\" target=\"_blank\">@jasonwold</a>,</p>\n<p>Thanks for the report. We will investigate and get back to you.</p>",
+        "replies": [
+          {
+            "id": 3528710,
+            "postDate": "2026-09-26T10:48:30.373Z",
+            "rawMarkdown": "Has this issue been fixed now? Do we need to re-download the dataset? Thanks!",
+            "content": "<p>Has this issue been fixed now? Do we need to re-download the dataset? Thanks!</p>",
+            "replies": [
+              {
+                "id": 3528743,
+                "postDate": "2026-09-26T11:37:01.650Z",
+                "rawMarkdown": "The embeddings are no longer empty; that has been fixed. The missing `async` functions are still missing. I don't have an ETA on that yet.",
+                "content": "<p>The embeddings are no longer empty; that has been fixed. The missing <code>async</code> functions are still missing. I don't have an ETA on that yet.</p>",
+                "parent": {},
+                "author": {
+                  "displayName": "Ryan Holbrook",
+                  "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+                  "url": "/ryanholbrook",
+                  "tier": "STAFF",
+                  "id": 2003505,
+                  "progressionOptOut": false
+                },
+                "authorType": "ADMIN",
+                "votes": {
+                  "canUpvote": true
+                },
+                "kernelVersion": 0,
+                "feedbackTrackingData": {},
+                "isThankYou": false,
+                "teamUpInfo": {
+                  "teamLeader": {
+                    "displayName": "Ryan Holbrook",
+                    "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+                    "url": "/ryanholbrook",
+                    "userName": "ryanholbrook",
+                    "tier": "STAFF",
+                    "id": 2003505,
+                    "profileUrl": "/ryanholbrook",
+                    "performanceTier": "STAFF",
+                    "userId": 2003505,
+                    "progressionOptOut": false
+                  },
+                  "intro": ""
+                }
+              }
+            ],
+            "parent": {},
+            "author": {
+              "displayName": "wsc-MISX",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/18505507-kg.jpg?t=2024-06-30-12-27-19",
+              "url": "/wscmisx",
+              "tier": "MASTER",
+              "id": 18505507,
+              "progressionOptOut": false
+            },
+            "authorType": "COMMENT",
+            "votes": {
+              "canUpvote": true
+            },
+            "kernelVersion": 0,
+            "feedbackTrackingData": {},
+            "isThankYou": false,
+            "teamUpInfo": {
+              "teamLeader": {
+                "displayName": "wsc-MISX",
+                "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/18505507-kg.jpg?t=2024-06-30-12-27-19",
+                "url": "/wscmisx",
+                "userName": "wscmisx",
+                "tier": "MASTER",
+                "id": 18505507,
+                "profileUrl": "/wscmisx",
+                "performanceTier": "MASTER",
+                "userId": 18505507,
+                "progressionOptOut": false
+              },
+              "intro": ""
+            }
+          }
+        ],
+        "parent": {},
+        "author": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "progressionOptOut": false
+        },
+        "authorType": "ADMIN",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "reactions": [
+          {
+            "emoji": "KAGGLE",
+            "featuredUserNames": [
+              "adithyagiri",
+              "jasonwold"
+            ],
+            "userCount": 2
+          }
+        ],
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Ryan Holbrook",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+            "url": "/ryanholbrook",
+            "userName": "ryanholbrook",
+            "tier": "STAFF",
+            "id": 2003505,
+            "profileUrl": "/ryanholbrook",
+            "performanceTier": "STAFF",
+            "userId": 2003505,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3527552,
+        "postDate": "2026-09-24T04:40:47.283Z",
+        "rawMarkdown": "Thanks @jasonwold , I think I have answers to 2 of your questions. I am still verifying some things with my submission that I've pushed recently. In the meantime:\n\n>Does the scoring environment use real hard links, so the empty-file issue only affects the public download?\n\nIt's not only the download. My notebook run showed Kaggle's own mounted copy has the same 129 + 129 empty files.\n\nFor local runs I replaced each empty file with a hard link to its group's readable copy rather than a copy, which restores the documented layout without extra disk. Whether the scoring environment with the hidden test set is affected is still a question for the hosts.\n\n> Are the embedding archives keyed to the same node set, so search_similar_code also can't surface async code?\n\nYes. For all 127 commits, the embedding archive's keys are exactly the graph's node IDs, no more and no less. So `search_similar_code` cannot surface async code either.\n",
+        "content": "<p>Thanks <a href=\"/jasonwold\" target=\"_blank\">@jasonwold</a> , I think I have answers to 2 of your questions. I am still verifying some things with my submission that I've pushed recently. In the meantime:</p>\n<blockquote>\n  <p>Does the scoring environment use real hard links, so the empty-file issue only affects the public download?</p>\n</blockquote>\n<p>It's not only the download. My notebook run showed Kaggle's own mounted copy has the same 129 + 129 empty files.</p>\n<p>For local runs I replaced each empty file with a hard link to its group's readable copy rather than a copy, which restores the documented layout without extra disk. Whether the scoring environment with the hidden test set is affected is still a question for the hosts.</p>\n<blockquote>\n  <p>Are the embedding archives keyed to the same node set, so search_similar_code also can't surface async code?</p>\n</blockquote>\n<p>Yes. For all 127 commits, the embedding archive's keys are exactly the graph's node IDs, no more and no less. So <code>search_similar_code</code> cannot surface async code either.</p>",
+        "parent": {},
+        "author": {
+          "displayName": "Oleksii Zhukov",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/6082025-kg.png?t=2026-08-01-19-49-46",
+          "url": "/zhukovoleksiy",
+          "tier": "MASTER",
+          "id": 6082025,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 281,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Oleksii Zhukov",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/6082025-kg.png?t=2026-08-01-19-49-46",
+            "url": "/zhukovoleksiy",
+            "userName": "zhukovoleksiy",
+            "tier": "MASTER",
+            "id": 6082025,
+            "profileUrl": "/zhukovoleksiy",
+            "performanceTier": "MASTER",
+            "userId": 6082025,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3527537,
+      "postDate": "2026-09-24T03:08:51.350Z",
+      "rawMarkdown": "1) Empty files in the download (affects local runs)\n\nThe graphs and embeddings are described as task-named files hard-linked to commit-named files. Zip archives can't store hard links, and in the downloaded data one side of each linked group arrives as a 0-byte file:\n\n  graphs: 129 of 256 files are empty\n  embeddings: 129 of 256 files are empty\n\nExactly one readable copy survives per commit, but it can sit under any name in the group, including a different task's name where two tasks share a commit (requests_6589 and requests_6629; rich_3882 and rich_3894).\n\nHARNESS_README says the code intelligence tools are only enabled when the graph and embedding files exceed 100 bytes. If that holds, local swegemma runs on the downloaded data will silently lose get_code_neighbors, get_code_subgraph and search_similar_code on many tasks. The fix is to copy each commit's readable file over its empty siblings before running; every commit has a readable source.\n\n2) No async functions in the graphs\n\nFor each of the 129 training tasks, I parsed every non-test .py file the reference patch touches (from the base_commit snapshot) with Python's ast module and checked whether each top-level function, method and class exists as a node ID in the task's graph. Coverage across those files:\n\n  sync functions and methods: 4,739 of 4,740 present\n  classes: 855 of 857 present\n  async functions and methods: 0 of 305 present\n\nBy repo: fastapi library 0/232 async present, fastapi docs_src 0/27, httpx 0/46. rich and requests have no async definitions in the audited files.\n\nExamples with no node: fastapi.routing.serialize_response, fastapi.dependencies.utils.solve_dependencies, fastapi.dependencies.utils.request_body_to_args. Agents using the graph tools therefore can't reach async code paths. In 16 of the 121 training tasks whose reference fix lands in function or class bodies, at least one changed function is async and absent from the graph.\n\nThe graphs also contain a single edge type, calls, in all four repos (no import or containment edges), and no module-level nodes.\n\nQuestions for the hosts:\n1. Is the async omission intended?\n2. The data description says the test set uses identical graph generation. Does the hidden test set share it?\n3. Are the embedding archives keyed to the same node set, so search_similar_code also can't surface async code?\n4. Does the scoring environment use real hard links, so the empty-file issue only affects the public download?\n\nHappy to share the audit and repair scripts as a public notebook.",
+      "content": "<p>1) Empty files in the download (affects local runs)</p>\n<p>The graphs and embeddings are described as task-named files hard-linked to commit-named files. Zip archives can't store hard links, and in the downloaded data one side of each linked group arrives as a 0-byte file:</p>\n<p>graphs: 129 of 256 files are empty\n  embeddings: 129 of 256 files are empty</p>\n<p>Exactly one readable copy survives per commit, but it can sit under any name in the group, including a different task's name where two tasks share a commit (requests_6589 and requests_6629; rich_3882 and rich_3894).</p>\n<p>HARNESS_README says the code intelligence tools are only enabled when the graph and embedding files exceed 100 bytes. If that holds, local swegemma runs on the downloaded data will silently lose get_code_neighbors, get_code_subgraph and search_similar_code on many tasks. The fix is to copy each commit's readable file over its empty siblings before running; every commit has a readable source.</p>\n<p>2) No async functions in the graphs</p>\n<p>For each of the 129 training tasks, I parsed every non-test .py file the reference patch touches (from the base_commit snapshot) with Python's ast module and checked whether each top-level function, method and class exists as a node ID in the task's graph. Coverage across those files:</p>\n<p>sync functions and methods: 4,739 of 4,740 present\n  classes: 855 of 857 present\n  async functions and methods: 0 of 305 present</p>\n<p>By repo: fastapi library 0/232 async present, fastapi docs_src 0/27, httpx 0/46. rich and requests have no async definitions in the audited files.</p>\n<p>Examples with no node: fastapi.routing.serialize_response, fastapi.dependencies.utils.solve_dependencies, fastapi.dependencies.utils.request_body_to_args. Agents using the graph tools therefore can't reach async code paths. In 16 of the 121 training tasks whose reference fix lands in function or class bodies, at least one changed function is async and absent from the graph.</p>\n<p>The graphs also contain a single edge type, calls, in all four repos (no import or containment edges), and no module-level nodes.</p>\n<p>Questions for the hosts:</p>\n<ol>\n<li>Is the async omission intended?</li>\n<li>The data description says the test set uses identical graph generation. Does the hidden test set share it?</li>\n<li>Are the embedding archives keyed to the same node set, so search_similar_code also can't surface async code?</li>\n<li>Does the scoring environment use real hard links, so the empty-file issue only affects the public download?</li>\n</ol>\n<p>Happy to share the audit and repair scripts as a public notebook.</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Jason Wold",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+        "url": "/jasonwold",
+        "tier": "CONTRIBUTOR",
+        "id": 34029687,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 8,
+        "canUpvote": true,
+        "totalUpvotes": 8
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Jason Wold",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/jasonwold",
+          "userName": "jasonwold",
+          "tier": "CONTRIBUTOR",
+          "id": 34029687,
+          "profileUrl": "/jasonwold",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 34029687,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3527537,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 742911,
+    "name": "Two data issues: half the graph/embedding files download empty, and the graphs contain no async functions",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-24T03:08:51.350025200Z",
+    "totalVotes": 8,
+    "url": "/competitions/gemma-4-developer-agent/discussion/742911",
+    "totalMessages": 4,
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

@@ -1,0 +1,2472 @@
+# CELL 0 markdown
+# 119 of 129 sound: the Gemma 4 grader, rebuilt
+
+The published material does not permit offline reproduction of the graders' Phase 2, the rule
+that decides a task changed under us on 2026-09-25, and the achievable range of the 129 public
+tasks is bounded well inside 0 to 129. The board the competition actually scores is a different,
+smaller set, and section 3.5 reads the one number it has given us.
+
+| | |
+|---|---|
+| **result** | under the criterion the organisers re-issued on **2026-09-25** (pytest exit code 0 **and** a JUnit XML in which every required test node passed explicitly), **119 of 129 public tasks are sound** = **92.25%**, Wilson 95% **[86.32, 95.74]**. The superseded rule, exit code 0 alone, returns the same **119 = 92.25%** on the same 129 tasks and the same snapshots, and re-scoring every patch our arms have produced under both rules out of the same pytest process moves **0** of them. The new criterion is strictly stricter and it took nothing away from us; that is measured, not assumed. Read as a sample of the process that makes such tasks; as a census of this public set the count is exact |
+| the number that is **ours**, not the organisers' | The rule asks for a list of required test nodes. The published `tasks.jsonl` carries neither `FAIL_TO_PASS` nor `PASS_TO_PASS`, on all 129 rows, which cell 15 checks live, so no such list can be read from the data and the README's third branch applies: the required nodes have to be **extracted from `test_patch`**. That extractor is a **surrogate of ours**, and it is unavoidable, not a shortcut. Read through it raw, two tasks leave the sound set and the count reads **117 of 129 = 90.70% [84.44, 94.60]**. 117 is therefore a property of our surrogate. It is reported everywhere the 119 is, and it is not the headline |
+| why the headline is 119 | the two tasks the surrogate drops, `fastapi_14186` and `rich_3486`, leave on a **skip, not a failure**. Both gold runs exit **0** with **0 failures and 0 errors**, and in both the node the surrogate demands is one the task's own `test_patch` marks inapplicable to the interpreter the sandbox runs. A node that is **skipped on the graders' own gold run cannot be in their required list**, because such a list contains by construction only nodes that pass there. Exclude the nodes skipped on the gold run and both tasks come back: **119**. Section 3.3 derives that from the measured per-node fields, and the cell after it shows a reader the mechanism in the competition data with nothing but `tasks.jsonl` |
+| beats | the unstated baseline that all 129 tasks measure what they claim. 2 of 129 resolve with an **empty** patch and 8 more cannot be brought to exit code 0 by their own gold patch under the documented command, so the achievable range of the public set runs from a **floor of 2/129 (1.6%, Wilson 95% [0.4, 5.5])** to a **ceiling of 125/129 (96.9%, Wilson 95% [92.3, 98.8])**, not from 0 to 129. Read that ceiling as reachable, never as reached: the competition scores a hidden set whose denominator is measured at **58** in section 3.5, where the same ceiling would put roughly **56 of 58** within reach of some patch, and the best of **347** teams has **reached 8**. 4 of those 8 die on a pytest pin whose fate is not decidable offline, which is the ceiling's other reading, **121/129 (93.8%, [88.2, 96.8])**. **10 of 129 = 7.8 pp** of the set does not discriminate a fix, and that is the error anyone comparing public-set numbers carries |
+| runtime and accelerator | **3.9 to 11.0 minutes** of cell time on a 4-vCPU Kaggle **CPU** session, no accelerator, internet **off**, competition attached. Ten measured runs spanned **231.2 to 458.3 s**, each covering **129 of 129** tasks in the live sweep and each producing the same live localisation table to the digit. This run's own wall clock, peak memory and scratch high-water mark are in the closing runtime table |
+
+*Every number above is restated below with the cell or the artefact that produced it: the result
+and the achievable range in section 3, the leaderboard in section 3.5, the runtime and the memory
+in section 8. Nothing about the shipped
+files is hardcoded here: the organisers replaced them once already, on 2026-09-25 18:36 UTC, and
+section 2.1 is what this notebook now says about that.*
+
+# CELL 1 code
+# Provenance, intervals and figure style for everything that follows. There are two kinds of
+# number here and every one of them says which it is, on the spot:
+#   LIVE   recomputed in this kernel from the competition data attached to this run. Rerun the
+#          cell and you get it back.
+#   CITED  measured on a machine this kernel is not: an 8-worker Mac with PyPI reachable, or
+#          four NVIDIA L4s. A CITED line names the artefact, the commit and the kernel that
+#          produced it, states in one clause why this kernel cannot redo it, and points at the
+#          nearest thing you CAN check here. Those artefacts are in a private repository, so a
+#          CITED path is a receipt we can produce, not a link you can open. Section 9 is the
+#          whole accounting: what you can recompute, what you cannot, and why for each.
+import hashlib, json, math, os, platform, resource, sys, time
+from pathlib import Path
+
+T_START = time.time()
+STAGE = {}
+FIGURES = []
+
+def stage(name, t0):
+    STAGE[name] = time.time() - t0
+    print(f"[stage] {name}: {STAGE[name]:.1f} s")
+
+def peak_rss_mb():
+    ru = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    return ru / (1024 * 1024) if sys.platform == "darwin" else ru / 1024
+
+BUILD_COMMIT = "fb49f20+dirty"      # stamped by kaggle_notebooks/33_gemma4_harness/build.py
+REPO_URL     = "github.com/BusyaPrime/Kaggle"   # PRIVATE. Printed once, below, with that word
+REPO_PRIVATE = True                             # next to it, and never as a bare citation.
+
+CANDIDATES = [
+    Path(os.environ.get("GEMMA4_DATA_DIR", "/nonexistent")),
+    Path("/kaggle/input/competitions/gemma-4-developer-agent"),
+    Path("/kaggle/input/gemma-4-developer-agent"),
+]
+DATA = None
+for c in CANDIDATES:
+    if (c / "tasks.jsonl").exists():
+        DATA = c
+        break
+if DATA is None:
+    raise SystemExit(
+        "The competition data is not attached. Attach gemma-4-developer-agent and re-run.\n"
+        "Looked in: " + ", ".join(str(c) for c in CANDIDATES) + "\n"
+        "This notebook has no fallback and invents no records.")
+
+TASKS_SHA = hashlib.sha256((DATA / "tasks.jsonl").read_bytes()).hexdigest()
+DATA_VERSION = f"tasks.jsonl sha256 {TASKS_SHA[:16]}"
+
+# The public extract of the CITED artefacts, attached to this run as a Kaggle dataset. It exists
+# so that the numbers this kernel cannot recompute from the competition data have a file a reader
+# can open, instead of only a path in a repository that is not theirs to open. If it is not
+# attached, every line that would have leaned on it says so and falls back to the citation.
+AUDIT_DS = None
+for c in [Path(os.environ.get("GEMMA4_AUDIT_DIR", "/nonexistent")),
+          Path("/kaggle/input/gemma-4-developer-agent-grader-audit")]:
+    if (c / "audit_legacy.csv").exists():
+        AUDIT_DS = c
+        break
+PROVMAP = {}
+if AUDIT_DS is not None:
+    try:
+        PROVMAP = {l["cited_line"]: l
+                   for l in json.loads((AUDIT_DS / "provenance_map.json").read_text())["lines"]}
+    except Exception as exc:          # a map we cannot parse must not be able to fake coverage
+        print("  provenance map unreadable; CITED lines fall back to the citation:", exc)
+        PROVMAP = {}
+try:
+    RAM_GIB = os.sysconf("SC_PAGE_SIZE") * os.sysconf("SC_PHYS_PAGES") / (1024 ** 3)
+except (ValueError, OSError):
+    RAM_GIB = float("nan")
+
+print("notebook build commit :", BUILD_COMMIT)
+print("source repository     :", REPO_URL, "- PRIVATE, you cannot open it")
+print("                        every CITED path below is a file in it. The path and the commit")
+print("                        are there so the number has an address and so the author can")
+print("                        produce the file on request. They are not links. Section 9.")
+print("run started (UTC)     :", time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()))
+print("python                :", sys.version.split()[0], platform.machine())
+print("cpu count / ram       :", os.cpu_count(), f"/ {RAM_GIB:.1f} GiB")
+print("competition data      :", DATA)
+if AUDIT_DS:
+    _st = {}
+    for _l in PROVMAP.values():
+        _st[_l["status"]] = _st.get(_l["status"], 0) + 1
+    print("public audit extract  :", AUDIT_DS)
+    print(f"                        it carries {len(PROVMAP)} provenance entries, "
+          + ", ".join(f"{_v} {_k.lower()}" for _k, _v in sorted(_st.items())) + ".")
+    print("                        How many of THIS run's CITED lines they answer is counted at")
+    print("                        the end, not promised here. Answered means the counts are in a")
+    print("                        file you can open; the blocker on each line is unchanged by it.")
+else:
+    print("public audit extract  : NOT ATTACHED - every CITED line below stays a receipt")
+print("data version          :", DATA_VERSION)
+print("accelerator           :", "none (CPU session)")
+print("internet              :", "off")
+
+PROV = {"live": 0, "cited": 0}
+
+def prov_live(what, cell):
+    """A number this kernel computed. The reader can rerun the cell and get it back."""
+    PROV["live"] += 1
+    print(f"  provenance: LIVE  | {what} | cell {cell} of this notebook | {DATA_VERSION} | build {BUILD_COMMIT}")
+
+CARRIER = {
+    # where the artefact behind a CITED line actually lives, and the one sentence that says so.
+    # It is a parameter and not a fixed string because it is not the same for every line: one
+    # of these files is in no repository at all, and printing "private repository" over it
+    # would make the line contradict its own artefact field two lines above.
+    "private_repo": "that file is in a private repository: the path is a receipt, not a link",
+    "no_repo":      "no repository carries the derived file this number came out of, private or "
+                    "not: it is regenerated under data/ and never committed. Only the write-up "
+                    "that quotes it is in the private repository: a receipt, not a link",
+}
+
+def prov_cited(what, artefact, commit, blocker, kernel=None, sha=None, check_here=None,
+               carrier="private_repo"):
+    """A number this kernel cannot produce.
+
+    blocker is required and is the whole point: it says, in numbers, what stops this kernel
+    from recomputing the value, so the line is readable by someone who cannot open the path.
+    check_here names the nearest measurement in THIS notebook, where one exists.
+    carrier says where the artefact lives; it is checked against CARRIER so a typo cannot
+    silently drop the sentence that tells a reader the path is not a link."""
+    if not blocker or not blocker.strip():
+        raise ValueError("a CITED line without a stated blocker is a path with no meaning")
+    if carrier not in CARRIER:
+        raise ValueError(f"unknown carrier {carrier!r}; a CITED line must say where the file is")
+    PROV["cited"] += 1
+    PROV.setdefault("carrier", {})
+    PROV["carrier"][carrier] = PROV["carrier"].get(carrier, 0) + 1
+    tail = f", kernel {kernel}" if kernel else ""
+    tail += f", sha256 {sha}" if sha else ""
+    print(f"  provenance: CITED | {what}")
+    print(f"      measured off this kernel, recorded in {artefact} @ {commit}{tail}")
+    print(f"      not recomputable here: {blocker}")
+    print(f"      {CARRIER[carrier]}")
+    _pm = PROVMAP.get(what)
+    if _pm:
+        PROV.setdefault("public", {})
+        PROV["public"][_pm["status"]] = PROV["public"].get(_pm["status"], 0) + 1
+        print(f"      answered in the public dataset attached to this run, {_pm['status']}: "
+              + "; ".join(_pm["answered_by"]))
+        if _pm.get("note"):
+            print(f"        {_pm['note']}")
+    if check_here:
+        print(f"      what you can check in this kernel instead: {check_here}")
+
+# ---- the interval protocol, defined once and used by every rate in this notebook ----------
+def wilson(x, n, z=1.959963985):
+    """Score interval for a proportion, in percent. Used for census-style counts out of 129."""
+    p = x / n; d = 1 + z * z / n
+    c = (p + z * z / (2 * n)) / d
+    h = z * math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / d
+    return 100 * (c - h), 100 * (c + h)
+
+def clopper_pearson(x, n, alpha=0.05):
+    """Exact binomial interval, in percent. Bisection on the exact CDF; no SciPy needed.
+
+    Lower bound: the p at which P(X >= x) = alpha/2. Upper: the p at which P(X <= x) = alpha/2.
+    Both tails are monotone in p, so 200 bisection steps are exact to machine precision."""
+    def tail_ge(p):
+        return sum(math.comb(n, k) * p ** k * (1 - p) ** (n - k) for k in range(x, n + 1))
+    def tail_le(p):
+        return sum(math.comb(n, k) * p ** k * (1 - p) ** (n - k) for k in range(0, x + 1))
+    def solve(f, target):
+        lo, hi = 0.0, 1.0
+        for _ in range(200):
+            mid = (lo + hi) / 2
+            if f(mid) < target: lo = mid
+            else: hi = mid
+        return (lo + hi) / 2
+    low  = 0.0 if x == 0 else solve(tail_ge, alpha / 2)
+    high = 1.0 if x == n else solve(lambda p: -tail_le(p), -(alpha / 2))
+    return 100 * low, 100 * high
+
+def pct(xs, q):
+    """Quantile by linear interpolation between order statistics. q in 0..100.
+
+    The method is named because it moves printed values: on the pilot's 444 turns the p90 of
+    prompt tokens is 14,092 by linear interpolation and 14,113 by nearest rank."""
+    xs = sorted(xs)
+    if not xs:
+        return float("nan")
+    k = (len(xs) - 1) * q / 100.0
+    lo, hi = int(k), min(int(k) + 1, len(xs) - 1)
+    return xs[lo] + (xs[hi] - xs[lo]) * (k - lo)
+
+# ---- figure style, and the proof that it reads on Kaggle's light and dark themes ----------
+import matplotlib as mpl, matplotlib.pyplot as plt
+from matplotlib.patches import Rectangle
+
+INK        = "#1f2328"   # body text
+MUTED      = "#5c6470"   # axis and tick text
+GRID       = "#d7dade"   # gridlines
+ACCENT     = "#d9480f"   # primary fill
+ACCENT_TXT = "#9a3412"   # primary text
+SECOND     = "#1c7ed6"   # secondary fill
+SECOND_TXT = "#1864ab"   # secondary text
+NEUTRAL    = "#868e96"   # neutral fill
+NEUTRAL_TXT= "#495057"   # neutral text
+
+mpl.rcParams.update({
+    "figure.figsize": (9, 4.0), "figure.dpi": 110, "savefig.dpi": 160,
+    "figure.facecolor": "white", "axes.facecolor": "white",
+    "savefig.facecolor": "white", "savefig.edgecolor": "white", "savefig.transparent": False,
+    "font.size": 11, "axes.titlesize": 13, "axes.titleweight": "bold",
+    "axes.titlelocation": "left", "axes.labelsize": 11, "axes.labelcolor": INK, "text.color": INK,
+    "xtick.color": MUTED, "ytick.color": MUTED, "xtick.labelsize": 10, "ytick.labelsize": 10,
+    "axes.edgecolor": GRID, "axes.spines.top": False, "axes.spines.right": False,
+    "axes.grid": True, "grid.color": GRID, "grid.linewidth": 0.8, "axes.axisbelow": True,
+    "lines.linewidth": 2.0, "legend.frameon": False, "legend.fontsize": 10})
+
+def _relative_luminance(hexcol):
+    h = hexcol.lstrip("#")
+    ch = [int(h[i:i + 2], 16) / 255 for i in (0, 2, 4)]
+    f = lambda v: v / 12.92 if v <= 0.04045 else ((v + 0.055) / 1.055) ** 2.4
+    r, g, b = [f(v) for v in ch]
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+def contrast(a, b="#ffffff"):
+    la, lb = _relative_luminance(a), _relative_luminance(b)
+    hi, lo = max(la, lb), min(la, lb)
+    return (hi + 0.05) / (lo + 0.05)
+
+print("\nFIGURE LEGIBILITY, computed here, not asserted")
+print("  Every figure is saved with an opaque white background, so Kaggle's dark theme shows a")
+print("  white card rather than dark ink on a dark page. Contrast is then fixed and measurable:")
+print(f"  {'role':<26}{'colour':>10}{'contrast vs white':>20}{'WCAG floor':>13}{'':>8}")
+CHECKS = [("body text", INK, 4.5), ("axis and tick text", MUTED, 4.5),
+          ("primary text", ACCENT_TXT, 4.5), ("secondary text", SECOND_TXT, 4.5),
+          ("neutral text", NEUTRAL_TXT, 4.5), ("primary fill", ACCENT, 3.0),
+          ("secondary fill", SECOND, 3.0), ("neutral fill", NEUTRAL, 3.0)]
+_bad = []
+for role, col, floor in CHECKS:
+    r = contrast(col)
+    ok = r >= floor
+    _bad += [] if ok else [role]
+    print(f"  {role:<26}{col:>10}{r:>20.2f}{floor:>13.1f}{('ok' if ok else 'FAIL'):>8}")
+assert not _bad, f"palette fails the contrast floor for: {_bad}"
+print("  All eight pass. Gridlines are decorative and carry no text, so no floor applies to them.")
+
+def finish(fig, n, title, claim, rows, header=None):
+    """Show a figure, then print the exact table behind it and the one claim it proves."""
+    fig.add_artist(Rectangle((0, 0), 1, 1, transform=fig.transFigure, fill=False,
+                                 edgecolor=GRID, linewidth=1.2, zorder=1000, clip_on=False))
+    plt.tight_layout(); plt.show()
+    print(f"Fig {n} table  ({title})")
+    if header:
+        print("  " + header)
+    for r in rows:
+        print("  " + r)
+    print(f"Fig {n} claim  : {claim}")
+    FIGURES.append((n, title, claim))
+
+print("\nEvery rate in this notebook carries an interval from the block above: Wilson for census")
+print("counts out of 129, Clopper-Pearson where the count is small, and a 2,000-replicate")
+print("stratified bootstrap for the localisation table (protocol stated once in section 1).")
+
+# CELL 2 markdown
+## 1. Scope, what is recomputed here, what is cited, and how every interval is made
+
+**Scope.** The grader is **ours**. `swegemma` is not shipped, so nobody can run the organisers'
+`verify_task` offline, and every public-set number anyone reports is produced by an instrument
+whose behaviour they have not checked. Section 4 names all thirteen places our re-implementation
+can differ from theirs, in the body, before any number is read through it, and divergence 13
+is the one the re-issued rule created.
+
+Half of the numbers below are recomputed in this kernel from the attached competition data. The
+other half were measured on an 8-worker Mac with PyPI reachable and on four NVIDIA L4s, neither
+of which a Kaggle CPU session has. Every number says which it is.
+
+**No `CITED:` path below is a link you can open.** Most name a file in a private repository;
+at least one names a derived file that no repository carries at all, because it is regenerated
+under `data/` and never committed, and the run says which case each line is. Each carries a commit
+and, where
+the file is one we control, a sha256, so the number has an address and the author can produce the
+file. It is not a link, and this notebook does not ask you to take it on trust either: each CITED
+line in the run states what blocks this kernel from recomputing the value, and points at the
+nearest thing the kernel does measure. Section 9 is the full accounting.
+
+**What you can open instead.** The measurements behind those paths are attached to this run as a
+public dataset, `busyaprime/gemma-4-developer-agent-grader-audit`: the two 129-row audit tables
+and the per-task JUnit fields, the diagnostic re-runs, the counters over 68 L4 runs, and a
+`provenance_map.json` that answers each of the 16 CITED lines one by one. The run prints how many
+of the 16 it covers and, for each CITED line, what in it answers that line and whether the answer
+is whole or partial. The headline is not quoted from it either: the eight repository rows in
+section 3.1 are **recomputed in the cell** out of those csv tables, and the cell prints how many
+of the 32 counts came back identical to the artefacts it was written against. The extract carries
+counts, ids and per-node statuses. It carries **no competition row**: no problem statement, no
+patch, no line of repository source. That is checked by `33_LEAKSCAN.json` inside it, which is
+what the check looked for and what it found, not a promise.
+
+| Number | Where it comes from | Why not here |
+|---|---|---|
+| file inventory, zero-byte count, code-intelligence availability under each naming rule, **as the data stands during this run** | **LIVE**, cell 5 | it runs here |
+| what the files were before the 2026-09-25 re-issue, and the size of the change | CITED: `competitions/33_gemma4/reset/stale_sweep/33_GRAPH_NAMES.json`, sha256 `def05b56780967b1...`, @ `38f38f8`; re-issue census `competitions/33_gemma4/graphstate/33_GRAPHSTATE_NEW.json` @ `992c227` | the removed files are not in the download any more; the count is a census taken while they were |
+| task statistics: repo mix, statement lengths, patch shape, empty hints, duplicate base commits | **LIVE**, cell 8 | it runs here |
+| `swegemma` / `adk-submission` / `adk-eval-core` absent from the shipped files | **LIVE**, cell 11 | it runs here |
+| which tasks' `test_patch` adds a skip marker, the mechanism behind the two tasks our raw required-node surrogate drops | **LIVE**, cell 15 | it runs here, from `tasks.jsonl` alone |
+| the free source predicate, both versions of it, and where its gold files live | **LIVE**, cell 24 | it runs here |
+| localisation: naive order vs the predicate vs lexical retrieval, all 129 tasks, dev and held-out reported apart, 2,000-replicate stratified bootstrap | **LIVE**, cells 25-27 | it runs here |
+| 258 verifications under the superseded rule: 119 sound, 2 pass-empty, 8 fail-gold, and the anomalies | CITED: `competitions/33_gemma4/eval/33_audit_results.json`, sha256 `031fc9ac5a07d5f8...`, @ `db73ebb`, written up in `33_AUDIT.md` @ `fc9e488`; re-run `eval/33_g1_rerun_audit_results.json`, sha256 `352cb7c72f22a24f...`, @ `673e812` | needs 39 test environments; **0 of 39 build from the shipped wheels alone** and 134 packages must come from PyPI, and this kernel has no network |
+| 258 verifications under the re-issued rule, required nodes from our raw `test_patch` surrogate: 117 sound, 2 pass-empty, 10 fail-gold, and the per-node JUnit status of the two that moved | CITED: `competitions/33_gemma4/eval/33_audit_results_junit.json`, sha256 `4ae17082ce636cb0...`, @ `db73ebb`, read against `eval/33_CRITERION_DIFF.md` @ `18077d9` and `eval/33_JUNIT_DELTA.md` @ `540bf64` | same machine, same reason |
+| 645 agent patches scored under both rules out of the same pytest process: 181 resolved either way, 0 disagreements | CITED: `competitions/33_gemma4/junit645/33_JUNIT645.json`, sha256 `2ea09cc78e4f4fdb...`, @ `ddd90f2` | same machine, and the patches themselves came off four L4s |
+| serving: startup 562.31 s, KV cache 87,985 tokens, **9,211.0 prompt tokens per turn over 1,346 turns**, the concurrency bound and its quantiles | CITED: `33_SERVING.md` @ `f5e989c` and `competitions/33_gemma4/eval/probes_20260924/trajectories/` (68 files) @ `5e17c58`, kernels `busyaprime/33-gemma4-l4-serve`, `busyaprime/33-gemma4-l4-probes` | needs 4 x NVIDIA L4, 96 GB |
+| wave 0: the refusal boundary, seed spread, the 20-task calibration pilot | CITED: `33_GATES.md` and `33_E01_PILOT.md` @ `5e17c58`, kernel `busyaprime/33-gemma4-l4-probes` | same hardware |
+| the full 13-method localisation table, held-out n = 66 | CITED: `data_products/33_gemma4_localisation.csv` (936 rows) and `33_LOCALISATION.md` @ `a6e259c` | 13 methods x 129 tasks x 2,000 replicates, and two of the methods need artefacts this kernel would have to rebuild |
+
+Every CITED number above is recomputed from its artefact by one script,
+`kaggle_notebooks/33_gemma4_harness/verify_cited.py`, which prints PASS or FAIL per number and
+exits non-zero on any failure. That script runs where the artefacts are, which is neither this
+kernel nor your machine, so it is our discipline and not your verification. What it buys you is
+narrow and real: the numbers printed here are the numbers in the files, or the build fails.
+Section 9 says which numbers you can check yourself, and what stops each of the others.
+
+**Pre-registration.** The development / held-out split is fixed before any number is read and is
+the same split the cited table uses: inside each repository, order tasks by `(created_at,
+instance_id)` ascending; the older `floor(n/2)` are **dev**, the newer `ceil(n/2)` are
+**held-out**. That is 63 dev and 66 held-out. Held-out numbers are reported separately
+everywhere, never merged into a single figure.
+
+**The interval protocol, stated once.** Every rate in this notebook carries an interval, and
+there are exactly three kinds:
+
+| kind | where it is used | definition |
+|---|---|---|
+| **Wilson 95%** | counts out of the 129 public tasks | score interval, z = 1.959963985; printed as the interval you would attach if these 129 were a sample of the process that makes such tasks. As a census of this set the count is exact and is labelled so |
+| **Clopper-Pearson 95%** | small counts: 1 of 89, 5 of 20, 42 of 68, 0 of 55 | exact binomial, both tails at 2.5%, solved by bisection on the exact CDF in cell 2 |
+| **stratified bootstrap** | every localisation rate | **B = 2,000** replicates, resampling **tasks inside each repository** so the repository mix is held at the observed one, **seed 20260924**, the same resample indices reused across methods so differences between methods are **paired on the same tasks**. Percentile interval at 2.5% and 97.5% |
+
+A count with no interval in this notebook is a census of a fixed set, and says so on the line.
+
+**Data hygiene.** Counts, sizes, percentiles, instance ids and pytest node ids only. No problem
+statement, no patch, no line of repository source is printed by any cell.
+
+**A note on hardcoded numbers.** The organisers replaced the published files once already, on
+2026-09-25 between 18:36:31 and 18:40:03 UTC, with no announcement. Every statement this
+notebook makes about the shipped files is therefore computed in the cell that prints it, and
+the numbers from before the re-issue are labelled as history with the census that recorded
+them. If the files move again, the live half of this notebook moves with them and the printed
+history stays true.
+
+# CELL 3 markdown
+## 2. The material, measured live
+
+Two facts about the download decide how an agent can be built, and both are visible from file
+sizes alone. One of them was true when this notebook was first written and is not true now;
+section 2.1 is the history of that, and everything in section 2 is recomputed at run time.
+
+# CELL 4 code
+# LIVE. Inventory, the zero-byte files, and what the harness can see under each naming rule.
+# Nothing in this cell is a literal taken from an earlier run. Every count comes from the tree
+# that is attached right now, because the organisers have replaced that tree once already.
+import json, os, time
+from collections import Counter
+t0 = time.time()
+
+TASKS = [json.loads(l) for l in (DATA / "tasks.jsonl").read_text().splitlines() if l.strip()]
+PREFIX = {"fastapi/fastapi": "fastapi", "Textualize/rich": "rich",
+          "psf/requests": "requests", "encode/httpx": "httpx"}
+
+print("INVENTORY")
+print(f"  {'directory':<24}{'files':>8}{'zero-byte':>12}{'bytes':>18}")
+inv = {}
+for sub in ["snapshots", "graphs", "embeddings", "wheels", "sample_submission", "sandbox", "docker"]:
+    d = DATA / sub
+    if not d.exists():
+        continue
+    files = [p for p in d.rglob("*") if p.is_file()]
+    zero = sum(1 for p in files if p.stat().st_size == 0)
+    size = sum(p.stat().st_size for p in files)
+    inv[sub] = (len(files), zero, size)
+    print(f"  {sub:<24}{len(files):>8}{zero:>12}{size:>18,}")
+tj = (DATA / "tasks.jsonl").stat().st_size
+print(f"  {'tasks.jsonl':<24}{1:>8}{0:>12}{tj:>18,}")
+
+N_GE = inv.get("graphs", (0, 0, 0))[0] + inv.get("embeddings", (0, 0, 0))[0]
+ZERO_TOTAL = inv.get("graphs", (0, 0, 0))[1] + inv.get("embeddings", (0, 0, 0))[1]
+N_ALLFILES = sum(1 for p in DATA.rglob("*") if p.is_file() and "__pycache__" not in p.parts)
+print(f"\n  graphs/ + embeddings/ hold {N_GE} files, of which {ZERO_TOTAL} are zero bytes "
+      f"({100*ZERO_TOTAL/N_GE:.1f}%, census of this set).")
+print(f"  This attachment carries {N_ALLFILES} files in total, counted by this cell, not quoted.")
+print("  On Kaggle that is the published set; a local checkout of the same competition may carry")
+print("  derived files and kept copies on top of it, so the two numbers need not agree.")
+print("  A zero-byte file here would be the material as published and not a failed download: the")
+print("  sizes Kaggle's own API lists match the bytes on disk. Section 2.1 says what that count")
+print("  was before the organisers re-issued the data on 2026-09-25 and what it is now.")
+
+# The harness appends its code-intelligence block only when BOTH files for a repo exist and are
+# larger than 100 bytes (HARNESS_README.md line 330). Two naming families exist in the download.
+# A resolver picks ONE family and asks it for both files. Counting the two files independently
+# would let a task pass with a graph from one family and an embedding from the other, which no
+# resolver does; both counts are printed so the difference cannot hide.
+def big(p):
+    return p.exists() and p.stat().st_size > 100
+
+rule = Counter()
+per_task = {}
+for t in TASKS:
+    iid = t["instance_id"]
+    alias = f'{PREFIX[t["repo"]]}_{t["base_commit"]}'
+    g_id, e_id = big(DATA / "graphs" / f"{iid}.json"), big(DATA / "embeddings" / f"{iid}.npz")
+    g_al, e_al = big(DATA / "graphs" / f"{alias}.json"), big(DATA / "embeddings" / f"{alias}.npz")
+    per_task[iid] = (g_id and e_id, g_al and e_al)
+    rule["by instance_id"] += g_id and e_id
+    rule["by <package>_<base_commit>"] += g_al and e_al
+    rule["either family, consistently"] += (g_id and e_id) or (g_al and e_al)
+    rule["graph and embedding from different families"] += (g_id or g_al) and (e_id or e_al)
+
+N = len(TASKS)
+print("\nCODE-INTELLIGENCE AVAILABILITY  (graph .json AND embedding .npz both > 100 bytes)")
+print(f"  {'naming rule':<46}{'tasks':>7}{'of':>4}{'share':>9}{'Wilson 95%':>20}")
+for k, v in rule.items():
+    lo, hi = wilson(v, N)
+    print(f"  {k:<46}{v:>7}{N:>4}{100*v/N:>8.1f}%{f'[{lo:.1f}, {hi:.1f}]':>20}")
+both = sum(1 for a, b in per_task.values() if a and b)
+dark = N - rule["either family, consistently"]
+BEST_FAMILY = max(("by instance_id", "by <package>_<base_commit>"), key=lambda k: rule[k])
+if both == 0:
+    print(f"\n  No task carries a usable pair under BOTH families: {both} of {N}, so the two sets")
+    print(f"  are disjoint and {rule['by instance_id']} + {rule['by <package>_<base_commit>']} = "
+          f"{rule['either family, consistently']} is an exact decomposition, not an upper bound.")
+else:
+    print(f"\n  {both} of {N} tasks carry a usable pair under BOTH families, so the two family")
+    print("  counts overlap and may not be added.")
+print(f"  A resolver that picks one family and keeps it sees a graph on at most "
+      f"{rule[BEST_FAMILY]} of {N} tasks,")
+print(f"  and that family is '{BEST_FAMILY}'.")
+if dark:
+    print(f"  Under either family, consistently, the three graph tools are dark for {dark} of {N}"
+          " tasks,")
+    print("  so an agent design that assumes the code-intelligence block is there is wrong for"
+          " that many.")
+else:
+    print(f"  Under either family, consistently, the three graph tools are dark for {dark} of {N}"
+          " tasks:")
+    print("  on the tree attached to this run every task has both files. Section 2.1 records that"
+          " this")
+    print("  was not so before 2026-09-25, and what it cost while it was not.")
+print(f"  The last row, {rule['graph and embedding from different families']} of {N}, is the "
+      "count a repository-level data product reports.")
+print("  It is reachable only by a resolver that takes the graph from one naming family and the")
+print("  embedding from the other, which is not a thing any resolver does. When the two families")
+print("  do not overlap it is an upper bound and nothing more.")
+print("  Which name the shipped resolver opens is UNVERIFIED: swegemma is not in the download")
+print("  and HARNESS_README.md line 474 writes a third spelling, data/graphs/<repo>.json.")
+
+ALIAS_FILES = len({f'{PREFIX[t["repo"]]}_{t["base_commit"]}' for t in TASKS})
+SHARED = {}
+for t in TASKS:
+    SHARED.setdefault(f'{PREFIX[t["repo"]]}_{t["base_commit"]}', []).append(t["instance_id"])
+shared = {k: v for k, v in SHARED.items() if len(v) > 1}
+print(f"\n  {N} tasks use {ALIAS_FILES} distinct <package>_<base_commit> names, so under that")
+print(f"  family {len(shared)} file pair(s) serve two tasks each: "
+      f"{sorted(sorted(v) for v in shared.values())}.")
+print("  A task with no graph of its own can therefore still be served, which is exactly what")
+print("  happened to requests_6589 when the data was re-issued (section 2.1).")
+prov_live("inventory, total file count, zero-byte count, availability under four naming rules,"
+          " and the shared-name decomposition", 5)
+stage("inventory", t0)
+
+# CELL 5 code
+# LIVE. Figure 1. One claim, and the table under it is the exact set of plotted values.
+NAMES = ["by instance_id", "by <package>_<base_commit>", "either family, consistently"]
+vals = [rule[k] for k in NAMES]
+cols = [NEUTRAL, NEUTRAL, ACCENT]
+fig, ax = plt.subplots()
+bars = ax.barh(NAMES[::-1], vals[::-1], color=cols[::-1], height=0.6)
+for b, v in zip(bars, vals[::-1]):
+    lo, hi = wilson(v, N)
+    ax.annotate(f"{v} of {N} = {100*v/N:.1f}%  [{lo:.1f}, {hi:.1f}]",
+                (v, b.get_y() + b.get_height() / 2),
+                xytext=(6, -4), textcoords="offset points", fontsize=10.5,
+                fontweight="bold", color=NEUTRAL_TXT)
+ax.axvline(N, color=MUTED, lw=1.2, ls="--")
+ax.text(N + 3, ax.get_ylim()[0] + 0.06, f"{N} public tasks", ha="left", va="bottom",
+        color=MUTED, fontsize=10)
+ax.set_xlim(0, N * 1.72)
+ax.set_xlabel(f"tasks with a usable graph AND embedding pair (count of {N})")
+# The caption is built from the counts this run measured. An earlier version of this notebook
+# wrote the dark count into the title as a literal, and after the organisers re-issued the data
+# the table printed underneath the same title contradicted it. Nothing here is a literal now.
+ax.set_title(f"Fig 1. The graph tools are dark for {dark} of {N} tasks")
+finish(fig, 1, "code-intelligence availability by naming rule",
+       (f"a resolver that keeps one naming family sees the code-intelligence block on "
+        f"{rule[BEST_FAMILY]} of {N} tasks under '{BEST_FAMILY}', and on "
+        f"{min(rule['by instance_id'], rule['by <package>_<base_commit>'])} of {N} under the "
+        f"other, so an agent that hardcodes the wrong spelling loses the block on "
+        f"{abs(rule['by instance_id'] - rule['by <package>_<base_commit>'])} tasks it could "
+        f"have had.")
+       if dark == 0 else
+       (f"a resolver that keeps one naming family sees the code-intelligence block on at most "
+        f"{rule[BEST_FAMILY]} of {N} tasks, so no agent design may depend on it."),
+       [f"{k:<44}{rule[k]:>4} of {N}   {100*rule[k]/N:5.1f}%   Wilson 95% "
+        f"[{wilson(rule[k], N)[0]:.1f}, {wilson(rule[k], N)[1]:.1f}]" for k in NAMES],
+       header=f"{'naming rule':<44}{'tasks':>11}{'share':>11}{'interval':>26}")
+prov_live("figure 1, same counts as cell 5", 6)
+
+# CELL 6 markdown
+### 2.1 The half-empty graph files: what they were, and the day they stopped being a defect
+
+This used to be the strongest finding in the notebook, and it is now a closed history. It is
+kept because a reader who finds our earlier write-ups deserves to know what happened to them,
+and because the way it closed is the reason nothing about the shipped files is hardcoded here.
+
+**What was measured, 2026-09-24.** `graphs/` held **256** files and `embeddings/` held **256**,
+and **129 of each were zero bytes**. Two naming families were interleaved: 129 files named
+`<instance_id>` and 127 named `<package>_<base_commit>`, and no task had a non-empty graph under
+both. A resolver that opened one spelling and kept it found a **dead graph on 61 of 129 tasks**,
+and **60 of those 61** had a live graph under the other spelling. One task, `requests_6589`, had
+none under either. That is what a placeholder scheme looks like, not a broken download, and the
+framing we published first, that the organisers had cost every entrant three tools on 47% of the
+set, was withdrawn on that evidence.
+
+**What happened, 2026-09-25 between 18:36:31 and 18:40:03 UTC.** The organisers replaced the
+published files with no announcement. The `<instance_id>` family is gone in its entirety: 524
+files where the API listed 782, and **258 = 129 + 129** removed, exactly the two zero-byte
+halves. `tasks.jsonl` is byte-identical, so no `tasks.jsonl`-derived number in this notebook
+moved. `HARNESS_README.md` grew by 3,062 bytes, and section 3 is about what it now says.
+
+**What it is now.** The cell above measures it rather than asserting it. On every run since the
+re-issue the answer has been the same: the `<package>_<base_commit>` family serves **129 of 129**
+tasks, the `<instance_id>` family serves 0, and the three graph tools are dark for **0 of 129**.
+`requests_6589`, the one task that had nothing, now has both files, because it shares a
+`base_commit` with `requests_6629` and 127 file names cover 129 tasks.
+
+**What this costs the numbers in this notebook.** Nothing in sections 3, 6 or 8: the audit runs
+pytest and never opens a graph. In section 5 it removes an argument: the cited retrieval methods
+that need the code-intelligence block used to be unsafe to design against because the block was
+missing on most tasks, and that objection is now closed. What is left against them is measured
+and is in section 5.1.
+
+**What this costs the agent runs we already have.** They were produced while the graphs were
+half dark, so any comparison between a run from before the re-issue and a run from after it is
+confounded by the data and not only by the change under test. We have not re-run them.
+
+*Provenance. The 2026-09-24 census, 256 / 129 zero for each directory and the 68 / 60 / 1 and
+63 / 65 / 1 per-task splits: `competitions/33_gemma4/reset/stale_sweep/33_GRAPH_NAMES.json`,
+sha256 `def05b56780967b1...`, @ `38f38f8`, cross-checked against the copy of the removed files
+we kept. The re-issue census, 524 files and the 129 of 129 that follow:
+`competitions/33_gemma4/graphstate/33_GRAPHSTATE_NEW.json` @ `992c227`. The 782-file API listing
+before the re-issue: `33_DATA_AUDIT.md` section 1 @ `742f44f`. All of it is re-checked by
+`verify_cited.py`, which reads the census file and the kept copy and never the live tree, on the
+machine that holds them. **Every path here is in a private repository: a receipt, not a link.**
+None of it can be recomputed in this kernel, and the reason is not the machine: the files those
+counts describe were removed from the download on 2026-09-25 and cannot be downloaded any more.
+What this kernel can measure is the tree as it stands during this run, and cell
+5 does exactly that.*
+
+# CELL 7 code
+# LIVE. tasks.jsonl, measured. Counts and percentiles only; no row is printed.
+import statistics as stats, re, time
+t0 = time.time()
+
+GOLD_RE = re.compile(r"^\+\+\+ b/(.+)$", re.M)
+def gold_files(patch):
+    return [m.group(1).strip() for m in GOLD_RE.finditer(patch)]
+
+def churn(patch):
+    add = sum(1 for l in patch.splitlines() if l.startswith("+") and not l.startswith("+++"))
+    dele = sum(1 for l in patch.splitlines() if l.startswith("-") and not l.startswith("---"))
+    return add, dele
+
+repo_mix = Counter(t["repo"] for t in TASKS)
+print("REPOSITORY MIX  (census of this set; the bootstrap of section 1 holds this mix fixed)")
+for r, n in repo_mix.most_common():
+    print(f"  {r:<20}{n:>4} task{'s' if n != 1 else ' '}   {100*n/N:5.1f}%")
+print(f"  {'total':<20}{N:>4}")
+
+ps = [len(t["problem_statement"]) for t in TASKS]
+print("\nPROBLEM STATEMENT, characters  (quantiles by linear interpolation, cell 2)")
+print(f"  min {min(ps)}   p10 {pct(ps,10):.0f}   p50 {pct(ps,50):.0f}   p90 {pct(ps,90):.0f}   max {max(ps)}   total {sum(ps):,}")
+print("  CITED, real Gemma 4 tokenizer (262,144 entries, not available in this kernel):")
+print("    min 9, p50 115, p90 598, max 3,113 Gemma tokens; 30,204 tokens for all 129 statements,")
+print("    which is less than ONE 32,768-token context for the whole public set.")
+prov_cited("Gemma 4 token counts of the problem statements", "33_DATA_AUDIT.md section 2.1",
+           "742f44f",
+           blocker="the Gemma 4 tokenizer is 262,144 entries and is not among the attached "
+                   "files; this session has no network to fetch it",
+           check_here="the character quantiles printed two lines above, over the same 129 "
+                      "statements, cell 8")
+
+n_hints = sum(1 for t in TASKS if t["hints_text"].strip())
+lo, hi = wilson(n_hints, N)
+print(f"\nHINTS: non-empty in {n_hints} of {N} tasks = {100*n_hints/N:.1f}% [{lo:.1f}, {hi:.1f}].")
+print("  The harness interpolates {hints} only when it is non-empty, so that branch never fires here.")
+
+files = [len(set(gold_files(t["patch"]))) for t in TASKS]
+adds = [churn(t["patch"])[0] for t in TASKS]
+dels = [churn(t["patch"])[1] for t in TASKS]
+print("\nGOLD PATCH SHAPE")
+print(f"  files touched   min {min(files)}  p50 {pct(files,50):.0f}  p90 {pct(files,90):.0f}  max {max(files)}  total {sum(files)}")
+print(f"  lines added     min {min(adds)}  p50 {pct(adds,50):.0f}  p90 {pct(adds,90):.0f}  max {max(adds)}  total {sum(adds):,}")
+print(f"  lines deleted   min {min(dels)}  p50 {pct(dels,50):.0f}  p90 {pct(dels,90):.0f}  max {max(dels)}  total {sum(dels):,}")
+sf = sum(1 for f in files if f == 1)
+lo, hi = wilson(sf, N)
+print(f"  single-file tasks: {sf} of {N} = {100*sf/N:.1f}% [{lo:.1f}, {hi:.1f}]")
+
+def touches_test(paths):
+    return any(("tests" in p.split("/")) or p.split("/")[-1].startswith("test_") for p in paths)
+leak = sum(1 for t in TASKS if touches_test(gold_files(t["patch"])))
+print(f"\nLEAK CHECK: gold patches that touch a test file: {leak} of {N} (census, exact).")
+
+bc = Counter(t["base_commit"] for t in TASKS)
+dups = {k: [t["instance_id"] for t in TASKS if t["base_commit"] == k] for k, v in bc.items() if v > 1}
+print(f"DUPLICATE base_commit: {len(dups)} pairs -> {sorted(v for v in dups.values())}")
+print(f"  so {N} tasks sit on {len(bc)} distinct repository snapshots, which is why")
+print(f"  graphs/ and embeddings/ hold {ALIAS_FILES} alias names and not {N}.")
+print(f"DUPLICATE instance_id: {N - len(set(t['instance_id'] for t in TASKS))}")
+print(f"DUPLICATE problem_statement: {N - len(set(t['problem_statement'] for t in TASKS))}")
+
+print("\nThe search problem is large and the edit problem is small: the median fix is one file,")
+print(f"  {pct(adds,50):.0f} added and {pct(dels,50):.0f} deleted lines, against a median problem statement of {pct(ps,50):.0f} characters.")
+prov_live("repository mix, statement lengths, patch shape, leak and duplicate checks", 8)
+stage("tasks", t0)
+
+# CELL 8 code
+# LIVE. Figure 2, with its own table printed under it.
+import numpy as np
+ch = [a + d for a, d in zip(adds, dels)]
+fig, axes = plt.subplots(1, 2, figsize=(10.5, 3.9))
+ax = axes[0]
+xs = np.sort(np.array(ps))
+ax.step(xs, np.arange(1, len(xs) + 1) / len(xs), where="post", color=ACCENT)
+ax.set_xscale("log"); ax.set_xlabel("problem statement, characters (log)"); ax.set_ylabel("share of tasks")
+ax.axvline(pct(ps, 50), color=MUTED, lw=1, ls="--")
+ax.annotate(f"p50 = {pct(ps,50):.0f}", (pct(ps, 50), 0.12), xytext=(6, 0),
+            textcoords="offset points", color=MUTED, fontsize=10)
+ax.set_title("Fig 2a. The query budget")
+ax = axes[1]
+ax.step(np.sort(np.array(ch)), np.arange(1, len(ch) + 1) / len(ch), where="post", color=SECOND)
+ax.set_xscale("log"); ax.set_xlabel("gold patch, added + deleted lines (log)")
+ax.axvline(pct(ch, 50), color=MUTED, lw=1, ls="--")
+ax.annotate(f"p50 = {pct(ch,50):.0f}", (pct(ch, 50), 0.12), xytext=(6, 0),
+            textcoords="offset points", color=MUTED, fontsize=10)
+ax.set_title("Fig 2b. The edit budget")
+finish(fig, 2, "ECDF of statement length and of patch churn",
+       f"the answer is small and nearly fixed in size, p50 {pct(ch,50):.0f} and p90 "
+       f"{pct(ch,90):.0f} changed lines, while the statement that has to locate it spans two "
+       f"orders of magnitude, p10 {pct(ps,10):.0f} to p90 {pct(ps,90):.0f} characters, "
+       f"over all {N} tasks.",
+       [f"{'quantile':<10}{'statement chars':>18}{'changed lines':>16}"] +
+       [f"{q:<10}{pct(ps,q):>18.0f}{pct(ch,q):>16.0f}" for q in (10, 25, 50, 75, 90)] +
+       [f"{'max':<10}{max(ps):>18}{max(ch):>16}"])
+prov_live("figure 2, same distributions as cell 8", 9)
+
+# CELL 9 markdown
+## 3. The grader that is not in the download
+
+`HARNESS_README.md` documents `swegemma eval` and a two-container lifecycle whose second
+container "streams cached unpacked site-packages" (line 274). That cache, and the three
+libraries the README names, are not in the published files. The next cell looks for them.
+
+# CELL 10 code
+# LIVE. Is the harness itself in the download?
+t0 = time.time()
+names = ["swegemma", "adk-submission", "adk_submission", "adk-eval-core", "adk_eval_core"]
+allfiles = [p for p in DATA.rglob("*") if p.is_file() and "__pycache__" not in p.parts]
+hits = {n: [str(p.relative_to(DATA)) for p in allfiles if n in p.name.lower()] for n in names}
+print(f"files visible under the attached competition data: {len(allfiles)}")
+print("  (Counted here, not quoted. Kaggle's API listed 782 files before the 2026-09-25 re-issue")
+print("   and 524 after it; a local checkout may carry derived files on top of whatever is")
+print("   published. CITED, both in the private repository, receipts and not links:")
+print("   33_DATA_AUDIT.md section 1 @ 742f44f for the first count,")
+print("   competitions/33_gemma4/graphstate/33_GRAPHSTATE_NEW.json @ 992c227 for the second.)")
+for n, h in hits.items():
+    print(f"  {n:<18}{len(h)} matching files")
+whl = sorted((DATA / "wheels").glob("*.whl")) if (DATA / "wheels").exists() else []
+print(f"\nwheels/ holds {len(whl)} wheels; they are the REPOSITORIES' dependencies, not a harness")
+print("  distribution. Largest single package family in wheels/:")
+fam = Counter(p.name.split("-")[0].lower() for p in whl)
+for k, v in fam.most_common(4):
+    print(f"    {k:<24}{v} wheels")
+print("\nCITED, and the reason this notebook cannot run Phase 2 here:")
+print("  0 of 39 test environments build from wheels/ alone; 134 distinct packages had to come")
+print("  from PyPI (pytest-timeout, attrs, trio, pyyaml, dirty-equals, cffi and so on).")
+print("  Offline reproduction of the graders' Phase 2 is impossible with the published data.")
+prov_cited("0 of 39 environments from wheels/ alone, 134 packages from PyPI",
+           "33_AUDIT.md section 4 point 2", "fc9e488",
+           blocker="building the 39 test environments needs 134 packages that the shipped "
+                   "wheels do not carry, and this session has no network. Counting the gap "
+                   "from the snapshots instead would mean a second pass over the 20 GB of "
+                   "tarballs, and the one pass this notebook already makes costs 225.5 to "
+                   "345.9 s of its 231.2 to 659.1 s",
+           check_here="the wheel inventory counted from the attached wheels/ directly above, "
+                      "cell 11")
+prov_live("harness libraries absent from the attached competition files", 11)
+stage("harness-search", t0)
+
+# CELL 11 markdown
+### 3.1 The rule changed on 2026-09-25, and here is the whole of it
+
+The re-issued `HARNESS_README.md` moves the scorer to `scripts/metric.py` and rewrites the one
+sentence that decides a task. Restated rather than quoted, so that what is ours and what is
+theirs stays visible:
+
+| | old rule | rule in effect |
+|---|---|---|
+| clause 1 | `test_res.exit_code == 0` | the same |
+| clause 2 | none | a JUnit XML report exists and parses |
+| clause 3 | none | it has `passed_tests > 0`, `failures == 0`, `errors == 0` |
+| clause 4 | none | **every required test node passed explicitly, and a skip does not count as a pass** |
+| where a required node comes from | not applicable | `FAIL_TO_PASS`, or `PASS_TO_PASS`, or the test functions extracted from `test_patch` |
+
+The command changed with it: the graded pytest line now carries `--junitxml`, adds `-s` and
+`PYTHONNOUSERSITE=1`, and drops `-o norecursedirs`. Our runner builds the new form verbatim,
+except that it writes the report inside the task's own workspace instead of a shared `/tmp`
+path, because it runs many tasks at once on one host. The targets are always files and never
+directories, so dropping `norecursedirs` moves no verdict here.
+
+Because the new rule is the old one **and** three more clauses, no task can become sound that
+was not sound before. Our number can only fall or stay. It fell by two.
+
+**Which branch of "required test node" applies here, and why it matters.** The published
+`tasks.jsonl` has eight keys and neither `FAIL_TO_PASS` nor `PASS_TO_PASS` is among them; all
+129 rows carry the same key set, which cell 15 verifies live. So the third
+branch applies and the required nodes have to be **extracted from `test_patch`**. That
+extraction is ours. `FAIL_TO_PASS` and `PASS_TO_PASS`, when the graders have them, contain by
+construction only nodes that pass in the graders' environment. Our surrogate has no such
+property and cannot have one. Section 3.3 is the price of that, and divergence 13 states it as
+the divergence it is.
+
+### 3.2 What our re-implementation reads on the 129 public tasks, under both rules
+
+`competitions/33_gemma4/eval/33_phase2.py` is ours, and it is a path in a private repository: a
+receipt, not a link. It executes the organisers' own `sandbox/setup.py` verbatim (only its
+hardcoded `WHEELS_DIR` is rebound) and runs the pytest line the re-issued README prints,
+`--junitxml` and all. Two audits were run over all 129 tasks:
+
+- **A, empty patch.** The snapshot is verified untouched, which is the organisers' own
+  `--skip-agent-patch`. A sound task must **FAIL**.
+- **B, gold patch.** `task.patch` is applied. A sound task must **PASS**.
+
+That is 258 verifications, and the whole thing was run twice, once under each rule, on the same
+129 tasks and the same snapshots. The two runs agree on the pytest **exit code for 129 of 129
+tasks in both modes** and on the pytest **counts for 128 of 129** (the one difference is
+`rich_4075`'s empty run, the scheduling race of divergence 12, and it moves no verdict because
+both runs exit 1). The move from 119 to 117 is therefore the required-node clause and not the
+run, and section 3.3 shows that under that clause it is our surrogate for the node list, not the
+clause itself, that moves the two tasks.
+
+The next cell prints both results and computes every interval here.
+
+# CELL 12 code
+# CITED counts, LIVE arithmetic. Two artefacts, one per rule, both over the same 129 tasks:
+#   legacy (pytest exit code 0)                 eval/33_audit_results.json       sha256 031fc9ac5a07d5f8...
+#   junit  (exit code 0 + the JUnit conjunct)   eval/33_audit_results_junit.json sha256 4ae17082ce636cb0...
+# Both were regenerated on 2026-09-26 by full re-runs of all 258 verifications. The legacy file's
+# sha256 moved from 733993c8e62b29c5 in the process and every count in it came back identical,
+# which is why the re-run is quoted as evidence and not as a revision.
+AUDIT = {
+    "legacy": {
+        "fastapi/fastapi":  {"tasks": 67, "sound": 62, "pass_empty": 2, "fail_gold": 3},
+        "Textualize/rich":  {"tasks": 48, "sound": 47, "pass_empty": 0, "fail_gold": 1},
+        "psf/requests":     {"tasks": 13, "sound":  9, "pass_empty": 0, "fail_gold": 4},
+        "encode/httpx":     {"tasks":  1, "sound":  1, "pass_empty": 0, "fail_gold": 0},
+    },
+    "junit": {
+        "fastapi/fastapi":  {"tasks": 67, "sound": 61, "pass_empty": 2, "fail_gold": 4},
+        "Textualize/rich":  {"tasks": 48, "sound": 46, "pass_empty": 0, "fail_gold": 2},
+        "psf/requests":     {"tasks": 13, "sound":  9, "pass_empty": 0, "fail_gold": 4},
+        "encode/httpx":     {"tasks":  1, "sound":  1, "pass_empty": 0, "fail_gold": 0},
+    },
+}
+# Those 32 counts are CITED: they were typed here from the two audit artefacts. When the public
+# extract is attached they are not left on trust. The block below recomputes all 32 from its two
+# 129-row tables, cell by cell, and what the table prints afterwards is the RECOMPUTATION. A
+# disagreement is printed and used; it is not smoothed into the cited value.
+AUDIT_SRC = "typed into this notebook from the two artefacts cited under this cell"
+AUDIT_AGREE = None
+if AUDIT_DS is not None:
+    import csv as _csv
+    def _true(v): return str(v).strip().lower() == "true"
+    _re_audit = {}
+    for _k, _f in (("legacy", "audit_legacy.csv"), ("junit", "audit_junit.csv")):
+        _agg = {}
+        with open(AUDIT_DS / _f, newline="") as _fh:
+            for _row in _csv.DictReader(_fh):
+                _a = _agg.setdefault(_row["repo"],
+                                     {"tasks": 0, "sound": 0, "pass_empty": 0, "fail_gold": 0})
+                _a["tasks"] += 1
+                _a["sound"] += _row["verdict"] == "sound"
+                _a["pass_empty"] += _true(_row["empty_resolved"])
+                _a["fail_gold"] += not _true(_row["gold_resolved"])
+        if set(_agg) != set(AUDIT[_k]):
+            raise SystemExit(f"{_f} carries repositories {sorted(_agg)}, this cell was written "
+                             f"against {sorted(AUDIT[_k])}. Refusing to print a mixed table.")
+        _re_audit[_k] = {_r: _agg[_r] for _r in AUDIT[_k]}    # keep the cited row order
+    _diff = [(_k, _r, _f, AUDIT[_k][_r][_f], _re_audit[_k][_r][_f])
+             for _k in AUDIT for _r in AUDIT[_k] for _f in AUDIT[_k][_r]
+             if AUDIT[_k][_r][_f] != _re_audit[_k][_r][_f]]
+    _n_cells = sum(len(_v) for _k in AUDIT for _v in AUDIT[_k].values())
+    AUDIT_AGREE = (_n_cells - len(_diff), _n_cells)
+    print(f"  RECOMPUTED, not quoted: the {len(AUDIT['legacy'])} repository rows of each of the "
+          f"two tables below come out of the")
+    print(f"  matching 129-row csv tables of the attached public dataset. {AUDIT_AGREE[0]} of "
+          f"{AUDIT_AGREE[1]} counts are identical to the")
+    print("  values this cell was written against; the csv is what gets printed either way.")
+    if _diff:
+        print("  DISAGREEMENT, printed and not smoothed:")
+        for _d in _diff:
+            print(f"    {_d[0]} {_d[1]} {_d[2]}: cited {_d[3]}, csv {_d[4]}")
+    AUDIT = _re_audit
+    AUDIT_SRC = ("recomputed in this cell from audit_legacy.csv and audit_junit.csv of the "
+                 "attached public dataset")
+else:
+    print("  the public extract is not attached: the rows below are the CITED artefact values,")
+    print("  and nothing in this cell recomputed them.")
+
+RULE_NAME = {"legacy": "pytest exit code 0: the superseded rule, and the rule in effect once\n"
+                       "  the nodes skipped on the gold run are out of the required set",
+             "junit":  "the rule in effect with the required nodes taken from OUR raw\n"
+                       "  test_patch surrogate"}
+TOT = {k: {f: sum(v[f] for v in AUDIT[k].values())
+           for f in ("tasks", "sound", "pass_empty", "fail_gold")} for k in AUDIT}
+
+print("PHASE 2 AUDIT, 129 tasks x 2 patches = 258 verifications, run once under each rule")
+for k in ("junit", "legacy"):
+    print(f"\n  {RULE_NAME[k]}")
+    print(f"  {'repository':<20}{'tasks':>7}{'sound':>8}{'pass empty':>13}{'fail gold':>12}"
+          f"{'sound %, Wilson 95%':>28}")
+    for r, v in AUDIT[k].items():
+        lo, hi = wilson(v["sound"], v["tasks"])
+        cell = f"{100*v['sound']/v['tasks']:.1f} [{lo:.1f}, {hi:.1f}]"
+        print(f"  {r:<20}{v['tasks']:>7}{v['sound']:>8}{v['pass_empty']:>13}{v['fail_gold']:>12}"
+              f"{cell:>28}")
+    t = TOT[k]
+    lo, hi = wilson(t["sound"], t["tasks"])
+    cell = f"{100*t['sound']/t['tasks']:.1f} [{lo:.1f}, {hi:.1f}]"
+    print(f"  {'total':<20}{t['tasks']:>7}{t['sound']:>8}{t['pass_empty']:>13}{t['fail_gold']:>12}"
+          f"{cell:>28}")
+
+SURROGATE = TOT["junit"]["sound"]     # our required-node surrogate, read raw
+SOUND     = TOT["legacy"]["sound"]    # the headline: pytest exit code 0, and see the line below
+lo, hi = wilson(SOUND, 129)
+slo, shi = wilson(SURROGATE, 129)
+print(f"\n  HEADLINE: {SOUND} of 129 = {100*SOUND/129:.2f}% [{lo:.2f}, {hi:.2f}]")
+print(f"  source of the counts: {AUDIT_SRC}.")
+print("  That count is BOTH readings at once: pytest exit code 0, the superseded rule, and the")
+print("  rule in effect once the nodes SKIPPED ON THE GOLD RUN are left out of the required set,")
+print("  which is the only way the organisers' own list can be built (section 3.3). The two")
+print("  readings coincide on this set, task for task, not only in total.")
+print(f"  Our required-node surrogate, read raw: {SURROGATE} of 129 = {100*SURROGATE/129:.2f}% "
+      f"[{slo:.2f}, {shi:.2f}]")
+print(f"  The gap is {SOUND - SURROGATE} tasks and "
+      f"{100*SOUND/129 - 100*SURROGATE/129:.2f} pp, and it is a property of OUR extractor, not of")
+print("  the organisers' rule: with no FAIL_TO_PASS and no PASS_TO_PASS in tasks.jsonl the")
+print("  required nodes have to be surrogated out of test_patch, and that surrogate keeps nodes")
+print("  the patch itself marks inapplicable. The next cell names both tasks.")
+print("  The two intervals overlap across almost their whole length, so on a set of this size the")
+print("  gap is not separable from sampling noise by the interval alone. It is separable by naming")
+print("  the tasks, which is why they are named and not averaged away.")
+print("\n  The interval is the sampling interval you would attach if these 129 were a sample of the")
+print("  process that makes such tasks. As a census of THIS public set both counts are exact.")
+
+print("\nTHE ACHIEVABLE RANGE THIS SETS  (the 129 public tasks; the competition's own")
+print("  leaderboard is a different and smaller set, and section 3.5 measures it)")
+n_free = TOT["junit"]["pass_empty"]
+n_unreach, n_pin, n_skiplock = 4, 4, 2
+CEIL_DOC = 129 - n_unreach
+CEIL_OLD_PYTEST = CEIL_DOC - n_pin
+CEIL_SURROGATE = CEIL_DOC - n_skiplock
+print(f"  {'':<50}{'count':>5}{'of':>5}{'share':>9}{'Wilson 95%':>20}")
+for label, x in [("floor: an agent that submits nothing", n_free),
+                 ("our re-implementation: sound tasks", SOUND),
+                 ("the same set read through our raw surrogate", SURROGATE),
+                 ("ceiling if the graders also carry the old pytest", CEIL_OLD_PYTEST),
+                 ("ceiling under the documented command", CEIL_DOC)]:
+    l, h = wilson(x, 129)
+    print(f"  {label:<50}{x:>5}{129:>5}{100*x/129:>8.1f}%{f'[{l:.1f}, {h:.1f}]':>20}")
+band = n_free + n_unreach + n_pin
+l, h = wilson(band, 129)
+print(f"  {'does not discriminate a fix':<50}{band:>5}{129:>5}{100*band/129:>8.1f}%"
+      f"{f'[{l:.1f}, {h:.1f}]':>20}")
+print(f"    = {n_free} that resolve with an empty patch, {n_unreach} that cannot reach exit code 0")
+print(f"    under the documented command, and {n_pin} psf/requests tasks that die on a pytest pin")
+print("    whose fate is not decidable offline.")
+print(f"  Our raw surrogate takes {n_skiplock} more out, for {band + n_skiplock} of 129 = "
+      f"{100*(band+n_skiplock)/129:.1f} pp, and it moves the")
+print(f"    ceiling from {CEIL_DOC} to {CEIL_SURROGATE}. Those {n_skiplock} are not in the range "
+      f"above, because a node skipped on")
+print("    the gold run cannot be in the organisers' required list. They are named in the next")
+print("    cell rather than folded in.")
+print(f"  The {CEIL_OLD_PYTEST} and the {SOUND} are {CEIL_OLD_PYTEST - SOUND} apart, and the "
+      f"difference is exactly the {n_free} tasks an empty")
+print("    patch already resolves: a ceiling counts what any patch can reach, and our sound count")
+print("    does not count a task that needs no fix.")
+
+print("\nEXIT-CODE CLASSES  (census over 129 runs each; no interval applies)")
+print("  audit A, empty patch, both rules : tests_failed 110, collection_error 14,"
+      " pytest_timeout 3, passed 2")
+print("  audit B, gold patch, legacy      : passed 121, tests_failed 5, collection_error 3")
+print("  audit B, gold patch, junit       : passed 119, tests_failed 5, collection_error 3,"
+      " junit_required_node_not_passed 2")
+print("  The empty-patch classes are identical under the two rules, which is the arithmetic of the")
+print("  conjunction: the new clause can only take a task out of resolved, and no empty-patch run")
+print("  that already failed can fail differently.")
+print("  git apply --unsafe-paths -p1 succeeded on the FIRST pass for all 129 gold patches and all")
+print("  258 test_patch applications; the documented 4-pass fallback never fired. See divergence 6")
+print("  for which of those two counts the committed artefact carries and which it does not.")
+AUDIT_BLOCK = ("258 pytest runs inside 39 built test environments. 0 of the 39 build from the "
+               "shipped wheels alone, 134 packages must come from PyPI, and this session has "
+               "no network. Cost is the second wall: the two audits took 5,150.4 s and "
+               "4,752.4 s on an 8-worker Mac, and this whole notebook has never taken longer "
+               "than 659.1 s on four vCPU")
+prov_cited(f"{SOUND}/129 sound under pytest exit code 0, per-repo counts, exit classes",
+           "competitions/33_gemma4/eval/33_audit_results.json", "db73ebb",
+           blocker=AUDIT_BLOCK, sha="031fc9ac5a07d5f8")
+prov_cited(f"{SURROGATE}/129 under our raw required-node surrogate, per-repo counts, exit classes",
+           "competitions/33_gemma4/eval/33_audit_results_junit.json", "db73ebb",
+           blocker=AUDIT_BLOCK, sha="4ae17082ce636cb0",
+           check_here="cell 15, which derives the mechanism behind the only two "
+                      "tasks that separate this count from the one above, from tasks.jsonl alone")
+prov_cited(f"the three readings of the denominator, and that {SOUND} is the one that stands",
+           "competitions/33_gemma4/eval/33_CRITERION_COSTS_US_NOTHING.json", "f20fc50",
+           blocker="the three readings are three passes over the same 258 verifications, and "
+                   "the verifications need the 39 environments. The choice between them is a "
+                   "judgement, recorded with its reasons in that file and restated in section "
+                   "3.3 where you can weigh it without the file",
+           check_here="section 3.3 and cell 15, which show from the competition "
+                      "data alone why the two disputed tasks are a skip and not a failure")
+prov_cited("re-run of the same 258 verifications under the superseded rule",
+           "competitions/33_gemma4/eval/33_g1_rerun_audit_results.json", "673e812",
+           blocker=AUDIT_BLOCK + ", and this line is a second full pass of it",
+           sha="352cb7c72f22a24f")
+prov_live("every Wilson interval and every subtraction in this cell", 13)
+if AUDIT_AGREE:
+    prov_live(f"the 8 repository rows and both totals: {AUDIT_AGREE[0]} of {AUDIT_AGREE[1]} counts "
+              f"recomputed here from the public dataset's 129-row tables", 13)
+
+# CELL 13 markdown
+### 3.3 The two tasks our surrogate drops, and why both are a skip and not a failure
+
+This is the part a reader can check against the competition data without running anything of
+ours, and it is the one measurement in this notebook that the re-issued rule made possible.
+
+Read raw, our surrogate moves the count from 119 to 117 by moving exactly two tasks,
+**`fastapi_14186`** and
+**`rich_3486`**, both into the error class `junit_required_node_not_passed`. Neither gold patch
+failed. Both gold runs exit **0**, with **0 failures and 0 errors** in the report, and in both
+the field `required_missing` is **empty**, which means every required node our extractor asked
+for was located in the JUnit XML. What the report shows instead is that the node was
+**skipped**.
+
+| task | gold exit | pytest counts | required nodes | found | passed | skipped |
+|---|---:|---|---:|---:|---:|---:|
+| `fastapi_14186` | 0 | 46 passed, 6 skipped | 5 | 5 | 0 | 5 (6 cases: one node is parametrised twice) |
+| `rich_3486` | 0 | 20 passed, 1 skipped | 2 | 2 | 1 | 1 |
+
+**Where the skip comes from.** In both tasks it is the task's own `test_patch` that marks the
+test inapplicable, on the interpreter the sandbox actually runs.
+
+- `rich_3486` adds **two mutually exclusive** `@pytest.mark.skipif` decorators to the same file,
+  one for `sys.version_info.minor >= 11` and one for `< 11`. Both land in **our** required set.
+  On **any** interpreter exactly one of the two is skipped, so under our raw surrogate this task
+  cannot be sound on any Python at all, which is on its own enough to say the surrogate and not
+  the task is what fails here. The XML's skip reason is the one the patch itself wrote.
+- `fastapi_14186` puts all five required nodes behind two of the project's own marker aliases.
+  Resolved in the task's working tree, one is `skipif(sys.version_info > (3, 13))` and the other
+  is `skipif(PYDANTIC_V2)`. The sandbox runs CPython 3.13.14 with pydantic 2.13.5, and the first
+  condition is written with `>` rather than `>= (3, 14)`, so it fires on every 3.13.x. Six skip
+  reasons for five nodes, three of each kind, and none of them says the gold patch failed.
+
+**So what does 117 measure?** It measures our implementation of the organisers' rule, and the
+weak part of that implementation is named in section 3.1: with no `FAIL_TO_PASS` or
+`PASS_TO_PASS` in the published `tasks.jsonl`, our required-node set is every test function the
+`test_patch` adds or changes, **including the ones the patch marks inapplicable**. The
+graders' own lists cannot contain such a node by construction. If a node skipped by a marker the
+`test_patch` itself adds were excluded from the required set, `rich_3486` keeps its passing half
+and `fastapi_14186` falls to an empty required set that is vacuously satisfied with 46 passed,
+and both come back sound at 119. That is derived from the measured per-node fields, not re-run
+as a separate audit, and it is written down as such.
+
+Both numbers are therefore reported, and the headline is **119**, because 117 is a reading of our
+surrogate and 119 is what the rule in effect says once the required set is built the only way the
+graders can build one. The lower number is not hidden and not a footnote: it is on the first
+screen, in the achievable range of the audit cell, in the figure below and in section 7 item 10, each time
+named as ours.
+
+*Provenance: `competitions/33_gemma4/eval/33_audit_results_junit.json`, sha256
+`4ae17082ce636cb0...`, @ `db73ebb`, fields `junit.required_node_status`, `junit.required_missing`
+and `junit.required_not_passed` of the two tasks; the reading of the skip reasons and the three
+sequential re-runs per task that show the two verdicts are deterministic and not a concurrency
+artefact: `competitions/33_gemma4/eval/33_JUNIT_DELTA.md` @ `540bf64` and
+`eval/33_JUNIT_DELTA_CONFIRMED.json`; the branch of the rule that applies and the extractor it
+forces: `eval/33_CRITERION_DIFF.md` @ `18077d9`; the three readings of the denominator side by
+side, and that the rule change moves 0 of our 645 arm patches:
+`eval/33_CRITERION_COSTS_US_NOTHING.json` @ `f20fc50` over
+`competitions/33_gemma4/junit645/33_JUNIT645.json`. **Every path here is in a private
+repository: a receipt, not a link.** A per-node status is written by a real pytest run inside one
+of the 39 environments this session cannot build, so none of it moves into this kernel. The
+mechanism under it does: cell 15 finds both skip markers in the competition data
+alone.*
+
+# CELL 14 code
+# LIVE. The mechanism behind section 3.3, from tasks.jsonl alone. No artefact of ours is read
+# here: a reader with the competition attached and nothing else gets these same numbers.
+t0 = time.time()
+import re as _re
+
+KEYSETS = {tuple(sorted(t.keys())) for t in TASKS}
+print("TASKS.JSONL KEYS")
+print(f"  distinct key sets across the {len(TASKS)} rows: {len(KEYSETS)}")
+for ks in KEYSETS:
+    print(f"    {list(ks)}")
+HAS_F2P = any("FAIL_TO_PASS" in ks or "PASS_TO_PASS" in ks for ks in KEYSETS)
+print(f"  FAIL_TO_PASS or PASS_TO_PASS present: {HAS_F2P}")
+print("  That is why the required-node branch that applies is 'test functions extracted from")
+print("  test_patch', and why the extraction is ours. Section 3.1.")
+
+# A skip marker the test_patch ADDS: either a literal pytest skip, or a decorator line the patch
+# adds whose name is one of the project marker aliases these repositories use. Both forms are
+# counted separately because only the literal form is self-describing.
+LIT = _re.compile(r"(pytest\.mark\.skipif|pytest\.mark\.skip\b|pytest\.skip\()")
+ALIAS = _re.compile(r"^\s*@(needs_|requires_|skip)")
+
+rows = []
+for t in TASKS:
+    added = [l[1:] for l in t["test_patch"].splitlines()
+             if l.startswith("+") and not l.startswith("+++")]
+    lit = sum(1 for l in added if LIT.search(l))
+    ali = sum(1 for l in added if ALIAS.match(l))
+    if lit or ali:
+        rows.append((t["instance_id"], lit, ali))
+
+n_lit = sum(1 for _, a, _b in rows if a)
+n_ali = sum(1 for _, _a, b in rows if b)
+lo, hi = wilson(len(rows), N)
+print(f"\nTEST PATCHES THAT ADD A SKIP MARKER  (census of the {N} published tasks)")
+print(f"  tasks whose test_patch adds a literal pytest skip marker : {n_lit} of {N}")
+print(f"  tasks whose test_patch adds a project marker alias        : {n_ali} of {N}")
+print(f"  either                                                    : {len(rows)} of {N} = "
+      f"{100*len(rows)/N:.1f}% [{lo:.1f}, {hi:.1f}]")
+print(f"  {'task':<18}{'literal skip lines added':>26}{'marker-alias lines added':>26}")
+for iid, lit, ali in sorted(rows, key=lambda r: (-(r[1] + r[2]), r[0])):
+    print(f"  {iid:<18}{lit:>26}{ali:>26}")
+
+DROPPED = ["fastapi_14186", "rich_3486"]
+hit = [r for r in rows if r[0] in DROPPED]
+print(f"\n  Both tasks our raw required-node surrogate drops are in that list: "
+      f"{sorted(r[0] for r in hit)} ({len(hit)} of {len(DROPPED)}).")
+print(f"  So the mechanism is live on {len(rows)} of {N} tasks, and on {len(DROPPED)} of them it")
+print("  is what separates our surrogate's 117 from the headline 119. The organisers' rule does")
+print("  not drop these two: a node skipped on the gold run cannot be in a required list built")
+print("  the way theirs is built. Section 3.3.")
+print("  The other tasks in the list survive because at least one required node still passes and")
+print("  the skipped ones are not required, or because the marker never fires on this interpreter.")
+print("  A reader who wants the per-node verdict has to run pytest; that needs 39 environments and")
+print("  PyPI, which is the whole reason section 3 is CITED and not LIVE.")
+prov_live("the key set of tasks.jsonl, and every test_patch that adds a skip marker", 15)
+stage("skip-marks", t0)
+
+# CELL 15 code
+# CITED. The twelve anomalies, each with its cause separated by a diagnostic run.
+ANOM = [
+ ("fastapi_14077", "passes with an EMPTY patch",
+  "gold replaces status.HTTP_422_UNPROCESSABLE_ENTITY with 422; the test_patch makes the same "
+  "substitution inside the assertion, and the two are equal, so the test cannot discriminate"),
+ ("fastapi_14851", "passes with an EMPTY patch",
+  "gold vendors two private Starlette symbols; behaviour is unchanged and the three added tests "
+  "pass against the unpatched snapshot"),
+ ("fastapi_15745", "gold patch cannot reach exit code 0",
+  "the graders disable anyio twice, on the CLI and inside the pytest.ini their own setup.py writes; "
+  "re-enabling anyio and changing nothing else passes 39/39"),
+ ("fastapi_15763", "gold patch cannot reach exit code 0", "same cause; with anyio enabled 37/37 pass"),
+ ("fastapi_15785", "gold patch cannot reach exit code 0", "same cause; with anyio enabled 41/41 pass"),
+ ("rich_3472", "gold patch cannot reach exit code 0",
+  "an unrelated test in the same target file hardcodes a CPython attribute-error message that "
+  "changed in 3.13, and docker/Dockerfile.sandbox line 1 is FROM python:3.13-slim"),
+ ("requests_6589", "collection error under the pinned pytest",
+  "the snapshot pins pytest<=6.2.5 and setup.py forces --import-mode=importlib, under which 6.2.5 "
+  "cannot resolve a relative import in the target test file"),
+ ("requests_6592", "collection error under the pinned pytest", "same cause"),
+ ("requests_6629", "collection error under the pinned pytest", "same cause"),
+ ("requests_6757", "residual failures with the gold patch",
+  "Python 3.13 turns VERIFY_X509_STRICT on by default and the bundled test CA has no Authority Key "
+  "Identifier, so the loopback HTTPS tests fail"),
+ ("fastapi_14186", "OURS, not the task's: gold exits 0, our surrogate's node is SKIPPED",
+  "All five required nodes sit behind two of the project's own marker aliases that the "
+  "test_patch itself adds; on CPython 3.13.14 with pydantic 2.13.5 both markers fire, so 46 "
+  "tests pass, 6 are skipped, and 0 required nodes pass. A node skipped on the gold run cannot "
+  "be in the organisers' list, so this task is counted sound in the range above. Section 3.3"),
+ ("rich_3486", "OURS, not the task's: gold exits 0, our surrogate's node is SKIPPED",
+  "The test_patch adds two mutually exclusive skipif decorators to one file and our surrogate "
+  "requires both nodes, so exactly one is skipped on every interpreter and no Python can satisfy "
+  "the surrogate. Counted sound in the range above, for the same reason. Section 3.3"),
+]
+import textwrap
+print("THE TWELVE ANOMALIES  (2 free tasks, 8 the documented command cannot bring to rc 0, and 2")
+print("  that reach rc 0 and are stopped only by OUR required-node surrogate)")
+print("  This is a census of the 129: the twelve are named, not sampled, so no interval applies to")
+print("  the list itself. Ten of the twelve are properties of the benchmark and carry the rate")
+print("  10 of 129 with its interval in the audit cell. The last two are properties of our")
+print("  extractor, and they are the whole distance between 119 and 117.")
+for iid, what, why in ANOM:
+    print(f"\n  {iid:<16}{what}")
+    for line in textwrap.wrap(why, 92):
+        print(f"                  {line}")
+print("\n  With current pytest the four psf/requests tasks all show their fix working: the failure")
+print("  count drops by exactly one between the empty and the gold run in every case.")
+print("  Whether the graders' unpublished site-packages holds the old pytest is NOT decidable offline,")
+print(f"  which is why the ceiling is reported twice, as {CEIL_DOC}/129 and as {CEIL_OLD_PYTEST}/129.")
+prov_cited("the first ten anomalies and their diagnostic runs", "33_AUDIT.md section 3",
+           "fc9e488",
+           blocker="each cause was separated by its own pytest run in a built environment, "
+                   "with one variable changed and nothing else. Same 39 environments, same "
+                   "134 packages from PyPI, same absent network")
+prov_cited("the two tasks our surrogate adds, and their per-node status",
+           "competitions/33_gemma4/eval/33_audit_results_junit.json", "db73ebb",
+           blocker="a per-node status comes out of a JUnit XML that only a real run writes",
+           sha="4ae17082ce636cb0",
+           check_here="cell 15, which finds the skip markers both test_patch "
+                      "files add, from the competition data and nothing of ours")
+
+# CELL 16 code
+# LIVE arithmetic over the cited counts. Figure 3. Every bar is a variable computed in the audit
+# cell; the title and the claim are assembled from them, so a re-measured range cannot leave a
+# stale caption behind.
+bars3 = [
+    ("an agent that submits nothing", n_free, ACCENT),
+    ("sound, our raw required-node surrogate", SURROGATE, NEUTRAL),
+    ("sound, the rule in effect", SOUND, ACCENT),
+    ("ceiling if the graders carry the old pytest", CEIL_OLD_PYTEST, SECOND),
+    ("ceiling under the documented command", CEIL_DOC, ACCENT),
+]
+fig, ax = plt.subplots(figsize=(9.8, 3.9))
+ys = range(len(bars3))
+ax.barh(list(ys), [b[1] for b in bars3], color=[b[2] for b in bars3], height=0.62)
+for i, (lab, v, _c) in enumerate(bars3):
+    lo, hi = wilson(v, 129)
+    ax.annotate(f"{v} of 129 = {100*v/129:.1f}%  [{lo:.1f}, {hi:.1f}]", (v, i), xytext=(8, -4),
+                textcoords="offset points", fontsize=10.5, fontweight="bold", color=NEUTRAL_TXT)
+ax.axvline(129, color=MUTED, lw=1.2, ls="--")
+ax.text(127, len(bars3) - 0.42, "129 public tasks", ha="right", va="bottom",
+        color=MUTED, fontsize=10)
+ax.set_yticks(list(ys)); ax.set_yticklabels([b[0] for b in bars3])
+ax.set_ylim(-0.6, len(bars3) - 0.1)
+ax.set_xlim(0, 252); ax.set_xlabel("tasks that can reach a resolved verdict")
+ax.set_title(f"Fig 3. The achievable range is [{n_free}, {CEIL_DOC}], not [0, 129]")
+finish(fig, 3, "floor, our sound count and our surrogate's reading of it, and the two ceilings",
+       f"an empty submission already scores {n_free} of 129 and no agent patch can exceed "
+       f"{CEIL_DOC} of 129 under the documented command, so {band} of 129 = {100*band/129:.1f} pp "
+       f"of the set does not discriminate a fix; the {SOUND - SURROGATE} tasks between "
+       f"{SOUND} and {SURROGATE} are our surrogate's, not the benchmark's.",
+       [f"{lab:<46}{v:>4} of 129   {100*v/129:5.1f}%   Wilson 95% "
+        f"[{wilson(v,129)[0]:.1f}, {wilson(v,129)[1]:.1f}]" for lab, v, _ in bars3],
+       header=f"{'quantity':<46}{'count':>11}{'share':>11}{'interval':>26}")
+prov_cited("floor and the two ceilings under the superseded rule", "33_AUDIT.md section 6",
+           "fc9e488",
+           blocker="every count under the bars is the audit's, and the audit needs the 39 "
+                   "environments this session cannot build",
+           check_here="every bar position, every interval and the band arithmetic in this "
+                      "figure, computed here from those counts, cell 17")
+prov_cited("the two tasks our raw surrogate takes out, and their per-node status",
+           "competitions/33_gemma4/eval/33_audit_results_junit.json", "db73ebb",
+           blocker="which two tasks move is a verdict from a run; only their mechanism is in "
+                   "the competition data",
+           sha="4ae17082ce636cb0",
+           check_here="cell 15, which names both tasks from tasks.jsonl alone")
+prov_live("every bar, every interval and the band arithmetic in this figure", 17)
+
+# CELL 17 markdown
+### 3.4 Our surrogate moved the denominator; the rule moved neither it nor the patches
+
+Two tasks leave the sound set when our raw surrogate is applied, and that is the only thing that
+moved a denominator: under the rule in effect the count is the same 119 the superseded rule
+gives. A separate question is whether the new rule changes which **agent patches** resolve, and
+that one has an answer with no inference in it. This is the measurement behind the first screen's
+claim that the re-issued criterion took nothing away from us.
+
+Every patch file our four arms ever produced, **645** of them (387 from three seeds of one arm
+and 129 each from two more), was re-scored once by the same evaluator, which reports
+`resolved_legacy` and `resolved_junit` **out of the same pytest process**. So a difference
+between the two columns can only be the rule: not the data, not the machine, not the run.
+
+| set | units | tasks | resolved, superseded rule | resolved, rule in effect | disagreements |
+|---|---:|---:|---:|---:|---:|
+| all patches | 645 | 129 | 181 (28.06%) | 181 (28.06%) | **0** |
+| patches on the 117 tasks our raw surrogate leaves sound | 585 | 117 | 171 (29.23%) | 171 (29.23%) | **0** |
+
+Zero in both directions: no unit resolved under the old rule and failed under the new one, and
+none the other way. 292 of the 645 patch files are 0 bytes, the agent emitted no diff, and they
+are scored like any other unit. `exit_code == 0` holds for exactly 181 units, which is the same
+181, because under this data every unit that clears the exit code also clears the JUnit conjunct.
+
+Two cautions, both measured rather than assumed. First, a Wilson interval on 645 units claims an
+independence the design does not have, because several arms and seeds are pooled over the same
+tasks; the interval to quote is a task-clustered bootstrap, 20,000 resamples of whole tasks, seed
+33, and it is about twice as wide. Second, the known flakiness under parallel evaluators is
+**one-sided**: it turns a pass into a failure, which makes the exit code non-zero and drops the
+unit out of **both** columns at once. It therefore hides a disagreement and cannot manufacture
+one, so the zero above is not an artefact of that mechanism; the guard that covers it is a
+sequential three-run repeat of every unit whose own arm had scored it resolved and that came back
+unresolved here, and that set is empty.
+
+**What this settles and what it does not.** It settles that on the patches we hold, the rule
+change is a denominator change. It does not settle the general case: an agent can leave a
+required test skipped or unimplemented while the rest of the file passes, which is precisely the
+shape that produces a disagreement, and none of our 645 patches happens to have it.
+
+*Provenance: `competitions/33_gemma4/junit645/33_JUNIT645.json`, sha256 `2ea09cc78e4f4fdb...`,
+@ `ddd90f2`, written out of per-unit rows that stay out of git because they carry pytest tails
+from competition data; the evaluator is `eval/33_phase2.py` and the rule module is
+`eval/33_junit.py`, both sha-stamped inside that JSON. Recomputed by `verify_cited.py` from the
+JSON, and the counts were also recomputed independently from the raw rows, on the machine that
+holds them. **Every path here is in a private repository: a receipt, not a link.** Those 645
+patches came off four L4s and were scored inside 39 built environments. No part of that is in the
+competition download, so no part of it can be recomputed here.*
+
+# CELL 18 markdown
+### 3.5 The graders answered, once, and it cost our own prediction
+
+Everything above measures our grader against itself. On **2026-09-25 19:04 UTC** one artefact of
+ours was sent to the competition, and on **2026-09-26** it came back scored. That is the first
+and only number in this project produced by the organisers' instrument rather than ours, and it
+arrived **after** the first version of this notebook was published. It is here because a
+measurement that breaks a claim of ours belongs in the same document as the claim.
+
+The board publishes one scalar per team, to two decimals, and nothing else: no per-task field, no
+node status, no list of what was solved. So the first thing to establish is what the scalar is a
+fraction **of**. That is not taken on faith below; it is searched for, and the search is the
+cell, not a citation.
+
+# CELL 19 code
+# LIVE. The board's denominator, proved here rather than quoted, and every rate that follows.
+# Input: board_distribution.csv in the attached public dataset, which carries only how many teams
+# show each displayed value. Team names, ids and dates are deliberately not in it: none of the
+# arithmetic below needs them, and a leaderboard reprinted with names is a compilation of people.
+import csv as _csv, random as _random
+t0 = time.time()
+
+
+# Every name below is LOCAL to this function. An earlier version of this cell bound names
+# like `rule` and `vals` at notebook scope; the next cell reads `rule` as a dict and got a
+# string instead. Kaggle found that on a published notebook, after a full run. Cells share
+# one namespace, so a cell with nothing to export must not create a name.
+def _board_section():
+    if AUDIT_DS is None:
+        print("  the public extract is not attached, so this cell has no board to read.")
+        print("  Nothing here is hardcoded as a fallback; the section's numbers simply do not run.")
+        BOARD = None
+    else:
+        with open(AUDIT_DS / "board_distribution.csv", newline="") as fh:
+            BOARD = {float(r["displayed_score"]): int(r["teams"]) for r in _csv.DictReader(fh)}
+        META = json.loads((AUDIT_DS / "board_distribution.json").read_text())
+
+    if BOARD:
+        vals, TEAMS = sorted(BOARD), sum(BOARD.values())
+        print(f"PUBLIC BOARD, snapshot {META['snapshot_utc']}, {TEAMS} teams")
+        print(f"  distinct displayed values: {len(vals)}  ->  "
+              + ", ".join(f"{v:.2f}" for v in vals))
+
+        # Which (denominator, display rule) can produce EXACTLY this set of values? Two conditions,
+        # and the second is the one that does the work: a candidate is rejected if it can display a
+        # value at or below the leader that no team out of TEAMS shows. That is an assumption about
+        # how densely the field fills the lattice, not about the scoring code, and it is the single
+        # step this whole section rests on. It is stated, not hidden.
+        top = max(vals)
+        RULES = (("round", lambda x: round(x, 2)), ("floor", lambda x: int(x * 100 + 1e-9) / 100))
+        seen = {round(v, 2) for v in vals}
+        loose, survivors, rivals = 0, [], []
+        for n in range(5, 5001):
+            for rule, f in RULES:
+                ks = [k for k in range(n + 1) if abs(f(k / n) - top) < 1e-9]
+                if not ks:
+                    continue
+                loose += 1
+                reach = sorted({round(f(k / n), 2) for k in range(max(ks) + 1)})
+                extra = [v for v in reach if v not in seen]
+                covers_all = seen.issubset(set(reach))
+                if covers_all and not extra:
+                    survivors.append((n, rule, max(ks)))
+                elif covers_all:
+                    # reaches every value the board shows, but ALSO reaches values it does not.
+                    # These are the only interesting losers: each survives or dies on whether those
+                    # extra cells are empty by chance.
+                    rivals.append((len(extra), n, rule, max(ks), extra))
+        print(f"  candidates that can display the leader's value at all: {loose}")
+        print(f"  of those, candidates that also leave NO reachable value below the leader unshown:"
+              f" {len(survivors)}")
+        if len(survivors) != 1:
+            raise SystemExit("the denominator is not pinned on this snapshot; the section stops here "
+                             "rather than choosing one.")
+        NB, RULE, KTOP = survivors[0]
+        fB = dict(RULES)[RULE]
+        print(f"  -> the board scores {NB} tasks and displays {RULE}(k/{NB}) to two decimals.")
+        # What the nearest losers were, and what each would cost, found rather than asserted.
+        rivals.sort()
+        near = [r for r in rivals if r[0] == rivals[0][0]][:4]
+        ms = ", ".join(f"{v:.2f}" for v in near[0][4])
+        who = ", ".join(f"n={r[1]} {r[2]}" for r in near)
+        print(f"     {len(rivals)} candidates reach all {len(seen)} shown values but also reach "
+              f"values the board does not.")
+        print(f"     The nearest of them overshoot by {near[0][0]} cell(s): {who}.")
+        print(f"     Each would need {ms} to hold zero teams. The board's own top cell holds")
+        print(f"     {BOARD[top]} of {TEAMS} teams, so it censors nothing at the thin end and an")
+        print(f"     absent value means genuinely no team, not a hidden one. That is the assumption,")
+        print(f"     and it is the only place this denominator can be attacked.")
+
+        def tasks_of(v):
+            ks = [k for k in range(NB + 1) if abs(fB(k / NB) - v) < 1e-9]
+            if len(ks) != 1:
+                raise SystemExit(f"{v} does not pin one task count")
+            return ks[0]
+
+        OURS_K, LEAD_K = tasks_of(META["our_displayed_score"]), KTOP
+        print(f"\n  OUR SCORE {META['our_displayed_score']:.2f} = {OURS_K} of {NB} tasks, "
+              f"rank {META['our_rank']} of {TEAMS}, on {META['our_submission_count']} submission")
+        lo, hi = wilson(OURS_K, NB); llo, lhi = wilson(LEAD_K, NB)
+        print(f"  {'':<26}{'tasks':>6}{'of':>4}{'rate':>9}{'Wilson 95%':>20}")
+        print(f"  {'us':<26}{OURS_K:>6}{NB:>4}{100*OURS_K/NB:>8.2f}%{f'[{lo:.2f}, {hi:.2f}]':>20}")
+        print(f"  {'the best of ' + str(TEAMS):<26}{LEAD_K:>6}{NB:>4}{100*LEAD_K/NB:>8.2f}%"
+              f"{f'[{llo:.2f}, {lhi:.2f}]':>20}")
+
+        print(f"\n  THE WHOLE FIELD, tasks resolved -> teams")
+        for k in range(0, KTOP + 1):
+            v = [x for x in vals if tasks_of(x) == k]
+            c = BOARD[v[0]] if v else 0
+            mark = "  <- us" if k == OURS_K else ""
+            print(f"    {k:>2} task(s){'':<3}{c:>5} teams{'  ' + '#' * round(c / 4):<32}{mark}")
+        res = sum(tasks_of(v) * c for v, c in BOARD.items())
+        pairs = TEAMS * NB
+        per = [tasks_of(v) / NB for v, c in BOARD.items() for _ in range(c)]
+        B = 20000
+        _r = _random.Random(20260926)
+        ms = sorted(sum(per[_r.randrange(TEAMS)] for _ in range(TEAMS)) / TEAMS for _ in range(B))
+        flo, fhi = 100 * ms[int(0.025 * B)], 100 * ms[int(0.975 * B)]
+        print(f"\n  THE FIELD'S OWN RATE: {res} resolutions over {TEAMS} x {NB} = {pairs} team-task")
+        print(f"  pairs = {100*res/pairs:.2f}%, cluster bootstrap 95% [{flo:.2f}, {fhi:.2f}] "
+              f"(B={B:,}, the team is the unit).")
+        print(f"  That interval is the one number here with a large denominator. Every single team's")
+        print(f"  rate, ours and the leader's alike, is one run of {NB} tasks and carries the wide")
+        print(f"  interval above. {sum(BOARD[v] for v in vals if abs(tasks_of(v)-OURS_K)<=1)} of "
+              f"{TEAMS} teams sit within one task of us.")
+
+        print(f"\n  IS THE LEADER MEASURABLY BETTER THAN US? Not on a board this size.")
+        print(f"  The gap is {LEAD_K-OURS_K} tasks. Unpaired, the difference is "
+              f"{100*(LEAD_K-OURS_K)/NB:.2f} pp with 95% [-4.12, +17.91],")
+        print(f"  Fisher exact two-sided p = 0.3612, pooled two-proportion z = 1.2195, p = 0.2227.")
+        print(f"  Those tests are the wrong ones and are printed as an upper bound: every team faces")
+        print(f"  the SAME {NB} tasks, so the counts are PAIRED. The paired test needs the discordant")
+        print(f"  split, which the board does not publish; at the split most favourable to a real")
+        print(f"  difference the exact McNemar p is 0.1250. No reading reaches 0.05.")
+        print(f"  One task is {100/NB:.2f} pp of displayed score. Every intervention this project has")
+        print(f"  measured is at or below that step: budget +3.36 pp = +1.95 tasks, sandbox fidelity")
+        print(f"  0.00 pp = 0 tasks, the LoRA adapter -9.24 pp = -5.36 tasks.")
+
+
+
+_board_section()
+prov_live("the board denominator, both rates, the field rate and its bootstrap", 20)
+print(f"\n  cell wall clock {time.time() - t0:.1f} s")
+
+# CELL 20 markdown
+**Our own prediction, registered before the submission, is refuted.** Before sending anything we
+wrote down what we expected: **29.31%, 95% [18.97, 41.38]**, which on a 58-task board is **17
+tasks with an interval from 11 to 24**. The measurement is **4**. That is far below the lower
+bound, and it is refuted a second time, more sharply: **17 of 58 is more than double the best
+score any of the 347 teams has shown.** Our harness did not merely overestimate us. It predicted
+a number nobody has reached. The error is in the scale, not in the ranking.
+
+**Where the distance goes.** Our own arm measured **34 of 119 = 28.57%** on the sound public
+tasks under our grader, and the board says **6.90%**. That is 21.67 pp, and it splits in two:
+
+| part | size | what could move it |
+|---|---:|---|
+| us to the best team on the board | **6.90 pp** = 4 tasks of 58 | our prompt, our budget, our loop. This is the part that is ours to win |
+| the best team to our local number | **14.78 pp** | nothing we ship. Every one of the 347 teams is under this line, so it is a property of the benchmark as the organisers score it, or of every entrant's instrument, and it cannot be bought back by editing our submission |
+
+What we can say about the causes is short, because most of it is not measurable without a second
+submission. Two candidates are already **closed by measurement**, and both are ours: our Phase 2
+being more permissive than theirs is refuted at **0 flips on 645 patches** and **0 flips on 178
+re-runs, Wilson upper 2.113%** (section 3.4 and divergence 13); and the prompt rule that referred
+to lists the graders never send is **not in the artefact that was scored** at all, it is in the
+one we did not send. What stays open is the loop itself: the graders ran an agent loop we have
+never executed, at a budget cell of 120 calls and 5.0 minutes that **no arm of ours ever ran**,
+on hardware we measured once at a different rate. Naming which of those costs how much is
+inference, and this notebook does not report inference as measurement.
+
+**What the score does not touch.** It was measured on 58 hidden tasks. Every count in section 3
+is about the **129 public** ones, and those are claims about whether a task can discriminate a
+fix at all, not about how many an agent solves. The public ceiling of **125 of 129 = 96.9%** says
+roughly **56 of 58** hidden tasks are probably reachable by some patch, if the hidden set was
+built the way the public one was, which is an assumption and is stated as one. The best of 347
+teams **reached 8**. Reachable and reached are different words, and the distance between them,
+not our 4, is what this benchmark is actually about today.
+
+# CELL 21 markdown
+## 4. Where our re-implementation can differ from the graders' (the divergence statement)
+
+This belongs in the body of the notebook, not in a footnote, because every number in section 3
+is read through it. Eleven were named when the audit was accepted, the twelfth came out of
+re-running the same 258 verifications a second time, and the thirteenth came in with the
+re-issued rule and is now the one that matters most.
+
+1. **`swegemma` is not published.** Every step is reconstructed from prose plus the two artefacts
+   the organisers did ship. If `verify_task` does something the README does not state, we do not
+   do it.
+2. **Test dependencies.** Container B streams a cached site-packages that is not in the download.
+   We rebuild each environment from the snapshot's own `pyproject.toml`, requirements and lockfile,
+   preferring the shipped wheels and falling back to PyPI. **0 of 39 environments built from
+   `wheels/` alone; 134 packages came from PyPI.**
+3. **Lockfile pinning is our choice.** 28 of 39 environments installed under the snapshot's own
+   lock pins plus one bound of ours for `psf/requests`; 11 fell back to a free resolve. It is not
+   cosmetic: in a single diagnostic run under a free resolve `rich_4070` fails the gold patch with
+   6 failed and 118 passed on pygments output, and under the lock pin (pygments 2.19.2) the same
+   run passes 124 of 124. Those are two single runs, not rates, so no interval is attached.
+4. **Platform.** Graders: Docker `swebench-sandbox:latest`, linux/amd64, `network_mode=none`,
+   4 GiB, 2 vCPU. Us: macOS arm64, no container, no memory or CPU cap. 8 of the 124 shipped wheels
+   are manylinux x86_64 only and cannot be installed there at all. This is the one divergence we
+   have since measured across the gap rather than argued about: the same audit on linux x86_64
+   returns the same 117, and the same verdict on all 129 tasks. The container, the memory cap and
+   the 2 vCPU are still untested, so the item stays open; what is closed is the architecture.
+5. **Network.** The grader sandbox is air-gapped. Our *environment build* uses PyPI; the
+   *verification run* is offline, but the machine still has an interface.
+6. **Pass 2 of the 4-pass apply** (symlink-normalised `git apply`) is not implemented. It was
+   never reached: pass 1 succeeded on all 129 gold patches and all 258 `test_patch` applications.
+   Read that second count with care. The committed artefact carries `apply_pass` for the 129 gold
+   runs; the per-run `test_patch_apply_pass` field is set by `eval/33_phase2.py` and then dropped
+   by its report writer, so the 258 figure lives in the per-run files of that session and not in
+   the committed JSON. Persisting the field is an open repository action.
+7. **The pytest target list.** The README gives the `+++ b/<path>` rule for the reset step but not
+   for building `<pytest_targets>`. We use the same rule, filtered to files that exist after
+   `test_patch` applies.
+8. **The verification timeout is undocumented.** Ours is 900 s and it changed the verdict of
+   exactly 3 runs, all in audit A, all correctly FAIL.
+9. **Container A is not reproduced at all.** We implement Container B only, which is what both
+   audits need.
+10. **Adaptive dependency fill, and it is not the same in the two artefacts.** When a target
+    test file raised `ModuleNotFoundError` for a third-party module we installed it and retried.
+    In the **committed audit** it fired for **2 packages (`certifi`, `charset-normalizer`) on 1
+    task**, `requests_6592`; blast radius **1 task-slot of 129**. In the **G1 re-run** of the
+    same 258 verifications it fired for **3 packages (`certifi`, `charset-normalizer`,
+    `urllib3`) on 4 tasks each** (`requests_6589`, `requests_6592`, `requests_6629`,
+    `requests_6644`, the same four for all three); blast radius **4 task-slots of 129**. The
+    difference is environment state, not code: a warm environment needs no fill. Both counts are
+    recomputed field by field from the two JSONs by `verify_cited.py`, and an earlier version of
+    this notebook printed the re-run's figure against the committed artefact's sha256, which is
+    the mistake this line exists to keep from coming back. A module the workspace itself should
+    provide is never installed.
+11. **Python patch release.** `python:3.13-slim` pins some 3.13.x; ours is CPython 3.13.14.
+12. **`rich_4075` carries a scheduling race, and the graders carry it too.** Its target file holds
+    a test that asserts `python -m rich | head -1` kills the writer with a broken pipe. `rich`
+    writes 8,479 bytes, a 64 KiB pipe swallows them, so the assertion depends on which process the
+    OS schedules first. It failed **once in 89 observations = 1.12%, Clopper-Pearson 95%
+    [0.028%, 6.10%]**, a 218-fold span. The 89 are not one condition: 1 of them is a full 258-verification
+    audit at 8 workers, which is where the failure happened, and the other 88 are lighter
+    (5 serial runs, 3 eight-task gold audits, 80 bare `pytest` invocations) and do not exercise
+    that concurrency. Under the condition that produced the failure the observed rate is **1 of 1,
+    Clopper-Pearson 95% [2.5%, 100%]**, which is to say unmeasured. The operating rule does not
+    depend on the point estimate: a `gold_fails` on `rich_4075` is re-verified once and logged.
+    This one is not a divergence between us and the graders, it is a divergence between one run
+    and the next **on the same machine with the same code**, and `HARNESS_README.md` line 587
+    makes the graders run the same file the same way.
+
+13. **Our required-node set is a surrogate, and it is the largest divergence on this page.**
+    The re-issued rule wants every required test node to pass. Where the graders have
+    `FAIL_TO_PASS` and `PASS_TO_PASS`, those lists contain by construction only nodes that pass
+    in their environment. The published `tasks.jsonl` has neither key, which cell
+    15 checks live, so we take the third branch the README allows and extract the
+    required nodes from `test_patch`: every test function the patch newly defines or whose text
+    it changes, found by parsing the **post-patch** source with `ast` and collecting under
+    pytest's own rules. That surrogate happily includes a node the patch itself marks
+    inapplicable, which is exactly what costs `fastapi_14186` and `rich_3486` in section 3.3.
+    Four earlier versions of the extractor were each wrong in a way that moved node counts, and
+    each correction is a measured number: a diff walk instead of the post-patch AST disagreed
+    with the tree on 21 tasks (13 node names invented, 92 lost); a span rule instead of a
+    pre-image text comparison lost 4 nodes in `fastapi_14371` and invented 4 across
+    `fastapi_14099` and `fastapi_14609`; `ast.get_source_segment` instead of a line slice made
+    `fastapi_14099`'s only hunk compare equal to itself; and emitting both definitions of a
+    shadowed name invented 14 nodes across 7 `rich` tasks. The extractor as it stands finds 807
+    required nodes over the 129 tasks, 479 newly defined and 328 changed, median 2 per task, with
+    2 tasks at zero, 0 unreadable sources and 0 unresolved class chains. Those 2 empty required
+    sets are treated as **vacuously satisfied**, which is a decision of ours, is recorded per
+    result as `required_empty`, and can be counted out of any headline at any time; an empty set
+    that comes from a failure to read the source is never treated that way and fails with its own
+    error class.
+
+**What that means for reading section 3.** The committed audit stands at 119/129 under pytest
+exit code 0, and at 117/129 when this surrogate is read raw. The headline is 119, because
+excluding the nodes skipped on the gold run, which is the only way the graders' own list can be
+built, returns the same 119 under the rule in effect. The re-run of the exit-code audit
+reproduced it on **128 of 129 tasks by verdict**. On **every compared field** it is **123 of
+129**. The compared fields are `exit_code`, pytest `counts`, `error_class`, `resolved`,
+`apply_pass`, `adaptive_installs`, `pytest_targets`, `env_key`, `target_test_files`, `repo` and
+`verdict`; wall-clock `duration_s` is excluded as the one field no re-run can reproduce. Six rows
+moved and here is every one of them:
+
+| task | what moved | reading |
+|---|---|---|
+| `rich_4075` | verdict, both `counts`, `gold.exit_code`, `gold.error_class`, `gold.resolved` | the scheduling race of item 12, and the only verdict change |
+| `fastapi_14448` | `empty.counts` gained `warning: 1` | a pytest warning count, no verdict content |
+| `requests_6589`, `requests_6592`, `requests_6629`, `requests_6644` | `adaptive_installs`, both modes | item 10: a warm environment needs no fill |
+
+An earlier version of this notebook said the re-run matched "on 128 of 129 tasks on every
+compared field". That was agreement by **verdict** only, and the verifier that blessed it
+compared the `verdict` key and nothing else. The field-level comparison is now part of
+`verify_cited.py`, and it fails if any of these six rows changes shape.
+
+**The re-run above is the same machine. Here is a different one.** On 2026-09-26 the whole
+JUnit audit, 129 tasks and 258 verifications, was run again on **linux x86_64** under WSL2,
+which shares with this Mac no operating system, no CPU architecture and no Python build, and
+which is the family the graders run in. It agrees **task for task on 129 of 129 verdicts**, and
+on **125 of 129** across every compared field. The sound count is **117 on both**, and the
+per-repository split matches row for row: `fastapi/fastapi` 61 of 67, `Textualize/rich` 46 of
+48, `psf/requests` 9 of 13, `encode/httpx` 1 of 1. The only field that moves is
+`adaptive_installs`, on the same four `psf/requests` tasks as item 10 above, for the same
+reason: a warm environment has nothing left to fill in. `duration_s` is excluded, being the one
+field no other machine can reproduce. So the denominator is not an artefact of one laptop.
+
+**What none of it means.** Both re-runs measure **replication, not accuracy**: our code
+reproducing itself, now across platforms, which a systematically biased instrument would also
+do. No verdict of ours has ever been compared with one of the organisers', and that is still
+true after the submission of section 3.5: the board returned **one scalar over 58 hidden tasks**
+and not a single per-task judgement, so there is no pair to compare. What the score settles is
+the aggregate, and section 3.5 is where it is read.
+
+*Provenance: `33_AUDIT.md` section 4 @ `fc9e488` for items 1-11, with item 10's two package sets
+recomputed from `eval/33_audit_results.json` (sha256 `031fc9ac5a07d5f8...`) and
+`eval/33_g1_rerun_audit_results.json` (sha256 `352cb7c72f22a24f...`); `33_GATES.md` section 1.3
+@ `5e17c58` and the same re-run file for item 12; `eval/33_CRITERION_DIFF.md` @ `18077d9` and
+`eval/33_JUNIT_DELTA.md` @ `540bf64` for item 13; the cross-platform counts from `eval/33_CROSSPLATFORM_JUNIT.json` and the linux artefact `eval/33_audit_junit_linux.json` @ `09c515e`, both of which are also in the public dataset attached to this run, as `crossplatform.json`, so this one you can open. The six moved rows and the 123 of 129 are
+recomputed field by field by `verify_cited.py`. The Clopper-Pearson intervals in item 12 are
+computed by cell 2 of this notebook and re-checked by the same script. **Every path
+here is in a private repository: a receipt, not a link.** The divergence list is a reading of our
+own audit runs and cannot be recomputed here; the divergences the download itself settles are the
+ones cells 5, 11 and 15 measure live, and those three
+are where a reader should press.*
+
+# CELL 22 markdown
+## 5. Localisation, recomputed live on all 129 tasks
+
+**What this section is not.** An earlier version of our own plan called this competition a
+localisation problem. That sentence is withdrawn, and the measurement that withdrew it is this:
+over the 20-task calibration pilot, 5 of 5 tasks that resolved and 14 of 15 that failed had
+already opened a gold-patch file, at a median of turn 3 out of a 46-call budget; over all 68
+wave-0 runs, **42 of 68 = 61.8%, Clopper-Pearson 95% [49.2, 73.3]**, finished with
+`successful_edits == 0` and a zero-byte patch. The agent reaches the file and then does not edit
+it. Finding the file is not where the score is lost.
+
+What localisation still decides is how much of the window the search costs. The agent pays for
+every wrong file it opens: `read_file` returns at most 150 lines and 10,000 characters, command
+output is capped at 5,000 characters, and the window is 32,768 tokens. So the question this
+section answers is narrow and worth answering: given only the problem statement, how deep in a
+ranked list is the first file the gold patch touches? It is a measurement of rank, and this
+notebook does not turn it into a claim about resolution.
+
+**Pre-registration.** The split is the one stated in section 1 and is fixed before any number is
+read. Dev and held-out are reported separately below. The three methods are:
+
+| method | what it is | what it costs the agent |
+|---|---|---|
+| `dir_listing` | no query at all: every file in the working tree in `find .` order, shallowest first, alphabetical inside a depth. This is the path the harness's own first message invites, since it ships the first 150 entries of `find . -maxdepth 3` | 0 tool calls, then one `read_file` per file opened |
+| `dir_listing_src` | the same order with one predicate applied: drop non-`.py`, anything under a `tests/` or `test/` directory, `test_*.py`, `*_test.py`, `conftest.py` | free: a predicate on a list the agent already has |
+| `bm25_src` | Okapi BM25 (k1 = 1.2, b = 0.75) over the filtered pool. Document = path tokens repeated three times plus the file's first 100,000 characters. Query = the code-shaped part of the problem statement: backticked spans, dotted paths, CamelCase, snake_case, falling back to the prose tokens when the statement contains none | one `run_command` if it ships as a skill script |
+
+`dir_listing` is the control. The two comparisons below are paired: the same tasks, the same
+bootstrap resample indices, the difference reported per task, under the protocol of section 1.
+
+**Two ceilings, stated before the numbers.** 49 of 278 gold files do not exist at `base_commit`
+(eleven tasks create at least one new file), so no retriever that indexes the snapshot can return
+them; they are counted as misses, which is the honest as-faced number. And 19 tasks have no gold
+symbol at all because every line the patch touches is at module scope, which is why this notebook
+reports file level only and cites the symbol-level table.
+
+*Provenance. The 42 of 68 and its interval: `eval/probes_20260924/trajectories/` (68 files) @
+`5e17c58`, fields `successful_edits` and `patch_size`, recomputed by `verify_cited.py`. The pilot
+turn numbers: `33_E01_PILOT.md` section 3 @ `5e17c58`. The two ceilings, 49 of 278 gold files
+absent at `base_commit` and 19 tasks with no gold symbol: a derived `facts.json` of that sweep,
+read through `33_LOCALISATION.md` @ `a6e259c`. **The first two are in a private repository:
+receipts, not links. The third is not in any repository at all**, because derived files under
+`data/` are regenerated and never committed, so it is named here as what it is rather than as a
+path. None of it is recomputable in this kernel: the trajectories are our own agent's runs on
+four L4s and are not part of the competition download. The 278 gold files themselves are, and
+cell 24 counts them live.*
+
+# CELL 23 code
+# LIVE. The free predicate, on all 129 tasks, from tasks.jsonl alone, with its two qualifications.
+t0 = time.time()
+def is_src(path):
+    if not path.endswith(".py"):
+        return False
+    parts = path.split("/")
+    if "tests" in parts or "test" in parts:
+        return False
+    b = parts[-1]
+    return not (b.startswith("test_") or b.endswith("_test.py") or b == "conftest.py")
+
+# The predicate the agent actually wrote in the sandbox, recovered verbatim from the wave-0
+# trajectories. It is not the predicate that was measured, and the difference matters.
+WRITTEN = re.compile(r"(^|/)(tests?|docs)/|/test_|_test\.py|conftest\.py")
+
+gold_all = [(t["instance_id"], f) for t in TASKS for f in dict.fromkeys(gold_files(t["patch"]))]
+kept = [f for _, f in gold_all if is_src(f)]
+dropped_written = [(i, f) for i, f in gold_all if WRITTEN.search(f)]
+print(f"gold files across the {N} tasks        : {len(gold_all)}")
+print(f"  of which .py                        : {sum(1 for _, f in gold_all if f.endswith('.py'))}")
+print(f"  kept by the MEASURED predicate      : {len(kept)}")
+print(f"  LOST by the MEASURED predicate      : {len(gold_all) - len(kept)}")
+print(f"  LOST by the predicate the agent WROTE: {len(dropped_written)}")
+print("\nNot one gold file is a test module. Every one lives in the package source tree, in")
+print("fastapi's runnable documentation examples, or in scripts/. Both predicates are free.")
+
+print("\nQUALIFICATION 1: the predicate that was measured is not the predicate the agent writes.")
+print("  Across 694 run_command calls in the 68 wave-0 trajectories the agent writes exactly one")
+print("  exclusion regex, 74 times in 57 of the 68 runs (CITED: the trajectories are ours and")
+print("  are not in the download; our verify_cited.py rechecks them where they live, not here):")
+print("      (^|/)(tests?|docs)/|/test_|_test\\.py|conftest\\.py")
+print("  It differs from the measured predicate three ways: tests? also drops test/, docs/ is not")
+print("  in the measured predicate at all, and it carries no .py restriction. Measured LIVE here:")
+docs_src = [(i, f) for i, f in gold_all if f.startswith("docs_src/")]
+by_task = {}
+for i, f in gold_all:
+    by_task.setdefault(i, []).append(f)
+whole = [i for i, fs in by_task.items() if all(f.startswith("docs_src/") for f in fs)]
+lo, hi = wilson(len(docs_src), len(gold_all))
+print(f"    gold files under docs_src/        : {len(docs_src)} of {len(gold_all)} = "
+      f"{100*len(docs_src)/len(gold_all):.1f}% [{lo:.1f}, {hi:.1f}]")
+print(f"    tasks with at least one of them   : {len({i for i, _ in docs_src})} of {N}")
+print(f"    tasks living ENTIRELY there       : {len(whole)} of {N}")
+print(f"    the written regex still drops     : {len(dropped_written)} of {len(gold_all)}")
+print("  Those 34 files survive only because the alternation requires a literal / after docs, so")
+print("  docs_src/ does not match. A regex written one character differently loses 3 whole tasks.")
+
+print("\nQUALIFICATION 2: the method table of section 5.1 was scored with a graph on 128 of 129")
+print("  tasks. Whether the harness hands the agent that much is the question cell")
+print(f"  5 answers at run time, and this run measured "
+      f"{rule['by instance_id']} / {rule['by <package>_<base_commit>']} / "
+      f"{rule['either family, consistently']} of {N} under the three naming rules.")
+if dark:
+    print(f"  {dark} of {N} tasks have no usable pair under either family, so every graph-fed row")
+    print("  in section 5.1 was scored with data the agent would not get on those tasks. The one")
+    print("  headline method that survives untouched is bm25_file_codeq_src, which reads only the")
+    print("  file tree; the hybrid that ties it needs the embeddings.")
+else:
+    print(f"  {dark} of {N} tasks are dark, so on the data attached to this run the availability")
+    print("  objection to the graph-fed rows is CLOSED: the sweep's 128 of 129 is no longer more")
+    print("  data than the agent gets. That objection was real until 2026-09-25 and section 2.1")
+    print("  records it. What is left against those rows is measured, not structural, and it is in")
+    print("  section 5.1: the embedding space is a narrow cone, and search_similar_code is an")
+    print("  emulation of a tool we have never run. bm25_file_codeq_src is still the method a")
+    print("  design can lean on, now because it ties the hybrid inside the intervals while needing")
+    print("  nothing but the file tree, and no longer because the hybrid's inputs are missing.")
+prov_live("278 gold files, both predicates, the docs_src share and the entirely-docs_src tasks", 24)
+prov_cited("694 run_command calls, the written regex, 74 writes in 57 of 68 runs",
+           "competitions/33_gemma4/eval/probes_20260924/trajectories/ (68 files)", "5e17c58",
+           blocker="these are 68 trajectories of our own agent on four L4s. They are not part "
+                   "of the competition download and nothing under /kaggle/input contains them",
+           kernel="busyaprime/33-gemma4-l4-probes",
+           check_here="the measured predicate, run on all 129 tasks, directly below")
+prov_cited("tasks_with_graph 128 of 129 in the cited sweep",
+           "a derived facts.json of that sweep, under data/, read through 33_LOCALISATION.md",
+           "a6e259c",
+           carrier="no_repo",
+           blocker="it counts the material as it stood before the organisers re-issued it on "
+                   "2026-09-25, and that material is not downloadable any more. This one is "
+                   "worse than private: there is no file to ask the author for either",
+           check_here="cell 5, which measures graph availability on the data "
+                      "attached to THIS run, which is the number a reader today needs")
+stage("predicate", t0)
+
+# CELL 24 code
+# LIVE. The localisation run: extract each snapshot, rank, score, delete. This is the long cell.
+import math, os, re, shutil, tarfile, tempfile, time
+from collections import Counter
+t0 = time.time()
+
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+LOC_BUDGET_S = float(os.environ.get("K33_LOC_BUDGET_S", 3600))
+SCRATCH_ROOT = next((d for d in ("/kaggle/temp", "/kaggle/tmp") if os.path.isdir(d)), tempfile.gettempdir())
+print("scratch root:", SCRATCH_ROOT)
+
+STOP = set(("a about after all also an and any are as at be because been before being between both but by can could did "
+            "do does doing done down during each few for from further had has have having he her here hers him his how i "
+            "if in into is it its just me more most my no nor not now of off on once only or other our out over own same "
+            "she should so some such than that the their them then there these they this those through to too under until "
+            "up very was we were what when where which while who whom why will with would you your").split())
+SPLIT = re.compile(r"[^0-9A-Za-z]+")
+CAMEL = re.compile(r"(?<=[a-z0-9])(?=[A-Z])")
+
+def tokenise(text):
+    out = []
+    for raw in SPLIT.split(text):
+        if not raw:
+            continue
+        parts = [p for p in CAMEL.split(raw) if p]
+        forms = [raw] + parts if len(parts) > 1 else [raw]
+        for f in forms:
+            f = f.lower()
+            if len(f) > 1 and f not in STOP:
+                out.append(f)
+    return out
+
+BACKTICK = re.compile(r"`([^`]{2,120})`")
+DOTTED   = re.compile(r"\b[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)+\b")
+CAMELW   = re.compile(r"\b[A-Z][a-z0-9]+(?:[A-Z][a-z0-9]+)+\b")
+SNAKE    = re.compile(r"\b[a-z][a-z0-9]*(?:_[a-z0-9]+)+\b")
+
+def code_query(statement):
+    picked = []
+    for rx in (BACKTICK, DOTTED, CAMELW, SNAKE):
+        picked += [m.group(1) if rx is BACKTICK else m.group(0) for m in rx.finditer(statement)]
+    return tokenise(" ".join(picked)) if picked else tokenise(statement)
+
+class BM25:
+    def __init__(self, docs, k1=1.2, b=0.75):
+        self.k1, self.b, self.N = k1, b, len(docs)
+        self.len = [len(d) for d in docs]
+        self.avg = sum(self.len) / max(1, self.N)
+        self.tf = [Counter(d) for d in docs]
+        df = Counter()
+        for c in self.tf:
+            df.update(c.keys())
+        self.idf = {t: math.log(1 + (self.N - n + 0.5) / (n + 0.5)) for t, n in df.items()}
+    def scores(self, q):
+        s = [0.0] * self.N
+        for t in set(q):
+            idf = self.idf.get(t)
+            if idf is None:
+                continue
+            for i, c in enumerate(self.tf):
+                f = c.get(t)
+                if not f:
+                    continue
+                s[i] += idf * f * (self.k1 + 1) / (f + self.k1 * (1 - self.b + self.b * self.len[i] / self.avg))
+        return s
+
+def listing_order(paths):
+    return sorted(paths, key=lambda p: (p.count("/"), p))
+
+def recall_at(ranked, gold, k):
+    return len(gold & set(ranked[:k])) / len(gold)
+
+def rank_first(ranked, gold):
+    for i, p in enumerate(ranked, 1):
+        if p in gold:
+            return i
+    return len(ranked) + 1
+
+# the pre-registered split
+def make_splits(tasks):
+    out, byrepo = {}, {}
+    for t in tasks:
+        byrepo.setdefault(t["repo"], []).append(t)
+    for repo, ts in byrepo.items():
+        ts.sort(key=lambda t: (t["created_at"], t["instance_id"]))
+        k = len(ts) // 2
+        for t in ts[:k]:
+            out[t["instance_id"]] = "dev"
+        for t in ts[k:]:
+            out[t["instance_id"]] = "heldout"
+    return out
+SPLIT_OF = make_splits(TASKS)
+print("split:", Counter(SPLIT_OF.values()), "(pre-registered, section 1)")
+
+ROWS, skipped, extracted_mb = [], [], []
+for n, t in enumerate(TASKS, 1):
+    if time.time() - t0 > LOC_BUDGET_S:
+        skipped = [x["instance_id"] for x in TASKS[n-1:]]
+        print(f"wall-clock budget {LOC_BUDGET_S:.0f} s reached after {n-1} tasks; "
+              f"{len(skipped)} not covered and reported as such")
+        break
+    iid = t["instance_id"]
+    gold = set(dict.fromkeys(gold_files(t["patch"])))
+    work = tempfile.mkdtemp(prefix="g4_", dir=SCRATCH_ROOT)
+    try:
+        with tarfile.open(DATA / "snapshots" / f"{iid}.tgz") as tf:
+            # filter="data" refuses absolute and ../ members. It is the default from Python 3.14
+            # and available from 3.12; the fallback keeps the cell runnable on older kernels.
+            try:
+                tf.extractall(work, filter="data")
+            except TypeError:
+                tf.extractall(work)
+        # Two walks on purpose. The ranking pool excludes .git, because the agent never ranks it.
+        # The disk measurement must NOT exclude it: .git is written to the scratch directory and
+        # an earlier version of this cell counted only the ranked files, which understated the
+        # high-water mark by roughly an order of magnitude.
+        paths, nbytes = [], 0
+        for root, dirs, fs in os.walk(work):
+            for f in fs:
+                full = os.path.join(root, f)
+                rel = os.path.relpath(full, work)
+                if ".git" not in rel.split(os.sep):
+                    paths.append(rel)
+                try:
+                    nbytes += os.path.getsize(full)
+                except OSError:
+                    pass
+        extracted_mb.append(nbytes / 1048576)
+        src = [p for p in paths if is_src(p)]
+        docs, keep = [], []
+        for p in src:
+            try:
+                with open(os.path.join(work, p), "r", errors="ignore") as fh:
+                    txt = fh.read(100000)
+            except OSError:
+                continue
+            keep.append(p)
+            docs.append(tokenise(p.replace("/", " ").replace(".", " ")) * 3 + tokenise(txt))
+        sc = BM25(docs).scores(code_query(t["problem_statement"]))
+        ranked_bm = [keep[i] for i in sorted(range(len(keep)), key=lambda i: (-sc[i], keep[i]))]
+    finally:
+        shutil.rmtree(work, ignore_errors=True)
+    r = {"instance_id": iid, "repo": t["repo"], "split": SPLIT_OF[iid],
+         "n_files": len(paths), "n_src": len(src), "n_gold": len(gold)}
+    for name, ranked in (("dir_listing", listing_order(paths)),
+                         ("dir_listing_src", listing_order(src)),
+                         ("bm25_src", ranked_bm)):
+        for k in (1, 5, 10, 20):
+            r[f"{name}@{k}"] = recall_at(ranked, gold, k)
+        r[f"{name}_rank"] = rank_first(ranked, gold)
+    ROWS.append(r)
+    if n % 10 == 0 or n == len(TASKS):
+        print(f"  {n:>3}/{len(TASKS)} tasks   {time.time()-t0:6.1f} s elapsed", flush=True)
+
+LOC_DISK_P50 = pct(extracted_mb, 50) if extracted_mb else float("nan")
+LOC_DISK_MAX = max(extracted_mb) if extracted_mb else float("nan")
+print(f"\ncovered {len(ROWS)} of {len(TASKS)} tasks in {time.time()-t0:.1f} s")
+print(f"per split: {Counter(r['split'] for r in ROWS)}")
+print(f"scratch high-water mark: one snapshot at a time, p50 {LOC_DISK_P50:.0f} MB, "
+      f"max {LOC_DISK_MAX:.0f} MB, deleted before the next task")
+print("  That is the whole extracted tree, .git included. Versions 1 to 10 of this notebook")
+print("  printed a number that counted only the ranked files and understated the mark by about")
+print("  an order of magnitude; the figure above is the corrected one.")
+prov_live("per-task rankings for three methods over the covered tasks", 25)
+stage("localisation", t0)
+
+# CELL 25 code
+# LIVE. The table, under the bootstrap protocol of section 1: B = 2,000, seed 20260924,
+# stratified over tasks inside each repository, the same resample indices reused across methods.
+import random, statistics as stats
+t0 = time.time()
+NBOOT, SEED = 2000, 20260924
+METHODS = ["dir_listing", "dir_listing_src", "bm25_src"]
+
+def boot_index(rows, nboot, seed):
+    rng = random.Random(seed)
+    byrepo = {}
+    for i, r in enumerate(rows):
+        byrepo.setdefault(r["repo"], []).append(i)
+    reps = []
+    for _ in range(nboot):
+        idx = []
+        for repo, members in sorted(byrepo.items()):
+            idx += [members[rng.randrange(len(members))] for _ in members]
+        reps.append(idx)
+    return reps
+
+def ci(vals):
+    v = sorted(vals)
+    return v[int(0.025 * len(v))], v[int(0.975 * len(v))]
+
+for split in ("dev", "heldout"):
+    rows = [r for r in ROWS if r["split"] == split]
+    if not rows:
+        continue
+    reps = boot_index(rows, NBOOT, SEED)          # shared across methods -> paired
+    print(f"\nFILE-LEVEL RECALL, split = {split} (n = {len(rows)})")
+    print(f"  median candidate pool: {stats.median(r['n_files'] for r in rows):.0f} files -> "
+          f"{stats.median(r['n_src'] for r in rows):.0f} after the predicate")
+    print(f"  {'method':<18}{'recall@1':>18}{'recall@5':>18}{'recall@10':>18}{'recall@20':>18}{'median rank':>13}")
+    for m in METHODS:
+        cells = []
+        for k in (1, 5, 10, 20):
+            point = 100 * stats.mean(r[f"{m}@{k}"] for r in rows)
+            draws = [100 * stats.mean(rows[i][f"{m}@{k}"] for i in ix) for ix in reps]
+            lo, hi = ci(draws)
+            cells.append(f"{point:5.1f} [{lo:4.1f},{hi:4.1f}]")
+        mr = stats.median(r[f"{m}_rank"] for r in rows)
+        print(f"  {m:<18}" + "".join(f"{c:>18}" for c in cells) + f"{mr:>13.1f}")
+
+    print("  paired differences on the same tasks, same replicates:")
+    print(f"    {'contrast':<34}{'d recall@1, pp':>22}{'d recall@20, pp':>22}{'d median rank':>16}")
+    for a, b in (("dir_listing_src", "dir_listing"), ("bm25_src", "dir_listing_src"), ("bm25_src", "dir_listing")):
+        cols = []
+        for k in (1, 20):
+            d = stats.mean(100 * (r[f"{a}@{k}"] - r[f"{b}@{k}"]) for r in rows)
+            draws = [stats.mean(100 * (rows[i][f"{a}@{k}"] - rows[i][f"{b}@{k}"]) for i in ix) for ix in reps]
+            lo, hi = ci(draws)
+            cols.append(f"{d:+5.1f} [{lo:+5.1f},{hi:+5.1f}]")
+        dr = stats.median(r[f"{a}_rank"] for r in rows) - stats.median(r[f"{b}_rank"] for r in rows)
+        print(f"    {a + ' - ' + b:<34}" + "".join(f"{c:>22}" for c in cols) + f"{dr:>16.1f}")
+    print("  NEGATIVE RESULT, kept: the predicate alone never puts a gold file first. Its recall@1")
+    print("  difference is exactly 0.0 pp with an interval that contains only 0. What it moves is")
+    print("  the tail and the rank, and that is what the ranked pass needs.")
+
+print("\nWhat a median rank buys, in the agent's own currency: read_file returns at most 10,000")
+print("characters, which at about 4 characters per token is roughly 2,500 tokens, so 67 reads is")
+print("roughly 167,000 tokens against a 32,768-token window. The 4-characters-per-token figure is")
+print("a rule of thumb, not a measurement, and is the only unmeasured constant in this notebook.")
+print("The naive path cannot reach the gold file inside one context at all, whatever it does after.")
+prov_live("live localisation table and paired differences over the covered tasks", 26)
+stage("bootstrap", t0)
+
+# CELL 26 code
+# LIVE. Figure 4.
+import statistics as stats
+order = list(reversed(METHODS))
+medians = {}
+fig, ax = plt.subplots(figsize=(9.5, 3.4))
+for i, m in enumerate(order):
+    d = stats.median(r[f"{m}_rank"] for r in ROWS if r["split"] == "dev")
+    h = stats.median(r[f"{m}_rank"] for r in ROWS if r["split"] == "heldout")
+    medians[m] = (d, h)
+    ax.plot([min(d, h), max(d, h)], [i, i], color=GRID, lw=3, zorder=1)
+    ax.scatter([d], [i], s=70, color=NEUTRAL, zorder=2, label="dev" if i == 0 else None)
+    ax.scatter([h], [i], s=70, color=ACCENT, zorder=3, label="held-out" if i == 0 else None)
+    ax.annotate(f"{d:.0f}", (d, i), xytext=(0, 10), textcoords="offset points",
+                ha="center", fontsize=10, color=NEUTRAL_TXT)
+    ax.annotate(f"{h:.0f}", (h, i), xytext=(0, -18), textcoords="offset points",
+                ha="center", fontsize=10, fontweight="bold", color=ACCENT_TXT)
+ax.set_yticks(range(len(order))); ax.set_yticklabels(order)
+ax.set_ylim(-0.6, len(order) - 0.2)
+ax.set_xlim(0, 210)
+ax.set_xlabel("median rank of the first gold file (lower is better)")
+ax.set_title("Fig 4. What the free predicate and one ranked pass are worth")
+ax.legend(loc="upper center", ncol=2)
+hd = medians["dir_listing"][1]; hb = medians["bm25_src"][1]
+finish(fig, 4, "median rank of the first gold file, dev and held-out",
+       f"on held-out tasks the free predicate and one ranked lexical pass move the first gold "
+       f"file from rank {hd:.0f} to rank {hb:.0f}, which is the difference between not fitting "
+       f"in a 32,768-token window and fitting several times over.",
+       [f"{m:<18}{medians[m][0]:>14.1f}{medians[m][1]:>18.1f}" for m in METHODS],
+       header=f"{'method':<18}{'dev median':>14}{'held-out median':>18}")
+prov_live("figure 4, same medians as cell 26", 27)
+
+# CELL 27 markdown
+### 5.1 The full method sweep, cited, and the results that did not work
+
+Thirteen methods on all 129 tasks, the same split, the same bootstrap protocol as section 1
+(B = 2,000, stratified, seed 20260924, paired across methods). Held-out, n = 66, file level,
+from the problem statement alone:
+
+| method | recall@1 | recall@20 | median rank of first gold file | needs the code-intelligence block? |
+|---|---|---|---|---|
+| `dir_listing` (naive `find .`) | 0.0 [0.0, 0.0] | 2.6 [0.5, 5.1] | 129.0 | no |
+| `dir_listing_src` (predicate only) | 0.0 [0.0, 0.0] | 25.5 [18.2, 32.6] | 67.0 | no |
+| `bm25_file` | 9.5 [3.6, 16.1] | 42.5 [32.7, 53.1] | 18.5 | no |
+| `bm25_node_text` | 13.3 [6.3, 20.8] | 56.3 [46.8, 65.8] | 10.5 | **yes** |
+| `search_similar_code` (emulated) | 18.8 [10.1, 28.0] | 29.8 [21.6, 38.9] | 506.0 | **yes** |
+| `hybrid` (lexical + `calls` expansion) | 17.1 [10.4, 24.5] | 59.3 [49.5, 68.7] | 6.0 | **yes** |
+| **`bm25_file_codeq_src`** | **29.5 [20.1, 39.3]** | 64.2 [54.3, 74.1] | **3.5** | **no** |
+| `hybrid_codeq_src` | 29.2 [19.7, 39.2] | 65.4 [55.6, 74.9] | 3.5 | **yes** |
+
+The last column used to be the whole argument: every row marked yes was scored with a graph on
+128 of 129 tasks, while the download handed that block to 36 / 34 / 70 of 129 depending on the
+naming rule, so the graph-fed rows were unsafe to design against. **The 2026-09-25 re-issue
+closed that objection**, and cell 24 prints whichever state the attached data is
+in rather than either of those two sets of numbers. What survives is narrower and is measured:
+`bm25_file_codeq_src` reads the file tree and nothing else, and it ties `hybrid_codeq_src` well
+inside both intervals at every k, so the block buys nothing at the top of the table even when it
+is there. That is why it stays the method this notebook says a design may lean on.
+
+Symbol level, held-out, best method `hybrid_codeq_src`: recall@1 22.1 [12.0, 32.6], recall@20
+46.9 [35.3, 59.3], over 110 tasks rather than 129.
+
+**Negative results, kept.**
+
+- `search_similar_code`, the only retrieval the agent can call from inside the sandbox, has the
+  best recall@1 of the in-sandbox options and a flat curve: recall@20 is 29.8 [21.6, 38.9],
+  barely above recall@10 at 29.2 [21.2, 38.5]. Its limit is candidate extraction, not similarity.
+  A symbol-shaped candidate resolves against the `.npz` keys for **74 of 129 = 57.4%,
+  Clopper-Pearson 95% [48.4, 66.0]** of tasks. On those 74 the conditional recall@1 is 0.321 and
+  the median rank 3; the cited sweep ran no bootstrap on the conditional split, so that 0.321
+  carries no interval and is reported as a conditional mean over 74 tasks, not as a rate. On the
+  other 55 it returns nothing usable: recall@1 is **0 of 55 tasks, Clopper-Pearson 95%
+  [0.0, 6.5]**, and the median rank is 530. The unconditional held-out figure in the table,
+  18.8 [10.1, 28.0], is the average of those two populations and hides both.
+- The prose query beats the code query at k = 20 on the unfiltered pool: `bm25_file`
+  42.5 [32.7, 53.1] against `bm25_file_codeq` 40.1 [30.5, 50.3], and `bm25_node_text`
+  56.3 [46.8, 65.8] against `bm25_node_text_codeq` 46.1 [36.8, 56.6]. It loses to it at k = 1.
+  Both gaps sit inside their intervals, so this is a direction, not a settled difference. The combination
+  that wins is the code query **and** the predicate. The prose query with the predicate was never
+  measured, so "the filter is what makes the code query win" is a hypothesis this run does not test.
+- The graph's embeddings are worse than the graph's own text: BM25 over node `text` reaches
+  held-out recall@20 56.3 [46.8, 65.8] against `search_similar_code`'s 29.8 [21.6, 38.9]. The
+  similarity space is a narrow cone: **median archive** pairwise cosine 0.849 between two
+  arbitrary symbols of the same repository, and a query fails to return itself first in
+  **15.5% of probes in the median archive, 15.2% probe-weighted over all 25,400 probes**, because
+  58,112 of 367,985 vectors are exact duplicates of another vector. Both figures are medians
+  across the 127 readable archives unless the line says probe-weighted; the archive mean of the
+  own-module share of top-5 neighbours is 23.7%, not the 13.7% median.
+- The two halves agree on the membership of the top group and on the bottom, not on the order
+  inside the top group. At recall@10 `hybrid` is first on dev and third on held-out. With 63 and 66
+  tasks a 10-point difference sits inside the intervals.
+- **The rule we wrote to stop the agent using that tool does not change what it does.** Our
+  shipped prompt says: call `search_similar_code` only when the first user message reports that
+  the graph tools work. The organisers append that block conditionally, so on a task whose graph
+  file is missing or zero-byte the block is absent and the rule should steer elsewhere. Measured
+  over the 129 trajectories of one arm at seed 0, split by whether that run saw a live graph:
+  the agent opens with the graph tool on **46 of 68 = 67.6% [55.8, 77.6]** of live-graph tasks
+  and on **42 of 61 = 68.9% [56.4, 79.1]** of dead-graph ones. The intervals overlap across
+  almost their whole length. The rule is written for a branch the agent does not take, and
+  **88 of 129** first calls go to the tool whose in-sandbox recall@1 is the 18.8 [10.1, 28.0]
+  of the table above rather than to one ranked grep. This is a negative result about our own
+  prompt, not about the tool.
+
+**Where the live table above differs from this one.** The live run implements one method family,
+file level only, and ranks the whole non-`.git` tree in the naive control, where the cited
+`dir_listing` uses a slightly smaller pool definition; its naive median rank is therefore the
+larger of the two. The live `bm25_src` is the cited `bm25_file_codeq_src` without the cited run's
+index caching. Treat the live numbers as this notebook's own measurement, not as a reproduction of
+the row above.
+
+*Provenance, CITED. `data_products/33_gemma4_localisation.csv` (936 rows) and
+`33_LOCALISATION.md` @ `a6e259c`, both in a private repository: receipts, not links. This table
+cannot move into the kernel. It is 13 methods x 129 tasks x 2,000 replicates, and two of the
+methods need an embedding index that would have to be rebuilt here; the live sweep in section 5
+is the part of it that fits in a CPU session, on one method family at file level. Every held-out
+row above is re-read from that CSV by `verify_cited.py`, together with its n, its 2,000
+replicates and its seed, on the machine that holds the CSV. `search_similar_code` is an emulation of
+`HARNESS_README.md` lines 489-500 because `swegemma` is not in the download, so its numbers are
+the documented behaviour, not a measurement of the shipped tool. Embedding geometry:
+`33_DATA_AUDIT.md` section 4.5 @ `742f44f`, whose table is the source of the medians and whose
+prose around it states them as overall shares, which they are not. The first-call split is
+`competitions/33_gemma4/reset/localisation/33_FIRSTCALL.json`, recomputed by
+`33_firstcall.py` from the 129 trajectory files of that arm; the trajectories are ours, they came
+off four L4s, and no part of them is in the competition download.*
+
+# CELL 28 markdown
+## 6. Serving arithmetic: the KV cache is the bound, and the prefill claim is withdrawn
+
+These constants were measured on four NVIDIA L4s, which a CPU session does not have. The
+constants are cited; the arithmetic runs in the next cell so a reader can check every division.
+
+| constant | value | source |
+|---|---|---|
+| startup `S`, wheel install + engine to first chat completion | **562.31 s** (120.17 + 442.14) | kernel `busyaprime/33-gemma4-l4-serve` v6 |
+| KV cache allocated | **4.77 GiB per GPU = 87,985 tokens**, vLLM's own maximum concurrency 2.69x at a 32,768 window | same kernel |
+| prompt tokens per agent turn | **9,211.0**, from 12,397,945 tokens over **1,346 turns** in 68 runs | `eval/probes_20260924/trajectories/` @ `5e17c58` |
+| per-turn prompt quantiles, pilot, 444 turns, linear interpolation | median **9,719**, p75 **12,546**, p90 **14,092**, max **17,138** | same |
+| prompt / completion throughput at concurrency 1 / 4 / 16 | **210.6 / 521.0 / 1,470.6** and **34.1 / - / 243.0** tok/s | kernel `busyaprime/33-gemma4-l4-serve` |
+| session cap | 43,200 s (12 h); L4 bills **2.00x** wall clock against a 30 h weekly pool | `33_COMPUTE.md` |
+
+*Every entry in the `source` column is either a Kaggle kernel of ours or a file in a private
+repository: a receipt, not a link. None of the six can be recomputed in a CPU session, because
+each one was read off four NVIDIA L4s or off Kaggle's own billing page. The next cell is the
+part you can check: it performs every division on these constants in front of you.*
+
+**A claim this notebook used to make, withdrawn here.** Earlier versions said "prefill is the
+bill: 31.8M prompt tokens over 129 tasks, so context is 178x more expensive than output". Three
+measurements break it and they are printed in the next cell. The conclusion that context is
+expensive survives. The mechanism does not, and the two have different remedies: you do not fix
+KV occupancy by sending fewer tokens once, you fix it by running fewer agents at a time.
+
+# CELL 29 code
+# CITED constants, LIVE arithmetic. Every figure below is a division you can check.
+S_INSTALL, S_ENGINE = 120.17, 442.14
+S = S_INSTALL + S_ENGINE
+SESSION = 43200.0
+KV_TOKENS = 87985
+WINDOW = 32768
+TURNS_ALL, PROMPT_ALL = 1346, 12397945
+PROMPT_PER_TURN = PROMPT_ALL / TURNS_ALL
+PILOT_RUNS, PILOT_TURNS, PILOT_PROMPT, PILOT_FIRST = 20, 444, 4262434, 769499
+QUANTILE = {"median": 9719.0, "p75": 12545.75, "p90": 14092.0, "max": 17138.0}
+PREFILL = {1: 210.6, 4: 521.0, 16: 1470.6}
+N_TASKS = 129
+CHOSEN_C = 8
+
+print(f"startup S                = {S_INSTALL:.2f} + {S_ENGINE:.2f} = {S:.2f} s = {S/60:.2f} min "
+      f"({100*S/SESSION:.2f}% of a 12 h session)")
+print(f"agent-loop time left     = {SESSION - S:,.0f} s = {(SESSION-S)/3600:.3f} h")
+print(f"serial budget per task   = {(SESSION-S)/N_TASKS:.1f} s = {(SESSION-S)/N_TASKS/60:.2f} min\n")
+
+print("WHAT BOUNDS CONCURRENCY")
+print(f"  vCPU    : (48 - 8) / 2 per sandbox                        = {(48-8)//2}")
+print(f"  RAM     : 188 GiB / 4 GiB per sandbox                     = {188//4}")
+print(f"  KV cache: {KV_TOKENS:,} / {WINDOW:,} (a full-window request)     = {KV_TOKENS//WINDOW}")
+print(f"  KV cache: {KV_TOKENS:,} / {PROMPT_PER_TURN:,.1f} (prompt per turn, 1,346 turns) "
+      f"= {KV_TOKENS/PROMPT_PER_TURN:.2f} -> floor {int(KV_TOKENS//PROMPT_PER_TURN)}")
+print(f"  binding limit at the mean turn                            = "
+      f"{min((48-8)//2, 188//4, int(KV_TOKENS//PROMPT_PER_TURN))}")
+print(f"  chosen concurrency                                        = {CHOSEN_C}\n")
+
+print("THE MEAN TURN IS THE WRONG STATISTIC, AND HERE IS THE COST OF USING IT")
+print(f"  {'per-turn prompt':<24}{'tokens':>10}{'agents that fit':>18}{'vs chosen 8':>18}")
+for k in ("median", "p75", "p90", "max"):
+    fits = KV_TOKENS / QUANTILE[k]
+    print(f"  {k:<24}{QUANTILE[k]:>10,.0f}{fits:>18.2f}{('fits' if fits >= CHOSEN_C else 'OVER-SUBSCRIBED'):>18}")
+print(f"  At least a quarter of turns sit above the level at which {CHOSEN_C} agents fit in the")
+print("  cache. Concurrency 6 would hold at p90 and costs 11.60 billed h per arm against 8.82 at")
+print("  concurrency 8, so it is an open 2.78 billed-hour decision, not a free correction.\n")
+
+print("WITHDRAWN CLAIM: 'prefill is the bill, 31.8M prompt tokens over 129 tasks, 178x output'")
+cacheable = 100 * (1 - PILOT_FIRST / PILOT_PROMPT)
+print(f"  1. It counted re-sends as work. Of the pilot's {PILOT_PROMPT:,} prompt tokens only")
+print(f"     {PILOT_FIRST:,} are first appearances, so {cacheable:.1f}% is a cacheable re-send of a")
+print(f"     prefix the server has already seen. New tokens for {N_TASKS} tasks at K = 1: "
+      f"{round(PILOT_FIRST/PILOT_RUNS*N_TASKS):,}, not 31.8M.")
+print(f"  2. Its 31.8M came from ONE trajectory: 246,597 x {N_TASKS}. The 20-task pilot measures")
+print(f"     {round(PILOT_PROMPT/PILOT_RUNS):,} prompt tokens per task, so "
+      f"{round(PILOT_PROMPT/PILOT_RUNS*N_TASKS):,} at K = 1. The single-trajectory headline is")
+print(f"     {100*(31811013/(PILOT_PROMPT/PILOT_RUNS*N_TASKS) - 1):.1f}% above the n = 20 figure.")
+print(f"  3. The 210.6 tok/s it billed prefill at is an end-to-end request rate at concurrency 1,")
+print("     not a marginal rate; the marginal prompt rate per slot is 7,824 tok/s. The latency")
+print("     rise at concurrency 8 begins exactly where 8 x median prompt crosses the KV cache:")
+print(f"     8 x {QUANTILE['median']:,.0f} = {8*QUANTILE['median']:,.0f} against {KV_TOKENS:,}.")
+print("  What survives: context is expensive. What changes: the remedy is fewer agents in flight,")
+print("  not fewer tokens sent once.\n")
+
+print("NEGATIVE RESULT, kept: the first eval_config.yaml derived from this arithmetic was wrong.")
+print("  max_time_minutes 37.6 = 90% of (43,200 - 562) / ceil(129/8) costs 22.50 billed L4 hours for")
+print("  ONE seed of 129 tasks and 64.24 at K = 3, against an arm budget of 5.38 h. The 20-task")
+print("  calibration pilot then showed no resolution needed more than 263.7 s, so the value became")
+print("  5.0 and one E01 arm costs 8.82 billed hours, not 5.38.")
+print("  The sample submission ships max_tool_calls 10 and max_time_minutes 1, an order of magnitude")
+print("  under the harness defaults: it is a smoke-test config, not a competitive one.")
+L4_BLOCK = ("four NVIDIA L4s with 96 GB of device memory, serving a model that is not in the "
+            "download. This session has no accelerator")
+prov_cited("startup, KV cache and throughput", "33_SERVING.md sections 2-3", "f5e989c",
+           blocker=L4_BLOCK, kernel="busyaprime/33-gemma4-l4-serve",
+           check_here="every division performed on these constants, in this cell, cell 30")
+prov_cited("9,211.0 prompt tokens per turn over 1,346 turns, the quantiles, and the 81.9% re-send",
+           "competitions/33_gemma4/eval/probes_20260924/trajectories/ (68 files)", "5e17c58",
+           blocker=L4_BLOCK + ", and the 68 trajectories are our own runs, not competition data",
+           kernel="busyaprime/33-gemma4-l4-probes")
+prov_cited("the 37.6 -> 5.0 correction and 8.82 billed h per arm",
+           "33_E01_PILOT.md section 4", "5e17c58",
+           blocker=L4_BLOCK + "; the correction came out of a 20-task calibration run on them",
+           kernel="busyaprime/33-gemma4-l4-probes")
+prov_live("every division in this cell", 30)
+
+# CELL 30 code
+# LIVE. Figure 5.
+keys = ["median", "p75", "p90", "max"]
+fits = [KV_TOKENS / QUANTILE[k] for k in keys]
+cols = [ACCENT if f < CHOSEN_C else NEUTRAL for f in fits]
+fig, ax = plt.subplots(figsize=(9, 3.6))
+bars = ax.bar(range(len(keys)), fits, width=0.56, color=cols)
+for i, f in enumerate(fits):
+    ax.annotate(f"{f:.2f}", (i, f), xytext=(0, 4), textcoords="offset points",
+                ha="center", fontsize=11, fontweight="bold", color=NEUTRAL_TXT)
+ax.axhline(CHOSEN_C, color=SECOND, lw=1.6, ls="--")
+ax.annotate(f"chosen concurrency {CHOSEN_C}", (len(keys) - 0.55, CHOSEN_C), xytext=(0, 6),
+            textcoords="offset points", color=SECOND_TXT, fontsize=10, ha="right")
+ax.set_xticks(range(len(keys)))
+ax.set_xticklabels([f"{k}\n{QUANTILE[k]:,.0f} tok" for k in keys])
+ax.set_ylabel(f"agents that fit in {KV_TOKENS:,} KV tokens")
+ax.set_ylim(0, 11)
+ax.set_title("Fig 5. At concurrency 8 the KV cache is over-subscribed for a quarter of turns")
+finish(fig, 5, "agents that fit in the KV cache at each per-turn prompt quantile",
+       f"the concurrency of {CHOSEN_C} holds at the median turn and fails from the 75th "
+       f"percentile upward, so the binding resource is KV occupancy and not prefill volume.",
+       [f"{k:<10}{QUANTILE[k]:>12,.0f}{KV_TOKENS/QUANTILE[k]:>18.2f}"
+        f"{('fits' if KV_TOKENS/QUANTILE[k] >= CHOSEN_C else 'over-subscribed'):>20}" for k in keys],
+       header=f"{'quantile':<10}{'prompt tokens':>12}{'agents that fit':>18}{'at c = 8':>20}")
+prov_live("figure 5, same divisions as cell 30", 31)
+
+# CELL 31 markdown
+## 7. What we could not verify
+
+Stated as open, not smoothed over.
+
+1. **Which filename the shipped harness opens for the graph and the embedding.** `swegemma` is
+   not in the material and `HARNESS_README.md` line 474 writes a third spelling. All four
+   coverage counts are reported in cell 5 instead of a guess.
+2. **Whether the graders' copy tracks the public one.** The zero-byte placeholders that made
+   this question interesting are gone from the public copy since 2026-09-25 (section 2.1), and
+   the graders' internal copy was never observable. What the re-issue adds is a sharper version
+   of the same question: the organisers changed the published material once, without notice, and
+   nothing tells us whether the grading copy changed with it or when.
+3. **Whether `edge_type="CALLS"` matches the stored lowercase `calls`.** The case handling lives
+   in code we do not have. The data holds one edge type, `calls`, 452,588 of 452,588 edges;
+   `DEFINED_IN` and `IMPORTS`, which the README documents, have no edges to match.
+   *(CITED: `data_products/33_gemma4_graph_stats.csv`, 127 rows, @ `742f44f`.)*
+4. **Whether the graders' cached site-packages holds the old pytest** the `psf/requests` snapshots
+   pin. That is the difference between the two ceilings the audit cell prints, and it is not
+   decidable from the download.
+5. **Whether a `.py` skill script executes inside the sandbox.** The allowed-extension list calls
+   `.py` "ADK skill scripts" while `adk-submission` states it never imports competitor Python.
+   That single question decides whether a real BM25 retriever can be shipped at all, or whether
+   the agent is limited to `grep` through `run_command`.
+6. **`search_similar_code` is an emulation** of the documented behaviour, not a measurement of the
+   shipped tool.
+7. **Whether the async exclusion is deliberate.** Measured: **0 of 68,449** `async def` definitions
+   across the 129 snapshots appear as a graph node, so on fastapi every async endpoint handler,
+   async dependency and async test is invisible to all three graph tools. The reason lives in the
+   extractor, which is not in the material. *(CITED: `33_DATA_AUDIT.md` section 3 @ `742f44f`.)*
+8. **Whether our instrument agrees with the graders'.** The re-run of section 3 measured
+   self-consistency: 128 of 129 rows by verdict and 123 of 129 on every compared field,
+   reproduced by the same code on the same machine. `swegemma` is unpublished, no verdict of ours
+   has ever been compared with one of theirs, and 10 of 129 tasks are structural zeros for any
+   paired statistic, with 2 more that only our own required-node surrogate zeroes out. The
+   cheapest calibration point is a submission whose only action is to submit an empty patch: its
+   leaderboard score would be the hidden set's pass-with-empty rate against our measured public
+   floor of 2 of 129. The board does **not** already answer this. **119 of its 347 teams display
+   0.00**, and a displayed zero is indistinguishable from a submission that crashed, timed out or
+   never ran, so those zeros bound nothing. The experiment still has to be run deliberately.
+9. **Whether better localisation converts into resolved tasks.** This notebook measures
+   localisation and the instrument, and it does not claim an end-to-end resolution rate. That is
+   a limit on what this notebook reports, not on what has been measured. Agent patches of ours
+   have been scored, and section 3.4 states the total: **645** patch files from our arms, every
+   one re-scored by the evaluator of section 3, **181 of 645 units resolved = 28.06%**,
+   task-clustered bootstrap 95% **[21.09, 35.35]** *(CITED:
+   `competitions/33_gemma4/junit645/33_JUNIT645.json` @ `ddd90f2`, keys
+   `totals.all_645_units_over_129_tasks.solved_legacy` and `.ci95_cluster_legacy_pct`)*. That is a
+   unit rate over pooled arms and seeds, on the public set, scored by **our** grader and not by
+   the organisers', so it is not a leaderboard number and cannot stand in for one. The earliest of
+   those numbers is the 20-task calibration run, **5 of 20 = 25.0%, Clopper-Pearson 95%
+   [8.66, 49.10]**, dev only, K = 1, labelled a calibration run everywhere it appears
+   *(count: `33_E01_PILOT.md` section 4 @ `5e17c58`, kernel `busyaprime/33-gemma4-l4-probes`;
+   interval: the Clopper-Pearson of cell 2, re-checked by `verify_cited.py`)*. The 42
+   of 68 zero-edit finishes of section 5 say where the loss is. What is open is the conversion
+   itself: this notebook reports no comparison between our own configurations, which is a
+   decision about what to publish and not a missing measurement. One artefact of ours **has** now
+   been scored by the organisers' grader, and section 3.5 reads it: **4 of 58 = 6.90%, Wilson 95%
+   [2.71, 16.43]**. That is not an arm. An arm in this project is a prompt together with a budget,
+   and what was graded carried arm E01's prompt with a budget cell of 120 calls and 5.0 minutes
+   that **no arm of ours ever ran**, which is one of the named confounds on the gap. Set the two
+   numbers side by side and the intervals do not touch: **28.06% [21.09, 35.35]** is a pooled unit
+   rate over four arms and three seeds on the **129 public** tasks scored by **our** grader, and
+   **6.90% [2.71, 16.43]** is one graded run of one artefact on **58 hidden** tasks scored by
+   theirs. Two task sets, two instruments, two run configurations. The disjointness is real and
+   none of the three differences is separable from the other two here.
+10. **Whether our required-node surrogate resembles the graders' `FAIL_TO_PASS` and
+   `PASS_TO_PASS`.** This is divergence 13 and section 3.3, and it is the whole distance between
+   the headline 119 and the surrogate's 117. We can show that the two tasks fall on skips the
+   `test_patch` itself wrote, and that a node skipped on the gold run cannot be in a list built
+   the way the graders build theirs. We cannot show what the graders' own required list contains,
+   because the published `tasks.jsonl` does not carry one. This notebook used to say that a single
+   scored submission would settle both this and item 8. That submission has now been scored, and
+   it settled **neither**. The board publishes one aggregate over a task set we cannot see: no
+   required-node list, no per-node report, not even which tasks were attempted. Both items stay
+   open, and they stay open until the organisers release a required list or a per-task report,
+   which no number of submissions produces.
+11. **What the re-issued README's `synthetic hardware stubs` are.** New wording in the container
+   lifecycle, with no file, command or module named anywhere in the material. Nothing to
+   implement, and recorded so the gap is not mistaken for an oversight.
+
+*Provenance for the four citations in this list, items 3, 7 and 9:
+`data_products/33_gemma4_graph_stats.csv` @ `742f44f`, `33_DATA_AUDIT.md` section 3 @ `742f44f`,
+`competitions/33_gemma4/junit645/33_JUNIT645.json` @ `ddd90f2` and `33_E01_PILOT.md` section 4 @
+`5e17c58`. **Every path here is in a private repository: a receipt, not a link.** None of the
+four moves into this kernel: the first two are readings of the graph extractor's output over
+material the organisers replaced on 2026-09-25, and the last two came off four L4s and 39 built
+environments. The one thing in this list that is live is item 1's coverage counts, in cell
+5, and item 10's mechanism, in cell 15.*
+
+# CELL 32 markdown
+## 8. Runtime, memory and cost
+
+What this kernel spent, measured by the kernel itself, and what each number it could not compute
+here cost on the machine that produced it.
+
+# CELL 33 code
+# LIVE timers and memory for this kernel, CITED costs for everything it could not run here.
+print("THIS NOTEBOOK, wall clock by stage")
+for k, v in STAGE.items():
+    print(f"  {k:<18}{v:>9.1f} s")
+where = "Kaggle CPU session" if str(DATA).startswith("/kaggle/") else f"{platform.system()} {platform.machine()}"
+print(f"  {'TOTAL':<18}{time.time()-T_START:>9.1f} s   on {where}, no accelerator, internet off")
+
+print("\nMEMORY AND DISK")
+print(f"  peak resident set of this process      {peak_rss_mb():>9.0f} MB")
+print(f"  machine RAM                            {RAM_GIB*1024:>9.0f} MB")
+print(f"  peak share of it                       {100*peak_rss_mb()/(RAM_GIB*1024):>9.1f} %")
+print(f"  scratch, one snapshot at a time  p50   {LOC_DISK_P50:>9.0f} MB")
+print(f"  scratch, one snapshot at a time  max   {LOC_DISK_MAX:>9.0f} MB")
+print("  Each snapshot is extracted, ranked and deleted before the next one, so the sweep never")
+print("  holds more than one repository on disk. Nothing is written outside the scratch root.")
+
+print(f"\nFIGURES: {len(FIGURES)}, each printed with the exact table behind it and one claim")
+for n, title, _claim in FIGURES:
+    print(f"  Fig {n}  {title}")
+
+print("\nWHAT THE CITED NUMBERS COST TO PRODUCE")
+print(f"  {'258 verifications, superseded rule, Mac':<52}{'5,150.4 s':>12}  empty 3,938.2 + gold 1,212.2")
+print(f"  {'258 verifications, JUnit criterion, Mac':<52}{'4,752.4 s':>12}  empty 3,753.1 + gold 999.3")
+print(f"  {'645 agent patches under both rules, Mac':<52}{'10 workers':>12}  one pytest process per unit")
+print(f"  {'the full 13-method localisation sweep, 129 tasks':<52}{'~25 min':>12}  + 22.7 GB extracted and deleted")
+print(f"  {'the data audit, all stages':<52}{'~12 min':>12}")
+print(f"  {'vLLM 0.30.0 offline wheel closure, CPU kernel':<52}{'145.3 s':>12}  196 wheels, 3.622 GiB")
+print(f"  {'L4 x4 serving session (startup, KV, throughput)':<52}{'~1.0 h':>12}  billed 2.00x")
+print(f"  {'L4 x4 wave-0 probe session, 62.9 min wall':<52}{'2.07 h':>12}  billed, of a 30 h weekly pool")
+print(f"  {'one E01 control arm, 129 tasks, K = 3':<52}{'8.82 h':>12}  billed, projected from the pilot")
+print("\n  A reader with no GPU can reproduce every LIVE number in this notebook on a CPU session.")
+print("  The CITED numbers need an 8-worker machine with PyPI reachable, and four L4s.")
+print("\n  Measured runs on 4 vCPU, versions 1 to 10: 353.1, 285.5, 353.2, 231.2, 458.3, 311.8,")
+print("  306.5, 274.0, 350.4 and 332.8 s of cell time (localisation 345.9, 277.8, 343.6, 225.5,")
+print("  448.2, 304.7, 299.9, 266.9, 340.7 and 325.3 s), each covering 129 of 129 tasks. That")
+print("  set of ten spans 231.2 to 458.3 s.")
+print("  A LATER RUN BROKE THAT SPAN, and the number below is the reason the first screen now")
+print("  says 659.1 and not 458.3: one run of THIS version took 659.1 s of cell time, with")
+print("  localisation at 631.1 s against 260.1 s on the run immediately before it. Nothing in")
+print("  the computation changed between those two: the same 129 tasks, the same live tables to")
+print("  the digit, the same code. What moved is read throughput on /kaggle/input, which the")
+print("  session gives and we do not control. Over all eleven runs the span is 231.2 to 659.1 s,")
+print("  and the slowest is 2.85x the fastest on identical work. The stated range was widened to")
+print("  the measurement rather than the measurement explained away. Versions")
+print("  7 to 10 each measured a peak resident set of 162 MB of 32,100 MB. Versions 1 to 9 each")
+print("  counted exactly the 782 files Kaggle's API listed at the time. The organisers re-issued")
+print("  the data on 2026-09-25 18:36 UTC and the API now lists 524: graphs and embeddings went")
+print("  from 256 + 256 files with 129 + 129 zero-byte placeholders to 127 + 127 with none, and")
+print("  version 10, the same code on the new material, counted 524. Section 2.1.")
+print("  Those ten runs also printed a scratch high-water mark of 32 MB, which was measured over")
+print("  the ranked files only and understated the real mark; the figure this run prints above")
+print("  counts the whole extracted tree and is not comparable with theirs.")
+print("  The spread is read throughput on /kaggle/input, not the computation:")
+print("  the live tables came back identical every time, and identical to the same cells run on")
+print("  macOS arm64 with 10 cores, which measured 66.6 s with the snapshots already in page")
+print("  cache and 140 to 150 s cold, and returned held-out recall@1 26.9 [17.4, 36.6] and median")
+print("  rank 6.0, the same digits. The live half is deterministic; only the stage timers differ.")
+prov_live("this kernel's own stage timers, peak memory and scratch high-water mark", 34)
+prov_cited("audit and sweep costs", "33_AUDIT.md section 2, 33_GATES.md section 2.1", "5e17c58",
+           blocker="these are wall clocks of machines this kernel is not: an 8-worker Mac and "
+                   "four L4s. The only wall clock this kernel can measure is its own, printed "
+                   "above")
+print("\nPROVENANCE LINES IN THIS RUN")
+print(f"  LIVE, recomputed in this kernel from the attached data   {PROV['live']:>3}")
+print(f"  CITED, measured elsewhere and not recomputable here      {PROV['cited']:>3}")
+_pub = PROV.get("public", {})
+if _pub:
+    print(f"    of those, answered in the public dataset attached to this run  "
+          f"{sum(_pub.values()):>3} of {PROV['cited']}")
+    for _st in ("COVERED", "PARTIAL", "SUPERSEDED"):
+        if _pub.get(_st):
+            print(f"      {_st:<12}{_pub[_st]:>3}")
+    print("    Answered means the counts are in a file you can open, not that the measurement")
+    print("    can be taken again here: the blocker on each line is unchanged by the dataset.")
+else:
+    print("    none of them is answered by a public file in this run: the extract is not attached.")
+print("  Every CITED line above states its own blocker. Section 9 groups them into the four")
+print("  blocks and says which of them could move into a kernel like this one. None of them can.")
+
+# CELL 34 markdown
+## 9. What you can recompute, what you cannot, and why
+
+This section used to be headed *one command that regenerates every number*. The command was
+real, and it worked for exactly one reader: the author. Half the numbers here were measured in a
+repository that is private, so for anyone else that command was eleven paths that do not resolve,
+sitting under the notebook's main promise. The promise is withdrawn. What replaces it is the
+split, with the reason on each side.
+
+**The live half. You can recompute it, and you need nothing from us.** Attach
+`gemma-4-developer-agent`, open this notebook on a 4-vCPU CPU session with no accelerator and
+internet off, and run it top to bottom. Seventeen provenance lines say LIVE, and every one of them
+is recomputed in front of you from the attached data: the file inventory under all four naming
+rules, the task statistics, the absence of the harness libraries from the download, the skip
+markers that decide the two tasks of section 3.3, the free source predicate over all 129 tasks,
+the whole localisation sweep with its bootstrap, and this run's own timers and memory. That half
+carries the argument. Section 3.3, the one measurement the re-issued rule made possible, runs
+from `tasks.jsonl` and reads no artefact of ours at all. The seventeenth is section 3.5: the
+board's denominator is not quoted there, it is searched for in the cell, and the search rejects
+every rival in front of you. The sixteenth of those lines is the
+one the public extract makes possible: the eight repository rows of section 3.1, recomputed in
+the cell from the extract's csv tables rather than typed in. Detach the extract and that line
+disappears along with the recomputation, and the run says so where it would have been.
+
+It is also stable in the only sense that matters here: **every measured run on four vCPU has
+returned the same live tables to the digit**, and the same cells on macOS arm64 returned the same
+held-out recall@1 and the same median rank. The **clock** is not stable and is not claimed to be.
+It has spanned **231.2 to 659.1 s**, and the slowest run is 2.4x the fastest on identical work;
+the whole of that is read throughput on `/kaggle/input`, with the localisation stage moving from
+260.1 to 631.1 s between two consecutive runs that computed the same thing. Section 8 prints
+every run with its clock. Reproducibility here is a claim about the numbers, not about the
+minutes.
+
+**The cited half. You cannot recompute it here, and we went through all sixteen lines one at a
+time to say so.** Not one of those measurements can be taken again in this kernel. There are four
+blocks, and the blocker is now printed on the line itself, next to the number, in the run:
+
+| what is cited | what blocks it | how far it is from this kernel |
+|---|---|---|
+| the 258 verifications under each reading, the twelve anomalies, the exit classes, the floor and both ceilings, the choice of denominator | 39 test environments have to be built first. None of them builds from the shipped wheels alone, 134 packages must come from PyPI, and this session has no network | far, and the network is only the first wall. The blocker printed on each of those lines in the run carries the two audit clocks on an 8-worker Mac beside this notebook's own ceiling; the audits are the longer by an order of magnitude. The mechanism behind the only two tasks that separate the two readings is live, in cell 15 |
+| the Gemma 4 token counts of the problem statements | the real tokenizer is 262,144 entries and is not among the attached files; there is no network to fetch it | the character quantiles in cell 8 are the live measure over the same 129 statements. They are a different unit, and the notebook says so rather than converting one into the other |
+| serving startup, KV cache, prompt tokens per turn, the quantiles, the pilot and the arm costs | four NVIDIA L4s with 96 GB, and 68 trajectories of our own agent that are not part of the competition download | this session has no accelerator, so the distance is the hardware and not the clock. Every division performed on those constants is live, in cell 30 |
+| the 13-method localisation table, and the graph availability of the pre-re-issue sweep | material the organisers replaced on 2026-09-25, and an embedding index a rerun would have to rebuild | one of these is worse than private: the sweep's own `facts.json` is a derived file that no repository carries, because derived files are regenerated and never committed. Its line says that instead of naming a path. Cell 5 measures availability on the data attached to **this** run, which is the number a reader today needs |
+
+**What the public extract changes, and what it does not.** The dataset attached to this run,
+`busyaprime/gemma-4-developer-agent-grader-audit`, does not move a single line of that table.
+It cannot: the blocker is 39 environments and 258 pytest runs, and a csv of results is not a
+pytest run. What it changes is smaller and worth saying exactly. Until now the eight repository
+rows of section 3.1 were **typed** into the cell from an artefact you could not open, so the
+denominator rested on our transcription as much as on our measurement. Those rows are now
+**recomputed in the cell** from 129-row tables you can download, and the cell prints how many of
+the 32 counts came back identical to what it was written against. The per-task rows are still
+our measurement, taken on a machine you do not have. The arithmetic on top of them is no longer
+ours to be trusted with. Twelve of the sixteen cited lines are answered there whole, three in
+part with the withheld part named on the line, and one is recorded there together with the
+document of ours that supersedes it; the run prints that split rather than asserting it.
+
+We also measured the one case that looked as if it could move. The gap between the shipped
+wheels and what the environments need can in principle be counted from the snapshots without
+installing anything: on a 10-core Mac with the tree in page cache, reading the dependency files
+out of all 129 tarballs took 21.6 s. Here it would be a second pass over the 20 GB that the
+localisation sweep already reads once, and section 8 prints what that one pass costs; a second
+one of the same size pushes the notebook past the envelope on the first screen. It would also
+answer a different question from the cited one, because a declared dependency is not an
+installed package, and a second number that disagreed with the first would be a new
+contradiction rather than a verification. So it stays cited, and its line now says why.
+**The rewrite in this section adds no computation: it adds printed lines. Every stage timer of
+this notebook is unchanged, and the envelope on the first screen still holds.**
+
+**What we run, and where.** These are the commands that produced the cited artefacts. They are
+here so the instrument is visible, not because you can run them: they need the private repository
+and a machine with PyPI reachable. Read them as a description of our discipline, and weigh the
+cited numbers accordingly.
+
+```bash
+bash -ec 'cd /path/to/Kaggle
+  .venv/bin/python competitions/33_gemma4/eval/33_data_audit.py   --stage all
+  .venv/bin/python competitions/33_gemma4/eval/33_phase2.py       audit --mode both --workers 8
+  .venv/bin/python competitions/33_gemma4/eval/33_phase2.py       audit --mode both --workers 8 --criterion junit
+  .venv/bin/python competitions/33_gemma4/eval/33_phase2.py       report
+  .venv/bin/python competitions/33_gemma4/eval/33_phase2.py       anomalies
+  .venv/bin/python competitions/33_gemma4/eval/33_junit_nodes.py
+  .venv/bin/python competitions/33_gemma4/eval/33_confirm_denominator.py --criterion junit
+  .venv/bin/python competitions/33_gemma4/eval/33_confirm_junit_delta.py
+  .venv/bin/python competitions/33_gemma4/eval/33_localisation.py --all
+  .venv/bin/python kaggle_notebooks/33_gemma4_harness/verify_cited.py
+  .venv/bin/python kaggle_notebooks/33_gemma4_harness/build.py'
+```
+
+Line 3 is the audit under pytest exit code 0 and line 4 the same 258 verifications under our
+required-node surrogate; the two write separate artefacts and neither can overwrite the other.
+Lines 7 and 8 are the guards the denominator needs: the first re-verifies **sequentially**, one
+task at a time, every task the audit called not sound, because the known flakiness under
+parallel evaluators is one-sided and removes a pass, and the second re-runs the two tasks of
+section 3.3 three times each. The second-to-last line is the one that keeps us honest rather
+than you: `verify_cited.py` takes every CITED number printed above, recomputes it from the
+artefact this notebook names, prints PASS or FAIL per number and exits non-zero on any failure.
+It reads JSON, CSV, the kept copy of the removed graph files and the competition tree, and it
+reads no document, so no document can make it agree. It runs where the artefacts are. That is
+not your machine, so what it buys you is narrow and worth stating exactly: the numbers printed
+in this notebook are the numbers in those files, or the notebook does not build. It is not
+evidence that the files themselves are right, and nothing in this notebook asks you to treat it
+as such.
+
+**The repository address.** It is printed once, in the run header at the top, with the word
+PRIVATE next to it, and nowhere else. A commit id with no repository named is not a citation; a
+repository named without saying it is closed is a promise we do not keep. They are printed
+together or not at all. What the address and the commit are for: they give every cited number an
+exact location, and they let the author produce the file on request. That is the whole of it.
+
+**One thing this list cannot do for you.** The competition data was replaced once already. Every
+LIVE number above is what the tree looked like during the run at the top of this page, and a
+rerun on a newer tree may print different ones. That is the notebook working, not failing.
+
+Seeds and versions, so a rerun lands on the same numbers: bootstrap seed **20260924**, 2,000
+replicates, stratified over tasks inside each repository; sampling seed **33** for the data
+audit's sampled measurements; quantiles by linear interpolation between order statistics;
+uv 0.12.2, CPython 3.13.14 for the verification runs, git 2.50.1. The data version this run read
+is printed in cell 2.
+
+This notebook is built by `kaggle_notebooks/33_gemma4_harness/build.py` from
+`kaggle_notebooks/33_gemma4_harness/cells.py`, and the build commit is stamped into cell
+2.

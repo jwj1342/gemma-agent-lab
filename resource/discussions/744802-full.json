@@ -1,0 +1,61 @@
+{
+  "forumTopic": {
+    "authorId": 37021297,
+    "authorThumbnailName": "37021297-kg.jpg?t=2026-10-04-17-08-19",
+    "authorUserDisplayName": "Chih-Kai Wang",
+    "authorUserName": "f0909172434",
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3530904,
+      "postDate": "2026-10-01T01:35:56.833Z",
+      "rawMarkdown": "Submission 56739788 (2026-10-01 00:48:59 UTC) failed with \"Notebook Threw Exception\" and no score. The API reports COMPLETE but includes the generic notebook error_description. Could the team inspect the underlying scorer exception?\n\nThe submitted ZIP has agent.yaml at the root, uses gemma-4-31b-it-qat-w4a16-ct and the official sample LoRA adapters, and passed the official compiler plus a two-task smoke in an offline Kaggle notebook on 4 L4 GPUs. One task passed verification and one did not; both finished within 300 seconds. Downloading the uploaded ZIP from the submission page confirmed it is byte-identical to the tested package.\n\nThe failed submission used today's only allowance. If the failure is platform-side, could it be rerun or the allowance restored? I have not established the root cause and am not assuming this is an infrastructure bug.",
+      "content": "<p>Submission 56739788 (2026-10-01 00:48:59 UTC) failed with \"Notebook Threw Exception\" and no score. The API reports COMPLETE but includes the generic notebook error_description. Could the team inspect the underlying scorer exception?</p>\n<p>The submitted ZIP has agent.yaml at the root, uses gemma-4-31b-it-qat-w4a16-ct and the official sample LoRA adapters, and passed the official compiler plus a two-task smoke in an offline Kaggle notebook on 4 L4 GPUs. One task passed verification and one did not; both finished within 300 seconds. Downloading the uploaded ZIP from the submission page confirmed it is byte-identical to the tested package.</p>\n<p>The failed submission used today's only allowance. If the failure is platform-side, could it be rerun or the allowance restored? I have not established the root cause and am not assuming this is an infrastructure bug.</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Chih-Kai Wang",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/37021297-kg.jpg?t=2026-10-04-17-08-19",
+        "url": "/f0909172434",
+        "tier": "CONTRIBUTOR",
+        "id": 37021297,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 3,
+        "canUpvote": true,
+        "totalUpvotes": 3
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 149,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Chih-Kai Wang",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/37021297-kg.jpg?t=2026-10-04-17-08-19",
+          "url": "/f0909172434",
+          "userName": "f0909172434",
+          "tier": "CONTRIBUTOR",
+          "id": 37021297,
+          "profileUrl": "/f0909172434",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 37021297,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3530904,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 744802,
+    "name": "Submission 56739788: Notebook Threw Exception after successful official-harness smoke",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-10-01T01:35:56.834659600Z",
+    "totalVotes": 3,
+    "url": "/competitions/gemma-4-developer-agent/discussion/744802",
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

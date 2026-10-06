@@ -1,0 +1,46 @@
+{
+  "checked_at": "2026-10-05T05:14:56.336370+00:00",
+  "raw_response": {
+    "quotaRefreshTime": "2026-10-10T00:00:00Z",
+    "gpuQuota": {
+      "timeUsed": {
+        "seconds": 0,
+        "nanos": 0
+      },
+      "timeReserved": {
+        "seconds": 0,
+        "nanos": 0
+      },
+      "totalTimeAllowed": {
+        "seconds": 108000,
+        "nanos": 0
+      },
+      "minimumTimeAllowed": {
+        "seconds": 108000,
+        "nanos": 0
+      },
+      "isPayToScaleEnabled": false,
+      "hasEverRun": true
+    },
+    "tpuQuota": {
+      "timeUsed": {
+        "seconds": 0,
+        "nanos": 0
+      },
+      "timeReserved": {
+        "seconds": 0,
+        "nanos": 0
+      },
+      "totalTimeAllowed": {
+        "seconds": 72000,
+        "nanos": 0
+      },
+      "minimumTimeAllowed": {
+        "seconds": 72000,
+        "nanos": 0
+      },
+      "isPayToScaleEnabled": false,
+      "hasEverRun": false
+    }
+  }
+}

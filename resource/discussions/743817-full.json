@@ -1,0 +1,102 @@
+{
+  "forumTopic": {
+    "authorId": 15012025,
+    "authorThumbnailName": "default-thumb.png",
+    "authorUserDisplayName": "Jean-Claude Paquin",
+    "authorUserName": "jcrpaquin",
+    "comments": [
+      {
+        "id": 3529102,
+        "postDate": "2026-09-27T10:58:17.303Z",
+        "rawMarkdown": "We did much more extensive reviewing and editing of the test tasks than the training tasks. \"Impossible\" tasks like you've described are one of the things we checked for. We also checked that a failing test case for the frontier model's patch was something it could have gotten correct with the information given. Unfortunately, time and resource constraints meant that we weren't able to do the same kind of review for the training set.",
+        "content": "<p>We did much more extensive reviewing and editing of the test tasks than the training tasks. \"Impossible\" tasks like you've described are one of the things we checked for. We also checked that a failing test case for the frontier model's patch was something it could have gotten correct with the information given. Unfortunately, time and resource constraints meant that we weren't able to do the same kind of review for the training set.</p>",
+        "parent": {},
+        "author": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "progressionOptOut": false
+        },
+        "authorType": "ADMIN",
+        "votes": {
+          "totalVotes": 1,
+          "canUpvote": true,
+          "totalUpvotes": 1
+        },
+        "kernelVersion": 0,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Ryan Holbrook",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+            "url": "/ryanholbrook",
+            "userName": "ryanholbrook",
+            "tier": "STAFF",
+            "id": 2003505,
+            "profileUrl": "/ryanholbrook",
+            "performanceTier": "STAFF",
+            "userId": 2003505,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3529044,
+      "postDate": "2026-09-27T08:11:45.043Z",
+      "rawMarkdown": "It says in `Data > Dataset Generation & Verification Pipeline` that:\n> Near Completion with Frontier Models: For the test set, we check that a larger frontier model can pass the case or get within a single test case of passing.\n\nOne of the training tasks is [fastapi/fastapi#15661](https://github.com/fastapi/fastapi/pull/15661). This task essentially requires the model to guess the exact file name and API surface that the tests require. Given the competition restrictions, there's no reasonable way for this task to be completed successfully. Without the ability to see the test imports or the referenced PR from [fastapi/asyncer#608](https://github.com/fastapi/asyncer/pull/608) it's not possible to know what the test is expecting.\n\nWere frontier models run using the same harness and restrictions when doing task validation? Could the tasks be re-reviewed for feasibility in case other, similar issues exist in the train/val/test sets?",
+      "content": "<p>It says in <code>Data &gt; Dataset Generation &amp; Verification Pipeline</code> that:</p>\n<blockquote>\n  <p>Near Completion with Frontier Models: For the test set, we check that a larger frontier model can pass the case or get within a single test case of passing.</p>\n</blockquote>\n<p>One of the training tasks is <a href=\"https://github.com/fastapi/fastapi/pull/15661\" target=\"_blank\">fastapi/fastapi#15661</a>. This task essentially requires the model to guess the exact file name and API surface that the tests require. Given the competition restrictions, there's no reasonable way for this task to be completed successfully. Without the ability to see the test imports or the referenced PR from <a href=\"https://github.com/fastapi/asyncer/pull/608\" target=\"_blank\">fastapi/asyncer#608</a> it's not possible to know what the test is expecting.</p>\n<p>Were frontier models run using the same harness and restrictions when doing task validation? Could the tasks be re-reviewed for feasibility in case other, similar issues exist in the train/val/test sets?</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Jean-Claude Paquin",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+        "url": "/jcrpaquin",
+        "tier": "CONTRIBUTOR",
+        "id": 15012025,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 1,
+        "canUpvote": true,
+        "totalUpvotes": 1
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Jean-Claude Paquin",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/jcrpaquin",
+          "userName": "jcrpaquin",
+          "tier": "CONTRIBUTOR",
+          "id": 15012025,
+          "profileUrl": "/jcrpaquin",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 15012025,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3529044,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 743817,
+    "name": "Task Verification Question",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-27T08:11:45.042487100Z",
+    "totalVotes": 1,
+    "url": "/competitions/gemma-4-developer-agent/discussion/743817",
+    "totalMessages": 1,
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

@@ -1,0 +1,160 @@
+{
+  "topics": [
+    {
+      "id": 745748,
+      "title": "[Resource & Benchmark] 50 Multi-Turn Gemma 4 SWE-bench Trajectories + Closed-Loop TFD-Agent Framework",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/745748",
+      "votes": 1,
+      "postDate": "2026-10-04T05:24:41.308Z",
+      "lastCommentPostDate": "2026-10-04T05:24:41.310Z"
+    },
+    {
+      "id": 745731,
+      "title": "Notes on the graph tools from auditing all 127 graphs",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/745731",
+      "postDate": "2026-10-04T01:14:57.584Z",
+      "lastCommentPostDate": "2026-10-04T01:14:57.583Z"
+    },
+    {
+      "id": 745699,
+      "title": "vLLM Startup Fails with Python 3.13 Binary Incompatibility",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/745699",
+      "votes": 4,
+      "postDate": "2026-10-03T19:03:06.431Z",
+      "lastCommentPostDate": "2026-10-03T19:03:06.430Z"
+    },
+    {
+      "id": 743140,
+      "title": "What Results Did You Get with Representative Submissions?",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/743140",
+      "commentCount": 6,
+      "votes": 12,
+      "postDate": "2026-09-25T02:09:29.282Z",
+      "lastCommentPostDate": "2026-10-03T18:43:21.470Z"
+    },
+    {
+      "id": 745695,
+      "title": "Hidden filename requirement in `fastapi_15661` (“Automate release preparation”)",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/745695",
+      "postDate": "2026-10-03T18:43:03.286Z",
+      "lastCommentPostDate": "2026-10-03T18:43:03.286Z"
+    },
+    {
+      "id": 742882,
+      "title": "Is the swegemma harness available for local evaluation?",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/742882",
+      "commentCount": 12,
+      "votes": 13,
+      "postDate": "2026-09-23T21:47:08.957Z",
+      "lastCommentPostDate": "2026-10-03T11:42:13.000Z"
+    },
+    {
+      "id": 745601,
+      "title": " fastapi_15661 validation stops at ImportError during test collection",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/745601",
+      "postDate": "2026-10-03T11:10:24.184Z",
+      "lastCommentPostDate": "2026-10-03T11:10:24.183Z"
+    },
+    {
+      "id": 745575,
+      "title": "Can TPU be used?",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/745575",
+      "postDate": "2026-10-03T09:41:18.156Z",
+      "lastCommentPostDate": "2026-10-03T09:41:18.156Z"
+    },
+    {
+      "id": 745059,
+      "title": "include_thoughts currently disables reasoning instead of only hiding it [adk_submission 0.2.12]",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/745059",
+      "commentCount": 1,
+      "votes": 3,
+      "postDate": "2026-10-02T00:48:44.099Z",
+      "lastCommentPostDate": "2026-10-03T09:08:31.696Z"
+    },
+    {
+      "id": 745543,
+      "title": "Googel Gemma and ARC AGI 2 have same problem of queue",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/745543",
+      "commentCount": 1,
+      "postDate": "2026-10-03T07:28:50.414Z",
+      "lastCommentPostDate": "2026-10-03T07:46:50.536Z"
+    },
+    {
+      "id": 744844,
+      "title": "Updating the Gemma 4 template to have July 15th fixes",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/744844",
+      "commentCount": 2,
+      "votes": 1,
+      "postDate": "2026-10-01T06:52:10.496Z",
+      "lastCommentPostDate": "2026-10-03T05:57:46.450Z"
+    },
+    {
+      "id": 745364,
+      "title": "Has anyone confirmed a LoRA adapter actually taking effect in a scored run?",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/745364",
+      "postDate": "2026-10-03T04:09:51.189Z",
+      "lastCommentPostDate": "2026-10-03T04:09:51.190Z"
+    },
+    {
+      "id": 744807,
+      "title": "Submission errors after the Sep 30 wheelhouse update",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/744807",
+      "commentCount": 21,
+      "votes": 20,
+      "postDate": "2026-10-01T02:01:14.842Z",
+      "lastCommentPostDate": "2026-10-03T01:43:27.736Z"
+    },
+    {
+      "id": 745028,
+      "title": " undeclared tool ends the task and discards the patch",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/745028",
+      "commentCount": 4,
+      "votes": 3,
+      "postDate": "2026-10-01T20:37:47.668Z",
+      "lastCommentPostDate": "2026-10-03T01:43:10.610Z"
+    },
+    {
+      "id": 745274,
+      "title": "Discussion : Are you guys seeing gains with distillation? What's your setup?",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/745274",
+      "postDate": "2026-10-02T21:16:35.681Z",
+      "lastCommentPostDate": "2026-10-02T21:16:35.680Z"
+    },
+    {
+      "id": 745269,
+      "title": "Question: training an adapter on Colab with the Kaggle-hosted checkpoint",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/745269",
+      "postDate": "2026-10-02T20:58:36.349Z",
+      "lastCommentPostDate": "2026-10-02T20:58:36.350Z"
+    },
+    {
+      "id": 745267,
+      "title": "Supported authorization, skill-startup and patch-recovery hooks",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/745267",
+      "postDate": "2026-10-02T20:48:13.193Z",
+      "lastCommentPostDate": "2026-10-02T20:48:13.193Z"
+    },
+    {
+      "id": 745249,
+      "title": "Missing python-multipart dependency in the FastAPI task environment",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/745249",
+      "postDate": "2026-10-02T19:56:12.582Z",
+      "lastCommentPostDate": "2026-10-02T19:56:12.583Z"
+    },
+    {
+      "id": 745220,
+      "title": "Task prompt: \"Workspace Layout\" omits the source package in 115/129 tasks, and \"Code Intelligence Tools\" tells the model to search by keyword (which always returns 0 results)",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/745220",
+      "postDate": "2026-10-02T18:23:57.313Z",
+      "lastCommentPostDate": "2026-10-02T18:23:57.313Z"
+    },
+    {
+      "id": 745154,
+      "title": "Adapters / LoRA",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/745154",
+      "postDate": "2026-10-02T14:36:21.055Z",
+      "lastCommentPostDate": "2026-10-02T14:36:21.056Z"
+    }
+  ],
+  "totalCount": 116
+}

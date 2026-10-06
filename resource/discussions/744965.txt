@@ -1,0 +1,5 @@
+# gpu outage causing submission failure 
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/744965
+
+## 3531301 /hawktalk TOPIC
+so are we getting a reset for our troubles or are we just sol? 

@@ -1,0 +1,320 @@
+# CELL 0 markdown
+# Getting Started: Gemma 4 Developer Agent
+
+# CELL 1 markdown
+## 1. Environment Configuration and Package Installation
+
+# CELL 2 code
+import glob
+import importlib
+import os
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+# Configure environment variables for offline vLLM serving and LiteLLM routing
+os.environ['LITELLM_LOCAL_MODEL_COST_MAP'] = 'True'
+os.environ['TRANSFORMERS_NO_TF'] = '1'
+os.environ['VLLM_WORKER_MULTIPROC_METHOD'] = 'spawn'
+os.environ['VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS'] = '1'
+os.environ['VLLM_ENGINE_READY_TIMEOUT_S'] = '1200'
+os.environ['VLLM_NO_USAGE_STATS'] = '1'
+os.environ['OTEL_SDK_DISABLED'] = 'true'
+os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
+
+WHEELHOUSE_DIR = Path('/kaggle/input/datasets/metric/gemma-4-developer-agent-wheelhouse')
+
+# Remove broken cutlass .pth hooks if present
+for pth_pattern in (
+    '/usr/local/lib/python*/dist-packages/*cutlass*.pth',
+    '/usr/local/lib/python*/site-packages/*cutlass*.pth',
+):
+    for pth in glob.glob(pth_pattern):
+        try:
+            os.unlink(pth)
+        except OSError:
+            pass
+
+# Restore PEP 440 '+cu128' wheel filenames stripped by Kaggle dataset uploads
+tmp_whl = Path('/tmp/wheelhouse')
+tmp_whl.mkdir(parents=True, exist_ok=True)
+for w in WHEELHOUSE_DIR.glob('*.whl'):
+    if 'cutlass' in w.name.lower():
+        continue
+    target_name = (
+        w.name.replace('cu128', '+cu128')
+        if ('cu128' in w.name and '+' not in w.name)
+        else w.name
+    )
+    target = tmp_whl / target_name
+    if not target.exists():
+        os.symlink(w, target)
+
+wheels = sorted(str(w) for w in tmp_whl.glob('*.whl'))
+print(f'Installing {len(wheels)} wheels from {WHEELHOUSE_DIR}...')
+subprocess.run(
+    [sys.executable, '-m', 'pip', 'install', '-q', '--no-deps', '--force-reinstall', *wheels],
+    check=True,
+)
+importlib.invalidate_caches()
+print('Wheelhouse installation complete.')
+
+# CELL 3 markdown
+## 2. Competition Dataset and Sample Submission
+
+# CELL 4 code
+from swegemma.models import load_tasks
+
+DATA_DIR = Path('/kaggle/input/competitions/gemma-4-developer-agent')
+WORKING_DIR = Path('/kaggle/working')
+WORKING_DIR.mkdir(parents=True, exist_ok=True)
+
+# Copy sample_submission to a writable directory for customization and packaging
+SAMPLE_SUBMISSION_SRC = Path('/kaggle/input/datasets/dhiaalhemdani/sample-submission')
+AGENT_DIR = WORKING_DIR / 'sample_submission'
+if AGENT_DIR.exists():
+    shutil.rmtree(AGENT_DIR)
+shutil.copytree(SAMPLE_SUBMISSION_SRC, AGENT_DIR)
+
+# Ensure sampling.yaml omits thinking_level (mapped to OpenAI reasoning_effort by LiteLLM)
+(AGENT_DIR / 'configs' / 'sampling.yaml').write_text(
+    'temperature: 0.2\n'
+    'top_p: 0.95\n'
+    'max_output_tokens: 8192\n'
+    'thinking_config:\n'
+    '  thinking_budget: 4096\n'
+    '  include_thoughts: true\n',
+    encoding='utf-8',
+)
+
+# Load tasks from the published dataset
+TASKS_PATH = DATA_DIR / 'tasks.jsonl'
+tasks = load_tasks(TASKS_PATH)
+
+print(f'Data directory: {DATA_DIR}')
+print(f'Agent directory: {AGENT_DIR}')
+print(f'Loaded {len(tasks)} tasks from {TASKS_PATH.name}')
+for t in tasks[:5]:
+    print(f'  - {t.instance_id} ({t.repo} @ {t.base_commit[:8]})')
+
+# CELL 5 markdown
+## 3. Code Graph Functions
+
+# CELL 6 code
+from swegemma import graph as sg
+
+sample_task = tasks[0]
+GRAPH_DIR = str(DATA_DIR / 'graphs')
+EMBEDDINGS_DIR = str(DATA_DIR / 'embeddings')
+
+# Load the pre-computed repository code graph and node embeddings for the sample task
+repo_graph = sg.get_graph(
+    repo_name=sample_task.repo,
+    graph_dir=GRAPH_DIR,
+    embeddings_dir=EMBEDDINGS_DIR,
+    base_commit=sample_task.base_commit,
+)
+sample_nodes = list(repo_graph.nodes())
+print(f'Graph for {sample_task.repo} ({sample_task.instance_id}):')
+print(f'  Nodes: {repo_graph.number_of_nodes()}, Edges: {repo_graph.number_of_edges()}')
+
+# Select a connected symbol and query structural neighbors (callers, callees, definitions)
+query_node = next((n for n, deg in repo_graph.degree() if deg >= 5), sample_nodes[0])
+neighbors = sg.get_neighbor(
+    node=query_node,
+    graph=repo_graph,
+    max_neighbors=10,
+)
+print(f'\nNeighbors of {query_node!r} (showing up to 5):')
+for n in neighbors[:5]:
+    print(f'  - {n}')
+
+# Search for semantically similar code nodes using pre-computed vector embeddings
+similar = sg.get_similar_nodes(
+    node=query_node,
+    repo_name=sample_task.repo,
+    k=5,
+    graph=repo_graph,
+    graph_dir=GRAPH_DIR,
+    embeddings_dir=EMBEDDINGS_DIR,
+    base_commit=sample_task.base_commit,
+)
+print(f'\nTop similar nodes to {query_node!r}:')
+for item in similar:
+    print(f"  - {item['node_name']} (similarity={item['similarity']:.4f})")
+
+# Extract an induced subgraph connecting the query symbol and its neighbors
+focal_nodes = [query_node, *neighbors[:4]]
+subgraph = sg.get_induced_subgraph(repo_graph, focal_nodes)
+print(
+    f'\nInduced subgraph over {len(focal_nodes)} focal nodes: '
+    f'{subgraph.number_of_nodes()} nodes, {subgraph.number_of_edges()} edges'
+)
+
+# CELL 7 markdown
+## 4. Start vLLM Server
+
+# CELL 8 code
+import litellm
+import torch
+from adk_submission import VllmConfig, VllmServer, discover_adapters
+from swegemma.config import ALLOWED_ADAPTER_EXTENSIONS
+from swegemma.models.discovery import validate_single_declared_model
+
+litellm.drop_params = True
+
+TARGET_MODEL_NAME = 'gemma-4-31b-it-qat-w4a16-ct'
+MODEL_PATH = Path('/kaggle/input/models/google/gemma-4/other/gemma-4-31b-it-qat-w4a16-ct/2')
+INFERENCE_API_KEY = 'EMPTY'
+
+# Validate single base model and discover any PEFT LoRA adapters in the submission directory
+declared_model = validate_single_declared_model(AGENT_DIR)
+adapters = discover_adapters(str(AGENT_DIR), adapter_extensions=ALLOWED_ADAPTER_EXTENSIONS)
+
+gpu_count = torch.cuda.device_count() if torch.cuda.is_available() else 1
+tp_size = 4 if gpu_count >= 4 else (2 if gpu_count >= 2 else 1)
+
+vllm_cfg = VllmConfig(
+    model=str(MODEL_PATH),
+    port=8000,
+    host='127.0.0.1',
+    tool_call_parser='gemma4',
+    reasoning_parser='gemma4',
+    max_model_len=32768,
+    dtype='bfloat16' if (torch.cuda.is_available() and torch.cuda.is_bf16_supported()) else 'auto',
+    gpu_memory_utilization=0.90,
+    enable_auto_tool_choice=True,
+    enable_lora=True,
+    max_loras=8,
+    max_lora_rank=128,
+    tensor_parallel_size=tp_size,
+    startup_timeout=60 * 20,
+)
+server_instance = VllmServer(vllm_cfg, adapter_manifest=adapters)
+server_instance.start()
+print(f'vLLM server started on {server_instance.base_url} (tp={tp_size})')
+
+# Register model and LoRA adapter aliases for Google ADK
+models = server_instance.create_model_registry(
+    aliases=[declared_model, TARGET_MODEL_NAME],
+    model_prefix='openai/',
+    api_key=INFERENCE_API_KEY,
+)
+
+# CELL 9 markdown
+## 5. Run Phase 1 Inference and Phase 2 Verification
+
+# CELL 10 code
+import asyncio
+import concurrent.futures
+import pandas as pd
+import yaml
+from google.adk.agents.context_cache_config import ContextCacheConfig
+from google.adk.apps._configs import EventsCompactionConfig
+from swegemma.config import EvalConfig, build_submission_limits
+from swegemma.evaluate import Evaluator
+
+
+def run_sync(coro_or_fn, *args, **kwargs):
+    """Run an async coroutine synchronously inside a notebook event loop."""
+    fn = (lambda: coro_or_fn(*args, **kwargs)) if callable(coro_or_fn) else (lambda: coro_or_fn)
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
+    if loop is not None and loop.is_running():
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+            return pool.submit(lambda: asyncio.run(fn())).result()
+    return asyncio.run(fn())
+
+
+# Read evaluation settings from the submission's eval_config.yaml
+eval_config_file = AGENT_DIR / 'eval_config.yaml'
+raw_eval_cfg = yaml.safe_load(eval_config_file.read_text(encoding='utf-8'))
+eval_section = raw_eval_cfg.get('evaluation', raw_eval_cfg)
+
+timeout_seconds = int(eval_section.get('timeout_seconds', 300))
+max_tool_calls = int(eval_section.get('max_tool_calls', 100))
+max_time_minutes = float(eval_section.get('max_time_minutes', 60.0))
+turns_raw = eval_section.get('max_turns', eval_section.get('max_llm_calls'))
+max_turns = int(turns_raw) if turns_raw is not None else None
+
+# Select a small subset of tasks from the published dataset
+SAMPLE_TASKS = tasks[:2]
+limits, gen_constraints = build_submission_limits()
+
+# Configure Evaluator to run Phase 1 (agent patch generation) and Phase 2 (verification)
+# using the subprocess sandbox backend and the submission's eval_config parameters
+eval_config = EvalConfig(
+    tasks_path=TASKS_PATH,
+    snapshots_dir=DATA_DIR / 'snapshots',
+    results_dir=WORKING_DIR / 'results',
+    submission_dir=AGENT_DIR,
+    models=models,
+    sandbox='subprocess',
+    timeout_seconds=timeout_seconds,
+    max_time_minutes=max_time_minutes,
+    max_tool_calls=max_tool_calls,
+    max_turns=max_turns,
+    limits=limits,
+    generation_constraints=gen_constraints,
+    adapter_manifest=adapters,
+    context_cache_config=ContextCacheConfig(min_tokens=2048, ttl_seconds=1800, cache_intervals=10),
+    events_compaction_config=EventsCompactionConfig(
+        compaction_interval=15,
+        overlap_size=2,
+        token_threshold=14336,
+        event_retention_size=5,
+    ),
+    graph_dir=GRAPH_DIR,
+    embeddings_dir=EMBEDDINGS_DIR,
+    wheels_dir=DATA_DIR / 'wheels',
+    verbose=False,
+)
+
+evaluator = Evaluator(eval_config)
+predictions = []
+
+for idx, task in enumerate(SAMPLE_TASKS, start=1):
+    print(f'[{idx}/{len(SAMPLE_TASKS)}] Evaluating {task.instance_id} ({task.repo})...')
+    result = run_sync(
+        evaluator.evaluate_task,
+        task=task,
+        task_index=idx,
+        total_tasks=len(SAMPLE_TASKS),
+    )
+    predictions.append({'id': task.instance_id, 'prediction': result.agent_patch or ''})
+    print(
+        f'  -> resolved={result.resolved}, '
+        f'exit_code={result.test_exit_code}, '
+        f'patch_chars={len(result.agent_patch or "")}, '
+        f'tool_calls={result.tool_calls}, '
+        f'duration={result.duration_seconds:.1f}s'
+    )
+
+submission_df = pd.DataFrame(predictions, columns=['id', 'prediction'])
+display(submission_df)
+
+# CELL 11 markdown
+## 6. Package Submission Archive
+
+# CELL 12 code
+import zipfile
+from swegemma.config import ALLOWED_SUBMISSION_EXTENSIONS, MAX_SUBMISSION_SIZE_BYTES
+
+# Create submission.zip with agent.yaml at the root of the archive
+zip_base = WORKING_DIR / 'submission'
+zip_path = Path(shutil.make_archive(str(zip_base), 'zip', root_dir=AGENT_DIR))
+
+# Validate archive contents against competition constraints
+with zipfile.ZipFile(zip_path, 'r') as zf:
+    infos = zf.infolist()
+    total_size = sum(i.file_size for i in infos)
+    assert total_size <= MAX_SUBMISSION_SIZE_BYTES, f'Archive exceeds 3 GiB limit: {total_size}'
+    for info in infos:
+        if not info.is_dir():
+            ext = Path(info.filename).suffix.lower()
+            assert ext in ALLOWED_SUBMISSION_EXTENSIONS, f'Disallowed file extension: {info.filename}'
+
+print(f'Created {zip_path} ({zip_path.stat().st_size / (1024 * 1024):.2f} MiB)')

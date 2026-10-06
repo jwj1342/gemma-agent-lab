@@ -1,0 +1,194 @@
+# CELL 0 code
+from pathlib import Path
+
+# Thư mục gốc
+paths = [
+    Path('/kaggle/input/competitions/gemma-4-developer-agent'),
+    Path('/kaggle/input/gemma-4-developer-agent'),
+]
+COMP_DIR = next((p for p in paths if p.exists()), None)
+assert COMP_DIR is not None, "Không tìm thấy dữ liệu!"
+
+# Lấy tên task đầu tiên làm mẫu (ví dụ: sympy__sympy-12345)
+sample_graph_file = next((COMP_DIR / "graphs").glob("*.json"))
+TASK_ID = sample_graph_file.stem  # Lấy tên task (bỏ đuôi .json)
+
+print(f"✅ Đang chọn khảo sát đúng 1 Task duy nhất: {TASK_ID}")
+
+# CELL 1 code
+# In Dockerfile
+docker_file = COMP_DIR / "docker" / "Dockerfile.sandbox"
+if not docker_file.exists():
+    docker_file = next((COMP_DIR / "docker").glob("Dockerfile*"))
+print(f"--- DOCKERFILE ({docker_file.name}) ---")
+print(docker_file.read_text(encoding="utf-8"))
+
+# In setup.py
+setup_file = COMP_DIR / "sandbox" / "setup.py"
+if setup_file.exists():
+    print(f"\n--- SANDBOX SETUP ({setup_file.name}) ---")
+    print(setup_file.read_text(encoding="utf-8"))
+
+# CELL 2 code
+import tarfile
+
+# 1. Thử tìm file theo tên chính xác
+snap_file = COMP_DIR / "snapshots" / f"{TASK_ID}.tgz"
+
+if not snap_file.exists():
+    # 2. Thử tìm file có CHỨA Task ID
+    snap_file = next((COMP_DIR / "snapshots").glob(f"*{TASK_ID}*.tgz"), None)
+
+if not snap_file:
+    # 3. Fallback: Lấy file .tgz đầu tiên có trong thư mục snapshots
+    old_task_id = TASK_ID
+    snap_file = next((COMP_DIR / "snapshots").glob("*.tgz"), None)
+    
+    if snap_file:
+        # Cập nhật lại TASK_ID theo tên file mới (bỏ đuôi .tgz hoặc .tar.gz)
+        TASK_ID = snap_file.name.replace(".tgz", "").replace(".tar.gz", "")
+        
+        print("="*60)
+        print(f"⚠ Không tìm thấy snapshot khớp với Task ban đầu: '{old_task_id}'")
+        print(f"🔄 ĐÃ THAY THẾ BẰNG TASK_ID MỚI: '{TASK_ID}'")
+        print(f"📁 Tên file snapshot được chọn: {snap_file.name}")
+        print("="*60 + "\n")
+
+if snap_file:
+    print(f"--- TẤT CẢ FILE TRONG REPO CỦA TASK: {TASK_ID} ---")
+    with tarfile.open(snap_file, "r:gz") as tar:
+        members = tar.getnames()
+        print(f"Tổng số file/thư mục: {len(members)}\n")
+        for name in members:
+            print(name)
+else:
+    print("❌ Lỗi: Không tìm thấy bất kỳ file .tgz nào trong thư mục snapshots/")
+
+# CELL 3 code
+import json
+
+# 1. Thử tìm graph theo tên chính xác
+graph_file = COMP_DIR / "graphs" / f"{TASK_ID}.json"
+
+if not graph_file.exists():
+    # 2. Thử tìm graph có chứa Task ID
+    graph_file = next((COMP_DIR / "graphs").glob(f"*{TASK_ID}*.json"), None)
+
+if not graph_file:
+    # 3. Fallback: Lấy file .json đầu tiên có trong thư mục graphs
+    old_task_id = TASK_ID
+    graph_file = next((COMP_DIR / "graphs").glob("*.json"), None)
+    
+    if graph_file:
+        TASK_ID = graph_file.stem
+        print("="*60)
+        print(f"⚠ Không tìm thấy graph khớp với Task ban đầu: '{old_task_id}'")
+        print(f"🔄 ĐÃ THAY THẾ BẰNG TASK_ID MỚI: '{TASK_ID}'")
+        print(f"📁 Tên file graph được chọn: {graph_file.name}")
+        print("="*60 + "\n")
+
+if graph_file:
+    print(f"--- ĐỌC GRAPH AST CỦA TASK: {TASK_ID} ---")
+    with open(graph_file, "r", encoding="utf-8") as f:
+        graph_data = json.load(f)
+
+    nodes = graph_data.get("nodes", [])
+    edges = graph_data.get("edges", [])
+    print(f"Tổng số: {len(nodes):,} Nodes, {len(edges):,} Edges\n")
+
+    if nodes:
+        first_node = nodes[0]
+        # Lưu ID node lại để dùng đồng bộ cho cell Embeddings
+        SAMPLE_NODE_ID = first_node.get("id")
+        
+        print(f"--- TOÀN BỘ NỘI DUNG 1 NODE MẪU (ID: {SAMPLE_NODE_ID}) ---")
+        print(f"Tên symbol: {first_node.get('name')}")
+        print("Mã nguồn hoàn chỉnh:")
+        print(first_node.get("text", ""))
+
+    if edges:
+        print("\n--- 1 LIÊN KẾT (EDGE) MẪU ---")
+        print(edges[0])
+else:
+    print("❌ Lỗi: Không tìm thấy bất kỳ file .json nào trong graphs/")
+
+# CELL 4 code
+import numpy as np
+
+# 1. Thử tìm vector file theo tên chính xác
+emb_file = COMP_DIR / "embeddings" / f"{TASK_ID}.npz"
+
+if not emb_file.exists():
+    # 2. Thử tìm file có chứa Task ID
+    emb_file = next((COMP_DIR / "embeddings").glob(f"*{TASK_ID}*.npz"), None)
+
+if not emb_file:
+    # 3. Fallback: Lấy file .npz đầu tiên có trong thư mục embeddings
+    old_task_id = TASK_ID
+    emb_file = next((COMP_DIR / "embeddings").glob("*.npz"), None)
+    
+    if emb_file:
+        TASK_ID = emb_file.stem
+        print("="*60)
+        print(f"⚠ Không tìm thấy embedding khớp với Task: '{old_task_id}'")
+        print(f"🔄 ĐÃ THAY THẾ BẰNG TASK_ID MỚI: '{TASK_ID}'")
+        print(f"📁 Tên file embedding được chọn: {emb_file.name}")
+        print("="*60 + "\n")
+
+if emb_file:
+    print(f"--- ĐỌC VECTOR EMBEDDINGS CỦA TASK: {TASK_ID} ---")
+    np.set_printoptions(threshold=np.inf, linewidth=100)
+    
+    with np.load(emb_file) as data:
+        keys = list(data.keys())
+        print(f"Tổng số symbols được đánh vector: {len(keys):,}")
+
+        # Ưu tiên lấy đúng Node ID từ Graph cell (nếu tồn tại)
+        if "SAMPLE_NODE_ID" in globals() and SAMPLE_NODE_ID in data:
+            target_key = SAMPLE_NODE_ID
+        else:
+            target_key = keys[0]
+            if "SAMPLE_NODE_ID" in globals():
+                print(f"⚠ Symbol '{SAMPLE_NODE_ID}' không có trong vector nhúng. Thay thế bằng symbol: '{target_key}'")
+
+        vector = data[target_key]
+        print(f"\n--- TOÀN BỘ 256 CHIỀU VECTOR CỦA SYMBOL: {target_key} ---")
+        print(f"Shape: {vector.shape}, Dtype: {vector.dtype}")
+        print(vector)
+else:
+    print("❌ Lỗi: Không tìm thấy bất kỳ file .npz nào trong embeddings/")
+
+# CELL 5 code
+import zipfile
+
+wheels_dir = COMP_DIR / "wheels"
+sample_whl = None
+
+if wheels_dir.exists():
+    # 1. Thử tìm wheel có tên chứa Task ID
+    sample_whl = next(wheels_dir.glob(f"*{TASK_ID}*.whl"), None)
+
+    if not sample_whl:
+        # 2. Fallback: Lấy 1 wheel bất kỳ đầu tiên
+        sample_whl = next(wheels_dir.glob("*.whl"), None)
+        if sample_whl:
+            print("="*60)
+            print(f"⚠ Không có gói wheel riêng khớp với Task: '{TASK_ID}'")
+            print(f"🔄 ĐÃ LẤY 1 GÓI WHEEL MẪU ĐẠI DIỆN: '{sample_whl.name}'")
+            print("="*60 + "\n")
+
+    if sample_whl:
+        print(f"--- KHÁM PHÁ GÓI WHEEL: {sample_whl.name} ---")
+        print(f"Kích thước file: {sample_whl.stat().st_size / 1024:.2f} KB")
+
+        # Đọc danh sách file bên trong gói wheel bằng zipfile
+        with zipfile.ZipFile(sample_whl, "r") as z:
+            file_list = z.namelist()
+            print(f"Tổng số file/thư mục bên trong wheel: {len(file_list)}\n")
+            print("Danh sách toàn bộ các file bên trong gói wheel:")
+            for f in file_list:
+                print(f"  - {f}")
+    else:
+        print("❌ Không tìm thấy bất kỳ file .whl nào trong thư mục wheels/")
+else:
+    print("❌ Thư mục wheels/ không tồn tại trong dataset này.")

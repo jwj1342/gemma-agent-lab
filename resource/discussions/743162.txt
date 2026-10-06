@@ -1,0 +1,19 @@
+# What happens when a submission reaches the 12-hour limit?
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743162
+
+## 3527953 /whisperlast TOPIC
+Hi organizers,
+
+The Evaluation section says the agent has 12 hours to submit patches for all tasks, including sandbox setup, and that per-task limits in `eval_config.yaml` are optional. To pick a sensible per-task budget, it would help to know how the scoring run behaves at the limit:
+
+1. If the 12 hours run out before every task has been attempted, are the patches that were already produced still scored (and the remaining tasks counted as unresolved), or does the whole submission fail with an error?
+2. Are the hidden tasks run one at a time (concurrency 1, as in the `swegemma eval` default) on the 4x L4 machine, or several in parallel?
+3. If `eval_config.yaml` is omitted, is the per-task limit the 60-minute default from HARNESS_README, or is there another cap in the scoring run?
+
+Thanks!
+
+## 3527981 /rahulrathnavel COMMENT
+@whisperlast
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743063#3527819
+
+Kaggle staff answered your questions nearly in this thread so check it out 🙋

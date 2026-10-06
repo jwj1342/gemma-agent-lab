@@ -1,0 +1,10 @@
+# L4 x4 sessions stuck in "Queued" for 8+ hours
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743901
+
+## 3529204 /ahmedalmarwani TOPIC
+Two notebooks (Version #1 and #2) with GPU L4 x4 have been queued for about 8 hours without starting. Is anyone else seeing long L4 queue times, or is there a known capacity issue? Any guidance on expected wait times before the deadline would help. Thanks
+
+## 3529211 /chandramdutta COMMENT
+my tpu run did start after 9 hrs. L4x4 are still on queue. so yeah the capacity is bad 😓.
+
+![](https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F14027805%2F916147fdf286b6f0842733e45f0284d2%2FScreenshot%202026-09-27%20at%208.44.35PM.png?generation=1790527715925123&alt=media)

@@ -1,0 +1,121 @@
+{
+  "forumTopic": {
+    "authorId": 5927283,
+    "authorThumbnailName": "5927283-kg.jpg?t=2023-10-25-03-24-26",
+    "authorUserDisplayName": "ISAKA Tsuyoshi",
+    "authorUserName": "isakatsuyoshi",
+    "comments": [
+      {
+        "id": 3531354,
+        "postDate": "2026-10-01T18:06:11.787Z",
+        "rawMarkdown": "Addressing now.",
+        "content": "<p>Addressing now.</p>",
+        "parent": {},
+        "author": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "progressionOptOut": false
+        },
+        "authorType": "ADMIN",
+        "votes": {
+          "totalVotes": 2,
+          "canUpvote": true,
+          "totalUpvotes": 2
+        },
+        "kernelVersion": 0,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "reactions": [
+          {
+            "emoji": "THANK_YOU",
+            "featuredUserNames": [
+              "isakatsuyoshi"
+            ],
+            "userCount": 1
+          }
+        ],
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Ryan Holbrook",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+            "url": "/ryanholbrook",
+            "userName": "ryanholbrook",
+            "tier": "STAFF",
+            "id": 2003505,
+            "profileUrl": "/ryanholbrook",
+            "performanceTier": "STAFF",
+            "userId": 2003505,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3530962,
+      "postDate": "2026-10-01T04:44:53.597Z",
+      "rawMarkdown": "Hello @ryanholbrook \n\n**Summary**\n`verify_task` should reset agent-modified test/config files before applying `test_patch` (HARNESS_README, \"Anti-Tampering Test & Config Reset\"). In practice nothing gets reset.\n\n**Cause**\nswegemma 0.2.7 (wheelhouse v28), `harness/verification.py` ~L389-412:\n```\ngit checkout HEAD -- <files_to_reset> 2>/dev/null || true\n```\n- `files_to_reset` always includes `sitecustomize.py`, `usercustomize.py` and `_swegemma_stubs.py`. These live in site-packages, not in `/workspace` HEAD.\n- `git checkout` aborts the whole command if any pathspec doesn't match, and the error is swallowed.\n- `git clean -f` still runs, so only added files are removed. Edits to existing test files survive.\n\n**Effect**\nIf the agent edits an existing test file, `test_patch` fails to apply. The task is then scored as failed even when the source fix is correct:\n```\nFailed to apply test_patch: ... Reversed (or previously applied) patch detected\n```\nSeen locally on public tasks, e.g. fastapi_14077 and fastapi_14492. Re-verifying the same patches with the test-file hunks stripped makes them resolve. The Docker path runs the same code.\n\n**Repro**\n```\ngit init -q r && cd r && echo a > t.py && git add t.py && git commit -qm init\necho b > t.py\ngit checkout HEAD -- t.py sitecustomize.py; echo $?   # error: pathspec 'sitecustomize.py' did not match ...; 1\ncat t.py                                              # b (not restored)\n```\n\n**Suggested fix**\nCheck out only the paths that exist in HEAD:\n```\ncd /workspace && git ls-tree -r -z --name-only HEAD -- <files_to_reset> | xargs -0 -r git checkout HEAD --\n```\n\nThanks!",
+      "content": "<p>Hello <a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a> </p>\n<p><strong>Summary</strong>\n<code>verify_task</code> should reset agent-modified test/config files before applying <code>test_patch</code> (HARNESS_README, \"Anti-Tampering Test &amp; Config Reset\"). In practice nothing gets reset.</p>\n<p><strong>Cause</strong>\nswegemma 0.2.7 (wheelhouse v28), <code>harness/verification.py</code> ~L389-412:</p>\n<pre><code>git checkout HEAD -- &lt;files_to_reset&gt; 2&gt;/dev/null || true\n</code></pre>\n<ul>\n<li><code>files_to_reset</code> always includes <code>sitecustomize.py</code>, <code>usercustomize.py</code> and <code>_swegemma_stubs.py</code>. These live in site-packages, not in <code>/workspace</code> HEAD.</li>\n<li><code>git checkout</code> aborts the whole command if any pathspec doesn't match, and the error is swallowed.</li>\n<li><code>git clean -f</code> still runs, so only added files are removed. Edits to existing test files survive.</li>\n</ul>\n<p><strong>Effect</strong>\nIf the agent edits an existing test file, <code>test_patch</code> fails to apply. The task is then scored as failed even when the source fix is correct:</p>\n<pre><code>Failed to apply test_patch: ... Reversed (or previously applied) patch detected\n</code></pre>\n<p>Seen locally on public tasks, e.g. fastapi_14077 and fastapi_14492. Re-verifying the same patches with the test-file hunks stripped makes them resolve. The Docker path runs the same code.</p>\n<p><strong>Repro</strong></p>\n<pre><code>git init -q r &amp;&amp; cd r &amp;&amp; echo a &gt; t.py &amp;&amp; git add t.py &amp;&amp; git commit -qm init\necho b &gt; t.py\ngit checkout HEAD -- t.py sitecustomize.py; echo $?   # error: pathspec 'sitecustomize.py' did not match ...; 1\ncat t.py                                              # b (not restored)\n</code></pre>\n<p><strong>Suggested fix</strong>\nCheck out only the paths that exist in HEAD:</p>\n<pre><code>cd /workspace &amp;&amp; git ls-tree -r -z --name-only HEAD -- &lt;files_to_reset&gt; | xargs -0 -r git checkout HEAD --\n</code></pre>\n<p>Thanks!</p>",
+      "parent": {},
+      "author": {
+        "displayName": "ISAKA Tsuyoshi",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/5927283-kg.jpg?t=2023-10-25-03-24-26",
+        "url": "/isakatsuyoshi",
+        "tier": "MASTER",
+        "id": 5927283,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 2,
+        "canUpvote": true,
+        "totalUpvotes": 2
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 228,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "reactions": [
+        {
+          "emoji": "KAGGLE",
+          "featuredUserNames": [
+            "whisperlast"
+          ],
+          "userCount": 1
+        }
+      ],
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "ISAKA Tsuyoshi",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/5927283-kg.jpg?t=2023-10-25-03-24-26",
+          "url": "/isakatsuyoshi",
+          "userName": "isakatsuyoshi",
+          "tier": "MASTER",
+          "id": 5927283,
+          "profileUrl": "/isakatsuyoshi",
+          "performanceTier": "MASTER",
+          "userId": 5927283,
+          "progressionOptOut": false
+        },
+        "intro": "Aiming for the gold medal!"
+      }
+    },
+    "firstMessageId": 3530962,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 744825,
+    "name": "Test-file reset before test_patch is a no-op (git checkout aborts on missing pathspecs)",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-10-01T04:44:53.597923600Z",
+    "totalVotes": 2,
+    "url": "/competitions/gemma-4-developer-agent/discussion/744825",
+    "totalMessages": 1,
+    "authorPerformanceTier": "MASTER",
+    "authorProgressionOptOut": false
+  }
+}

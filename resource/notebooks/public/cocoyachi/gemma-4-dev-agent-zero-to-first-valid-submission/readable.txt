@@ -1,0 +1,293 @@
+# CELL 0 markdown
+# 🧭 Gemma 4 Dev Agent — Zero to First *Valid* Submission
+
+**Who this is for:** you joined the competition, opened the data tab, and are not sure what a "submission" even is here.
+By the end of this notebook you will have:
+
+1. a clear mental model of how your agent is run and scored,
+2. a feel for the 129 public tasks,
+3. a **clean, minimal agent bundle** you understand line by line,
+4. that bundle **checked with the harness's own validators** (so it doesn't fail after hours in the queue),
+5. a **time-budget calculator** so your run fits the 12-hour limit,
+6. a `submission.zip` in the output panel, ready to submit.
+
+It runs on **CPU in ~3 minutes** — no GPU quota needed. Fork it, change the prompt, re-run, submit.
+
+> If this helps, an upvote keeps it visible for other newcomers 🙏 Questions and corrections are very welcome in the comments.
+
+# CELL 1 markdown
+## 1. The big picture (read this first)
+
+You do **not** submit predictions. You submit an **agent**, described declaratively:
+
+```
+submission.zip
+├── agent.yaml          ← which model, which tools, which prompt
+├── prompts/system.md   ← the instructions your agent follows
+├── configs/sampling.yaml
+└── eval_config.yaml    ← per-task budget (minutes, tool calls, turns)
+```
+
+Kaggle then runs the harness (`swegemma`) on hidden tasks from **private repositories**, one task after another:
+
+| Phase | Where | What happens |
+|---|---|---|
+| 1. Agent | sandbox A (offline, 2 vCPU, 4 GB) | Your agent reads the issue, explores `/workspace`, edits files, calls `submit_patch` |
+| 2. Verify | fresh sandbox B | Your patch is applied, the task's hidden tests run → **resolved** or not |
+
+**Score = fraction of tasks resolved.** The model is fixed (`gemma-4-31b-it-qat-w4a16-ct`, 32k context), so everything you control is *how the agent works*: prompt, tools, budget, sub-agents, skills (and LoRA adapters).
+
+# CELL 2 markdown
+## 2. Setup — install the harness from the wheelhouse
+
+The competition ships its harness as wheels. We only need them to *inspect data* and *validate bundles* — no model is loaded in this notebook.
+
+# CELL 3 code
+import glob, os, subprocess, sys, json, shutil, zipfile
+from pathlib import Path
+
+def first(*patterns):
+    for p in patterns:
+        hits = glob.glob(p)
+        if hits:
+            return Path(hits[0])
+    raise FileNotFoundError(patterns)
+
+DATA = first("/kaggle/input/competitions/gemma-4-developer-agent", "/kaggle/input/gemma-4-developer-agent")
+WHEELS = first("/kaggle/input/datasets/metric/gemma-4-developer-agent-wheelhouse",
+               "/kaggle/input/gemma-4-developer-agent-wheelhouse")
+
+# Kaggle strips '+cu128' from some wheel names; restore it so pip accepts them (same trick as the official starter)
+tmp = Path("/tmp/wheelhouse"); tmp.mkdir(exist_ok=True)
+for w in WHEELS.glob("*.whl"):
+    if "cutlass" in w.name.lower():
+        continue
+    name = w.name.replace("cu128", "+cu128") if ("cu128" in w.name and "+" not in w.name) else w.name
+    if not (tmp / name).exists():
+        os.symlink(w, tmp / name)
+subprocess.run([sys.executable, "-m", "pip", "install", "-q", "--no-deps", "--force-reinstall",
+                *sorted(map(str, tmp.glob("*.whl")))], check=True)
+print("data:", DATA)
+print("installed:", [p.name for p in WHEELS.glob("*.whl") if p.name.startswith(("swegemma", "adk_", "google_adk"))])
+
+# CELL 4 markdown
+## 3. Meet the data
+
+`tasks.jsonl` holds 129 public tasks. Each one is a real GitHub issue/PR with the commit to start from and the reference fix.
+The hidden test tasks come from **other (private) repositories**, so treat these as practice, not as something to memorise.
+
+# CELL 5 code
+import pandas as pd
+tasks = pd.read_json(DATA / "tasks.jsonl", lines=True)
+tasks["patch_lines"] = tasks.patch.str.count("\n")
+tasks["files_changed"] = tasks.patch.str.count(r"(?m)^\+\+\+ ")  # one "+++ b/<file>" header per file
+tasks["issue_chars"] = tasks.problem_statement.str.len()
+print(tasks.shape)
+display(tasks.groupby("repo").agg(tasks=("instance_id", "size"),
+                                  median_patch_lines=("patch_lines", "median"),
+                                  median_files=("files_changed", "median"),
+                                  median_issue_chars=("issue_chars", "median")))
+
+# CELL 6 code
+import matplotlib.pyplot as plt
+fig, ax = plt.subplots(1, 2, figsize=(11, 3.2))
+tasks.patch_lines.clip(upper=200).plot.hist(bins=40, ax=ax[0], color="#2a78d6")
+ax[0].set_title("Reference patch size (lines, clipped at 200)"); ax[0].set_xlabel("lines")
+tasks.files_changed.clip(upper=10).value_counts().sort_index().plot.bar(ax=ax[1], color="#2a78d6")
+ax[1].set_title("Files changed by the reference patch"); ax[1].set_xlabel("files (10 = 10+)")
+plt.tight_layout(); plt.show()
+print(f"{(tasks.files_changed == 1).mean():.0%} of tasks change a single file; "
+      f"median patch = {tasks.patch_lines.median():.0f} lines")
+
+# CELL 7 markdown
+**Takeaway:** most fixes are *small and local*. The hard part is **finding where to edit**, not writing lots of code.
+Your prompt should push the agent to localise quickly, make a minimal edit, and verify it.
+
+Let's look at one task the way your agent sees it (the reference patch is hidden from the agent, of course):
+
+# CELL 8 code
+t = tasks.sort_values("issue_chars").iloc[len(tasks) // 2]
+print("instance:", t.instance_id, "| repo:", t.repo, "| base commit:", t.base_commit[:10])
+print("-" * 80)
+print(t.problem_statement[:1200])
+
+# CELL 9 markdown
+Other files in the data tab, briefly:
+
+| Path | What it is |
+|---|---|
+| `snapshots/*.tgz` | the repository at `base_commit` (what your agent sees in `/workspace`) |
+| `graphs/*.json`, `embeddings/*.npz` | precomputed code graph + node embeddings behind the 3 graph tools |
+| `sample_submission/` | the host's example bundle (see pitfalls below) |
+| `wheels/`, `docker/`, `sandbox/` | offline dependencies and sandbox setup |
+| `HARNESS_README.md` | **the most useful document in this competition** — read it once end to end |
+
+# CELL 10 markdown
+## 4. Anatomy of an agent bundle
+
+Your agent can use these harness tools (attach any subset in `agent.yaml`):
+
+| Tool | Counts toward tool budget | Notes |
+|---|---|---|
+| `run_command` | yes | bash in `/workspace`; **only the first 5,000 characters** of output are returned |
+| `read_file` | yes | max 150 lines / 10,000 chars per call |
+| `edit_file` | yes | string replacement with whitespace-tolerant matching |
+| `write_file` | yes | creates/overwrites a file under `/workspace` |
+| `get_status` | no | remaining time and calls |
+| `submit_patch` | no | stores `git diff` of `/workspace` — call it **last** |
+| `get_code_neighbors`, `search_similar_code`, `get_code_subgraph` | yes | graph tools; see pitfalls |
+
+Now let's write a **minimal, readable** bundle. Every file is short on purpose so you can change it with confidence.
+
+# CELL 11 code
+BUNDLE = Path("/kaggle/working/my_agent")
+shutil.rmtree(BUNDLE, ignore_errors=True)
+(BUNDLE / "prompts").mkdir(parents=True); (BUNDLE / "configs").mkdir()
+
+(BUNDLE / "agent.yaml").write_text("""\
+name: first_agent
+model: gemma-4-31b-it-qat-w4a16-ct        # the only allowed model
+instruction: !include prompts/system.md
+tools:
+  - run_command
+  - read_file
+  - edit_file
+  - write_file
+  - get_status
+  - submit_patch
+generate_content_config: !include configs/sampling.yaml
+""")
+
+(BUNDLE / "configs" / "sampling.yaml").write_text("""\
+temperature: 0.2
+top_p: 0.95
+top_k: 40
+max_output_tokens: 8192
+thinking_config:
+  include_thoughts: false   # thinking off: much faster per turn; many public entries report timeouts with it on
+""")
+
+(BUNDLE / "eval_config.yaml").write_text("""\
+evaluation:
+  timeout_seconds: 120     # max seconds for one shell command
+  max_tool_calls: 40
+  max_time_minutes: 5      # per task — see the budget calculator below
+  max_turns: 100
+""")
+print("\n".join(str(p.relative_to(BUNDLE)) for p in sorted(BUNDLE.rglob("*")) if p.is_file()))
+
+# CELL 12 markdown
+### The system prompt
+
+This is where most of your score comes from. The version below encodes the harness facts that trip people up.
+`{problem_description?}` is filled in by the harness with the issue text (the `?` makes it optional so validation never fails on it);
+putting it **at the end** keeps the task visible even after the conversation is compacted.
+
+# CELL 13 code
+(BUNDLE / "prompts" / "system.md").write_text("""\
+You are an expert software engineer fixing an issue in the repository at /workspace.
+
+## Workflow
+1. Locate: extract file names, functions, classes and error messages from the issue. Find them with
+   `git grep -n "<name>" -- '*.py'` and read only the relevant line ranges with read_file.
+   Ignore pull-request template text and checklists in the issue.
+2. Remember: older tool outputs are dropped as the conversation grows. After each important finding,
+   write one plain sentence stating it (file, function, line).
+3. Fix: make the smallest change that solves the issue with edit_file (small, incremental edits).
+4. Verify: run only the relevant test file, keeping output short:
+   python3 -m pytest tests/test_x.py -k name -q -x > /tmp/t.log 2>&1; tail -n 30 /tmp/t.log
+   (command output is cut after 5,000 characters). Existing unrelated failures can be ignored.
+5. Submit: call submit_patch as your final action and check that patch_size > 0.
+
+## Never
+- Modify or create test files, conftest.py or pytest.ini (they are reset before grading).
+- Run the whole test suite, install packages, or search outside /workspace.
+- Leave scratch files in /workspace (use /tmp), or revert a plausible fix when time is short:
+  the working tree is graded as it is.
+
+## The issue
+{problem_description?}
+""")
+print((BUNDLE / "prompts" / "system.md").read_text()[:400], "...")
+
+# CELL 14 markdown
+## 5. Validate with the harness's own checks (before you spend a submission!)
+
+A bundle that fails validation wastes a day's submission. These are the same functions the scorer calls.
+
+# CELL 15 code
+from swegemma.models.discovery import validate_single_declared_model
+from swegemma.config import ALLOWED_SUBMISSION_EXTENSIONS, MAX_SUBMISSION_SIZE_BYTES
+from adk_submission import validate_directory
+
+print("declared model  :", validate_single_declared_model(BUNDLE))
+validate_directory(BUNDLE)
+print("validate_directory: OK")
+
+bad = [p for p in BUNDLE.rglob("*") if p.is_file() and p.suffix.lower() not in ALLOWED_SUBMISSION_EXTENSIONS]
+size = sum(p.stat().st_size for p in BUNDLE.rglob("*") if p.is_file())
+print("disallowed files:", bad or "none")
+print(f"size: {size:,} bytes (limit {MAX_SUBMISSION_SIZE_BYTES:,})")
+assert not bad and size < MAX_SUBMISSION_SIZE_BYTES
+
+# CELL 16 markdown
+## 6. Budget calculator — will your run fit in 12 hours?
+
+Hidden tasks run **sequentially**, and the whole run must finish within **12 hours**. Container setup and test verification also take time.
+Use this to pick `max_time_minutes`:
+
+# CELL 17 code
+def budget(n_tasks=120, total_hours=12.0, overhead_min_per_task=1.0, safety=0.85):
+    usable = total_hours * 60 * safety
+    return usable / n_tasks - overhead_min_per_task
+
+rows = [(n, oh, round(budget(n, overhead_min_per_task=oh), 1)) for n in (100, 120, 140) for oh in (0.5, 1.0, 1.5)]
+display(pd.DataFrame(rows, columns=["hidden tasks", "setup+verify min/task", "max agent minutes/task"]))
+print("Rule of thumb: ~4–5 agent minutes per task leaves a safety margin.")
+
+# CELL 18 markdown
+## 7. Package `submission.zip`
+
+The archive must have `agent.yaml` **at its root** (not inside a folder).
+
+# CELL 19 code
+zip_path = Path("/kaggle/working/submission.zip")
+with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+    for p in sorted(BUNDLE.rglob("*")):
+        if p.is_file():
+            zf.write(p, p.relative_to(BUNDLE).as_posix())
+with zipfile.ZipFile(zip_path) as zf:
+    names = zf.namelist()
+assert "agent.yaml" in names, "agent.yaml must be at the zip root"
+print(zip_path, f"{zip_path.stat().st_size:,} bytes")
+print(names)
+
+# CELL 20 markdown
+### How to submit
+1. Click **Save Version → Save & Run All (Commit)** (CPU is fine).
+2. Open the saved version → **Output** → `submission.zip` → **Submit** (or use the *Submit to Competition* button).
+3. Scoring runs the full hidden set on the host's GPUs and can take many hours; queues are long at busy times.
+
+CLI alternative: `kaggle competitions submit gemma-4-developer-agent -k <you>/<notebook> -v <version> -f submission.zip -m "msg"`.
+
+# CELL 21 markdown
+## 8. Pitfalls that cost people days (all discussed publicly in the forums)
+
+| Pitfall | What to do |
+|---|---|
+| Submitting `sample_submission/` unchanged | Its budget is 1 minute / 10 tool calls and it has placeholder adapters; build your own bundle (as above) |
+| Thinking on + huge `max_output_tokens` | Turns become slow → run exceeds 12 h. Start with thinking off |
+| Long command outputs | Only the first 5,000 chars come back; pytest's verdict is at the *end* → redirect to a file and `tail` |
+| Editing tests / `conftest.py` | They are reset before grading; fix the library code |
+| Scratch files in `/workspace` | They end up in your patch; use `/tmp` |
+| Graph tools | The shipped graph has no `async def` functions and only `calls` edges (forum topic 742911); `edge_type="CALLS"` returns nothing; `search_similar_code` can return very long outputs. Test them on a few tasks before relying on them |
+| LoRA adapters | Participants report adapters currently have no effect (forum topic 743508); check the thread before training |
+| Daily limit | Validate locally first (Section 5) so a submission is never wasted on a format error |
+
+## 9. Where to go next
+- **Prompt iteration** is the cheapest lever: localisation strategy, verification discipline, pacing.
+- A read-only **analyser sub-agent** (`agent_tool` with `skip_summarization: true`) keeps exploration out of the main context.
+- **Skills** (`skills/<name>/SKILL.md` + `scripts/`) let your agent run your own Python *inside the sandbox* via `run_skill_script` — powerful for custom search tools.
+- Read `HARNESS_README.md` sections 5–8 once; almost every "mysterious" failure is explained there.
+
+Good luck — and if you found this useful, an upvote helps other beginners find it. 🚀

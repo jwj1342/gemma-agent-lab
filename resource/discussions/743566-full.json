@@ -1,0 +1,61 @@
+{
+  "forumTopic": {
+    "authorId": 2411334,
+    "authorThumbnailName": "2411334-kg.jpg",
+    "authorUserDisplayName": "Bharat",
+    "authorUserName": "bharat0",
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3528582,
+      "postDate": "2026-09-26T08:23:41.227Z",
+      "rawMarkdown": "I'm trying to run the swegemma eval in local. I'm using ollama(cloud) for inference.\nI've created the docker image using the Dockefile.public\n\n`docker build -t swebench-sandbox:latest -f Dockerfile.public .`\n\nWhen I ran the eval, for fastapi tasks it is giving \n\n`ModuleNotFoundError: No module named 'typing_inspection'`\n\nand the whl is not there for typing_inspection. So I've to add the wheels manually and run it.\n\nDid anyone face the same issue?\n\n\n",
+      "content": "<p>I'm trying to run the swegemma eval in local. I'm using ollama(cloud) for inference.\nI've created the docker image using the Dockefile.public</p>\n<p><code>docker build -t swebench-sandbox:latest -f Dockerfile.public .</code></p>\n<p>When I ran the eval, for fastapi tasks it is giving </p>\n<p><code>ModuleNotFoundError: No module named 'typing_inspection'</code></p>\n<p>and the whl is not there for typing_inspection. So I've to add the wheels manually and run it.</p>\n<p>Did anyone face the same issue?</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Bharat",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2411334-kg.jpg",
+        "url": "/bharat0",
+        "tier": "CONTRIBUTOR",
+        "id": 2411334,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 1,
+        "canUpvote": true,
+        "totalUpvotes": 1
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 1388,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Bharat",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2411334-kg.jpg",
+          "url": "/bharat0",
+          "userName": "bharat0",
+          "tier": "CONTRIBUTOR",
+          "id": 2411334,
+          "profileUrl": "/bharat0",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 2411334,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3528582,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 743566,
+    "name": "Local eval with docker sandbox, Error Module not found",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-26T08:23:41.227991500Z",
+    "totalVotes": 1,
+    "url": "/competitions/gemma-4-developer-agent/discussion/743566",
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

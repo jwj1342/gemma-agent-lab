@@ -1,0 +1,368 @@
+# CELL 0 code
+# This Python 3 environment comes with many helpful analytics libraries installed
+# It is defined by the kaggle/python Docker image: https://github.com/kaggle/docker-python
+# For example, here's several helpful packages to load
+
+import numpy as np # linear algebra
+import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
+
+# Input data files are available in the read-only "../input/" directory
+# For example, running this (by clicking run or pressing Shift+Enter) will list all files under the input directory
+
+import os
+for dirname, _, filenames in os.walk('/kaggle/input'):
+    for filename in filenames:
+        print(os.path.join(dirname, filename))
+
+# You can write up to 20GB to the current directory (/kaggle/working/) that gets preserved as output when you create a version using "Save & Run All" 
+# You can also write temporary files to /kaggle/temp/, but they won't be saved outside of the current session
+
+# Use the kagglehub client library to attach Kaggle resources like competitions, datasets, and models to your session
+# Learn more about kagglehub: https://github.com/Kaggle/kagglehub/blob/main/README.md
+
+import kagglehub
+# kagglehub.dataset_download('<owner>/<dataset-slug>')
+
+# CELL 1 code
+!pip -q install -U transformers accelerate datasets sentencepiece
+
+import os
+import re
+import json
+import time
+import glob
+import subprocess
+from pathlib import Path
+
+import torch
+import pandas as pd
+from transformers import AutoProcessor, AutoModelForImageTextToText
+
+# CELL 2 code
+MODEL_CANDIDATES = [
+    "/kaggle/input/gemma-4-31b-it-qat-w4a16-ct",
+    "/kaggle/input/gemma-4-31b-it-qat-w4a16-ct/1",
+    "google/gemma-4-31B-it-qat-w4a16-ct"
+]
+
+MODEL_PATH = None
+
+for p in MODEL_CANDIDATES:
+    if p.startswith("/kaggle/input"):
+        if os.path.exists(p):
+            MODEL_PATH = p
+            break
+    else:
+        MODEL_PATH = p
+
+print("MODEL:", MODEL_PATH)
+
+# CELL 3 code
+!pip install -q "compressed-tensors>=0.15.0"
+
+# CELL 4 code
+import compressed_tensors
+print(compressed_tensors.__version__)
+
+# CELL 5 code
+%pip install -U "compressed-tensors>=0.15.0"
+
+# CELL 6 code
+import torch
+import transformers
+import compressed_tensors
+
+print("Torch:", torch.__version__)
+print("CUDA available:", torch.cuda.is_available())
+print("CUDA version:", torch.version.cuda)
+print("Transformers:", transformers.__version__)
+print("Compressed tensors:", compressed_tensors.__version__)
+
+# CELL 7 code
+%pip uninstall -y transformers
+%pip install --no-cache-dir git+https://github.com/huggingface/transformers.git
+
+# CELL 8 code
+import sys
+import subprocess
+
+subprocess.check_call([
+    sys.executable, "-m", "pip", "install",
+    "--no-cache-dir",
+    "compressed-tensors>=0.15.0"
+])
+
+import compressed_tensors
+print("compressed-tensors:", compressed_tensors.__version__)
+
+# CELL 9 code
+import transformers
+print("Transformers:", transformers.__version__)
+print("Path:", transformers.__file__)
+
+# CELL 10 code
+import sys
+import subprocess
+
+subprocess.check_call([
+    sys.executable,
+    "-m",
+    "pip",
+    "install",
+    "--no-cache-dir",
+    "--upgrade",
+    "--force-reinstall",
+    "git+https://github.com/huggingface/transformers.git"
+])
+
+subprocess.check_call([
+    sys.executable,
+    "-m",
+    "pip",
+    "install",
+    "--no-cache-dir",
+    "--upgrade",
+    "compressed-tensors>=0.15.0"
+])
+
+print("Installation complete. Restart the Kaggle session now.")
+
+# CELL 11 code
+import transformers
+import compressed_tensors
+
+print("Transformers:", transformers.__version__)
+print("Transformers path:", transformers.__file__)
+print("Compressed tensors:", compressed_tensors.__version__)
+
+# CELL 12 code
+from transformers.models.gemma4.configuration_gemma4 import Gemma4Config
+
+print("Gemma4 model type:", Gemma4Config.model_type)
+
+# CELL 13 code
+import torch
+import transformers
+import compressed_tensors
+
+print("Transformers:", transformers.__version__)
+print("Compressed tensors:", compressed_tensors.__version__)
+print("CUDA:", torch.cuda.is_available())
+print("GPU:", torch.cuda.get_device_name(0) if torch.cuda.is_available() else "NONE")
+
+# CELL 14 code
+from transformers import AutoConfig
+
+MODEL_PATH = "/kaggle/input/models/google/gemma-4/other/gemma-4-31b-it-qat-w4a16-ct/2"
+
+config = AutoConfig.from_pretrained(MODEL_PATH)
+
+print("Config class:", type(config).__name__)
+print("Model type:", config.model_type)
+
+# CELL 15 code
+from transformers import AutoProcessor
+
+processor = AutoProcessor.from_pretrained(MODEL_PATH)
+
+print("Processor loaded:", type(processor).__name__)
+
+# CELL 16 code
+from transformers import AutoModelForMultimodalLM
+
+model = AutoModelForMultimodalLM.from_pretrained(
+    MODEL_PATH,
+    device_map="auto",
+    dtype="auto"
+)
+
+model.eval()
+
+print("Model loaded:", type(model).__name__)
+
+# CELL 17 code
+import gc
+import torch
+
+gc.collect()
+torch.cuda.empty_cache()
+
+print(torch.cuda.memory_allocated() / 1024**3, "GB allocated")
+print(torch.cuda.memory_reserved() / 1024**3, "GB reserved")
+
+# CELL 18 code
+import torch
+import transformers
+import compressed_tensors
+
+print("Transformers:", transformers.__version__)
+print("Compressed tensors:", compressed_tensors.__version__)
+print("CUDA:", torch.cuda.is_available())
+print("GPU:", torch.cuda.get_device_name(0))
+print("Allocated:", round(torch.cuda.memory_allocated() / 1024**3, 2), "GB")
+print("Reserved:", round(torch.cuda.memory_reserved() / 1024**3, 2), "GB")
+
+# CELL 19 code
+import torch
+import gc
+
+print("=== PYTORCH ===")
+print("Allocated:", torch.cuda.memory_allocated() / 1024**3, "GB")
+print("Reserved:", torch.cuda.memory_reserved() / 1024**3, "GB")
+
+print("\n=== NVIDIA-SMI ===")
+
+# CELL 20 code
+!nvidia-smi
+
+# CELL 21 code
+import gc
+import torch
+
+cuda_tensors = []
+
+for obj in gc.get_objects():
+    try:
+        if torch.is_tensor(obj) and obj.is_cuda:
+            cuda_tensors.append(obj)
+    except:
+        pass
+
+cuda_tensors = sorted(
+    cuda_tensors,
+    key=lambda x: x.numel() * x.element_size(),
+    reverse=True
+)
+
+print("CUDA tensors:", len(cuda_tensors))
+
+for t in cuda_tensors[:20]:
+    size_gb = t.numel() * t.element_size() / 1024**3
+    print(
+        "shape=", tuple(t.shape),
+        "dtype=", t.dtype,
+        "device=", t.device,
+        "size=", round(size_gb, 3), "GB"
+    )
+
+# CELL 22 code
+import gc
+import sys
+import torch
+
+for name in list(globals()):
+    if name not in {"gc", "sys", "torch"}:
+        try:
+            obj = globals()[name]
+            if torch.is_tensor(obj) or hasattr(obj, "parameters"):
+                del globals()[name]
+        except:
+            pass
+
+sys.last_traceback = None
+sys.last_value = None
+sys.last_type = None
+
+gc.collect()
+torch.cuda.empty_cache()
+torch.cuda.ipc_collect()
+
+print("Allocated:", round(torch.cuda.memory_allocated() / 1024**3, 3), "GB")
+print("Reserved:", round(torch.cuda.memory_reserved() / 1024**3, 3), "GB")
+
+# CELL 23 code
+print([x for x in globals().keys() if "model" in x.lower()])
+
+# CELL 24 code
+!nvidia-smi
+
+# CELL 25 code
+import torch
+
+print("CUDA:", torch.cuda.is_available())
+print("GPU count:", torch.cuda.device_count())
+
+for i in range(torch.cuda.device_count()):
+    free, total = torch.cuda.mem_get_info(i)
+    print(
+        f"GPU {i}:",
+        torch.cuda.get_device_name(i),
+        "free:", round(free / 1024**3, 2),
+        "GB /",
+        round(total / 1024**3, 2),
+        "GB"
+    )
+
+# CELL 26 code
+!nvidia-smi
+
+
+
+# CELL 27 code
+import torch
+
+print("GPU count:", torch.cuda.device_count())
+
+for i in range(torch.cuda.device_count()):
+    free, total = torch.cuda.mem_get_info(i)
+    print(
+        f"GPU {i}: {free/1024**3:.2f} GB free / {total/1024**3:.2f} GB"
+    )
+
+# CELL 28 code
+import transformers
+import compressed_tensors
+
+print("Transformers:", transformers.__version__)
+print("Compressed tensors:", compressed_tensors.__version__)
+
+from transformers.models.gemma4.configuration_gemma4 import Gemma4Config
+print("Gemma:", Gemma4Config.model_type)
+
+# CELL 29 code
+!nvidia-smi --query-gpu=index,memory.used,memory.free,memory.total --format=csv
+
+# CELL 30 code
+import os
+import signal
+
+os.kill(os.getpid(), signal.SIGKILL)
+
+# CELL 31 code
+!nvidia-smi --query-gpu=index,memory.used,memory.free,memory.total --format=csv
+
+# CELL 32 code
+from transformers import AutoProcessor
+
+MODEL_PATH = "/kaggle/input/models/google/gemma-4/other/gemma-4-31b-it-qat-w4a16-ct/2"
+
+processor = AutoProcessor.from_pretrained(MODEL_PATH)
+
+print("Processor:", type(processor).__name__)
+
+# CELL 33 code
+from transformers import AutoModelForMultimodalLM
+
+model = AutoModelForMultimodalLM.from_pretrained(
+    MODEL_PATH,
+    device_map="balanced_low_0",
+    max_memory={
+        0: "13GiB",
+        1: "13GiB",
+        "cpu": "24GiB"
+    },
+    offload_folder="/kaggle/working/gemma_offload",
+    offload_state_dict=True,
+    dtype="auto"
+)
+
+model.eval()
+
+print("Loaded:", type(model).__name__)
+print(model.hf_device_map)
+
+# CELL 34 code
+!vllm serve google/gemma-4-31B-it-qat-w4a16-ct
+
+# CELL 35 code
+!7z i | head -5

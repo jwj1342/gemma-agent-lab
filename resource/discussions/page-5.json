@@ -1,0 +1,172 @@
+{
+  "topics": [
+    {
+      "id": 744054,
+      "title": "L4 ×4 session queued for 13 hours—still hasn’t started",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/744054",
+      "commentCount": 9,
+      "votes": 5,
+      "postDate": "2026-09-28T13:02:11.083Z",
+      "lastCommentPostDate": "2026-09-28T21:48:57.213Z"
+    },
+    {
+      "id": 743297,
+      "title": "Prize payout eligibility for participants residing in Russia",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/743297",
+      "commentCount": 1,
+      "postDate": "2026-09-25T14:50:34.506Z",
+      "lastCommentPostDate": "2026-09-28T17:25:32.773Z"
+    },
+    {
+      "id": 744099,
+      "title": "Does the time between submitting and the scoring include queue time?",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/744099",
+      "votes": 1,
+      "postDate": "2026-09-28T16:59:09.757Z",
+      "lastCommentPostDate": "2026-09-28T16:59:09.756Z"
+    },
+    {
+      "id": 744078,
+      "title": "Possible mismatch between published task base commits and snapshots",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/744078",
+      "postDate": "2026-09-28T15:16:06.011Z",
+      "lastCommentPostDate": "2026-09-28T15:16:06.013Z"
+    },
+    {
+      "id": 744070,
+      "title": "Can the scoring server load Gemma 4 LoRA adapters?",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/744070",
+      "commentCount": 1,
+      "votes": 1,
+      "postDate": "2026-09-28T14:36:22.378Z",
+      "lastCommentPostDate": "2026-09-28T14:48:48.126Z"
+    },
+    {
+      "id": 744029,
+      "title": "swegemma 0.2.7: unpacked-wheel cache ignores the wheel set, so added wheels have no effect locally",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/744029",
+      "postDate": "2026-09-28T10:23:54.893Z",
+      "lastCommentPostDate": "2026-09-28T10:23:54.893Z"
+    },
+    {
+      "id": 743957,
+      "title": "Onboarding notebook: what the 129 public fixes look like (+ a Kaggle survival kit)",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/743957",
+      "votes": 3,
+      "postDate": "2026-09-28T00:22:55.385Z",
+      "lastCommentPostDate": "2026-09-28T00:22:55.386Z"
+    },
+    {
+      "id": 743901,
+      "title": "L4 x4 sessions stuck in \"Queued\" for 8+ hours",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/743901",
+      "commentCount": 1,
+      "votes": 6,
+      "postDate": "2026-09-27T16:14:21.372Z",
+      "lastCommentPostDate": "2026-09-27T16:49:24.026Z"
+    },
+    {
+      "id": 743600,
+      "title": "Getting gpu l4*4 queued and system errror",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/743600",
+      "commentCount": 4,
+      "votes": 11,
+      "postDate": "2026-09-26T09:13:18.132Z",
+      "lastCommentPostDate": "2026-09-27T15:55:51.816Z"
+    },
+    {
+      "id": 743800,
+      "title": "Which google-adk versions and YAML features does the official evaluator support?",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/743800",
+      "commentCount": 2,
+      "votes": 1,
+      "postDate": "2026-09-27T06:28:38.330Z",
+      "lastCommentPostDate": "2026-09-27T11:05:56.893Z"
+    },
+    {
+      "id": 743817,
+      "title": "Task Verification Question",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/743817",
+      "commentCount": 1,
+      "votes": 1,
+      "postDate": "2026-09-27T08:11:45.042Z",
+      "lastCommentPostDate": "2026-09-27T10:58:17.303Z"
+    },
+    {
+      "id": 743275,
+      "title": "Past Competition Reference ? (Anyone)",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/743275",
+      "commentCount": 3,
+      "votes": 3,
+      "postDate": "2026-09-25T13:53:29.333Z",
+      "lastCommentPostDate": "2026-09-27T07:41:21.176Z"
+    },
+    {
+      "id": 743316,
+      "title": "The $65k prize is cheaper than the GPUs you need to win it...",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/743316",
+      "commentCount": 5,
+      "votes": -1,
+      "postDate": "2026-09-25T16:31:29.988Z",
+      "lastCommentPostDate": "2026-09-26T23:47:32.206Z"
+    },
+    {
+      "id": 743752,
+      "title": "Query regarding scorer config",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/743752",
+      "votes": 1,
+      "postDate": "2026-09-26T19:39:36.364Z",
+      "lastCommentPostDate": "2026-09-26T19:39:36.363Z"
+    },
+    {
+      "id": 743751,
+      "title": "Needs clarifications on Agent Architecture + Graph/Embeddings",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/743751",
+      "votes": 1,
+      "postDate": "2026-09-26T19:32:18.001Z",
+      "lastCommentPostDate": "2026-09-26T19:32:18.003Z"
+    },
+    {
+      "id": 743715,
+      "title": "computing resources",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/743715",
+      "commentCount": 10,
+      "postDate": "2026-09-26T14:58:44.801Z",
+      "lastCommentPostDate": "2026-09-26T19:07:05.666Z"
+    },
+    {
+      "id": 743743,
+      "title": "You can run Gemma 4 31B QAT locally with llama.cpp",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/743743",
+      "postDate": "2026-09-26T18:55:06.948Z",
+      "lastCommentPostDate": "2026-09-26T18:55:06.950Z"
+    },
+    {
+      "id": 743308,
+      "title": "VRAM to run Gemma locally",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/743308",
+      "commentCount": 2,
+      "votes": 1,
+      "postDate": "2026-09-25T16:08:26.145Z",
+      "lastCommentPostDate": "2026-09-26T18:24:37.830Z"
+    },
+    {
+      "id": 743687,
+      "title": "Clima e vida cotidiana",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/743687",
+      "votes": -4,
+      "postDate": "2026-09-26T12:22:17.536Z",
+      "lastCommentPostDate": "2026-09-26T12:22:17.536Z"
+    },
+    {
+      "id": 743213,
+      "title": "Official sample_submission scores FAILED — are submitted adapters meant to be registered as named LoRA modules?",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/743213",
+      "commentCount": 13,
+      "votes": 4,
+      "postDate": "2026-09-25T08:40:06.426Z",
+      "lastCommentPostDate": "2026-09-26T11:52:05.560Z"
+    }
+  ],
+  "totalCount": 116
+}

@@ -1,0 +1,112 @@
+{
+  "forumTopic": {
+    "authorId": 4182392,
+    "authorThumbnailName": "default-thumb.png",
+    "authorUserDisplayName": "ming zhao99",
+    "authorUserName": "mingzhao99",
+    "comments": [
+      {
+        "id": 3532723,
+        "postDate": "2026-10-04T14:04:30.363Z",
+        "rawMarkdown": "Update: 35 tasks were affected by missing test dependencies",
+        "content": "<p>Update: 35 tasks were affected by missing test dependencies</p>",
+        "parent": {},
+        "author": {
+          "displayName": "ming zhao99",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/mingzhao99",
+          "tier": "CONTRIBUTOR",
+          "id": 4182392,
+          "progressionOptOut": false
+        },
+        "authorType": "TOPIC",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "ming zhao99",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+            "url": "/mingzhao99",
+            "userName": "mingzhao99",
+            "tier": "CONTRIBUTOR",
+            "id": 4182392,
+            "profileUrl": "/mingzhao99",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 4182392,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3532652,
+      "postDate": "2026-10-04T10:32:37.240Z",
+      "rawMarkdown": "## Summary\n\nDuring local evaluation of the supplied tasks, some FastAPI tests failed during collection because `inline-snapshot` and `dirty-equals` were unavailable in the test container.\n\nThese packages are imported by existing tests in the supplied repository snapshots. We want to confirm the official environment requirements before installing a local workaround.\n\nThis report describes a local reproduction. It does not establish that the official Kaggle evaluation environment has the same issue.\n\n## Reproduction environment\n\n- Model: `gemma-4-31b-it-qat-w4a16-ct`.\n- Evaluation: local evaluation harness with Docker sandbox.\n- Sandbox image: `swebench-sandbox:latest`, built from the project's `docker/Dockerfile.sandbox`.\n- Container Python: 3.13.\n- Tasks and repository snapshots: supplied competition data.\n\nThe Dockerfile does not explicitly install either package. Other repository dependencies are installed through the evaluation setup; the question is whether that setup should also provision these test dependencies.\n\n## Example 1: fastapi_14978\n\nTest collection includes `tests/test_tutorial/test_body/test_tutorial001.py` and fails with:\n\n```text\nfrom inline_snapshot import snapshot\nModuleNotFoundError: No module named 'inline_snapshot'\n```\n\nThe supplied `snapshots/fastapi_14978.tgz` contains a `pyproject.toml` that declares:\n\n```toml\n\"dirty-equals >=0.9.0\",\n\"inline-snapshot >=0.21.1\",\n```\n\nThe test's import is present in the repository snapshot; it was not introduced by the agent patch.\n\nThis task also reports separate implementation errors, such as an unsupported `strict_content_type` argument. Those errors should not be attributed to missing dependencies. Installing the packages alone would not establish that the task is solved.\n\n## Example 2: fastapi_14356\n\nTest collection fails in `tests/test_tutorial/test_header_param_models/test_tutorial003.py`:\n\n```text\nfrom dirty_equals import IsDict\nModuleNotFoundError: No module named 'dirty_equals'\n```\n\nThis import is also present in the supplied repository snapshot.\n\n## Observed impact\n\nThe evaluator cannot complete the selected tests when collection fails on these imports. Missing packages can therefore obscure whether an implementation patch is correct.\n\nA test exit code of 2 is not sufficient to identify a dependency problem: other tasks also fail collection because of incomplete implementations. The examples above are identified by their explicit ModuleNotFoundError messages.\n\n## Questions for the organizers\n\n1. Does the official Kaggle evaluation environment already include these dependencies?\n2. Should the harness automatically install each repository's test dependencies? If so, which setup step should we check locally?\n3. Is there a supported dependency manifest or wheel bundle for reproducing the official environment?\n4. If these packages are also missing in official evaluation, could the environment or setup instructions be updated?\n\n## Workaround status\n\nWe have not installed these packages as a workaround for these evaluation runs. We want local evaluation to match the official environment before changing the sandbox.\n\n## Local evidence\n\nThese paths are local evidence references, not public download links. Relevant excerpts can be attached to the Kaggle report.\n\n- `results/summary.json`: per-task test output for this experiment.\n- `results/logs/tests/`: saved test output files.\n- Project `snapshots/fastapi_14978.tgz`: dependency declarations and existing test import.\n- Project `snapshots/fastapi_14356.tgz`: existing test import.\n- Project `docker/Dockerfile.sandbox`: base sandbox installation.\n\nNo credentials or API authentication data are included in this report.\n",
+      "content": "<h2>Summary</h2>\n<p>During local evaluation of the supplied tasks, some FastAPI tests failed during collection because <code>inline-snapshot</code> and <code>dirty-equals</code> were unavailable in the test container.</p>\n<p>These packages are imported by existing tests in the supplied repository snapshots. We want to confirm the official environment requirements before installing a local workaround.</p>\n<p>This report describes a local reproduction. It does not establish that the official Kaggle evaluation environment has the same issue.</p>\n<h2>Reproduction environment</h2>\n<ul>\n<li>Model: <code>gemma-4-31b-it-qat-w4a16-ct</code>.</li>\n<li>Evaluation: local evaluation harness with Docker sandbox.</li>\n<li>Sandbox image: <code>swebench-sandbox:latest</code>, built from the project's <code>docker/Dockerfile.sandbox</code>.</li>\n<li>Container Python: 3.13.</li>\n<li>Tasks and repository snapshots: supplied competition data.</li>\n</ul>\n<p>The Dockerfile does not explicitly install either package. Other repository dependencies are installed through the evaluation setup; the question is whether that setup should also provision these test dependencies.</p>\n<h2>Example 1: fastapi_14978</h2>\n<p>Test collection includes <code>tests/test_tutorial/test_body/test_tutorial001.py</code> and fails with:</p>\n<pre><code>from inline_snapshot import snapshot\nModuleNotFoundError: No module named 'inline_snapshot'\n</code></pre>\n<p>The supplied <code>snapshots/fastapi_14978.tgz</code> contains a <code>pyproject.toml</code> that declares:</p>\n<pre><code>\"dirty-equals &gt;=0.9.0\",\n\"inline-snapshot &gt;=0.21.1\",\n</code></pre>\n<p>The test's import is present in the repository snapshot; it was not introduced by the agent patch.</p>\n<p>This task also reports separate implementation errors, such as an unsupported <code>strict_content_type</code> argument. Those errors should not be attributed to missing dependencies. Installing the packages alone would not establish that the task is solved.</p>\n<h2>Example 2: fastapi_14356</h2>\n<p>Test collection fails in <code>tests/test_tutorial/test_header_param_models/test_tutorial003.py</code>:</p>\n<pre><code>from dirty_equals import IsDict\nModuleNotFoundError: No module named 'dirty_equals'\n</code></pre>\n<p>This import is also present in the supplied repository snapshot.</p>\n<h2>Observed impact</h2>\n<p>The evaluator cannot complete the selected tests when collection fails on these imports. Missing packages can therefore obscure whether an implementation patch is correct.</p>\n<p>A test exit code of 2 is not sufficient to identify a dependency problem: other tasks also fail collection because of incomplete implementations. The examples above are identified by their explicit ModuleNotFoundError messages.</p>\n<h2>Questions for the organizers</h2>\n<ol>\n<li>Does the official Kaggle evaluation environment already include these dependencies?</li>\n<li>Should the harness automatically install each repository's test dependencies? If so, which setup step should we check locally?</li>\n<li>Is there a supported dependency manifest or wheel bundle for reproducing the official environment?</li>\n<li>If these packages are also missing in official evaluation, could the environment or setup instructions be updated?</li>\n</ol>\n<h2>Workaround status</h2>\n<p>We have not installed these packages as a workaround for these evaluation runs. We want local evaluation to match the official environment before changing the sandbox.</p>\n<h2>Local evidence</h2>\n<p>These paths are local evidence references, not public download links. Relevant excerpts can be attached to the Kaggle report.</p>\n<ul>\n<li><code>results/summary.json</code>: per-task test output for this experiment.</li>\n<li><code>results/logs/tests/</code>: saved test output files.</li>\n<li>Project <code>snapshots/fastapi_14978.tgz</code>: dependency declarations and existing test import.</li>\n<li>Project <code>snapshots/fastapi_14356.tgz</code>: existing test import.</li>\n<li>Project <code>docker/Dockerfile.sandbox</code>: base sandbox installation.</li>\n</ul>\n<p>No credentials or API authentication data are included in this report.</p>",
+      "parent": {},
+      "author": {
+        "displayName": "ming zhao99",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+        "url": "/mingzhao99",
+        "tier": "CONTRIBUTOR",
+        "id": 4182392,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 3,
+        "canUpvote": true,
+        "totalUpvotes": 3
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "reactions": [
+        {
+          "emoji": "THANK_YOU",
+          "featuredUserNames": [
+            "chrstfer",
+            "moazeldegwy",
+            "dronadhikari",
+            "iamjgarciao"
+          ],
+          "userCount": 4
+        }
+      ],
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "ming zhao99",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/mingzhao99",
+          "userName": "mingzhao99",
+          "tier": "CONTRIBUTOR",
+          "id": 4182392,
+          "profileUrl": "/mingzhao99",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 4182392,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3532652,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 745775,
+    "name": "Missing FastAPI test dependencies in the evaluation sandbox",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-10-04T10:32:37.239001400Z",
+    "totalVotes": 3,
+    "url": "/competitions/gemma-4-developer-agent/discussion/745775",
+    "totalMessages": 1,
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

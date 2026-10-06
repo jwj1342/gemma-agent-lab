@@ -1,0 +1,10 @@
+{
+  "messages": [
+    {
+      "id": 3531741,
+      "postDate": "2026-10-02T14:36:21.057Z",
+      "content": "<p>Are adapters placed in the adapters/ directory definitely loaded and applied to the Gemma 4 checkpoint during official evaluation?\nIf yes, are there any restrictions on adapter architecture, rank, size, or training method?</p>",
+      "rawMarkdown": "Are adapters placed in the adapters/ directory definitely loaded and applied to the Gemma 4 checkpoint during official evaluation?\nIf yes, are there any restrictions on adapter architecture, rank, size, or training method?"
+    }
+  ]
+}

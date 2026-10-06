@@ -1,0 +1,136 @@
+{
+  "topics": [
+    {
+      "id": 743383,
+      "title": "Rules: Only LORA allowed?",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/743383",
+      "commentCount": 5,
+      "votes": 1,
+      "postDate": "2026-09-25T20:22:57.264Z",
+      "lastCommentPostDate": "2026-09-26T11:46:00.320Z"
+    },
+    {
+      "id": 743573,
+      "title": "How to package and resolve custom Python tools in submission.zip given adk-submission's closed ToolRegistry?",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/743573",
+      "commentCount": 1,
+      "votes": 1,
+      "postDate": "2026-09-26T08:40:56.274Z",
+      "lastCommentPostDate": "2026-09-26T11:38:42.686Z"
+    },
+    {
+      "id": 742911,
+      "title": "Two data issues: half the graph/embedding files download empty, and the graphs contain no async functions",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/742911",
+      "commentCount": 4,
+      "votes": 8,
+      "postDate": "2026-09-24T03:08:51.350Z",
+      "lastCommentPostDate": "2026-09-26T11:37:01.650Z"
+    },
+    {
+      "id": 743663,
+      "title": "How much of the submission runtime is excluded as patch validation?",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/743663",
+      "commentCount": 2,
+      "votes": 2,
+      "postDate": "2026-09-26T10:43:31.500Z",
+      "lastCommentPostDate": "2026-09-26T11:29:27.233Z"
+    },
+    {
+      "id": 743661,
+      "title": " Anyone else getting \"Notebook Exceeded Allowed Compute\" ~2 hours into evaluation?",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/743661",
+      "commentCount": 2,
+      "votes": 3,
+      "postDate": "2026-09-26T10:41:25.957Z",
+      "lastCommentPostDate": "2026-09-26T11:00:26.093Z"
+    },
+    {
+      "id": 743566,
+      "title": "Local eval with docker sandbox, Error Module not found",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/743566",
+      "votes": 1,
+      "postDate": "2026-09-26T08:23:41.227Z",
+      "lastCommentPostDate": "2026-09-26T08:23:41.226Z"
+    },
+    {
+      "id": 743457,
+      "title": "First scored run on the board 🎉",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/743457",
+      "commentCount": 1,
+      "postDate": "2026-09-26T04:46:11.605Z",
+      "lastCommentPostDate": "2026-09-26T07:29:30.176Z"
+    },
+    {
+      "id": 743506,
+      "title": "The public leaderboard has exactly 58 tasks",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/743506",
+      "votes": 9,
+      "postDate": "2026-09-26T06:00:05.963Z",
+      "lastCommentPostDate": "2026-09-26T06:00:05.963Z"
+    },
+    {
+      "id": 743456,
+      "title": "Does events compaction ever trigger before the context limit?",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/743456",
+      "votes": 1,
+      "postDate": "2026-09-26T04:45:36.125Z",
+      "lastCommentPostDate": "2026-09-26T04:45:36.126Z"
+    },
+    {
+      "id": 743365,
+      "title": "Budgeting the 12-hour run",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/743365",
+      "postDate": "2026-09-25T18:40:54.426Z",
+      "lastCommentPostDate": "2026-09-25T18:40:54.426Z"
+    },
+    {
+      "id": 743353,
+      "title": "Not able to download data",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/743353",
+      "commentCount": 3,
+      "postDate": "2026-09-25T18:09:46.200Z",
+      "lastCommentPostDate": "2026-09-25T18:34:51.520Z"
+    },
+    {
+      "id": 743263,
+      "title": "Title: 13-year-old participant eligibility with parental consent",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/743263",
+      "commentCount": 1,
+      "postDate": "2026-09-25T12:42:30.835Z",
+      "lastCommentPostDate": "2026-09-25T14:18:23.503Z"
+    },
+    {
+      "id": 743056,
+      "title": "Gemma4 allowed variant",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/743056",
+      "commentCount": 4,
+      "postDate": "2026-09-24T19:01:33.990Z",
+      "lastCommentPostDate": "2026-09-25T13:37:58.260Z"
+    },
+    {
+      "id": 743241,
+      "title": "Accessibility request: direct email contact with competition organizers — Support #261909",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/743241",
+      "postDate": "2026-09-25T10:36:17.099Z",
+      "lastCommentPostDate": "2026-09-25T10:36:17.100Z"
+    },
+    {
+      "id": 743162,
+      "title": "What happens when a submission reaches the 12-hour limit?",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/743162",
+      "commentCount": 1,
+      "postDate": "2026-09-25T04:19:22.893Z",
+      "lastCommentPostDate": "2026-09-25T06:00:07.183Z"
+    },
+    {
+      "id": 743106,
+      "title": "GPU Access",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/743106",
+      "commentCount": 2,
+      "postDate": "2026-09-24T22:52:28.754Z",
+      "lastCommentPostDate": "2026-09-25T03:24:44.420Z"
+    }
+  ],
+  "totalCount": 116
+}

@@ -1,0 +1,171 @@
+{
+  "topics": [
+    {
+      "id": 745151,
+      "title": "Failed patches and retry behavior",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/745151",
+      "postDate": "2026-10-02T14:34:55.674Z",
+      "lastCommentPostDate": "2026-10-02T14:34:55.673Z"
+    },
+    {
+      "id": 745143,
+      "title": "gemma4-swe-kit: open-source local evaluation tools that behave like the scorer's vLLM",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/745143",
+      "votes": 1,
+      "postDate": "2026-10-02T13:56:44.297Z",
+      "lastCommentPostDate": "2026-10-02T13:56:44.296Z"
+    },
+    {
+      "id": 744272,
+      "title": "Tool results reach the model double-JSON-encoded: a line of code with quotes turns into a wall of backslashes",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/744272",
+      "commentCount": 6,
+      "votes": 7,
+      "postDate": "2026-09-29T07:18:38.207Z",
+      "lastCommentPostDate": "2026-10-02T13:32:23.253Z"
+    },
+    {
+      "id": 745138,
+      "title": "vLLM's Gemma 4 tool-argument parser can loop forever on some malformed array arguments",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/745138",
+      "postDate": "2026-10-02T13:30:50.604Z",
+      "lastCommentPostDate": "2026-10-02T13:30:50.603Z"
+    },
+    {
+      "id": 744794,
+      "title": "Several harness issues make results hard to trust: request for fixes and a status update",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/744794",
+      "commentCount": 2,
+      "votes": 3,
+      "postDate": "2026-10-01T00:38:13.461Z",
+      "lastCommentPostDate": "2026-10-02T12:38:05.896Z"
+    },
+    {
+      "id": 744354,
+      "title": "Thinking mode drops the model's thoughts between tool calls (vLLM ignores `reasoning_content`). Will the scoring environment be patched?",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/744354",
+      "commentCount": 6,
+      "votes": 10,
+      "postDate": "2026-09-29T14:05:56.996Z",
+      "lastCommentPostDate": "2026-10-01T21:35:47.470Z"
+    },
+    {
+      "id": 745027,
+      "title": "[Paper Track] Making a Legacy PHP Monolith Verifiable for a Gemma 4 Bug-Fixing Agent",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/745027",
+      "votes": 1,
+      "postDate": "2026-10-01T20:35:22.851Z",
+      "lastCommentPostDate": "2026-10-01T20:35:22.853Z"
+    },
+    {
+      "id": 745003,
+      "title": "old_string issue",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/745003",
+      "commentCount": 1,
+      "postDate": "2026-10-01T19:21:15.530Z",
+      "lastCommentPostDate": "2026-10-01T19:50:42.320Z"
+    },
+    {
+      "id": 744825,
+      "title": "Test-file reset before test_patch is a no-op (git checkout aborts on missing pathspecs)",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/744825",
+      "commentCount": 1,
+      "votes": 2,
+      "postDate": "2026-10-01T04:44:53.597Z",
+      "lastCommentPostDate": "2026-10-01T18:06:11.786Z"
+    },
+    {
+      "id": 744924,
+      "title": "Test on a Small Public Sample and Share Full Logs",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/744924",
+      "commentCount": 3,
+      "votes": 2,
+      "postDate": "2026-10-01T13:19:46.431Z",
+      "lastCommentPostDate": "2026-10-01T17:14:55.393Z"
+    },
+    {
+      "id": 744678,
+      "title": "\"'>' not supported between instances of 'int' and 'str'\". Is this same for everyone?",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/744678",
+      "commentCount": 4,
+      "votes": 2,
+      "postDate": "2026-09-30T18:50:40.605Z",
+      "lastCommentPostDate": "2026-10-01T17:02:45.830Z"
+    },
+    {
+      "id": 744965,
+      "title": "gpu outage causing submission failure ",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/744965",
+      "votes": 2,
+      "postDate": "2026-10-01T16:42:49.828Z",
+      "lastCommentPostDate": "2026-10-01T16:42:49.830Z"
+    },
+    {
+      "id": 744941,
+      "title": "Public code sharing via a Notebook or Dataset linked from a paper-track Writeup",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/744941",
+      "postDate": "2026-10-01T14:38:48.413Z",
+      "lastCommentPostDate": "2026-10-01T14:38:48.413Z"
+    },
+    {
+      "id": 744813,
+      "title": "Submission 56722466 (2026-10-01 00:00 UTC) also ended with \"Notebook Threw Exception\" and no score. ",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/744813",
+      "commentCount": 1,
+      "votes": 2,
+      "postDate": "2026-10-01T02:48:53.926Z",
+      "lastCommentPostDate": "2026-10-01T12:57:53.810Z"
+    },
+    {
+      "id": 744861,
+      "title": "Same submission failed twice with \"Notebook Threw Exception\" within minutes (Sep 30 and Oct 1), no adapters",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/744861",
+      "commentCount": 1,
+      "votes": 2,
+      "postDate": "2026-10-01T08:10:21.082Z",
+      "lastCommentPostDate": "2026-10-01T12:44:51.030Z"
+    },
+    {
+      "id": 743531,
+      "title": "Local Models (E4B/E2B) possible? Separate LB likely?",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/743531",
+      "commentCount": 5,
+      "votes": 5,
+      "postDate": "2026-09-26T06:45:03.051Z",
+      "lastCommentPostDate": "2026-10-01T09:04:05.080Z"
+    },
+    {
+      "id": 744889,
+      "title": "Does patch validation import the edited src/ package for Requests tasks?",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/744889",
+      "postDate": "2026-10-01T09:03:30.881Z",
+      "lastCommentPostDate": "2026-10-01T09:03:30.880Z"
+    },
+    {
+      "id": 744805,
+      "title": "Submission 56740049: Notebook Threw Exception, no score, prompt-text-only change",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/744805",
+      "votes": 5,
+      "postDate": "2026-10-01T01:57:50.965Z",
+      "lastCommentPostDate": "2026-10-01T01:57:50.966Z"
+    },
+    {
+      "id": 744800,
+      "title": "Submission ended with \"Notebook Threw Exception\": could you check what raised?",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/744800",
+      "commentCount": 2,
+      "votes": 2,
+      "postDate": "2026-10-01T01:25:17.093Z",
+      "lastCommentPostDate": "2026-10-01T01:56:50.953Z"
+    },
+    {
+      "id": 744802,
+      "title": "Submission 56739788: Notebook Threw Exception after successful official-harness smoke",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/744802",
+      "votes": 3,
+      "postDate": "2026-10-01T01:35:56.834Z",
+      "lastCommentPostDate": "2026-10-01T01:35:56.833Z"
+    }
+  ],
+  "totalCount": 116
+}

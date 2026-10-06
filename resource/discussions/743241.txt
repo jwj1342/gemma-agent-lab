@@ -1,0 +1,20 @@
+# Accessibility request: direct email contact with competition organizers — Support #261909
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743241
+
+## 3528088 /saidsucu TOPIC
+Dear Competition Organizers,
+
+My name is Said Sucu, founder of SCalmora Digital Systems in Türkiye. As a participant with a disability, I would like to request an accessible way to communicate directly with the team organizing the Google – The Gemma 4 Developer Agent Competition.
+
+Email is the most accessible and manageable communication channel for me. Could you please provide an official organizer email address, or ask Kaggle Support to forward my existing correspondence to the appropriate team and arrange a reply by email?
+
+My Kaggle Support case number is #261909.
+
+At SCalmora, I am developing an approach to AI-supported task completion, workflow continuity, and cognitive load reduction to help people participate more independently in digital work and economic opportunities. I would appreciate guidance on participation and any available accessibility support.
+
+Thank you for your understanding and assistance.
+
+Kind regards,
+Said Sucu
+Founder | SCalmora Digital Systems
+Türkiye

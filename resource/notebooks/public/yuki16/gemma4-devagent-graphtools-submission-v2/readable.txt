@@ -1,0 +1,1790 @@
+# CELL 0 markdown
+# Gemma 4 Developer Agent — Graph Tools, Model Probe & Submission Builder
+
+End-to-end helper notebook for the **Gemma 4 Developer Agent** competition.
+
+| Part | Content | Needs GPU? |
+|---|---|---|
+| 1 | Quick EDA of `tasks.jsonl` | No |
+| 2 | Local re-implementation + verification of the 3 code-graph tools (`get_code_neighbors`, `search_similar_code`, `get_code_subgraph`) | No |
+| 3 | *Optional* model probe + 1-2 turn mini agent loop (auto-skipped when the model / GPU / libraries are missing) | Yes (only if it runs) |
+| 4 | Build `submission.zip` and self-validate it against the harness constraints | No |
+
+**Design rules**
+* Works with **Internet OFF** and **no accelerator**: only pre-installed libraries are used, nothing is downloaded.
+* Every part guards its own inputs, so the notebook always finishes normally (also when the hidden test set replaces the public data at scoring time).
+
+# CELL 1 code
+# Standard library + pre-installed Kaggle packages only (no pip install).
+import collections
+import dataclasses
+import functools
+import gc
+import hashlib
+import json
+import math
+import os
+import re
+import shutil
+import sys
+import tempfile
+import time
+import zipfile
+import zlib
+from pathlib import Path
+
+import matplotlib
+import matplotlib.pyplot as plt
+import networkx as nx
+import numpy as np
+import pandas as pd
+import yaml
+
+try:
+    from IPython.display import display
+except ImportError:  # keeps the code runnable outside Jupyter
+    display = print
+
+pd.set_option("display.width", 200)
+pd.set_option("display.max_columns", None)
+pd.set_option("display.max_colwidth", 90)
+
+# CELL 2 code
+# ---- Global configuration -------------------------------------------------------------
+COMPETITION_SLUG = "gemma-4-developer-agent"
+DEFAULT_DATA_ROOT = Path(f"/kaggle/input/competitions/{COMPETITION_SLUG}")
+# Environment overrides exist only so the notebook can be smoke-tested outside Kaggle.
+DATA_ROOT = Path(os.environ.get("GEMMA4_DATA_ROOT", str(DEFAULT_DATA_ROOT)))
+WORKING_DIR = Path(os.environ.get("GEMMA4_WORKING_DIR", "/kaggle/working"))
+MODEL_SEARCH_ROOT = Path(os.environ.get("GEMMA4_MODEL_SEARCH_ROOT", "/kaggle/input"))
+
+TARGET_INSTANCE_ID = "fastapi_11194"
+BASE_MODEL_NAME = "gemma-4-31b-it-qat-w4a16-ct"  # the only base model allowed by the rules
+
+# Collects one status line per part; printed at the very end of the notebook.
+RUN_STATUS: dict = {}
+
+
+def resolve_competition_data_root(preferred_root: Path) -> Path:
+    """Return the competition data root; fall back to a shallow search for tasks.jsonl."""
+    if preferred_root.exists():
+        return preferred_root
+    print(f"[WARN] {preferred_root} does not exist. Searching {MODEL_SEARCH_ROOT} for tasks.jsonl ...")
+    if MODEL_SEARCH_ROOT.exists():
+        for dirpath, dirnames, filenames in os.walk(MODEL_SEARCH_ROOT):
+            depth = len(Path(dirpath).relative_to(MODEL_SEARCH_ROOT).parts)
+            if "tasks.jsonl" in filenames:
+                return Path(dirpath)
+            if depth >= 3:
+                dirnames[:] = []  # do not descend further
+    print("[WARN] Competition data not found. Parts that need it will be skipped.")
+    return preferred_root
+
+
+DATA_ROOT = resolve_competition_data_root(DATA_ROOT)
+
+
+def locate_competition_file(filename, subdirs=("",), recursive=False):
+    """Find `filename` under DATA_ROOT: first in `subdirs`, then (optionally) anywhere below it."""
+    for sub in subdirs:
+        candidate = DATA_ROOT / sub / filename
+        if candidate.is_file():
+            return candidate
+    if recursive and DATA_ROOT.exists():
+        for dirpath, _, filenames in os.walk(DATA_ROOT):
+            if filename in filenames:
+                return Path(dirpath) / filename
+    return None
+
+
+print("DATA_ROOT   :", DATA_ROOT, "| exists =", DATA_ROOT.exists())
+print("WORKING_DIR :", WORKING_DIR, "| exists =", WORKING_DIR.exists())
+if DATA_ROOT.exists():
+    print("Top-level entries:", sorted(p.name for p in DATA_ROOT.iterdir())[:20])
+
+# CELL 3 markdown
+---
+# Part 1 — Quick EDA of `tasks.jsonl`
+
+Scope: task counts per repository, `problem_statement` length distribution, reference-patch size and creation dates.
+The hidden test set omits `patch` / `test_patch`, so every patch-based statistic is guarded.
+
+# CELL 4 code
+def load_tasks_dataframe(tasks_path):
+    """Read tasks.jsonl (one JSON object per line) into a DataFrame."""
+    records = []
+    with open(tasks_path, "r", encoding="utf-8") as handle:
+        for line in handle:
+            line = line.strip()
+            if line:
+                records.append(json.loads(line))
+    return pd.DataFrame.from_records(records)
+
+
+def count_patch_stats(patch_text):
+    """Files changed / lines added / lines removed of a unified diff string."""
+    if not isinstance(patch_text, str) or not patch_text:
+        return {"patch_files": 0, "patch_added": 0, "patch_removed": 0}
+    lines = patch_text.splitlines()
+    return {
+        "patch_files": len(re.findall(r"^\+\+\+ b/\S+", patch_text, flags=re.M)),
+        "patch_added": sum(1 for l in lines if l.startswith("+") and not l.startswith("+++")),
+        "patch_removed": sum(1 for l in lines if l.startswith("-") and not l.startswith("---")),
+    }
+
+
+TASKS_PATH = locate_competition_file("tasks.jsonl", subdirs=("", "data"), recursive=True)
+TASKS_DF = None
+if TASKS_PATH is None:
+    print("[Part 1] tasks.jsonl not found -> Part 1 skipped.")
+    RUN_STATUS["part1_eda"] = "skipped (tasks.jsonl not found)"
+else:
+    TASKS_DF = load_tasks_dataframe(TASKS_PATH)
+    TASKS_DF["problem_chars"] = TASKS_DF["problem_statement"].fillna("").str.len()
+    TASKS_DF["has_hints"] = TASKS_DF.get("hints_text", pd.Series([""] * len(TASKS_DF))).fillna("").str.strip().ne("")
+    TASKS_DF["created_at_ts"] = (pd.to_datetime(TASKS_DF["created_at"], utc=True, errors="coerce")
+                                 if "created_at" in TASKS_DF.columns else pd.NaT)
+    if "patch" in TASKS_DF.columns:
+        patch_stats_df = pd.DataFrame([count_patch_stats(p) for p in TASKS_DF["patch"]])
+        TASKS_DF = pd.concat([TASKS_DF, patch_stats_df], axis=1)
+
+    print(f"Loaded {len(TASKS_DF)} tasks from {TASKS_PATH}")
+    print("Columns:", list(TASKS_DF.columns))
+    # Basic integrity checks
+    print("Unique instance_id      :", TASKS_DF["instance_id"].is_unique)
+    print("Valid 40-char base_commit:", TASKS_DF["base_commit"].str.fullmatch(r"[0-9a-f]{40}").all())
+    print("Tasks with hints        :", int(TASKS_DF["has_hints"].sum()))
+    RUN_STATUS["part1_eda"] = f"ok ({len(TASKS_DF)} tasks)"
+
+# CELL 5 code
+if TASKS_DF is not None:
+    repo_counts = TASKS_DF["repo"].value_counts()
+    print("Tasks per repository:")
+    display(repo_counts.to_frame("n_tasks").assign(share=lambda d: (d["n_tasks"] / d["n_tasks"].sum()).round(3)))
+
+    print("\nproblem_statement length (characters), overall:")
+    display(TASKS_DF["problem_chars"].describe(percentiles=[0.1, 0.25, 0.5, 0.75, 0.9, 0.99]).round(1).to_frame("chars").T)
+    print("\nproblem_statement length by repository:")
+    display(TASKS_DF.groupby("repo")["problem_chars"].describe().round(1))
+
+    if "patch_files" in TASKS_DF.columns:
+        print("\nReference patch size by repository (median):")
+        display(TASKS_DF.groupby("repo")[["patch_files", "patch_added", "patch_removed"]].median())
+
+# CELL 6 code
+if TASKS_DF is not None:
+    fig, axes = plt.subplots(1, 3, figsize=(17, 4.2))
+
+    repo_counts.plot.barh(ax=axes[0], color="#4c72b0")
+    axes[0].invert_yaxis()
+    axes[0].set_title("Tasks per repository")
+    axes[0].set_xlabel("# tasks")
+
+    axes[1].hist(np.log10(TASKS_DF["problem_chars"].clip(lower=1)), bins=25, color="#55a868", edgecolor="white")
+    axes[1].set_title("problem_statement length (log10 chars)")
+    axes[1].set_xlabel("log10(chars)")
+    axes[1].set_ylabel("# tasks")
+
+    year_counts = TASKS_DF["created_at_ts"].dt.year.value_counts().sort_index()
+    axes[2].bar(year_counts.index.astype(str), year_counts.values, color="#c44e52")
+    axes[2].set_title("Tasks by creation year")
+    axes[2].set_xlabel("year")
+
+    plt.tight_layout()
+    plt.show()
+
+    target_rows = TASKS_DF[TASKS_DF["instance_id"] == TARGET_INSTANCE_ID]
+    if len(target_rows):
+        row = target_rows.iloc[0]
+        print(f"--- Target task: {TARGET_INSTANCE_ID} ({row['repo']}) ---")
+        print("problem_statement (first 500 chars):")
+        print(str(row["problem_statement"])[:500])
+    else:
+        print(f"[Part 1] {TARGET_INSTANCE_ID} is not in tasks.jsonl (expected for the hidden test set).")
+
+# CELL 7 markdown
+---
+# Part 2 — Local re-implementation of the code-graph tools
+
+Re-implements the three graph tools documented in `HARNESS_README.md` §6.3 on top of
+`fastapi_11194.json` (NetworkX-style call graph) and `fastapi_11194.npz` (256-d node embeddings):
+
+* `get_code_neighbors(node, edge_type=None, max_neighbors=50)`
+* `search_similar_code(query, k=10)`
+* `get_code_subgraph(nodes)`
+
+All tools return **JSON strings** following the documented schema
+(`{"status": "ok", ...}` / `{"status": "error", "error_type", "error_message", "details"}`), are budget-gated like the
+harness tools, and resolve short symbol names with the 4-tier resolver (exact → `.`/`/` suffix → case-insensitive → substring).
+
+Choices the README leaves open (documented in the code): edge types are reported upper-case (`CALLS`) as in the README examples,
+neighbours are ordered non-test code first, and `search_similar_code` truncates `code` previews.
+
+# CELL 8 code
+# ---- Asset loading ---------------------------------------------------------------------
+EMBEDDING_DIM = 256
+
+
+@dataclasses.dataclass
+class RepoGraphAssets:
+    """Everything the three graph tools need for one repository snapshot."""
+    graph: nx.MultiDiGraph
+    node_ids: list
+    node_id_set: set
+    embedding_names: list
+    embedding_matrix: np.ndarray        # float32, L2-normalised rows, shape (n, dim)
+    embedding_row_by_name: dict
+    embedding_source: str               # "npz" or "hashed-fallback"
+
+
+def load_code_graph_json(graph_path):
+    """Load the node-link JSON (`nodes[*].id/name/text`, `edges[*].source/target/type/key`) as a MultiDiGraph."""
+    raw = json.loads(Path(graph_path).read_text(encoding="utf-8"))
+    graph = nx.MultiDiGraph(**(raw.get("graph") or {}))
+    for node in raw["nodes"]:
+        graph.add_node(node["id"], name=node.get("name", node["id"]), text=node.get("text") or "")
+    for edge in raw.get("edges", raw.get("links", [])):
+        graph.add_edge(edge["source"], edge["target"], key=edge.get("key", 0), type=str(edge.get("type", "calls")))
+    return graph
+
+
+def _l2_normalise_rows(matrix):
+    matrix = np.asarray(matrix, dtype=np.float32)
+    norms = np.linalg.norm(matrix, axis=1, keepdims=True)
+    return matrix / np.maximum(norms, 1e-12)
+
+
+def _read_npz_layouts(npz_path, allow_pickle):
+    archive = np.load(npz_path, allow_pickle=allow_pickle)
+    keys = list(archive.files)
+    if not keys:
+        raise ValueError("npz archive contains no arrays")
+
+    if len(keys) <= 8:  # layouts B / C
+        arrays = {k: archive[k] for k in keys}  # lazy: object arrays raise here unless allow_pickle=True
+        matrices = [k for k, a in arrays.items() if a.ndim == 2 and np.issubdtype(a.dtype, np.floating)]
+        for mk in matrices:
+            rows = arrays[mk].shape[0]
+            for nk, a in arrays.items():
+                if nk != mk and a.ndim == 1 and a.dtype.kind in "USO" and len(a) == rows:
+                    return [str(x) for x in a.tolist()], arrays[mk]
+        if len(keys) == 1:
+            only = arrays[keys[0]]
+            if only.dtype == object and only.ndim == 0 and isinstance(only.item(), dict):
+                mapping = only.item()
+                return list(mapping.keys()), np.stack([np.asarray(v, dtype=np.float32) for v in mapping.values()])
+    # layout A
+    vectors = [np.asarray(archive[k], dtype=np.float32).reshape(-1) for k in keys]
+    if len({v.shape[0] for v in vectors}) != 1:
+        raise ValueError("npz arrays have inconsistent lengths; unknown layout")
+    return keys, np.stack(vectors)
+
+
+def read_named_vectors_from_npz(npz_path):
+    """Return (names, matrix) from an embedding archive.
+
+    The exact npz layout is not documented, so three layouts are supported:
+      A) one key per node: key = symbol name, value = 1-D vector
+      B) one 2-D float matrix + one 1-D string array of names
+      C) a single pickled dict {name: vector}
+    Pickle is only enabled as a retry (the file is part of the official competition dataset).
+    """
+    try:
+        return _read_npz_layouts(npz_path, allow_pickle=False)
+    except ValueError as exc:
+        if "allow_pickle" in str(exc):
+            return _read_npz_layouts(npz_path, allow_pickle=True)
+        raise
+
+
+def build_hashed_fallback_embeddings(graph, dim=EMBEDDING_DIM):
+    """Deterministic 256-d bag-of-identifier-tokens embedding (signed feature hashing).
+
+    Only used when the real npz is missing / empty / unreadable, so Part 2 still runs on CPU.
+    It is NOT the competition embedding; similarity values are not comparable to the real ones.
+    """
+    def split_tokens(text):
+        text = re.sub(r"([a-z0-9])([A-Z])", r"\1 \2", text)          # camelCase -> camel Case
+        return [t.lower() for t in re.findall(r"[A-Za-z]{2,}|\d+", text)]
+
+    names = list(graph.nodes)
+    matrix = np.zeros((len(names), dim), dtype=np.float32)
+    for row, node_id in enumerate(names):
+        weighted = [(t, 3.0) for t in split_tokens(node_id.replace(".", " ").replace("_", " "))]
+        weighted += [(t, 1.0) for t in split_tokens(graph.nodes[node_id]["text"][:4000].replace("_", " "))]
+        for token, weight in weighted:
+            digest = zlib.crc32(token.encode("utf-8"))
+            sign = 1.0 if (digest >> 16) & 1 else -1.0
+            matrix[row, digest % dim] += sign * weight
+    matrix = np.sign(matrix) * np.log1p(np.abs(matrix))               # sub-linear term weighting
+    return names, matrix
+
+
+def build_repo_graph_assets(graph_path, npz_path):
+    """Load graph + embeddings; degrade to hashed fallback embeddings if the npz is unusable."""
+    graph = load_code_graph_json(graph_path)
+    source = "npz"
+    try:
+        if npz_path is None or Path(npz_path).stat().st_size < 100:  # harness also ignores npz files <= 100 bytes
+            raise ValueError("npz missing or empty (<100 bytes)")
+        names, matrix = read_named_vectors_from_npz(npz_path)
+        coverage = len(set(names) & set(graph.nodes)) / max(graph.number_of_nodes(), 1)
+        if coverage < 0.5:
+            raise ValueError(f"only {coverage:.0%} of graph nodes have embeddings (unknown name scheme)")
+    except Exception as exc:  # broad on purpose: any unreadable archive -> fallback
+        print(f"[WARN] Real embeddings unavailable ({type(exc).__name__}: {exc}).")
+        print("[WARN] Using deterministic hashed fallback embeddings; search_similar_code scores are approximate.")
+        names, matrix = build_hashed_fallback_embeddings(graph)
+        source = "hashed-fallback"
+    matrix = _l2_normalise_rows(matrix)
+    return RepoGraphAssets(
+        graph=graph,
+        node_ids=list(graph.nodes),
+        node_id_set=set(graph.nodes),
+        embedding_names=list(names),
+        embedding_matrix=matrix,
+        embedding_row_by_name={n: i for i, n in enumerate(names)},
+        embedding_source=source,
+    )
+
+
+ACTIVE_ASSETS = None  # set by install_repo_graph_assets(); read by the tools below
+
+
+def install_repo_graph_assets(assets):
+    global ACTIVE_ASSETS
+    ACTIVE_ASSETS = assets
+
+
+def _assets():
+    if ACTIVE_ASSETS is None:
+        raise LocalToolError("AssetsNotLoaded", "Code graph assets are not loaded.")
+    return ACTIVE_ASSETS
+
+# CELL 9 code
+# ---- Tool plumbing: errors, budget gate, symbol resolver -----------------------------------
+class LocalToolError(Exception):
+    """Raised inside a tool body; converted into the documented error payload."""
+    def __init__(self, error_type, message, details=None):
+        super().__init__(message)
+        self.error_type, self.message, self.details = error_type, message, details or {}
+
+
+@dataclasses.dataclass
+class LocalToolBudget:
+    """Minimal stand-in for the harness budget (only the tool-call counter)."""
+    max_tool_calls: int = None
+    tool_calls_used: int = 0
+
+    @property
+    def remaining(self):
+        return None if self.max_tool_calls is None else self.max_tool_calls - self.tool_calls_used
+
+
+TOOL_BUDGET = LocalToolBudget()
+
+
+def _error_payload(error_type, message, details=None):
+    return {"status": "error", "error_type": error_type, "error_message": message, "details": details or {}}
+
+
+def graph_tool(func):
+    """Budget gate + uniform JSON response, mirroring `@budget_gated` in the harness."""
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        budget = TOOL_BUDGET
+        if budget.max_tool_calls is not None and budget.tool_calls_used >= budget.max_tool_calls:
+            payload = _error_payload(
+                "BudgetExhausted", "Tool call budget exhausted.",
+                {"tool_calls_used": budget.tool_calls_used, "max_tool_calls": budget.max_tool_calls},
+            )
+            return json.dumps(payload, ensure_ascii=False)
+        budget.tool_calls_used += 1
+        try:
+            payload = func(*args, **kwargs)
+        except LocalToolError as exc:
+            payload = _error_payload(exc.error_type, exc.message, exc.details)
+        except Exception as exc:  # never let a tool crash the agent loop
+            payload = _error_payload(type(exc).__name__, str(exc), {})
+        # README: extra warning once budget >= 20 calls and <= 10 remain
+        if budget.max_tool_calls is not None and budget.max_tool_calls >= 20 and budget.remaining <= 10:
+            payload["budget_warning"] = (
+                f"Only {budget.remaining} tool call(s) remaining ({budget.tool_calls_used}/{budget.max_tool_calls} used). "
+                "Finalize your edits and call submit_patch soon."
+            )
+        return json.dumps(payload, ensure_ascii=False)
+    return wrapper
+
+
+_LOW_PRIORITY_PREFIXES = ("tests.", "docs_src.", "scripts.")
+
+
+def _node_priority(node_id):
+    """Sort key: library code before tests/docs/scripts, then shorter names, then alphabetical."""
+    return (1 if node_id.startswith(_LOW_PRIORITY_PREFIXES) else 0, len(node_id), node_id)
+
+
+def resolve_node_name(name, assets=None):
+    """4-tier symbol resolution -> (resolved_id or None, other candidates in the same tier)."""
+    assets = assets or _assets()
+    needle = name.strip()
+    if needle in assets.node_id_set:
+        return needle, []
+    low = needle.lower()
+    tiers = (
+        lambda n: n.endswith("." + needle) or n.endswith("/" + needle),                       # 2) suffix
+        lambda n: n.lower() == low or n.lower().endswith("." + low) or n.lower().endswith("/" + low),  # 3) case-insensitive
+        lambda n: low in n.lower(),                                                           # 4) substring
+    )
+    for predicate in tiers:
+        matches = sorted((n for n in assets.node_ids if predicate(n)), key=_node_priority)
+        if matches:
+            return matches[0], matches[1:6]
+    return None, []
+
+
+def _suggest_nodes(query, assets, limit=5):
+    """Token-overlap suggestions attached to NodeNotFound errors (helps the LLM self-correct)."""
+    def toks(text):
+        text = re.sub(r"([a-z0-9])([A-Z])", r"\1 \2", text)
+        return {t.lower() for t in re.findall(r"[A-Za-z]{2,}", text)}
+    q = toks(query)
+    if not q:
+        return []
+    scored = [(len(q & toks(n)) / len(q), n) for n in assets.node_ids]
+    scored = [s for s in scored if s[0] > 0]
+    scored.sort(key=lambda s: (-s[0], _node_priority(s[1])))
+    return [n for _, n in scored[:limit]]
+
+
+def _as_positive_int(value, field_name):
+    """Accept ints and digit strings (LLMs often emit "5"); reject everything else with ValidationError."""
+    if isinstance(value, str) and value.strip().isdigit():
+        value = int(value)
+    if not isinstance(value, int) or isinstance(value, bool) or value < 1:
+        raise LocalToolError("ValidationError", f"{field_name} must be a positive integer.", {field_name: value})
+    return value
+
+
+def _require_node(name, assets):
+    if not isinstance(name, str) or not name.strip():
+        raise LocalToolError("ValidationError", "node must be a non-empty string.", {"node": name})
+    resolved, _ = resolve_node_name(name, assets)
+    if resolved is None:
+        raise LocalToolError("NodeNotFound", f"Could not resolve symbol '{name}' in the code graph.",
+                             {"node": name, "suggestions": _suggest_nodes(name, assets)})
+    return resolved
+
+# CELL 10 code
+# ---- The three graph tools ---------------------------------------------------------------
+SEARCH_CODE_PREVIEW_CHARS = 1200  # README does not specify truncation; keeps agent context small
+
+
+@graph_tool
+def get_code_neighbors(node: str, edge_type: str = None, max_neighbors: int = 50):
+    """Incoming + outgoing neighbours of `node` (callers and callees for `calls` edges)."""
+    assets = _assets()
+    max_neighbors = _as_positive_int(max_neighbors, "max_neighbors")
+    resolved = _require_node(node, assets)
+    wanted = edge_type.strip().lower() if isinstance(edge_type, str) and edge_type.strip() else None  # case-insensitive filter
+
+    neighbours = set()
+    for _, target, data in assets.graph.out_edges(resolved, data=True):
+        if wanted is None or data["type"].lower() == wanted:
+            neighbours.add(target)
+    for source, _, data in assets.graph.in_edges(resolved, data=True):
+        if wanted is None or data["type"].lower() == wanted:
+            neighbours.add(source)
+    neighbours.discard(resolved)  # ignore self-loops (recursive calls)
+
+    ordered = sorted(neighbours, key=_node_priority)[:max_neighbors]
+    return {"status": "ok", "node": resolved, "neighbors": ordered, "count": len(ordered)}
+
+
+@graph_tool
+def search_similar_code(query: str, k: int = 10):
+    """Top-k nodes by cosine similarity to the embedding of the symbol `query` resolves to."""
+    assets = _assets()
+    k = _as_positive_int(k, "k")
+    resolved = _require_node(query, assets)
+    row = assets.embedding_row_by_name.get(resolved)
+    if row is None:
+        raise LocalToolError("EmbeddingNotFound", f"No embedding stored for '{resolved}'.", {"node": resolved})
+
+    matrix = assets.embedding_matrix
+    scores = matrix @ matrix[row]
+    scores[row] = -np.inf                       # "all other nodes": exclude the query node itself
+    k_eff = min(k, len(scores) - 1)
+    top = np.argpartition(-scores, k_eff - 1)[:k_eff]
+    top = top[np.argsort(-scores[top])]
+
+    results = []
+    for idx in top:
+        name = assets.embedding_names[idx]
+        code = assets.graph.nodes[name]["text"] if name in assets.graph else ""
+        if len(code) > SEARCH_CODE_PREVIEW_CHARS:
+            code = code[:SEARCH_CODE_PREVIEW_CHARS] + "\n# ... [truncated]"
+        results.append({"node_name": name, "code": code, "similarity": round(float(scores[idx]), 4)})
+    return {"status": "ok", "query": query, "results": results, "count": len(results)}
+
+
+@graph_tool
+def get_code_subgraph(nodes: list):
+    """Induced subgraph over the resolved symbols (parallel identical edges are de-duplicated)."""
+    assets = _assets()
+    if isinstance(nodes, str):
+        nodes = [nodes]
+    if not isinstance(nodes, list) or not nodes:
+        raise LocalToolError("ValidationError", "nodes must be a non-empty list of symbol names.", {"nodes": nodes})
+
+    resolved_nodes, unresolved = [], []
+    for name in nodes:
+        try:
+            resolved = _require_node(name, assets)
+        except LocalToolError:
+            unresolved.append(name)
+            continue
+        if resolved not in resolved_nodes:
+            resolved_nodes.append(resolved)
+    if not resolved_nodes:
+        raise LocalToolError("NodeNotFound", "None of the given symbols could be resolved.", {"nodes": nodes})
+
+    members = set(resolved_nodes)
+    edge_triples = set()
+    for source in resolved_nodes:
+        for _, target, data in assets.graph.out_edges(source, data=True):
+            if target in members:
+                edge_triples.add((source, target, data["type"].upper()))  # README shows upper-case types (CALLS)
+    edges = [{"from": s, "to": t, "type": ty} for s, t, ty in sorted(edge_triples)]
+    payload = {"status": "ok", "nodes": resolved_nodes, "edges": edges,
+               "node_count": len(resolved_nodes), "edge_count": len(edges)}
+    if unresolved:
+        payload["unresolved"] = unresolved  # extra field, only present when something could not be resolved
+    return payload
+
+# CELL 11 code
+# ---- Load assets for the target task ------------------------------------------------------
+GRAPH_PATH = (locate_competition_file(f"{TARGET_INSTANCE_ID}.json", subdirs=("graphs", "data/graphs", ""), recursive=True))
+NPZ_PATH = (locate_competition_file(f"{TARGET_INSTANCE_ID}.npz", subdirs=("embeddings", "data/embeddings", ""), recursive=True))
+print("graph json :", GRAPH_PATH)
+print("embeddings :", NPZ_PATH, "| size =", NPZ_PATH.stat().st_size if NPZ_PATH else None)
+
+PART2_ENABLED = GRAPH_PATH is not None
+if not PART2_ENABLED:
+    print(f"[Part 2] Graph for {TARGET_INSTANCE_ID} not found -> Part 2 (and the Part 3 tool loop) skipped.")
+    RUN_STATUS["part2_graph_tools"] = "skipped (graph json not found)"
+else:
+    REPO_ASSETS = build_repo_graph_assets(GRAPH_PATH, NPZ_PATH)
+    install_repo_graph_assets(REPO_ASSETS)
+    edge_type_counts = collections.Counter(d["type"] for _, _, d in REPO_ASSETS.graph.edges(data=True))
+    print(f"nodes={REPO_ASSETS.graph.number_of_nodes():,}  edges={REPO_ASSETS.graph.number_of_edges():,}  "
+          f"edge types={dict(edge_type_counts)}")
+    print(f"embeddings: source={REPO_ASSETS.embedding_source}  shape={REPO_ASSETS.embedding_matrix.shape}  "
+          f"coverage={len(set(REPO_ASSETS.embedding_names) & REPO_ASSETS.node_id_set) / REPO_ASSETS.graph.number_of_nodes():.1%}")
+
+# CELL 12 code
+# ---- Dataset-wide survey: are graph / embedding files populated? -------------------------------------
+# The harness only adds the "Code Intelligence Tools" section to the prompt when BOTH files are > 100 bytes.
+def survey_asset_sizes(subdirs, pattern):
+    """Return sizes (bytes) of all files matching `pattern` in the first existing directory of `subdirs`."""
+    for sub in subdirs:
+        folder = DATA_ROOT / sub
+        if folder.is_dir():
+            files = sorted(folder.glob(pattern))
+            return folder, files, np.array([f.stat().st_size for f in files], dtype=np.int64)
+    return None, [], np.array([], dtype=np.int64)
+
+
+for label, subdirs, pattern in (("graphs", ("graphs", "data/graphs"), "*.json"),
+                                ("embeddings", ("embeddings", "data/embeddings"), "*.npz")):
+    folder, files, sizes = survey_asset_sizes(subdirs, pattern)
+    if len(files) == 0:
+        print(f"{label:11s}: directory not found or empty")
+        continue
+    n_empty = int((sizes <= 100).sum())
+    print(f"{label:11s}: {len(files)} files in {folder} | empty (<=100 B): {n_empty} | "
+          f"size min/median/max = {sizes.min():,} / {int(np.median(sizes)):,} / {sizes.max():,} bytes")
+    if 0 < n_empty:
+        print(f"{'':11s}  e.g. empty files: {[f.name for f, sz in zip(files, sizes) if sz <= 100][:5]}")
+
+# CELL 13 markdown
+### Schema conformance checks
+A small validator encodes the documented return schemas; every tool response below is validated against it.
+
+# CELL 14 code
+TOOL_RESPONSE_FIELDS = {
+    "get_code_neighbors": {"node": str, "neighbors": list, "count": int},
+    "search_similar_code": {"query": str, "results": list, "count": int},
+    "get_code_subgraph": {"nodes": list, "edges": list, "node_count": int, "edge_count": int},
+}
+
+
+def validate_tool_response_schema(tool_name, response_json):
+    """Return a list of schema violations (empty list = conforming)."""
+    problems = []
+    if not isinstance(response_json, str):
+        return [f"response must be a JSON string, got {type(response_json).__name__}"]
+    try:
+        payload = json.loads(response_json)
+    except json.JSONDecodeError as exc:
+        return [f"invalid JSON: {exc}"]
+    status = payload.get("status")
+    if status == "error":
+        for key in ("error_type", "error_message", "details"):
+            if key not in payload:
+                problems.append(f"error payload missing '{key}'")
+        return problems
+    if status != "ok":
+        return [f"unexpected status {status!r}"]
+    for key, expected_type in TOOL_RESPONSE_FIELDS[tool_name].items():
+        if key not in payload:
+            problems.append(f"missing field '{key}'")
+        elif not isinstance(payload[key], expected_type):
+            problems.append(f"field '{key}' should be {expected_type.__name__}")
+    if not problems:
+        if tool_name == "get_code_neighbors" and payload["count"] != len(payload["neighbors"]):
+            problems.append("count != len(neighbors)")
+        if tool_name == "search_similar_code":
+            if payload["count"] != len(payload["results"]):
+                problems.append("count != len(results)")
+            sims = [r.get("similarity") for r in payload["results"]]
+            if any(set(r) != {"node_name", "code", "similarity"} for r in payload["results"]):
+                problems.append("result items must have exactly node_name/code/similarity")
+            if sims != sorted(sims, reverse=True):
+                problems.append("results not sorted by similarity")
+        if tool_name == "get_code_subgraph":
+            if payload["node_count"] != len(payload["nodes"]) or payload["edge_count"] != len(payload["edges"]):
+                problems.append("node_count/edge_count mismatch")
+            if any(set(e) != {"from", "to", "type"} for e in payload["edges"]):
+                problems.append("edge items must have exactly from/to/type")
+    return problems
+
+
+def run_tool_case(title, tool_name, response_json, preview_chars=420):
+    """Print a compact view of a tool response together with the schema verdict."""
+    problems = validate_tool_response_schema(tool_name, response_json)
+    verdict = "SCHEMA OK" if not problems else f"SCHEMA PROBLEMS: {problems}"
+    print(f"\n### {title}  ->  {verdict}")
+    print(response_json[:preview_chars] + (" ..." if len(response_json) > preview_chars else ""))
+    return not problems
+
+# CELL 15 code
+if PART2_ENABLED:
+    TOOL_BUDGET = LocalToolBudget(max_tool_calls=None)
+    outcomes = []
+
+    outcomes.append(run_tool_case("get_code_neighbors('FastAPI')", "get_code_neighbors", get_code_neighbors("FastAPI")))
+    outcomes.append(run_tool_case("get_code_neighbors('get_request_handler', edge_type='CALLS', max_neighbors=5)",
+                                  "get_code_neighbors", get_code_neighbors("get_request_handler", edge_type="CALLS", max_neighbors=5)))
+    outcomes.append(run_tool_case("get_code_neighbors(..., edge_type='IMPORTS')  (no such edges in this graph)",
+                                  "get_code_neighbors", get_code_neighbors("get_request_handler", edge_type="IMPORTS")))
+    outcomes.append(run_tool_case("search_similar_code('_get_multidict_value', k=5)",
+                                  "search_similar_code", search_similar_code("_get_multidict_value", k=5), preview_chars=300))
+    subgraph_response = get_code_subgraph(["get_request_handler", "APIRoute.get_route_handler", "RequestValidationError",
+                                           "fastapi.datastructures.Default", "not_a_real_symbol_xyz"])
+    outcomes.append(run_tool_case("get_code_subgraph([...5 symbols, one unresolvable...])", "get_code_subgraph", subgraph_response, preview_chars=900))
+    assert json.loads(subgraph_response)["edge_count"] > 0 and json.loads(subgraph_response)["unresolved"] == ["not_a_real_symbol_xyz"]
+
+    # Error paths must also follow the documented error schema
+    outcomes.append(run_tool_case("Error: unknown symbol", "get_code_neighbors", get_code_neighbors("does_not_exist_xyz")))
+    outcomes.append(run_tool_case("Error: bad k", "search_similar_code", search_similar_code("FastAPI", k=0)))
+    outcomes.append(run_tool_case("Error: free-text query is not a symbol", "search_similar_code",
+                                  search_similar_code("validation error when File declared after Form")))
+
+    print("\nAll schema checks passed:", all(outcomes))
+    RUN_STATUS["part2_graph_tools"] = f"ok (embeddings={REPO_ASSETS.embedding_source}, schema_ok={all(outcomes)})"
+
+# CELL 16 markdown
+### Behavioural checks
+* Symbol resolution tiers, ordering and determinism.
+* Budget gate: the `budget_warning` field and the `BudgetExhausted` error.
+* Similarity sanity: bounded in [-1, 1], self excluded, sorted.
+
+# CELL 17 code
+if PART2_ENABLED:
+    # Resolution tiers
+    for probe in ["fastapi.applications.FastAPI", "FastAPI", "fastapi", "get_request_handler"]:
+        resolved, alternatives = resolve_node_name(probe)
+        print(f"resolve({probe!r:34}) -> {resolved}   (+{len(alternatives)} alternatives)")
+    assert resolve_node_name("fastapi.applications.FastAPI")[0] == "fastapi.applications.FastAPI"      # tier 1
+    assert resolve_node_name("FastAPI")[0] == "fastapi.applications.FastAPI"                           # tier 2 (suffix)
+    assert resolve_node_name("fastapi.applications.fastapi")[0] == "fastapi.applications.FastAPI"      # tier 3 (case-insensitive)
+    assert resolve_node_name("applications.FastAPI.__ini")[0] == "fastapi.applications.FastAPI.__init__"  # tier 4 (substring)
+
+    # Determinism
+    first = get_code_neighbors("FastAPI", max_neighbors=20)
+    assert first == get_code_neighbors("FastAPI", max_neighbors=20), "neighbour order must be deterministic"
+
+    # Symmetry: every callee reported for X must list X among its own neighbours
+    payload = json.loads(get_code_neighbors("get_request_handler"))
+    for neighbour in payload["neighbors"][:10]:
+        assert payload["node"] in json.loads(get_code_neighbors(neighbour, max_neighbors=500))["neighbors"], neighbour
+
+    # Similarity sanity
+    sims = json.loads(search_similar_code("APIRoute", k=10))
+    values = [r["similarity"] for r in sims["results"]]
+    assert all(-1.0 <= v <= 1.0 for v in values) and values == sorted(values, reverse=True)
+    assert "fastapi.routing.APIRoute" not in [r["node_name"] for r in sims["results"]], "query node must be excluded"
+
+    # Budget gate
+    TOOL_BUDGET = LocalToolBudget(max_tool_calls=22)
+    for _ in range(12):
+        last = json.loads(get_code_neighbors("FastAPI", max_neighbors=1))
+    print("\nbudget_warning after 12/22 calls:", last.get("budget_warning"))
+    assert "budget_warning" in last
+    for _ in range(10):  # calls 13..22 are still within budget
+        last = json.loads(get_code_neighbors("FastAPI", max_neighbors=1))
+    assert last["status"] == "ok"
+    last = json.loads(get_code_neighbors("FastAPI", max_neighbors=1))  # call 23 exceeds the budget
+    print("call 23 (over budget):", last["status"], last.get("error_type"))
+    assert last["error_type"] == "BudgetExhausted"
+    TOOL_BUDGET = LocalToolBudget(max_tool_calls=None)  # reset for the following cells
+    print("\nBehavioural checks passed.")
+
+# CELL 18 markdown
+### Graph coverage vs. the reference patch of the target task
+The graph is built from the AST. This check looks at the functions the reference patch touches
+and whether they exist as graph nodes — it tells the agent when graph tools are blind.
+
+# CELL 19 code
+def extract_patched_symbols(patch_text):
+    """(file, symbol, is_async) tuples taken from the hunk headers of a unified diff."""
+    symbols, current_file = [], None
+    for line in patch_text.splitlines():
+        file_match = re.match(r"^\+\+\+ b/(\S+)", line)
+        if file_match:
+            current_file = file_match.group(1)
+            continue
+        hunk_match = re.match(r"^@@[^@]*@@\s*(async\s+)?(?:def|class)\s+(\w+)", line)
+        if hunk_match and current_file and current_file.endswith(".py"):
+            symbols.append((current_file, hunk_match.group(2), bool(hunk_match.group(1))))
+    return symbols
+
+
+if PART2_ENABLED:
+    graph_nodes = REPO_ASSETS.graph.nodes
+    n_async_toplevel = sum(1 for n in graph_nodes if graph_nodes[n]["text"].lstrip().startswith("async def"))
+    n_def_toplevel = sum(1 for n in graph_nodes if graph_nodes[n]["text"].lstrip().startswith("def "))
+    print(f"Graph nodes whose source starts with 'def '      : {n_def_toplevel}")
+    print(f"Graph nodes whose source starts with 'async def ': {n_async_toplevel}")
+
+    patch_text = None
+    if TASKS_DF is not None and "patch" in TASKS_DF.columns:
+        rows = TASKS_DF[TASKS_DF["instance_id"] == TARGET_INSTANCE_ID]
+        patch_text = rows.iloc[0]["patch"] if len(rows) else None
+    if patch_text:
+        coverage_rows = []
+        for file_path, symbol, is_async in extract_patched_symbols(patch_text):
+            module = file_path[:-3].replace("/", ".")
+            in_graph = any(n.startswith(module + ".") and n.split(".")[-1] == symbol for n in REPO_ASSETS.node_ids)
+            coverage_rows.append({"file": file_path, "symbol": symbol, "async": is_async, "in_graph": in_graph})
+        display(pd.DataFrame(coverage_rows))
+        print("If 'in_graph' is False for async functions, graph tools cannot locate them: the agent must fall back "
+              "to `grep -rn` / `read_file` for `async def` code.")
+    else:
+        print("Reference patch not available (hidden-test-like data): coverage table skipped.")
+
+# CELL 20 markdown
+---
+# Part 3 — Optional: model probe and mini agent loop
+
+Runs **only if all of the following hold**; otherwise every cell prints a skip message and the notebook continues:
+1. `gemma-4-31b-it-qat-w4a16-ct` model assets are attached under `/kaggle/input/`
+2. Part 2 assets (code graph) are loaded
+3. A CUDA GPU is visible
+4. `vllm` **or** `transformers` is importable (vLLM is tried first, `transformers` is the fallback)
+
+The mini loop (1-2 turns) lets the model call the three local graph tools for `fastapi_11194`. It has no sandbox, so it
+demonstrates the tool-calling round trip only — it does not edit code or produce a patch.
+
+# CELL 21 code
+def looks_like_model_dir(path):
+    """A loadable HF-style directory has config.json and at least one *.safetensors shard."""
+    path = Path(path)
+    return os.path.exists(path / "config.json") and any(path.glob("*.safetensors"))
+
+
+def find_gemma4_model_dir(search_root, model_name, max_depth=6):
+    """Return the first directory under `search_root` that looks like the target model, else None."""
+    key = model_name.lower()
+    explicit = [DATA_ROOT / model_name, DATA_ROOT / "models" / model_name, search_root / model_name]
+    for candidate in explicit:
+        print(f"os.path.exists({str(candidate)!r}) = {os.path.exists(candidate)}")
+        if os.path.isdir(candidate) and looks_like_model_dir(candidate):
+            return candidate
+    if not search_root.exists():
+        print(f"{search_root} does not exist.")
+        return None
+    for dirpath, dirnames, _ in os.walk(search_root):
+        depth = len(Path(dirpath).relative_to(search_root).parts)
+        lowered = dirpath.lower()
+        if depth >= 1 and (key in lowered or ("gemma" in lowered and "31b" in lowered)) and looks_like_model_dir(dirpath):
+            return Path(dirpath)
+        if depth >= max_depth:
+            dirnames[:] = []
+    return None
+
+
+def probe_runtime_capabilities():
+    """Try-import the optional stack; never raises."""
+    caps = {"torch": False, "cuda_gpus": 0, "compute_capability": None,
+            "transformers": False, "vllm": False, "compressed_tensors": False}
+    try:
+        import torch
+        caps["torch"] = True
+        if torch.cuda.is_available():
+            caps["cuda_gpus"] = torch.cuda.device_count()
+            caps["compute_capability"] = torch.cuda.get_device_capability(0)
+    except Exception:
+        pass
+    for module_name in ("transformers", "vllm", "compressed_tensors"):
+        try:
+            __import__(module_name)
+            caps[module_name] = True
+        except Exception:
+            pass
+    return caps
+
+
+MODEL_DIR = find_gemma4_model_dir(MODEL_SEARCH_ROOT, BASE_MODEL_NAME)
+RUNTIME_CAPS = probe_runtime_capabilities()
+print("Model directory :", MODEL_DIR)
+print("Runtime probe   :", RUNTIME_CAPS)
+
+if MODEL_DIR is None:
+    PART3_SKIP_REASON = "model assets not found"
+    PART3_SKIP_MESSAGE = ("[Part 3] モデル未検出のためPart 3をスキップしました "
+                          f"(no {BASE_MODEL_NAME} directory found under {MODEL_SEARCH_ROOT}).")
+elif not PART2_ENABLED:
+    PART3_SKIP_REASON = "graph tools unavailable"
+    PART3_SKIP_MESSAGE = "[Part 3] Part 2のグラフツールが未ロードのためPart 3をスキップしました."
+elif RUNTIME_CAPS["cuda_gpus"] == 0:
+    PART3_SKIP_REASON = "no CUDA GPU"
+    PART3_SKIP_MESSAGE = "[Part 3] GPU未検出のためPart 3をスキップしました (model found, but no CUDA device)."
+elif not (RUNTIME_CAPS["vllm"] or RUNTIME_CAPS["transformers"]):
+    PART3_SKIP_REASON = "neither vllm nor transformers importable"
+    PART3_SKIP_MESSAGE = "[Part 3] vllm/transformersが利用不可のためPart 3をスキップしました."
+else:
+    PART3_SKIP_REASON = None
+    PART3_SKIP_MESSAGE = ""
+
+PART3_ENABLED = PART3_SKIP_REASON is None
+if PART3_ENABLED:
+    print(f"[Part 3] Enabled. vllm={RUNTIME_CAPS['vllm']}, transformers={RUNTIME_CAPS['transformers']}, GPUs={RUNTIME_CAPS['cuda_gpus']}")
+else:
+    print(PART3_SKIP_MESSAGE)
+    RUN_STATUS["part3_model"] = f"skipped ({PART3_SKIP_REASON})"
+
+# CELL 22 code
+# ---- Tool schemas + dispatch table (also reused by the mini agent loop) --------------------
+GRAPH_TOOL_SCHEMAS = [
+    {"type": "function", "function": {
+        "name": "get_code_neighbors",
+        "description": "Find callers/callees (incoming and outgoing edges) of a symbol in the repository code graph.",
+        "parameters": {"type": "object", "properties": {
+            "node": {"type": "string", "description": "Symbol name, e.g. 'FastAPI' or 'fastapi.routing.get_request_handler'."},
+            "edge_type": {"type": "string", "description": "Optional edge filter, e.g. 'CALLS'."},
+            "max_neighbors": {"type": "integer", "description": "Maximum neighbours to return (default 50)."}},
+            "required": ["node"]}}},
+    {"type": "function", "function": {
+        "name": "search_similar_code",
+        "description": "Find code most similar (embedding cosine) to a known symbol. Pass a symbol name, not a sentence.",
+        "parameters": {"type": "object", "properties": {
+            "query": {"type": "string", "description": "A class/function/module symbol name."},
+            "k": {"type": "integer", "description": "Number of results (default 10)."}},
+            "required": ["query"]}}},
+    {"type": "function", "function": {
+        "name": "get_code_subgraph",
+        "description": "Induced subgraph (nodes and edges between them) for a list of symbols.",
+        "parameters": {"type": "object", "properties": {
+            "nodes": {"type": "array", "items": {"type": "string"}, "description": "Symbol names."}},
+            "required": ["nodes"]}}},
+]
+LOCAL_TOOL_REGISTRY = {
+    "get_code_neighbors": get_code_neighbors if PART2_ENABLED else None,
+    "search_similar_code": search_similar_code if PART2_ENABLED else None,
+    "get_code_subgraph": get_code_subgraph if PART2_ENABLED else None,
+}
+
+
+def parse_tool_calls_heuristic(text):
+    """Best-effort extraction of tool calls from raw model text.
+
+    The exact Gemma 4 tool-call syntax is not documented in the competition files, so two common shapes are handled:
+      1) `call:NAME{key:value, ...}` (Gemma function-call style, with optional <|"|> string escapes)
+      2) JSON objects such as {"name": ..., "arguments": {...}}
+    Adapt this function after inspecting the raw output printed by the loop below.
+    """
+    calls = []
+    cleaned = re.sub(r'<\|?"\|?>|<escape>', '"', text)
+    for match in re.finditer(r"call:(\w+)\s*\{(.*?)\}", cleaned, flags=re.S):
+        name, body = match.group(1), match.group(2)
+        args = {}
+        for key, raw in re.findall(r'(\w+)\s*:\s*("(?:[^"\\]|\\.)*"|\[[^\]]*\]|[^,}]+)', body):
+            raw = raw.strip()
+            try:
+                args[key] = json.loads(raw)
+            except json.JSONDecodeError:
+                args[key] = raw.strip("\"' ")
+        if name in LOCAL_TOOL_REGISTRY:
+            calls.append({"name": name, "arguments": args})
+    if calls:
+        return calls
+    decoder = json.JSONDecoder()
+    for start in (m.start() for m in re.finditer(r"\{", text)):
+        try:
+            obj, _ = decoder.raw_decode(text[start:])
+        except json.JSONDecodeError:
+            continue
+        if isinstance(obj, dict) and obj.get("name") in LOCAL_TOOL_REGISTRY:
+            args = obj.get("arguments", obj.get("parameters", {}))
+            if isinstance(args, dict):
+                calls.append({"name": obj["name"], "arguments": args})
+    return calls
+
+
+# Offline unit check of the parser (no model needed)
+_demo_text = 'Let me look. <|tool_call>call:get_code_neighbors{node:<|"|>get_request_handler<|"|>,max_neighbors:5}<tool_call|>'
+assert parse_tool_calls_heuristic(_demo_text) == [{"name": "get_code_neighbors", "arguments": {"node": "get_request_handler", "max_neighbors": 5}}]
+_demo_json = 'ok {"name": "search_similar_code", "arguments": {"query": "APIRoute", "k": 3}}'
+assert parse_tool_calls_heuristic(_demo_json) == [{"name": "search_similar_code", "arguments": {"query": "APIRoute", "k": 3}}]
+print("Tool-call parser self-test passed.")
+
+# CELL 23 code
+# ---- Chat backends: vLLM first, transformers as fallback ----------------------------------
+class VllmChatBackend:
+    name = "vllm"
+
+    def __init__(self, model_dir, caps, max_model_len=8192):
+        from vllm import LLM  # imported lazily so the notebook never fails at import time
+        n_gpu = caps["cuda_gpus"]
+        tensor_parallel = max(t for t in (4, 2, 1) if t <= n_gpu)
+        capability = caps["compute_capability"] or (0, 0)
+        self.llm = LLM(
+            model=str(model_dir),
+            tensor_parallel_size=tensor_parallel,
+            max_model_len=max_model_len,
+            gpu_memory_utilization=0.90,
+            dtype="bfloat16" if capability[0] >= 8 else "float16",  # T4/P100 lack bf16
+        )
+
+    def chat(self, messages, tools=None, max_new_tokens=768):
+        from vllm import SamplingParams
+        params = SamplingParams(temperature=0.2, max_tokens=max_new_tokens, skip_special_tokens=False)
+        outputs = self.llm.chat(messages, sampling_params=params, tools=tools, use_tqdm=False)
+        return outputs[0].outputs[0].text
+
+
+class TransformersChatBackend:
+    name = "transformers"
+
+    def __init__(self, model_dir, caps):
+        import torch
+        import transformers
+        self.torch = torch
+        self.tokenizer = transformers.AutoTokenizer.from_pretrained(str(model_dir))
+        last_error = None
+        for auto_class_name in ("AutoModelForCausalLM", "AutoModelForImageTextToText"):
+            auto_class = getattr(transformers, auto_class_name, None)
+            if auto_class is None:
+                continue
+            for dtype_kwarg in ("dtype", "torch_dtype"):  # kwarg name differs across transformers versions
+                try:
+                    self.model = auto_class.from_pretrained(str(model_dir), device_map="auto", **{dtype_kwarg: "auto"})
+                    self.model.eval()
+                    return
+                except TypeError as exc:
+                    last_error = exc
+                except Exception as exc:
+                    last_error = exc
+                    break
+        raise RuntimeError(f"transformers could not load the model: {last_error}")
+
+    def chat(self, messages, tools=None, max_new_tokens=768):
+        try:
+            prompt = self.tokenizer.apply_chat_template(messages, tools=tools, add_generation_prompt=True, tokenize=False)
+        except Exception:  # template without tool support
+            prompt = self.tokenizer.apply_chat_template(messages, add_generation_prompt=True, tokenize=False)
+        inputs = self.tokenizer(prompt, return_tensors="pt", add_special_tokens=False).to(self.model.device)
+        with self.torch.no_grad():
+            generated = self.model.generate(**inputs, max_new_tokens=max_new_tokens, do_sample=False)
+        return self.tokenizer.decode(generated[0, inputs["input_ids"].shape[1]:], skip_special_tokens=False)
+
+
+def load_gemma4_backend(model_dir, caps):
+    """Try vLLM, then transformers. Returns a backend or None (never raises)."""
+    attempts = []
+    if caps["vllm"]:
+        attempts.append(VllmChatBackend)
+    if caps["transformers"]:
+        attempts.append(TransformersChatBackend)
+    for backend_class in attempts:
+        started = time.time()
+        try:
+            backend = backend_class(model_dir, caps)
+            print(f"[Part 3] Loaded model with {backend.name} in {time.time() - started:.0f}s")
+            return backend
+        except Exception as exc:
+            print(f"[Part 3] {backend_class.name} backend failed: {type(exc).__name__}: {str(exc)[:300]}")
+            gc.collect()
+            try:
+                import torch
+                torch.cuda.empty_cache()
+            except Exception:
+                pass
+    return None
+
+
+MODEL_BACKEND = None
+if PART3_ENABLED:
+    MODEL_BACKEND = load_gemma4_backend(MODEL_DIR, RUNTIME_CAPS)
+    if MODEL_BACKEND is None:
+        PART3_ENABLED = False
+        PART3_SKIP_MESSAGE = "[Part 3] モデルのロードに失敗したためPart 3の残りをスキップしました (see error above)."
+        RUN_STATUS["part3_model"] = "skipped (model load failed)"
+        print(PART3_SKIP_MESSAGE)
+else:
+    print(PART3_SKIP_MESSAGE)
+
+# CELL 24 code
+# ---- Mini agent loop (1-2 turns) ------------------------------------------------------------
+MINI_LOOP_SYSTEM_PROMPT = (
+    "You are a code-navigation assistant for a Python repository. Use the provided tools to locate code relevant to the issue. "
+    "Keep your reasoning to a few sentences and call one tool at a time. "
+    "The code graph does not contain async def functions; you may only see their callers and neighbours."
+)
+
+
+def build_task_prompt(task_row, max_problem_chars=3000):
+    """Condensed version of the harness prompt (problem statement + code-intelligence tool section)."""
+    return (
+        f"You are evaluating a software engineering task for repository {task_row['repo']}.\n\n"
+        f"Problem Statement:\n{str(task_row['problem_statement'])[:max_problem_chars]}\n\n"
+        "## Code Intelligence Tools\n"
+        "This repository has pre-built code graph and embedding data. Use these tools for fast, targeted navigation:\n"
+        "- `search_similar_code(query)`: Find semantically similar functions/classes by keyword.\n"
+        "- `get_code_neighbors(node)`: Find callers, callees, and definitions related to a symbol.\n"
+        "- `get_code_subgraph(nodes)`: Get the induced subgraph for a set of symbols.\n\n"
+        "Which functions are most relevant to this issue? Call a tool to start exploring."
+    )
+
+
+def run_mini_agent_loop(backend, task_row, max_turns=2, max_new_tokens=768, max_result_chars=2500):
+    """Model -> parse tool calls -> run local graph tools -> feed results back. Returns the transcript."""
+    global TOOL_BUDGET
+    TOOL_BUDGET = LocalToolBudget(max_tool_calls=10)
+    messages = [{"role": "system", "content": MINI_LOOP_SYSTEM_PROMPT},
+                {"role": "user", "content": build_task_prompt(task_row)}]
+    transcript = []
+    for turn in range(1, max_turns + 1):
+        started = time.time()
+        raw = backend.chat(messages, tools=GRAPH_TOOL_SCHEMAS, max_new_tokens=max_new_tokens)
+        calls = parse_tool_calls_heuristic(raw)
+        print(f"\n===== Turn {turn} ({time.time() - started:.1f}s) — raw model output (first 1200 chars) =====")
+        print(raw[:1200])
+        print(f"-- parsed tool calls: {calls}")
+        transcript.append({"turn": turn, "raw": raw, "calls": calls, "results": []})
+        if not calls:
+            break
+        result_blocks = []
+        for call in calls[:3]:
+            result = LOCAL_TOOL_REGISTRY[call["name"]](**call["arguments"])
+            transcript[-1]["results"].append({"call": call, "result": result})
+            result_blocks.append(f"[{call['name']}] {result[:max_result_chars]}")
+            print(f"-- {call['name']} -> {result[:300]}")
+        # Tool results are fed back as a plain user message so the loop works with any chat template.
+        messages.append({"role": "assistant", "content": raw})
+        messages.append({"role": "user", "content": "Tool results:\n" + "\n".join(result_blocks) +
+                         "\nSummarise which symbols look most relevant, or call another tool."})
+    return transcript
+
+
+MINI_LOOP_TRANSCRIPT = None
+if not PART3_ENABLED:
+    print(PART3_SKIP_MESSAGE)
+else:
+    task_matches = TASKS_DF[TASKS_DF["instance_id"] == TARGET_INSTANCE_ID] if TASKS_DF is not None else []
+    if len(task_matches) == 0:
+        PART3_SKIP_MESSAGE = f"[Part 3] {TARGET_INSTANCE_ID} not found in tasks.jsonl -> mini agent loop skipped."
+        RUN_STATUS["part3_model"] = "model loaded, loop skipped (task missing)"
+        print(PART3_SKIP_MESSAGE)
+    else:
+        try:
+            MINI_LOOP_TRANSCRIPT = run_mini_agent_loop(MODEL_BACKEND, task_matches.iloc[0])
+            n_calls = sum(len(t["calls"]) for t in MINI_LOOP_TRANSCRIPT)
+            RUN_STATUS["part3_model"] = f"ok (backend={MODEL_BACKEND.name}, turns={len(MINI_LOOP_TRANSCRIPT)}, tool_calls={n_calls})"
+        except Exception as exc:  # a generation problem must not abort Parts 4
+            print(f"[Part 3] Mini agent loop failed: {type(exc).__name__}: {exc}")
+            RUN_STATUS["part3_model"] = f"loop failed ({type(exc).__name__})"
+        finally:
+            TOOL_BUDGET = LocalToolBudget(max_tool_calls=None)
+
+# CELL 25 code
+# Release GPU memory before Part 4 (no-op when Part 3 was skipped).
+if MODEL_BACKEND is not None:
+    del MODEL_BACKEND
+    MODEL_BACKEND = None
+    gc.collect()
+    try:
+        import torch
+        torch.cuda.empty_cache()
+    except Exception:
+        pass
+    print("[Part 3] Model released.")
+else:
+    print("[Part 3] Nothing to release.")
+
+# CELL 26 markdown
+---
+# Part 4 — Build `submission.zip` and self-validate it
+
+Base material: `agent.yaml`, `eval_config.yaml` and `setup.py` (taken from the competition dataset's `sample_submission/` or
+`sandbox/` when present, otherwise from the versions embedded below).
+
+**Pipeline**: stage files in a temp dir → fill in files the YAML references (`!include`, `config_path`) → validate the directory →
+zip into `/kaggle/working/submission.zip.partial` → **re-validate the zip itself** → rename to `submission.zip` only if all checks pass.
+
+**Checks derived from `HARNESS_README.md`** (FAIL blocks the build, WARN is informational):
+1. Unpacked size `< 3 GiB` (3,221,225,472 bytes)
+2. Only `.yaml/.yml`, `.md/.txt`, `.py`, `.json`, `.safetensors`
+3. All agents/sub-agents declare a **single** base model (`validate_single_declared_model` rule), and it is `gemma-4-31b-it-qat-w4a16-ct`
+4. Exactly **one** root config (`agent.yaml`/`agent.yml`/`root_agent.yaml`/`root_agent.yml`) at the zip root
+5. Extras: safe paths / no symlinks, `!include` + `config_path` targets exist, tool names are harness tools, generation limits
+   (`max_output_tokens`, `thinking_budget` ≤ 32,768, no forbidden fields), adapter directories exist, `eval_config.yaml` sanity.
+
+# CELL 27 code
+# ---- Constants taken from HARNESS_README.md ------------------------------------------------
+GIB = 1024 ** 3
+MAX_TOTAL_UNPACKED_BYTES = 3 * GIB                       # 3,221,225,472
+MAX_FILE_COUNT = 10_000
+ALLOWED_EXTENSIONS = {".yaml", ".yml", ".md", ".txt", ".py", ".json", ".safetensors"}
+ROOT_CONFIG_NAMES = ("agent.yaml", "agent.yml", "root_agent.yaml", "root_agent.yml")
+HARNESS_TOOL_NAMES = ("run_command", "submit_patch", "get_status", "read_file", "edit_file", "write_file",
+                      "get_code_neighbors", "search_similar_code", "get_code_subgraph")
+FORBIDDEN_GENERATION_FIELDS = ("tools", "system_instruction", "http_options", "safety_settings", "response_schema")
+MODEL_PROVIDER_PREFIXES = ("openai/", "google/", "hosted_vllm/", "custom/")
+MAX_TOKEN_CEILING = 32_768
+ESTIMATED_HIDDEN_TASKS = 120            # "~120 tasks" per the competition overview
+TOTAL_AGENT_HOURS = 12                  # total agent time limit across all tasks
+
+# ---- Build options ---------------------------------------------------------------------------
+INCLUDE_SANDBOX_SETUP_PY = False  # the official sample_submission has no setup.py and the harness ships its own /sandbox/setup.py; README allows .py for skill scripts only
+COPY_SAMPLE_ADAPTERS = False      # sample LoRA weights are placeholders; the baseline runs without adapters
+EVAL_CONFIG_OVERRIDES = {}        # e.g. {"max_time_minutes": 5, "max_tool_calls": 60}; empty = keep the sample values verbatim
+
+# CELL 28 code
+# ---- Embedded default files (used when the dataset's sample_submission/ lacks them) --------------
+DEFAULT_AGENT_YAML = """name: swe_baseline_agent
+model: gemma-4-31b-it-qat-w4a16-ct
+adapter: main_lora
+instruction: !include prompts/system.md
+tools:
+  - run_command
+  - read_file
+  - edit_file
+  - write_file
+  - get_status
+  - submit_patch
+  - get_code_neighbors
+  - search_similar_code
+  - get_code_subgraph
+  - agent_tool:
+      config_path: sub_agents/code_analyzer.yaml
+      skip_summarization: true
+generate_content_config: !include configs/sampling.yaml
+"""
+
+DEFAULT_EVAL_CONFIG_YAML = """# Optional participant evaluation configuration for Stage 1 inference.
+# Controls per-task execution budgets and sandbox command timeouts.
+evaluation:
+  timeout_seconds: 60
+  max_tool_calls: 10
+  max_time_minutes: 1
+  max_turns: 50
+"""
+
+DEFAULT_SAMPLING_YAML = """# README best practice: small thinking budget + large output budget so tool calls are never truncated.
+temperature: 0.2
+top_p: 0.95
+top_k: 64
+seed: 42
+max_output_tokens: 16384
+thinking_config:
+  thinking_budget: 4096
+"""
+
+# NOTE: no curly braces in prompts. ADK treats {name} as a session-state placeholder and fails on unknown names.
+DEFAULT_SYSTEM_PROMPT_MD = """You are an autonomous software engineering agent. Fix the bug or implement the feature described in the
+problem statement in the Python repository at /workspace, then submit a patch.
+
+## Workflow
+1. Read the problem statement and state the expected behaviour in one or two sentences.
+2. Localize the code. Use search_similar_code and get_code_neighbors for a quick map (pass symbol names, not sentences) and
+   run_command with grep -rn for exact strings. The code graph does NOT contain async def functions: for those, use grep and read_file.
+   Delegate broad exploration to the code_analyzer tool to keep your own context small.
+3. Reproduce the problem with a tiny script in /tmp (never inside /workspace), e.g. python3 /tmp/repro.py.
+4. Fix it with small, focused edit_file calls: one logical change per call, never rewrite whole files.
+5. Re-run the reproduction and one targeted pytest run on the closest existing test file.
+6. Run git status. Only intended source changes may remain (no scratch files in /workspace).
+7. Call submit_patch as your very last tool action, then reply with a one-line summary.
+
+## Rules
+- Fix library code. Never change existing tests to make them pass.
+- Do not modify /workspace/pytest.ini or /workspace/conftest.py.
+- The environment is offline: never run pip install.
+- Keep your reasoning to a few sentences, then act. Very long thoughts can truncate the tool call.
+- The tool-call budget is limited: prefer read_file with line ranges (at most 150 lines) over broad commands.
+- Follow the code style and conventions already used in the repository.
+"""
+
+DEFAULT_ANALYZER_PROMPT_MD = """You are a read-only code analyst. Explore the repository at /workspace and report back; never modify files.
+Return at most 300 words: (1) the relevant files and line ranges, (2) a root-cause hypothesis, (3) the most likely place to edit.
+The code graph tools do not contain async def functions; use grep -rn and read_file for those.
+"""
+
+# The sub-agent is fully inline (no !include) so it does not depend on how the harness resolves relative include paths.
+DEFAULT_CODE_ANALYZER_YAML = """name: code_analyzer
+model: gemma-4-31b-it-qat-w4a16-ct
+description: Read-only code search specialist. Given a bug description it explores the repository (grep, read_file, code graph tools) and returns relevant files, line ranges and a root-cause hypothesis. It never edits files.
+instruction: |
+  You are a read-only code analyst. Explore the repository at /workspace and report back; never modify files.
+  Return at most 300 words: (1) the relevant files and line ranges, (2) a root-cause hypothesis, (3) the most likely place to edit.
+  The code graph tools do not contain async def functions; use grep -rn and read_file for those.
+tools:
+  - run_command
+  - read_file
+  - get_code_neighbors
+  - search_similar_code
+  - get_code_subgraph
+generate_content_config:
+  temperature: 0.2
+  max_output_tokens: 8192
+  thinking_config:
+    thinking_budget: 2048
+"""
+
+DEFAULT_SUPPORT_FILES = {
+    "prompts/system.md": DEFAULT_SYSTEM_PROMPT_MD,
+    "prompts/analyzer.md": DEFAULT_ANALYZER_PROMPT_MD,
+    "configs/sampling.yaml": DEFAULT_SAMPLING_YAML,
+    "sub_agents/code_analyzer.yaml": DEFAULT_CODE_ANALYZER_YAML,
+}
+
+# CELL 29 code
+# ---- YAML helpers: `!include` aware loading and resolution ---------------------------------------
+@dataclasses.dataclass(frozen=True)
+class IncludeRef:
+    """Placeholder for a `!include <path>` tag."""
+    path: str
+
+
+class IncludeAwareLoader(yaml.SafeLoader):
+    """SafeLoader that understands `!include` (kept as IncludeRef instead of being executed)."""
+
+
+IncludeAwareLoader.add_constructor("!include", lambda loader, node: IncludeRef(loader.construct_scalar(node)))
+
+
+def parse_yaml_raw(path):
+    with open(path, "r", encoding="utf-8") as handle:
+        return yaml.load(handle, Loader=IncludeAwareLoader)
+
+
+def resolve_reference_target(root, referencing_file, relative_path):
+    """Find an include/config_path target -> (path or None, problem or None).
+
+    The official sample uses `!include ../prompts/analyzer.md` from sub_agents/, so paths are resolved relative to the
+    referencing YAML first (root-relative as a fallback). `..` is fine as long as the result stays INSIDE the submission
+    root; absolute paths, NUL bytes and anything escaping the root (also via symlinks) are rejected.
+    """
+    if not isinstance(relative_path, str) or not relative_path or "\x00" in relative_path or os.path.isabs(relative_path):
+        return None, "unsafe or empty path (absolute / NUL)"
+    root_resolved = root.resolve()
+    escaped = False
+    for base in (referencing_file.parent, root):
+        candidate = Path(os.path.normpath(base / relative_path))       # collapses '..' textually, keeps symlinks
+        try:
+            resolved = candidate.resolve()                             # follows symlinks for the containment test
+        except OSError:
+            continue
+        if resolved != root_resolved and root_resolved not in resolved.parents:
+            escaped = True
+            continue
+        if resolved.is_file():
+            return candidate, None
+    return None, ("resolves outside the submission root" if escaped else "target does not exist")
+
+
+def resolve_includes(node, root, referencing_file, problems, depth=0, stack=()):
+    """Recursively replace IncludeRef placeholders by file content (md/txt -> str, yaml -> parsed + resolved)."""
+    if isinstance(node, IncludeRef):
+        target, problem = resolve_reference_target(root, referencing_file, node.path)
+        location = referencing_file.relative_to(root).as_posix()
+        if problem:
+            problems.append(f"{location}: !include {node.path!r}: {problem}")
+            return None
+        if depth >= 10 or target in stack:
+            problems.append(f"{location}: !include {node.path!r}: include depth > 10 or cycle")
+            return None
+        suffix = target.suffix.lower()
+        if suffix in (".md", ".txt"):
+            return target.read_text(encoding="utf-8")
+        if suffix in (".yaml", ".yml"):
+            return resolve_includes(parse_yaml_raw(target), root, target, problems, depth + 1, stack + (target,))
+        problems.append(f"{location}: !include {node.path!r}: unsupported include type {suffix!r}")
+        return None
+    if isinstance(node, dict):
+        return {key: resolve_includes(value, root, referencing_file, problems, depth, stack) for key, value in node.items()}
+    if isinstance(node, list):
+        return [resolve_includes(item, root, referencing_file, problems, depth, stack) for item in node]
+    return node
+
+
+def iter_yaml_files(root):
+    return sorted(p for p in root.rglob("*") if p.is_file() and p.suffix.lower() in (".yaml", ".yml"))
+
+
+def collect_references(raw_node):
+    """All (kind, path) pairs found in a raw YAML tree: kind is 'include' or 'config_path'."""
+    refs = []
+    if isinstance(raw_node, IncludeRef):
+        refs.append(("include", raw_node.path))
+    elif isinstance(raw_node, dict):
+        for key, value in raw_node.items():
+            if key == "config_path" and isinstance(value, str):
+                refs.append(("config_path", value))
+            refs.extend(collect_references(value))
+    elif isinstance(raw_node, list):
+        for item in raw_node:
+            refs.extend(collect_references(item))
+    return refs
+
+
+def find_values_for_key(node, key):
+    """Yield every value stored under `key` anywhere in a nested dict/list structure."""
+    if isinstance(node, dict):
+        for k, v in node.items():
+            if k == key:
+                yield v
+            yield from find_values_for_key(v, key)
+    elif isinstance(node, list):
+        for item in node:
+            yield from find_values_for_key(item, key)
+
+
+def iter_tool_entries(node):
+    """Yield entries of every agent `tools:` list (not the forbidden `tools` key inside generate_content_config)."""
+    if isinstance(node, dict):
+        for key, value in node.items():
+            if key == "generate_content_config":
+                continue
+            if key == "tools" and isinstance(value, list):
+                yield from value
+            yield from iter_tool_entries(value)
+    elif isinstance(node, list):
+        for item in node:
+            yield from iter_tool_entries(item)
+
+
+def normalize_model_name(name):
+    """Strip provider prefixes (openai/, google/, hosted_vllm/, custom/) like the harness does."""
+    name = name.strip()
+    changed = True
+    while changed:
+        changed = False
+        for prefix in MODEL_PROVIDER_PREFIXES:
+            if name.startswith(prefix):
+                name, changed = name[len(prefix):], True
+    return name
+
+# CELL 30 code
+# ---- Self-validation ------------------------------------------------------------------------------
+@dataclasses.dataclass
+class CheckResult:
+    name: str
+    status: str   # "PASS" | "FAIL" | "WARN"
+    detail: str
+
+
+@dataclasses.dataclass
+class FileEntry:
+    relpath: str
+    size: int
+    is_symlink: bool = False
+
+
+class SubmissionValidationError(RuntimeError):
+    pass
+
+
+def entries_from_directory(root):
+    entries = []
+    for dirpath, dirnames, filenames in os.walk(root, followlinks=False):
+        for name in dirnames:
+            full = Path(dirpath) / name
+            if full.is_symlink():
+                entries.append(FileEntry(full.relative_to(root).as_posix(), 0, True))
+        for name in filenames:
+            full = Path(dirpath) / name
+            entries.append(FileEntry(full.relative_to(root).as_posix(), full.lstat().st_size, full.is_symlink()))
+    return entries
+
+
+def run_structural_checks(entries):
+    """Checks that only need the file listing (identical for a directory and for a zip)."""
+    results = []
+    total = sum(e.size for e in entries)
+    results.append(CheckResult(
+        "unpacked_size_lt_3GiB", "PASS" if total < MAX_TOTAL_UNPACKED_BYTES else "FAIL",
+        f"{total:,} bytes ({total / MAX_TOTAL_UNPACKED_BYTES:.4%} of the {MAX_TOTAL_UNPACKED_BYTES:,}-byte limit)"))
+    results.append(CheckResult(
+        "file_count_le_10000", "PASS" if len(entries) <= MAX_FILE_COUNT else "FAIL", f"{len(entries)} files"))
+
+    bad_ext = sorted(e.relpath for e in entries if Path(e.relpath).suffix.lower() not in ALLOWED_EXTENSIONS)
+    results.append(CheckResult(
+        "allowed_extensions_only", "PASS" if not bad_ext else "FAIL",
+        f"allowed={sorted(ALLOWED_EXTENSIONS)}" + (f"; offending={bad_ext[:10]}" if bad_ext else "")))
+
+    root_configs = sorted(e.relpath for e in entries if "/" not in e.relpath and e.relpath in ROOT_CONFIG_NAMES)
+    results.append(CheckResult(
+        "exactly_one_root_config_at_root", "PASS" if len(root_configs) == 1 else "FAIL", f"found at root: {root_configs}"))
+
+    unsafe = sorted(e.relpath for e in entries
+                    if e.relpath.startswith("/") or "\\" in e.relpath or "\x00" in e.relpath or ".." in e.relpath.split("/"))
+    symlinks = sorted(e.relpath for e in entries if e.is_symlink)
+    results.append(CheckResult(
+        "safe_paths_no_symlinks", "PASS" if not unsafe and not symlinks else "FAIL",
+        f"unsafe={unsafe[:5]} symlinks={symlinks[:5]}" if (unsafe or symlinks) else "no absolute/traversal paths, no symlinks"))
+    return results
+
+
+def _check_generation_config(config, where):
+    problems = []
+    if not isinstance(config, dict):
+        return [f"{where}: generate_content_config must be a mapping"]
+    for field in FORBIDDEN_GENERATION_FIELDS:
+        if field in config:
+            problems.append(f"{where}: forbidden field '{field}'")
+    max_out = config.get("max_output_tokens")
+    if max_out is not None and not (isinstance(max_out, int) and 1 <= max_out <= MAX_TOKEN_CEILING):
+        problems.append(f"{where}: max_output_tokens={max_out!r} outside 1..{MAX_TOKEN_CEILING}")
+    thinking = config.get("thinking_config") or {}
+    budget = thinking.get("thinking_budget") if isinstance(thinking, dict) else None
+    if budget is not None and not (isinstance(budget, int) and 1 <= budget <= MAX_TOKEN_CEILING):
+        problems.append(f"{where}: thinking_budget={budget!r} outside 1..{MAX_TOKEN_CEILING}")
+    if isinstance(config.get("temperature"), (int, float)) and config["temperature"] < 0:
+        problems.append(f"{where}: temperature < 0")
+    if isinstance(config.get("top_p"), (int, float)) and not 0.0 <= config["top_p"] <= 1.0:
+        problems.append(f"{where}: top_p outside [0, 1]")
+    if isinstance(config.get("top_k"), int) and config["top_k"] < 1:
+        problems.append(f"{where}: top_k < 1")
+    return problems
+
+
+def run_semantic_checks(root):
+    """Checks that need the file contents (YAML structure, models, references, generation limits, ...)."""
+    root = Path(root)
+    results = []
+    documents, load_problems = [], []          # documents: (yaml path, include-resolved data, raw data)
+    for yaml_path in iter_yaml_files(root):
+        try:
+            raw = parse_yaml_raw(yaml_path)
+        except yaml.YAMLError as exc:
+            load_problems.append(f"{yaml_path.relative_to(root).as_posix()}: YAML parse error: {str(exc)[:120]}")
+            continue
+        documents.append((yaml_path, resolve_includes(raw, root, yaml_path, load_problems), raw))
+    results.append(CheckResult("yaml_parses_and_includes_resolve", "PASS" if not load_problems else "FAIL",
+                               f"{len(documents)} YAML files" + (f"; problems={load_problems[:5]}" if load_problems else "")))
+
+    # Single base model rule: every `model:` in every YAML file must normalise to the same single name.
+    declared = collections.defaultdict(list)
+    for yaml_path, data, _ in documents:
+        for value in find_values_for_key(data, "model"):
+            if isinstance(value, str):
+                declared[normalize_model_name(value)].append(yaml_path.relative_to(root).as_posix())
+    results.append(CheckResult(
+        "single_declared_base_model", "PASS" if len(declared) <= 1 else "FAIL",
+        f"unique models={ {m: sorted(set(f)) for m, f in declared.items()} }"))
+    wrong = [m for m in declared if m != BASE_MODEL_NAME]
+    results.append(CheckResult("declared_model_is_allowed_base", "PASS" if not wrong else "FAIL",
+                               f"allowed only '{BASE_MODEL_NAME}'" + (f"; got {wrong}" if wrong else "")))
+    root_files = [p for p in (root / n for n in ROOT_CONFIG_NAMES) if p.is_file()]
+    if len(root_files) == 1:
+        root_doc = next((d for p, d, _ in documents if p == root_files[0]), None) or {}
+        results.append(CheckResult("root_agent_declares_model", "PASS" if isinstance(root_doc.get("model"), str) else "WARN",
+                                   f"root model={root_doc.get('model')!r}"))
+
+    # Every config_path / !include must point to an existing file inside the root.
+    reference_problems = []
+    for yaml_path, _, raw in documents:
+        for kind, rel in collect_references(raw):
+            _, problem = resolve_reference_target(root, yaml_path, rel)
+            if problem:
+                reference_problems.append(f"{yaml_path.relative_to(root).as_posix()}: {kind} {rel!r}: {problem}")
+    results.append(CheckResult("references_resolve", "PASS" if not reference_problems else "FAIL",
+                               "all !include / config_path targets exist" if not reference_problems else str(reference_problems[:5])))
+
+    # Tools must be harness tools or agent_tool / inline agents.
+    tool_problems = []
+    for yaml_path, data, _ in documents:
+        for entry in iter_tool_entries(data):
+            if isinstance(entry, str) and entry not in HARNESS_TOOL_NAMES:
+                tool_problems.append(f"{yaml_path.name}: unknown tool {entry!r}")
+            elif isinstance(entry, dict) and not ({"agent_tool", "model", "name"} & set(entry)):
+                tool_problems.append(f"{yaml_path.name}: unsupported tool entry {list(entry)}")
+            elif not isinstance(entry, (str, dict)):
+                tool_problems.append(f"{yaml_path.name}: invalid tool entry {entry!r}")
+    results.append(CheckResult("tools_are_harness_tools", "PASS" if not tool_problems else "FAIL",
+                               f"allowed={list(HARNESS_TOOL_NAMES)} + agent_tool" if not tool_problems else str(tool_problems[:5])))
+
+    # Generation config limits.
+    gen_problems = []
+    for yaml_path, data, _ in documents:
+        for config in find_values_for_key(data, "generate_content_config"):
+            gen_problems += _check_generation_config(config, yaml_path.name)
+    results.append(CheckResult("generation_config_limits", "PASS" if not gen_problems else "FAIL",
+                               f"max_output_tokens / thinking_budget within 1..{MAX_TOKEN_CEILING}, no forbidden fields"
+                               if not gen_problems else str(gen_problems[:5])))
+
+    # Adapters and skills referenced from YAML must exist.
+    asset_problems = []
+    for yaml_path, data, _ in documents:
+        for name in find_values_for_key(data, "adapter"):
+            if isinstance(name, str) and name.lower() not in ("null", "none", "~"):
+                for required in ("adapter_config.json", "adapter_model.safetensors"):
+                    if not (root / "adapters" / name / required).is_file():
+                        asset_problems.append(f"{yaml_path.name}: adapters/{name}/{required} missing")
+        for skills in find_values_for_key(data, "skills"):
+            for skill in (skills if isinstance(skills, list) else []):
+                if isinstance(skill, str) and not (root / skill / "SKILL.md").is_file():
+                    asset_problems.append(f"{yaml_path.name}: {skill}/SKILL.md missing")
+    results.append(CheckResult("adapters_and_skills_exist", "PASS" if not asset_problems else "FAIL",
+                               "no dangling adapter/skill references" if not asset_problems else str(asset_problems[:5])))
+
+    # Prompt files: stray {placeholders} would be interpolated from ADK session state and can crash the agent.
+    brace_warnings = []
+    for text_path in sorted(p for p in root.rglob("*") if p.is_file() and p.suffix.lower() in (".md", ".txt") and p.name != "SKILL.md"):
+        stray = set(re.findall(r"\{([^{}\n]*)\}", text_path.read_text(encoding="utf-8", errors="replace")))
+        stray -= {"problem_description", "hints"}
+        if stray:
+            brace_warnings.append(f"{text_path.relative_to(root).as_posix()}: {sorted(stray)[:3]}")
+    results.append(CheckResult("prompt_has_no_stray_braces", "PASS" if not brace_warnings else "WARN",
+                               "no unexpected {placeholders}" if not brace_warnings else str(brace_warnings)))
+
+    # eval_config.yaml sanity (advisory).
+    eval_path = root / "eval_config.yaml"
+    if eval_path.is_file():
+        cfg = (yaml.safe_load(eval_path.read_text(encoding="utf-8")) or {})
+        cfg = cfg.get("evaluation", cfg) if isinstance(cfg, dict) else {}
+        notes = []
+        minutes, calls = cfg.get("max_time_minutes"), cfg.get("max_tool_calls")
+        per_task = TOTAL_AGENT_HOURS * 60 / ESTIMATED_HIDDEN_TASKS
+        if isinstance(minutes, (int, float)) and minutes < 3:
+            notes.append(f"max_time_minutes={minutes} looks like a smoke-test value (12 h / ~{ESTIMATED_HIDDEN_TASKS} tasks ≈ {per_task:.0f} min per task)")
+        if isinstance(minutes, (int, float)) and minutes * ESTIMATED_HIDDEN_TASKS > TOTAL_AGENT_HOURS * 60:
+            notes.append(f"max_time_minutes={minutes} x ~{ESTIMATED_HIDDEN_TASKS} tasks exceeds the {TOTAL_AGENT_HOURS} h total limit if every task uses its full budget")
+        if isinstance(calls, int) and calls < 30:
+            notes.append(f"max_tool_calls={calls} is very tight for SWE tasks (README example uses 50)")
+        results.append(CheckResult("eval_config_sanity", "WARN" if notes else "PASS",
+                                   "; ".join(notes) if notes else f"evaluation={cfg}"))
+    return results
+
+
+def validate_submission_directory(root):
+    root = Path(root)
+    return run_structural_checks(entries_from_directory(root)) + run_semantic_checks(root)
+
+
+def validate_submission_zip(zip_path):
+    """Validate the finished archive itself (root-config check uses the zip's own namelist)."""
+    with zipfile.ZipFile(zip_path) as archive:
+        corrupt = archive.testzip()
+        entries = [FileEntry(info.filename, info.file_size, ((info.external_attr >> 16) & 0o170000) == 0o120000)
+                   for info in archive.infolist() if not info.is_dir()]
+        results = [CheckResult("zip_integrity", "PASS" if corrupt is None else "FAIL", f"first corrupt member: {corrupt}")]
+        structural = run_structural_checks(entries)
+        results += structural
+        if all(r.status != "FAIL" for r in structural):  # only extract archives that passed the structural gate
+            with tempfile.TemporaryDirectory(prefix="gemma4_zipcheck_") as tmp:
+                archive.extractall(tmp)
+                results += run_semantic_checks(Path(tmp))
+    return results
+
+
+def show_check_results(results, title):
+    frame = pd.DataFrame([dataclasses.asdict(r) for r in results]).rename(columns={"name": "check"})
+    print(f"\n=== {title} ===")
+    with pd.option_context("display.max_colwidth", 140):
+        display(frame)
+    counts = collections.Counter(r.status for r in results)
+    print(f"PASS={counts['PASS']}  WARN={counts['WARN']}  FAIL={counts['FAIL']}")
+    return counts["FAIL"] == 0
+
+# CELL 31 code
+# ---- Staging: assemble the submission directory ----------------------------------------------------
+ADAPTER_LINE = re.compile(r"^(\s*)adapter:\s*([^\s#]+)\s*(#.*)?$", re.M)
+
+
+def locate_sample_submission_dir():
+    """Return DATA_ROOT/sample_submission (or the first dir with that name below DATA_ROOT)."""
+    direct = DATA_ROOT / "sample_submission"
+    if direct.is_dir():
+        return direct
+    if DATA_ROOT.exists():
+        for dirpath, dirnames, _ in os.walk(DATA_ROOT):
+            if "sample_submission" in dirnames:
+                return Path(dirpath) / "sample_submission"
+    return None
+
+
+def copy_allowed_files(source_dir, target_dir, log):
+    """Copy a sample tree, dropping disallowed extensions (and adapter weights unless COPY_SAMPLE_ADAPTERS)."""
+    for path in sorted(p for p in source_dir.rglob("*") if p.is_file()):
+        rel = path.relative_to(source_dir)
+        if path.is_symlink() or path.suffix.lower() not in ALLOWED_EXTENSIONS or "__pycache__" in rel.parts:
+            log.append(f"skip (not allowed): {rel.as_posix()}")
+        elif rel.parts[0] == "adapters" and not COPY_SAMPLE_ADAPTERS:
+            log.append(f"skip (COPY_SAMPLE_ADAPTERS=False): {rel.as_posix()}")
+        else:
+            (target_dir / rel).parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(path, target_dir / rel)
+            log.append(f"copy: {rel.as_posix()}")
+
+
+def read_source_text(filename, default_text, log):
+    """Prefer the competition dataset's copy of a file; fall back to the embedded default."""
+    found = locate_competition_file(filename, subdirs=("sample_submission", "sandbox", ""))
+    if found is not None:
+        log.append(f"{filename}: taken from {found}")
+        return found.read_text(encoding="utf-8")
+    log.append(f"{filename}: not found in dataset -> embedded default")
+    return default_text
+
+
+def stage_submission_directory(staging_dir):
+    """Build the submission tree in `staging_dir` and return a human-readable action log."""
+    log = []
+    if staging_dir.exists():
+        shutil.rmtree(staging_dir)
+    staging_dir.mkdir(parents=True)
+
+    sample_dir = locate_sample_submission_dir()
+    if sample_dir is not None:
+        log.append(f"sample_submission found: {sample_dir}")
+        copy_allowed_files(sample_dir, staging_dir, log)
+    else:
+        log.append("sample_submission/ not found -> starting from the embedded files")
+
+    # Root files (do not overwrite what the sample already provided)
+    if not (staging_dir / "agent.yaml").exists():
+        (staging_dir / "agent.yaml").write_text(read_source_text("agent.yaml", DEFAULT_AGENT_YAML, log), encoding="utf-8")
+    if not (staging_dir / "eval_config.yaml").exists():
+        (staging_dir / "eval_config.yaml").write_text(
+            read_source_text("eval_config.yaml", DEFAULT_EVAL_CONFIG_YAML, log), encoding="utf-8")
+    if EVAL_CONFIG_OVERRIDES:
+        cfg = yaml.safe_load((staging_dir / "eval_config.yaml").read_text(encoding="utf-8")) or {}
+        cfg.setdefault("evaluation", {}).update(EVAL_CONFIG_OVERRIDES)
+        (staging_dir / "eval_config.yaml").write_text(yaml.safe_dump(cfg, sort_keys=False), encoding="utf-8")
+        log.append(f"eval_config.yaml: applied overrides {EVAL_CONFIG_OVERRIDES}")
+
+    setup_target = staging_dir / "setup.py"
+    if INCLUDE_SANDBOX_SETUP_PY:
+        if not setup_target.exists():
+            found = locate_competition_file("setup.py", subdirs=("sample_submission", "sandbox", ""))
+            if found is not None:
+                shutil.copyfile(found, setup_target)
+                log.append(f"setup.py: copied from {found}")
+            else:
+                log.append("setup.py: not found in dataset -> not included (optional)")
+    elif setup_target.exists():
+        setup_target.unlink()
+        log.append("setup.py: removed (INCLUDE_SANDBOX_SETUP_PY=False)")
+
+    # Create files that the YAML references but that are missing (defaults only for known paths).
+    for _ in range(5):
+        created = False
+        for yaml_path in iter_yaml_files(staging_dir):
+            for kind, rel in collect_references(parse_yaml_raw(yaml_path)):
+                target, _ = resolve_reference_target(staging_dir, yaml_path, rel)
+                if target is not None:
+                    continue
+                try:  # express the missing target as a root-relative path, e.g. '../prompts/x.md' in sub_agents/ -> 'prompts/x.md'
+                    root_rel = Path(os.path.normpath(yaml_path.parent / rel)).relative_to(staging_dir).as_posix()
+                except ValueError:
+                    continue
+                if root_rel in DEFAULT_SUPPORT_FILES:
+                    (staging_dir / root_rel).parent.mkdir(parents=True, exist_ok=True)
+                    (staging_dir / root_rel).write_text(DEFAULT_SUPPORT_FILES[root_rel], encoding="utf-8")
+                    log.append(f"generated missing {kind} target: {root_rel}")
+                    created = True
+        if not created:
+            break
+
+    # A LoRA adapter can only be referenced when its weights are shipped. No adapters are trained yet -> disable the reference.
+    for yaml_path in iter_yaml_files(staging_dir):
+        original = yaml_path.read_text(encoding="utf-8")
+
+        def disable_if_missing(match):
+            name = match.group(2).strip("'\"")
+            if name.lower() in ("null", "none", "~") or (staging_dir / "adapters" / name).is_dir():
+                return match.group(0)
+            log.append(f"{yaml_path.relative_to(staging_dir).as_posix()}: commented out 'adapter: {name}' (adapters/{name}/ not shipped)")
+            return f"{match.group(1)}# [notebook] disabled, adapters/{name}/ is not shipped: {match.group(0).strip()}"
+
+        updated = ADAPTER_LINE.sub(disable_if_missing, original)
+        if updated != original:
+            yaml_path.write_text(updated, encoding="utf-8")
+    return log
+
+
+def write_submission_zip(staging_dir, zip_path):
+    """Zip the staging dir with files at the archive root (no wrapping folder), in sorted order."""
+    with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=6) as archive:
+        for path in sorted(p for p in staging_dir.rglob("*") if p.is_file() and not p.is_symlink()):
+            archive.write(path, arcname=path.relative_to(staging_dir).as_posix())
+
+# CELL 32 code
+# ---- Build -> validate directory -> zip -> validate zip -> publish ------------------------------------
+STAGING_DIR = Path(tempfile.mkdtemp(prefix="gemma4_submission_"))
+STAGE_LOG = stage_submission_directory(STAGING_DIR)
+print("\n".join(f"  {line}" for line in STAGE_LOG))
+print("\nStaged files:", sorted(p.relative_to(STAGING_DIR).as_posix() for p in STAGING_DIR.rglob("*") if p.is_file()))
+
+directory_results = validate_submission_directory(STAGING_DIR)
+directory_ok = show_check_results(directory_results, "Pre-zip validation (staging directory)")
+if not directory_ok:
+    failed_lines = "\n".join(f"  - {r.name}: {r.detail}" for r in directory_results if r.status == "FAIL")
+    raise SubmissionValidationError(f"Staging directory failed validation; submission.zip was NOT written.\n{failed_lines}")
+
+WORKING_DIR.mkdir(parents=True, exist_ok=True)
+PARTIAL_ZIP_PATH = WORKING_DIR / "submission.zip.partial"
+FINAL_ZIP_PATH = WORKING_DIR / "submission.zip"
+write_submission_zip(STAGING_DIR, PARTIAL_ZIP_PATH)
+
+zip_results = validate_submission_zip(PARTIAL_ZIP_PATH)
+zip_ok = show_check_results(zip_results, "Post-zip validation (the archive itself)")
+if not zip_ok:
+    PARTIAL_ZIP_PATH.unlink(missing_ok=True)
+    failed_lines = "\n".join(f"  - {r.name}: {r.detail}" for r in zip_results if r.status == "FAIL")
+    raise SubmissionValidationError(f"submission.zip failed validation and was removed.\n{failed_lines}")
+
+os.replace(PARTIAL_ZIP_PATH, FINAL_ZIP_PATH)  # publish only after every FAIL-level check passed
+with zipfile.ZipFile(FINAL_ZIP_PATH) as archive:
+    listing = pd.DataFrame([{"member": i.filename, "bytes": i.file_size} for i in archive.infolist() if not i.is_dir()])
+print(f"\nWrote {FINAL_ZIP_PATH}  ({FINAL_ZIP_PATH.stat().st_size:,} bytes zipped, {listing['bytes'].sum():,} bytes unpacked)")
+display(listing)
+print("\n--- agent.yaml inside submission.zip ---")
+print((STAGING_DIR / "agent.yaml").read_text(encoding="utf-8"))
+RUN_STATUS["part4_submission"] = f"ok ({FINAL_ZIP_PATH})"
+
+# CELL 33 markdown
+## Run summary
+Also serves as the "notebook finished normally" marker: skipped parts are reported, never raised.
+
+# CELL 34 code
+print("=== Run summary ===")
+for part_name in ("part1_eda", "part2_graph_tools", "part3_model", "part4_submission"):
+    print(f"{part_name:20s}: {RUN_STATUS.get(part_name, 'not run')}")
+print("\n/kaggle/working contents:", sorted(p.name for p in WORKING_DIR.iterdir()))
+shutil.rmtree(STAGING_DIR, ignore_errors=True)  # temp staging only; the deliverable is /kaggle/working/submission.zip
+print("\nNotebook finished normally.")

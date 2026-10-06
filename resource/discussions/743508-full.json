@@ -1,0 +1,256 @@
+{
+  "forumTopic": {
+    "authorId": 19641724,
+    "authorThumbnailName": "19641724-kg.png?t=2026-09-29-07-48-18",
+    "authorUserDisplayName": "Whisper Last",
+    "authorUserName": "whisperlast",
+    "comments": [
+      {
+        "id": 3530007,
+        "postDate": "2026-09-29T10:55:16.617Z",
+        "rawMarkdown": "Following up with a reproduction on the current Wheelhouse, in case it helps.\n\n**Setup:** Kaggle notebook, GPU L4 x4, Internet off · Wheelhouse dataset version [N] (vLLM 0.19.1) · gemma-4-31b-it-qat-w4a16-ct v2 · adapter = the `sample_submission/adapters/[main_lora]` adapter with its `lora_B` weights replaced by N(0, 1) noise, so any working LoRA path should visibly change the output.\n\n**1. Through `adk_submission.VllmServer`** (`enable_lora=True, max_loras=8, max_lora_rank=128`, adapter passed via `discover_adapters` → `adapter_manifest`): `/v1/models` lists only the base model, no LoRA entry. With `VLLM_ALLOW_RUNTIME_LORA_UPDATING=True` set before startup, `POST /v1/load_lora_adapter` returns 404.\n\n**2. Directly in vLLM, bypassing the server:**\n\n```python\nllm = LLM(model=MODEL_PATH, tensor_parallel_size=4, max_model_len=4096,\n          enable_lora=True, max_loras=1, max_lora_rank=128)\nsp = SamplingParams(temperature=0, max_tokens=40, logprobs=3)\nbase = llm.chat(PROMPT, sp)\nlora = llm.chat(PROMPT, sp, lora_request=LoRARequest(\"loud_lora\", 1, ADAPTER_PATH))\n```\n\nBase and LoRA outputs are identical: same text (\"2, 3, 5, 7, 11, 13, 17, 19, 23, 29\") and same logprobs. vLLM does handle the request (it logs its LoRA-tokenizer warning), so the adapter seems to load but have no effect.\n\nCaveat: I only randomised `lora_B`. If the sample adapter's `lora_A` is all zeros, that alone would explain it. I'll re-run with both A and B randomised and post the result.\n\nTwo questions:\n1. Is the zeroing fix meant to be in the current Wheelhouse, or only on the scorer?\n2. Should the harness server list the adapter in `/v1/models` when it's in `adapter_manifest`?\n\nThanks!",
+        "content": "<p>Following up with a reproduction on the current Wheelhouse, in case it helps.</p>\n<p><strong>Setup:</strong> Kaggle notebook, GPU L4 x4, Internet off · Wheelhouse dataset version [N] (vLLM 0.19.1) · gemma-4-31b-it-qat-w4a16-ct v2 · adapter = the <code>sample_submission/adapters/[main_lora]</code> adapter with its <code>lora_B</code> weights replaced by N(0, 1) noise, so any working LoRA path should visibly change the output.</p>\n<p><strong>1. Through <code>adk_submission.VllmServer</code></strong> (<code>enable_lora=True, max_loras=8, max_lora_rank=128</code>, adapter passed via <code>discover_adapters</code> → <code>adapter_manifest</code>): <code>/v1/models</code> lists only the base model, no LoRA entry. With <code>VLLM_ALLOW_RUNTIME_LORA_UPDATING=True</code> set before startup, <code>POST /v1/load_lora_adapter</code> returns 404.</p>\n<p><strong>2. Directly in vLLM, bypassing the server:</strong></p>\n<pre><code>llm = LLM(model=MODEL_PATH, tensor_parallel_size=4, max_model_len=4096,\n          enable_lora=True, max_loras=1, max_lora_rank=128)\nsp = SamplingParams(temperature=0, max_tokens=40, logprobs=3)\nbase = llm.chat(PROMPT, sp)\nlora = llm.chat(PROMPT, sp, lora_request=LoRARequest(\"loud_lora\", 1, ADAPTER_PATH))\n</code></pre>\n<p>Base and LoRA outputs are identical: same text (\"2, 3, 5, 7, 11, 13, 17, 19, 23, 29\") and same logprobs. vLLM does handle the request (it logs its LoRA-tokenizer warning), so the adapter seems to load but have no effect.</p>\n<p>Caveat: I only randomised <code>lora_B</code>. If the sample adapter's <code>lora_A</code> is all zeros, that alone would explain it. I'll re-run with both A and B randomised and post the result.</p>\n<p>Two questions:</p>\n<ol>\n<li>Is the zeroing fix meant to be in the current Wheelhouse, or only on the scorer?</li>\n<li>Should the harness server list the adapter in <code>/v1/models</code> when it's in <code>adapter_manifest</code>?</li>\n</ol>\n<p>Thanks!</p>",
+        "replies": [
+          {
+            "id": 3530598,
+            "postDate": "2026-09-30T14:34:38.550Z",
+            "rawMarkdown": "1. The zeroing fix landed in v23 of the wheelhouse dataset (now on v25). You might check that your notebook has the most recent version.\n2. Yes, it should. `discover_adapters` expects the submission root, so make sure you're passing that and not the adapter directory.",
+            "content": "<ol>\n<li>The zeroing fix landed in v23 of the wheelhouse dataset (now on v25). You might check that your notebook has the most recent version.</li>\n<li>Yes, it should. <code>discover_adapters</code> expects the submission root, so make sure you're passing that and not the adapter directory.</li>\n</ol>",
+            "parent": {},
+            "author": {
+              "displayName": "Ryan Holbrook",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+              "url": "/ryanholbrook",
+              "tier": "STAFF",
+              "id": 2003505,
+              "progressionOptOut": false
+            },
+            "authorType": "ADMIN",
+            "votes": {
+              "canUpvote": true
+            },
+            "kernelVersion": 0,
+            "feedbackTrackingData": {},
+            "isThankYou": false,
+            "teamUpInfo": {
+              "teamLeader": {
+                "displayName": "Ryan Holbrook",
+                "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+                "url": "/ryanholbrook",
+                "userName": "ryanholbrook",
+                "tier": "STAFF",
+                "id": 2003505,
+                "profileUrl": "/ryanholbrook",
+                "performanceTier": "STAFF",
+                "userId": 2003505,
+                "progressionOptOut": false
+              },
+              "intro": ""
+            }
+          }
+        ],
+        "parent": {},
+        "author": {
+          "displayName": "Abdul Muiz",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/seclayer",
+          "tier": "CONTRIBUTOR",
+          "id": 24545639,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 72,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Abdul Muiz",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+            "url": "/seclayer",
+            "userName": "seclayer",
+            "tier": "CONTRIBUTOR",
+            "id": 24545639,
+            "profileUrl": "/seclayer",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 24545639,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3528725,
+        "postDate": "2026-09-26T11:19:21.103Z",
+        "rawMarkdown": "Thanks for the report. I will address.",
+        "content": "<p>Thanks for the report. I will address.</p>",
+        "replies": [
+          {
+            "id": 3530558,
+            "postDate": "2026-09-30T12:53:50.507Z",
+            "rawMarkdown": "Is there an update on this @ryanholbrook? Appreciate all the help but I think this is a serious bug for anyone attempting to use adapters.",
+            "content": "<p>Is there an update on this <a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a>? Appreciate all the help but I think this is a serious bug for anyone attempting to use adapters.</p>",
+            "replies": [
+              {
+                "id": 3530599,
+                "postDate": "2026-09-30T14:34:58.417Z",
+                "rawMarkdown": "It should be fixed in the most recent wheelhouse version, but please let me know if it seems otherwise.",
+                "content": "<p>It should be fixed in the most recent wheelhouse version, but please let me know if it seems otherwise.</p>",
+                "parent": {},
+                "author": {
+                  "displayName": "Ryan Holbrook",
+                  "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+                  "url": "/ryanholbrook",
+                  "tier": "STAFF",
+                  "id": 2003505,
+                  "progressionOptOut": false
+                },
+                "authorType": "ADMIN",
+                "votes": {
+                  "canUpvote": true
+                },
+                "kernelVersion": 0,
+                "feedbackTrackingData": {},
+                "isThankYou": false,
+                "teamUpInfo": {
+                  "teamLeader": {
+                    "displayName": "Ryan Holbrook",
+                    "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+                    "url": "/ryanholbrook",
+                    "userName": "ryanholbrook",
+                    "tier": "STAFF",
+                    "id": 2003505,
+                    "profileUrl": "/ryanholbrook",
+                    "performanceTier": "STAFF",
+                    "userId": 2003505,
+                    "progressionOptOut": false
+                  },
+                  "intro": ""
+                }
+              }
+            ],
+            "parent": {},
+            "author": {
+              "displayName": "Ayush Thakur",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2212893-kg.jpg?t=2023-09-12-07-15-57",
+              "url": "/ayuraj",
+              "tier": "MASTER",
+              "id": 2212893,
+              "progressionOptOut": false
+            },
+            "authorType": "COMMENT",
+            "votes": {
+              "canUpvote": true
+            },
+            "kernelVersion": 0,
+            "feedbackTrackingData": {},
+            "isThankYou": false,
+            "teamUpInfo": {
+              "teamLeader": {
+                "displayName": "Ayush Thakur",
+                "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2212893-kg.jpg?t=2023-09-12-07-15-57",
+                "url": "/ayuraj",
+                "userName": "ayuraj",
+                "tier": "MASTER",
+                "id": 2212893,
+                "profileUrl": "/ayuraj",
+                "performanceTier": "MASTER",
+                "userId": 2212893,
+                "progressionOptOut": false
+              },
+              "intro": ""
+            }
+          }
+        ],
+        "parent": {},
+        "author": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "progressionOptOut": false
+        },
+        "authorType": "ADMIN",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Ryan Holbrook",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+            "url": "/ryanholbrook",
+            "userName": "ryanholbrook",
+            "tier": "STAFF",
+            "id": 2003505,
+            "profileUrl": "/ryanholbrook",
+            "performanceTier": "STAFF",
+            "userId": 2003505,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3528509,
+      "postDate": "2026-09-26T06:03:03.950Z",
+      "rawMarkdown": "Tested with the patched vllm 0.19.1 from `metric/gemma-4-developer-agent-wheelhouse` (uploaded 2026-09-25). This is the build whose `gemma4.py` / `gemma4_mm.py` add `SupportsLoRA` to `Gemma4ForConditionalGeneration`. With it, `--enable-lora --lora-modules name=path` starts fine and the adapter is reported as loaded. **But the adapter has no effect on the outputs.**\n\n**Cause**\n\nGemma4Model registers every decoder layer twice:\n- once as `language_model.model.layers.N`;\n- once through the YOCO alias `language_model.model.self_decoder.decoder_layers.N`. `Gemma4SelfDecoderLayers` keeps a slice of the same `ModuleList` as a submodule, and it is built even when `kv_sharing_fast_prefill` is off.\n\n`LoRAModelManager.activate_adapter` iterates over both names:\n1. Under `layers.N` it finds the adapter weights and calls `set_lora`.\n2. Under the alias name the adapter has no weights, so it calls `module.reset_lora(index)` on the same layer object. This wipes the weights it has just set.\n\n**Repro**\n\n1. Take any adapter for `gemma-4-31b-it-qat-w4a16-ct` and set every `lora_B` to large random values (std 1.0).\n2. Serve it with the patched vLLM and `--enable-lora`.\n3. Compare the top logprobs for the base model name and the adapter name on the same prompt at temperature 0. They are identical.\n4. With `VLLM_LOGGING_LEVEL=DEBUG`, the log shows 240 lines of `Successfully loaded LoRA weights for module language_model.model.layers.N...`, followed by 240 lines of `No LoRA weights found for module language_model.model.self_decoder.decoder_layers.N..., skipping.`\n5. Inspecting the LoRA layers afterwards shows that every `lora_b_stacked` slot is zero.\n\n**Possible fixes**\n\n- Store `decoder_layers` in `Gemma4SelfDecoderLayers` / `Gemma4CrossDecoderLayers` without registering them as submodules. The patch already does this for `embed_tokens` and the other shared modules via `self.__dict__[...]`.\n- Or skip `reset_lora` for a module object that already received weights under another name.\n\nThis affects any submission that ships an adapter, because it would score exactly like the base model. It is separate from the earlier \"does not support LoRA yet\" startup error discussed in https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743213.",
+      "content": "<p>Tested with the patched vllm 0.19.1 from <code>metric/gemma-4-developer-agent-wheelhouse</code> (uploaded 2026-09-25). This is the build whose <code>gemma4.py</code> / <code>gemma4_mm.py</code> add <code>SupportsLoRA</code> to <code>Gemma4ForConditionalGeneration</code>. With it, <code>--enable-lora --lora-modules name=path</code> starts fine and the adapter is reported as loaded. <strong>But the adapter has no effect on the outputs.</strong></p>\n<p><strong>Cause</strong></p>\n<p>Gemma4Model registers every decoder layer twice:</p>\n<ul>\n<li>once as <code>language_model.model.layers.N</code>;</li>\n<li>once through the YOCO alias <code>language_model.model.self_decoder.decoder_layers.N</code>. <code>Gemma4SelfDecoderLayers</code> keeps a slice of the same <code>ModuleList</code> as a submodule, and it is built even when <code>kv_sharing_fast_prefill</code> is off.</li>\n</ul>\n<p><code>LoRAModelManager.activate_adapter</code> iterates over both names:</p>\n<ol>\n<li>Under <code>layers.N</code> it finds the adapter weights and calls <code>set_lora</code>.</li>\n<li>Under the alias name the adapter has no weights, so it calls <code>module.reset_lora(index)</code> on the same layer object. This wipes the weights it has just set.</li>\n</ol>\n<p><strong>Repro</strong></p>\n<ol>\n<li>Take any adapter for <code>gemma-4-31b-it-qat-w4a16-ct</code> and set every <code>lora_B</code> to large random values (std 1.0).</li>\n<li>Serve it with the patched vLLM and <code>--enable-lora</code>.</li>\n<li>Compare the top logprobs for the base model name and the adapter name on the same prompt at temperature 0. They are identical.</li>\n<li>With <code>VLLM_LOGGING_LEVEL=DEBUG</code>, the log shows 240 lines of <code>Successfully loaded LoRA weights for module language_model.model.layers.N...</code>, followed by 240 lines of <code>No LoRA weights found for module language_model.model.self_decoder.decoder_layers.N..., skipping.</code></li>\n<li>Inspecting the LoRA layers afterwards shows that every <code>lora_b_stacked</code> slot is zero.</li>\n</ol>\n<p><strong>Possible fixes</strong></p>\n<ul>\n<li>Store <code>decoder_layers</code> in <code>Gemma4SelfDecoderLayers</code> / <code>Gemma4CrossDecoderLayers</code> without registering them as submodules. The patch already does this for <code>embed_tokens</code> and the other shared modules via <code>self.__dict__[...]</code>.</li>\n<li>Or skip <code>reset_lora</code> for a module object that already received weights under another name.</li>\n</ul>\n<p>This affects any submission that ships an adapter, because it would score exactly like the base model. It is separate from the earlier \"does not support LoRA yet\" startup error discussed in <a href=\"https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743213\" target=\"_blank\">https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743213</a>.</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Whisper Last",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/19641724-kg.png?t=2026-09-29-07-48-18",
+        "url": "/whisperlast",
+        "tier": "CONTRIBUTOR",
+        "id": 19641724,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 4,
+        "canUpvote": true,
+        "totalUpvotes": 4
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 197,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Whisper Last",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/19641724-kg.png?t=2026-09-29-07-48-18",
+          "url": "/whisperlast",
+          "userName": "whisperlast",
+          "tier": "CONTRIBUTOR",
+          "id": 19641724,
+          "profileUrl": "/whisperlast",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 19641724,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3528509,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 743508,
+    "name": "LoRA adapters are silently wiped in the patched vLLM 0.19.1 (Gemma4 decoder layers registered twice)",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-26T06:03:03.949495700Z",
+    "totalVotes": 4,
+    "url": "/competitions/gemma-4-developer-agent/discussion/743508",
+    "totalMessages": 5,
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

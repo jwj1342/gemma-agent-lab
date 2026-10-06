@@ -1,0 +1,38 @@
+# Welcome to the Gemma 4 Developer Agent Competition
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743007
+
+## 3527743 /elanlearns HOST
+Hello Kagglers,
+
+Today’s most capable software engineering agents rely on massive, closed-source models running in the cloud, leaving advanced autonomous development tools out of reach for many developers.
+
+With Gemma 4, we want to change that.
+
+Our challenge to you is to push the boundaries of open-source models and post-train Gemma 4 into an autonomous coding agent capable of navigating real-world repositories and reliably resolving software engineering tasks on consumer-grade hardware. To help you get started, we’ve provided a [starter submission](https://www.kaggle.com/competitions/gemma-4-developer-agent/data?select=sample_submission), [development tasks](https://www.kaggle.com/competitions/gemma-4-developer-agent/data?select=tasks.jsonl), and a corresponding dataset of structured [code graphs](https://www.kaggle.com/competitions/gemma-4-developer-agent/data?select=graphs) with [pre-computed embeddings](https://www.kaggle.com/competitions/gemma-4-developer-agent/data?select=embeddings) for repository-level retrieval.
+
+Whether you explore parameter-efficient fine-tuning, novel reinforcement learning approaches, or graph-based code reasoning, we want to see how far you can take local, open models. 
+
+We can't wait to see the agents you build and the solutions you invent!
+
+Google Research and The Gemma Team
+
+
+## 3529562 /atomstack001 COMMENT
+L4 ×4 session is queued for very long time. 
+
+
+## 3528874 /satyam1836 COMMENT
+Good skills 
+
+## 3528756 /sharifmohamed1 COMMENT
+it's the best choice for deepmind to let developers to show their skills
+
+## 3527784 /surajgod COMMENT
+Or post train model with api and that can be implemented for better accuracy   
+
+## 3527783 /surajgod COMMENT
+Train gama offline?
+
+
+## 3529290 / COMMENT
+

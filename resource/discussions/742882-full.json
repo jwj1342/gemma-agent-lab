@@ -1,0 +1,507 @@
+{
+  "forumTopic": {
+    "authorId": 21536254,
+    "authorThumbnailName": "21536254-kg.png?t=2025-09-23-22-19-45",
+    "authorUserDisplayName": "shimonDanziger",
+    "authorUserName": "shimondanziger",
+    "comments": [
+      {
+        "id": 3527656,
+        "postDate": "2026-09-24T10:45:26.967Z",
+        "rawMarkdown": "Hi @shimondanziger,\n\nHere is a wheelhouse with the packages: [Gemma 4 Developer Agent Wheelhouse](https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse/data).\n\nI'll post a notebook later today illustrating how to run everything on Kaggle.",
+        "content": "<p>Hi <a href=\"/shimondanziger\" target=\"_blank\">@shimondanziger</a>,</p>\n<p>Here is a wheelhouse with the packages: <a href=\"https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse/data\" target=\"_blank\">Gemma 4 Developer Agent Wheelhouse</a>.</p>\n<p>I'll post a notebook later today illustrating how to run everything on Kaggle.</p>",
+        "replies": [
+          {
+            "id": 3528156,
+            "postDate": "2026-09-25T14:24:09.787Z",
+            "rawMarkdown": "",
+            "parent": {},
+            "author": {
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+              "url": "/"
+            },
+            "authorType": "COMMENT",
+            "votes": {},
+            "canDelete": true,
+            "isUserAuthor": true,
+            "isDeleted": true,
+            "kernelVersion": 0,
+            "feedbackTrackingData": {},
+            "isThankYou": false
+          }
+        ],
+        "parent": {},
+        "author": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "progressionOptOut": false
+        },
+        "authorType": "ADMIN",
+        "votes": {
+          "totalVotes": 10,
+          "canUpvote": true,
+          "totalUpvotes": 10
+        },
+        "kernelVersion": 0,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "reactions": [
+          {
+            "emoji": "YAY",
+            "featuredUserNames": [
+              "adithyagiri",
+              "i1ravenov"
+            ],
+            "userCount": 2
+          },
+          {
+            "emoji": "KAGGLE",
+            "featuredUserNames": [
+              "i1ravenov"
+            ],
+            "userCount": 1
+          }
+        ],
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Ryan Holbrook",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+            "url": "/ryanholbrook",
+            "userName": "ryanholbrook",
+            "tier": "STAFF",
+            "id": 2003505,
+            "profileUrl": "/ryanholbrook",
+            "performanceTier": "STAFF",
+            "userId": 2003505,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3528075,
+        "postDate": "2026-09-25T09:59:46.470Z",
+        "rawMarkdown": "Hi @ryanholbrook, thanks for the wheelhouse! Is the \"how to run everything on Kaggle\" notebook still coming? Specifically:\n\nTest dependencies: the public wheelhouse lacks some packages the task tests import (e.g. typing-inspection, inline-snapshot, dirty-equals, pytest-httpbin), so gold patches for many FastAPI and Requests tasks can't pass locally. Will the sandbox wheels from the scoring data be published, or should we supply these ourselves?\nSandbox mode: Docker isn't available in Kaggle notebooks. Is --sandbox subprocess the intended way to run swegemma eval there?\nServer settings: which vLLM flags does the scorer use (tool/reasoning parser, --default-chat-template-kwargs, kv-cache dtype)?\nThanks!",
+        "content": "<p>Hi <a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a>, thanks for the wheelhouse! Is the \"how to run everything on Kaggle\" notebook still coming? Specifically:</p>\n<p>Test dependencies: the public wheelhouse lacks some packages the task tests import (e.g. typing-inspection, inline-snapshot, dirty-equals, pytest-httpbin), so gold patches for many FastAPI and Requests tasks can't pass locally. Will the sandbox wheels from the scoring data be published, or should we supply these ourselves?\nSandbox mode: Docker isn't available in Kaggle notebooks. Is --sandbox subprocess the intended way to run swegemma eval there?\nServer settings: which vLLM flags does the scorer use (tool/reasoning parser, --default-chat-template-kwargs, kv-cache dtype)?\nThanks!</p>",
+        "replies": [
+          {
+            "id": 3528280,
+            "postDate": "2026-09-25T18:42:00.897Z",
+            "rawMarkdown": "I’m equally waiting. Let me know when you have it",
+            "content": "<p>I’m equally waiting. Let me know when you have it</p>",
+            "replies": [
+              {
+                "id": 3528281,
+                "postDate": "2026-09-25T18:42:51.693Z",
+                "rawMarkdown": "It's here: https://www.kaggle.com/code/ryanholbrook/getting-started-gemma-4-developer-agent",
+                "content": "<p>It's here: <a href=\"https://www.kaggle.com/code/ryanholbrook/getting-started-gemma-4-developer-agent\" target=\"_blank\">https://www.kaggle.com/code/ryanholbrook/getting-started-gemma-4-developer-agent</a></p>",
+                "parent": {},
+                "author": {
+                  "displayName": "Ryan Holbrook",
+                  "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+                  "url": "/ryanholbrook",
+                  "tier": "STAFF",
+                  "id": 2003505,
+                  "progressionOptOut": false
+                },
+                "authorType": "ADMIN",
+                "votes": {
+                  "totalVotes": 1,
+                  "canUpvote": true,
+                  "totalUpvotes": 1
+                },
+                "kernelVersion": 0,
+                "feedbackTrackingData": {},
+                "isThankYou": false,
+                "reactions": [
+                  {
+                    "emoji": "LOVE",
+                    "featuredUserNames": [
+                      "irfanparaniya"
+                    ],
+                    "userCount": 1
+                  }
+                ],
+                "teamUpInfo": {
+                  "teamLeader": {
+                    "displayName": "Ryan Holbrook",
+                    "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+                    "url": "/ryanholbrook",
+                    "userName": "ryanholbrook",
+                    "tier": "STAFF",
+                    "id": 2003505,
+                    "profileUrl": "/ryanholbrook",
+                    "performanceTier": "STAFF",
+                    "userId": 2003505,
+                    "progressionOptOut": false
+                  },
+                  "intro": ""
+                }
+              },
+              {
+                "id": 3528318,
+                "postDate": "2026-09-25T20:39:39.697Z",
+                "rawMarkdown": "@ryanholbrook \nWe're validating the public tasks with `swegemma==0.2.7` using the official Docker verification path and the public competition `wheels/`.\n\nWe've hit two environment issues and wanted to confirm whether the private scorer differs:\n\n1. FastAPI tasks cannot import because the public wheel set includes Pydantic 2 but not `typing-inspection`. Several tasks also require packages such as `pytest-httpbin`, `inline-snapshot`, or `dirty-equals`, which aren't present in the public wheels.\n\n2. `_ensure_container_site_packages` can inject the repository's own released package (for example `requests` or `httpx`) into site-packages. In our checks, that package can shadow `/workspace`; for some Requests tasks the released wheel already contains the fix, so the test passes before applying the gold patch.\n\nDoes the private scoring wheel set contain the missing test dependencies? And in scoring, is the task repository's own released package also injected into site-packages, or is `/workspace` expected to take precedence?\n\nWe're asking because the task data and gold patches themselves validate cleanly, but these environment differences prevent the public verifier from providing a reliable gold-patch positive control.",
+                "content": "<p><a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a> \nWe're validating the public tasks with <code>swegemma==0.2.7</code> using the official Docker verification path and the public competition <code>wheels/</code>.</p>\n<p>We've hit two environment issues and wanted to confirm whether the private scorer differs:</p>\n<ol>\n<li><p>FastAPI tasks cannot import because the public wheel set includes Pydantic 2 but not <code>typing-inspection</code>. Several tasks also require packages such as <code>pytest-httpbin</code>, <code>inline-snapshot</code>, or <code>dirty-equals</code>, which aren't present in the public wheels.</p></li>\n<li><p><code>_ensure_container_site_packages</code> can inject the repository's own released package (for example <code>requests</code> or <code>httpx</code>) into site-packages. In our checks, that package can shadow <code>/workspace</code>; for some Requests tasks the released wheel already contains the fix, so the test passes before applying the gold patch.</p></li>\n</ol>\n<p>Does the private scoring wheel set contain the missing test dependencies? And in scoring, is the task repository's own released package also injected into site-packages, or is <code>/workspace</code> expected to take precedence?</p>\n<p>We're asking because the task data and gold patches themselves validate cleanly, but these environment differences prevent the public verifier from providing a reliable gold-patch positive control.</p>",
+                "parent": {},
+                "author": {
+                  "displayName": "yesterdays_rebel",
+                  "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/26814855-kg.jpg?t=2026-08-04-10-01-43",
+                  "url": "/irfanparaniya",
+                  "tier": "CONTRIBUTOR",
+                  "id": 26814855,
+                  "progressionOptOut": false
+                },
+                "authorType": "COMMENT",
+                "votes": {
+                  "canUpvote": true
+                },
+                "kernelVersion": 0,
+                "competitionRanking": 759,
+                "feedbackTrackingData": {},
+                "isThankYou": false,
+                "isCollapsed": true,
+                "teamUpInfo": {
+                  "teamLeader": {
+                    "displayName": "yesterdays_rebel",
+                    "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/26814855-kg.jpg?t=2026-08-04-10-01-43",
+                    "url": "/irfanparaniya",
+                    "userName": "irfanparaniya",
+                    "tier": "CONTRIBUTOR",
+                    "id": 26814855,
+                    "profileUrl": "/irfanparaniya",
+                    "performanceTier": "CONTRIBUTOR",
+                    "userId": 26814855,
+                    "progressionOptOut": false
+                  },
+                  "intro": ""
+                }
+              },
+              {
+                "id": 3528750,
+                "postDate": "2026-09-26T11:49:05.143Z",
+                "rawMarkdown": "Hi @irfanparaniya,\n\nThanks for the report. I will look into it (likely on Monday). For now, I can verify at least that the evaluation metric correctly validates a gold-patch submission at 100%.",
+                "content": "<p>Hi <a href=\"/irfanparaniya\" target=\"_blank\">@irfanparaniya</a>,</p>\n<p>Thanks for the report. I will look into it (likely on Monday). For now, I can verify at least that the evaluation metric correctly validates a gold-patch submission at 100%.</p>",
+                "parent": {},
+                "author": {
+                  "displayName": "Ryan Holbrook",
+                  "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+                  "url": "/ryanholbrook",
+                  "tier": "STAFF",
+                  "id": 2003505,
+                  "progressionOptOut": false
+                },
+                "authorType": "ADMIN",
+                "votes": {
+                  "canUpvote": true
+                },
+                "kernelVersion": 0,
+                "feedbackTrackingData": {},
+                "isThankYou": false,
+                "isCollapsed": true,
+                "reactions": [
+                  {
+                    "emoji": "THANK_YOU",
+                    "featuredUserNames": [
+                      "irfanparaniya"
+                    ],
+                    "userCount": 1
+                  }
+                ],
+                "teamUpInfo": {
+                  "teamLeader": {
+                    "displayName": "Ryan Holbrook",
+                    "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+                    "url": "/ryanholbrook",
+                    "userName": "ryanholbrook",
+                    "tier": "STAFF",
+                    "id": 2003505,
+                    "profileUrl": "/ryanholbrook",
+                    "performanceTier": "STAFF",
+                    "userId": 2003505,
+                    "progressionOptOut": false
+                  },
+                  "intro": ""
+                }
+              },
+              {
+                "id": 3528924,
+                "postDate": "2026-09-26T21:00:50.320Z",
+                "rawMarkdown": "@ryanholbrook — follow-up with a completed Kaggle reproduction of the public evaluation environment problems.\n\nThank you for confirming that the evaluation metric validates a gold-patch submission at 100%. We are trying to reproduce reliable reference-patch validation with the released tooling before using it to compare agents.\n\nWe ran a **private Kaggle CPU notebook**, using the **unchanged installation cell from your current Getting Started notebook**, with the competition data and official wheelhouse attached. The notebook used the released `verify_task` and subprocess sandbox, with no agent, model calls, inference, or competition submission. We ran fresh unpatched/reference controls for six public development tasks without changing patches, verification tests, pytest flags, or scoring expectations.\n\nAll 12 controls completed. **Only 2 of the 6 reference controls passed:**\n\n| Public task | Reference result |\n|---|---|\n| `fastapi_14786` | Pass: 9 tests |\n| `rich_3043` | Pass: 96 tests |\n| `fastapi_14356` | Collection fails: missing `dirty_equals` |\n| `fastapi_15745` | Collection fails: missing `inline_snapshot` |\n| `requests_7309` | 6 failures; the failing traceback executes `/usr/local/lib/python3.12/dist-packages/requests/utils.py`, rather than the patched workspace source |\n| `httpx_3672` | Collection fails because imported `httpx` has no `Stream`; the import probe resolves installed HTTPX rather than workspace source |\n\nThe returned snapshot hashes for all six tasks, task-data hash, all 124 task-wheel hashes, and the verification/setup source hashes match our local copies. The notebook environment has Python 3.12.13, pytest 8.4.2, Pydantic 2.12.3, Starlette 0.52.1, Requests 2.32.4 and HTTPX 0.28.1. This was the public CPU/subprocess path; we are **not claiming the private scorer or the GPU notebook has the same failures**.\n\nThese failures prevent trustworthy comparisons in the public development environment: a correct reference patch can fail because a package is missing or because the verifier executes an installed distribution instead of the patched repository.\n\nCould you clarify:\n\n1. Which supported environment/setup reproduces the successful reference-patch validation you reported? Could its sandbox image digest and complete dependency lock or wheel manifest be provided?\n2. Should the released setup ensure workspace source (including `src/` layouts) takes precedence over installed repository packages, and supply the missing test dependencies?\n3. Does private scoring use a different sandbox backend or dependency setup from the released notebook flow?\n\nWe can provide the diagnostic script, package/import inventories and hashes. No reference patch text, test bodies, credentials or raw verification logs need to be posted.",
+                "content": "<p><a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a> — follow-up with a completed Kaggle reproduction of the public evaluation environment problems.</p>\n<p>Thank you for confirming that the evaluation metric validates a gold-patch submission at 100%. We are trying to reproduce reliable reference-patch validation with the released tooling before using it to compare agents.</p>\n<p>We ran a <strong>private Kaggle CPU notebook</strong>, using the <strong>unchanged installation cell from your current Getting Started notebook</strong>, with the competition data and official wheelhouse attached. The notebook used the released <code>verify_task</code> and subprocess sandbox, with no agent, model calls, inference, or competition submission. We ran fresh unpatched/reference controls for six public development tasks without changing patches, verification tests, pytest flags, or scoring expectations.</p>\n<p>All 12 controls completed. <strong>Only 2 of the 6 reference controls passed:</strong></p>\n<table>\n<thead>\n<tr>\n<th>Public task</th>\n<th>Reference result</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>fastapi_14786</code></td>\n<td>Pass: 9 tests</td>\n</tr>\n<tr>\n<td><code>rich_3043</code></td>\n<td>Pass: 96 tests</td>\n</tr>\n<tr>\n<td><code>fastapi_14356</code></td>\n<td>Collection fails: missing <code>dirty_equals</code></td>\n</tr>\n<tr>\n<td><code>fastapi_15745</code></td>\n<td>Collection fails: missing <code>inline_snapshot</code></td>\n</tr>\n<tr>\n<td><code>requests_7309</code></td>\n<td>6 failures; the failing traceback executes <code>/usr/local/lib/python3.12/dist-packages/requests/utils.py</code>, rather than the patched workspace source</td>\n</tr>\n<tr>\n<td><code>httpx_3672</code></td>\n<td>Collection fails because imported <code>httpx</code> has no <code>Stream</code>; the import probe resolves installed HTTPX rather than workspace source</td>\n</tr>\n</tbody>\n</table>\n<p>The returned snapshot hashes for all six tasks, task-data hash, all 124 task-wheel hashes, and the verification/setup source hashes match our local copies. The notebook environment has Python 3.12.13, pytest 8.4.2, Pydantic 2.12.3, Starlette 0.52.1, Requests 2.32.4 and HTTPX 0.28.1. This was the public CPU/subprocess path; we are <strong>not claiming the private scorer or the GPU notebook has the same failures</strong>.</p>\n<p>These failures prevent trustworthy comparisons in the public development environment: a correct reference patch can fail because a package is missing or because the verifier executes an installed distribution instead of the patched repository.</p>\n<p>Could you clarify:</p>\n<ol>\n<li>Which supported environment/setup reproduces the successful reference-patch validation you reported? Could its sandbox image digest and complete dependency lock or wheel manifest be provided?</li>\n<li>Should the released setup ensure workspace source (including <code>src/</code> layouts) takes precedence over installed repository packages, and supply the missing test dependencies?</li>\n<li>Does private scoring use a different sandbox backend or dependency setup from the released notebook flow?</li>\n</ol>\n<p>We can provide the diagnostic script, package/import inventories and hashes. No reference patch text, test bodies, credentials or raw verification logs need to be posted.</p>",
+                "parent": {},
+                "author": {
+                  "displayName": "rdeschamps",
+                  "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/3548285-kg.jpg?t=2026-09-25-01-34-20",
+                  "url": "/rdeschamps",
+                  "tier": "CONTRIBUTOR",
+                  "id": 3548285,
+                  "progressionOptOut": false
+                },
+                "authorType": "COMMENT",
+                "votes": {
+                  "totalVotes": 2,
+                  "canUpvote": true,
+                  "totalUpvotes": 2
+                },
+                "kernelVersion": 0,
+                "competitionRanking": 1368,
+                "feedbackTrackingData": {},
+                "isThankYou": false,
+                "isCollapsed": true,
+                "teamUpInfo": {
+                  "teamLeader": {
+                    "displayName": "rdeschamps",
+                    "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/3548285-kg.jpg?t=2026-09-25-01-34-20",
+                    "url": "/rdeschamps",
+                    "userName": "rdeschamps",
+                    "tier": "CONTRIBUTOR",
+                    "id": 3548285,
+                    "profileUrl": "/rdeschamps",
+                    "performanceTier": "CONTRIBUTOR",
+                    "userId": 3548285,
+                    "progressionOptOut": false
+                  },
+                  "intro": ""
+                }
+              },
+              {
+                "id": 3529110,
+                "postDate": "2026-09-27T11:12:58.517Z",
+                "rawMarkdown": "This may be a problem with the subprocess sandbox. I don't recall seeing these failures using the Docker sandbox. The private Docker sandbox uses the same base image but installs a different set of dependencies because the test issues come from a different set of repos.\n\nI'll look into getting a more reliable setup going in the notebook environment.",
+                "content": "<p>This may be a problem with the subprocess sandbox. I don't recall seeing these failures using the Docker sandbox. The private Docker sandbox uses the same base image but installs a different set of dependencies because the test issues come from a different set of repos.</p>\n<p>I'll look into getting a more reliable setup going in the notebook environment.</p>",
+                "parent": {},
+                "author": {
+                  "displayName": "Ryan Holbrook",
+                  "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+                  "url": "/ryanholbrook",
+                  "tier": "STAFF",
+                  "id": 2003505,
+                  "progressionOptOut": false
+                },
+                "authorType": "ADMIN",
+                "votes": {
+                  "canUpvote": true
+                },
+                "kernelVersion": 0,
+                "feedbackTrackingData": {},
+                "isThankYou": false,
+                "isCollapsed": true,
+                "teamUpInfo": {
+                  "teamLeader": {
+                    "displayName": "Ryan Holbrook",
+                    "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+                    "url": "/ryanholbrook",
+                    "userName": "ryanholbrook",
+                    "tier": "STAFF",
+                    "id": 2003505,
+                    "profileUrl": "/ryanholbrook",
+                    "performanceTier": "STAFF",
+                    "userId": 2003505,
+                    "progressionOptOut": false
+                  },
+                  "intro": ""
+                }
+              },
+              {
+                "id": 3529696,
+                "postDate": "2026-09-28T19:16:11.890Z",
+                "rawMarkdown": "@ryanholbrook - Did you get a chance to look at this?",
+                "content": "<p><a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a> - Did you get a chance to look at this?</p>",
+                "parent": {},
+                "author": {
+                  "displayName": "yesterdays_rebel",
+                  "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/26814855-kg.jpg?t=2026-08-04-10-01-43",
+                  "url": "/irfanparaniya",
+                  "tier": "CONTRIBUTOR",
+                  "id": 26814855,
+                  "progressionOptOut": false
+                },
+                "authorType": "COMMENT",
+                "votes": {
+                  "canUpvote": true
+                },
+                "kernelVersion": 0,
+                "competitionRanking": 759,
+                "feedbackTrackingData": {},
+                "isThankYou": false,
+                "isCollapsed": true,
+                "teamUpInfo": {
+                  "teamLeader": {
+                    "displayName": "yesterdays_rebel",
+                    "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/26814855-kg.jpg?t=2026-08-04-10-01-43",
+                    "url": "/irfanparaniya",
+                    "userName": "irfanparaniya",
+                    "tier": "CONTRIBUTOR",
+                    "id": 26814855,
+                    "profileUrl": "/irfanparaniya",
+                    "performanceTier": "CONTRIBUTOR",
+                    "userId": 26814855,
+                    "progressionOptOut": false
+                  },
+                  "intro": ""
+                }
+              }
+            ],
+            "parent": {},
+            "author": {
+              "displayName": "Opoku Emmanuel",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+              "url": "/opokuemmanuel",
+              "tier": "CONTRIBUTOR",
+              "id": 12550268,
+              "progressionOptOut": false
+            },
+            "authorType": "COMMENT",
+            "votes": {
+              "canUpvote": true
+            },
+            "kernelVersion": 0,
+            "feedbackTrackingData": {},
+            "isThankYou": false,
+            "teamUpInfo": {
+              "teamLeader": {
+                "displayName": "Opoku Emmanuel",
+                "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+                "url": "/opokuemmanuel",
+                "userName": "opokuemmanuel",
+                "tier": "CONTRIBUTOR",
+                "id": 12550268,
+                "profileUrl": "/opokuemmanuel",
+                "performanceTier": "CONTRIBUTOR",
+                "userId": 12550268,
+                "progressionOptOut": false
+              },
+              "intro": ""
+            }
+          }
+        ],
+        "parent": {},
+        "author": {
+          "displayName": "yesterdays_rebel",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/26814855-kg.jpg?t=2026-08-04-10-01-43",
+          "url": "/irfanparaniya",
+          "tier": "CONTRIBUTOR",
+          "id": 26814855,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 759,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "yesterdays_rebel",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/26814855-kg.jpg?t=2026-08-04-10-01-43",
+            "url": "/irfanparaniya",
+            "userName": "irfanparaniya",
+            "tier": "CONTRIBUTOR",
+            "id": 26814855,
+            "profileUrl": "/irfanparaniya",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 26814855,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3532363,
+        "postDate": "2026-10-03T11:42:13Z",
+        "rawMarkdown": "",
+        "parent": {},
+        "author": {
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/"
+        },
+        "authorType": "COMMENT",
+        "votes": {},
+        "canDelete": true,
+        "isUserAuthor": true,
+        "isDeleted": true,
+        "kernelVersion": 0,
+        "feedbackTrackingData": {},
+        "isThankYou": false
+      },
+      {
+        "id": 3528921,
+        "postDate": "2026-09-26T20:59:55.013Z",
+        "rawMarkdown": "",
+        "parent": {},
+        "author": {
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/"
+        },
+        "authorType": "COMMENT",
+        "votes": {},
+        "canDelete": true,
+        "isUserAuthor": true,
+        "isDeleted": true,
+        "kernelVersion": 0,
+        "feedbackTrackingData": {},
+        "isThankYou": false
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3527470,
+      "postDate": "2026-09-23T21:47:08.957Z",
+      "rawMarkdown": " HARNESS_README.md section 9 shows a local CLI command:\n\n swegemma eval --tasks ... --submission-dir starter_kit/sample_submission --sandbox docker\n But the dataset has no swegemma, adk-submission, or adk-eval-core package, and no starter_kit folder. It only has docker/, sandbox/setup.py, and wheels/.\n\n1. Will these packages be released (pip, GitHub, or a Kaggle dataset)?\n2. If not, what is the recommended way to test a submission locally before submitting?\n Thanks!",
+      "content": "<p>HARNESS_README.md section 9 shows a local CLI command:\nswegemma eval --tasks … --submission-dir starter_kit/sample_submission --sandbox docker\nBut the dataset has no swegemma, adk-submission, or adk-eval-core package, and no starter_kit folder. It only has docker/, sandbox/setup.py, and wheels/.</p>\n<ol>\n<li>Will these packages be released (pip, GitHub, or a Kaggle dataset)?</li>\n<li>If not, what is the recommended way to test a submission locally before submitting?\nThanks!</li>\n</ol>",
+      "parent": {},
+      "author": {
+        "displayName": "shimonDanziger",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/21536254-kg.png?t=2025-09-23-22-19-45",
+        "url": "/shimondanziger",
+        "tier": "CONTRIBUTOR",
+        "id": 21536254,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 13,
+        "canUpvote": true,
+        "totalUpvotes": 14
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 670,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "shimonDanziger",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/21536254-kg.png?t=2025-09-23-22-19-45",
+          "url": "/shimondanziger",
+          "userName": "shimondanziger",
+          "tier": "CONTRIBUTOR",
+          "id": 21536254,
+          "profileUrl": "/shimondanziger",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 21536254,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3527470,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 742882,
+    "name": "Is the swegemma harness available for local evaluation?",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-23T21:47:08.957941Z",
+    "totalVotes": 13,
+    "url": "/competitions/gemma-4-developer-agent/discussion/742882",
+    "totalMessages": 12,
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

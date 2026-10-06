@@ -1,0 +1,61 @@
+{
+  "forumTopic": {
+    "authorId": 28395178,
+    "authorThumbnailName": "28395178-kg.png?t=2026-09-25-14-23-00",
+    "authorUserDisplayName": "Narendar Kumar Ale",
+    "authorUserName": "narendarkumarale",
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3530912,
+      "postDate": "2026-10-01T01:57:50.967Z",
+      "rawMarkdown": "Hi @ryanholbrook, our submission 56740049 (2026-10-01 01:04 UTC) ended with \"Notebook Threw Exception\" and no score. The only change from our previous submission (which scored normally on 29/30 Sep) was prompt text in agent.yaml's included system prompt -- no config, model, adapter or tool changes. Given the reports in this thread and others today (e.g. the read_file line-range type error acknowledged with a fix incoming), this looks like it may be platform-side rather than caused by our submission. If so, could it be rerun, or the daily allowance restored? Happy to share more detail if useful. Thanks!",
+      "content": "<p>Hi <a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a>, our submission 56740049 (2026-10-01 01:04 UTC) ended with \"Notebook Threw Exception\" and no score. The only change from our previous submission (which scored normally on 29/30 Sep) was prompt text in agent.yaml's included system prompt -- no config, model, adapter or tool changes. Given the reports in this thread and others today (e.g. the read_file line-range type error acknowledged with a fix incoming), this looks like it may be platform-side rather than caused by our submission. If so, could it be rerun, or the daily allowance restored? Happy to share more detail if useful. Thanks!</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Narendar Kumar Ale",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/28395178-kg.png?t=2026-09-25-14-23-00",
+        "url": "/narendarkumarale",
+        "tier": "CONTRIBUTOR",
+        "id": 28395178,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 5,
+        "canUpvote": true,
+        "totalUpvotes": 5
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 127,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Narendar Kumar Ale",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/28395178-kg.png?t=2026-09-25-14-23-00",
+          "url": "/narendarkumarale",
+          "userName": "narendarkumarale",
+          "tier": "CONTRIBUTOR",
+          "id": 28395178,
+          "profileUrl": "/narendarkumarale",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 28395178,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3530912,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 744805,
+    "name": "Submission 56740049: Notebook Threw Exception, no score, prompt-text-only change",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-10-01T01:57:50.965639400Z",
+    "totalVotes": 5,
+    "url": "/competitions/gemma-4-developer-agent/discussion/744805",
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

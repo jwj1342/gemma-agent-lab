@@ -1,0 +1,12 @@
+# Does the time between submitting and the scoring include queue time?
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/744099
+
+## 3529630 /zhukovoleksiy TOPIC
+Hi, hosts. I got two timing questions, since many of us plan our per-task budgets around the 12-hour limit.
+
+1. When a submission takes many hours to show a score, is part of that time spent waiting in a queue, or is almost all of it the scoring run itself? Several threads mention long waits for the 4x L4 machines. Some of my submissions took close to 12 hours from Submit to score, much longer than I expected, so I can't tell how close they came to the limit.
+
+
+2. Does the 12-hour limit start when the scoring run starts, or when we click Submit? In other words, can a long queue wait count against the limit?
+
+Thanks!

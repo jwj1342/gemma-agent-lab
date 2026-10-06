@@ -1,0 +1,46 @@
+# computing resources
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743715
+
+## 3528806 /dasgupsa500 TOPIC
+i have a macbook m1 pro. is that enough for this competition? so my only free resources are kaggle gpu and people are getting timed out. do i need to us cloud computing? ree
+thank you in advance
+
+## 3528864 /josephayanda COMMENT
+Is there a supported way to use the competition's four L4 GPUs in a private research notebook with no competition data source mounted, or with an official sanitized development-only resource instead?
+
+We want to use only the permitted Gemma model, approved wheelhouse and development tasks while keeping reference fixes, verification tests and held-out tasks inaccessible during generation. Standard sanitized-only notebooks currently offer T4 x2, while attaching the competition source enables L4 x4. Does Kaggle provide an entitlement-only competition association, an approved private template, or a sanitized resource that grants L4 x4 access? Please also clarify the applicable free quota and notebook storage limits.
+
+This is an access/configuration question; no solution code, model output, private data or credentials will be included.
+
+## 3528870 /johnparkerson COMMENT
+Competition source has to be attached. Notebook can be private, but it needs to be attached. Of course, don’t abuse it for something outside this competition, since Kaggle staff can eject you by their discretion. 
+
+## 3528824 /johnparkerson COMMENT
+You probably can’t post train locally. You may be able to run the model for inference and A/B, but probably need cloud for SFT and RL.
+
+## 3528830 /dasgupsa500 TOPIC
+Thank you John. That leaves me out. Unfortunately I don't have resources for online computing. 
+The people likely to win this competition do! 
+Thanks again John.
+
+## 3528868 /johnparkerson COMMENT
+Yeah MLX would probably be slow for inference anyways. Of course, CUDA is always preferred, with tensor cores, but you could post train on the Kaggle GPUs, and run the customized harness with your own laptop to improve it, but in my experience even with my 128gb m4 MacBook, it’ll probably overheat and shut off (which would stop your iterations), so I have my own 64gb rig of Nvidia GPUs. I also was using oMLX, which is essentially one of the most optimized inference stacks for Metal. 
+
+## 3528872 /mjustinscott COMMENT
+Modal offers $30 of free credits a month. I typically have run SFT/RL on their systems costing about $5-8 per a run. Caveat being it is cost beneficial once you have all the setup kinks figured out. Ping me on here I'll share my open source work on Modal and using Gemma and Qwen based models on Modal which should save you a few days of pain if you want! I'm working on my setup for this competition on Modal right now and if it's not to much of a giveaway I can open source those scripts for this competition as well. 
+
+Having your SFT/RL regime and data organized and ready to go will save you compute cost and resources. 
+
+## 3528880 /johnparkerson COMMENT
+Lowkey could I get your setup? I still need resources for post training. 
+
+## 3528881 /mjustinscott COMMENT
+[LLM Tuning](https://github.com/jscott3201/llm-tuning) [Gemma Tuning](https://github.com/jscott3201/Model-Tuning)
+
+This should be enough to get past the hard part with Modal. For the sake of the competition I won't dive into my data mix and overall setup but this should make getting into Modal and going with Gemma pretty much out the box easier. I've built MLX/Metal inference engines around the Gemma models (Hyperion Project) so seeing this competition was a fun one to get into for me haha
+
+## 3528883 /dasgupsa500 TOPIC
+Thanks John. Will wait for another competition!
+
+## 3528885 /dasgupsa500 TOPIC
+Thank you so much for your offer Justin. I'll defo hit u up in another competition. 

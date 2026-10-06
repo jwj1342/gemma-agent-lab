@@ -1,0 +1,13 @@
+# Hidden test set
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/744951
+
+## 3531256 /verracodeguacas TOPIC
+same repositories as the training tasks?
+
+The training set covers fastapi, rich, requests and httpx. Does the hidden test set draw from the same four repositories (roughly similar proportions?), or does it include additional repositories?
+
+## 3531258 /ryanholbrook ADMIN
+No, the test set draws from private repositories not available publicly.
+
+## 3532630 /varunambadi COMMENT
+Does this mean that the test set will contain completely different topics from the training tasks, or will it be fastapi, rich, requests and httpx, but in a different proportion? 

@@ -1,0 +1,18 @@
+{
+	"data": {
+		"attributes": {
+			"labels": {
+				"maintainer": "NVIDIA CORPORATION \u003ccudatools@nvidia.com\u003e",
+				"org.label-schema.build-arch": "amd64",
+				"org.label-schema.build-date": "Monday_5_October_2026_0:39:56_EDT",
+				"org.label-schema.schema-version": "1.0",
+				"org.label-schema.usage.apptainer.version": "1.4.5",
+				"org.label-schema.usage.singularity.deffile.bootstrap": "docker",
+				"org.label-schema.usage.singularity.deffile.from": "vllm/vllm-openai@sha256:89c1d0629d377daa3f7f369cbea6167a7b48ea89aaacd12555e2b0b2f7f740d3",
+				"org.opencontainers.image.ref.name": "ubuntu",
+				"org.opencontainers.image.version": "22.04"
+			}
+		}
+	},
+	"type": "container"
+}

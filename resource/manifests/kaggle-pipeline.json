@@ -1,0 +1,12 @@
+{
+  "kernel": "jwj1342/gemma4-pipeline-baseline",
+  "version": 1,
+  "status": "COMPLETE",
+  "is_private": true,
+  "gpu": false,
+  "internet": false,
+  "sha256": "02bb939095ded0c970088fc9d19634e203e2d3119a36a5feff20bad55c9343fc",
+  "bytes": 3695,
+  "local_equals_kaggle_output": true,
+  "competition_submission": null
+}

@@ -1,0 +1,212 @@
+{
+  "forumTopic": {
+    "authorId": 2384691,
+    "authorThumbnailName": "2384691-kg.png?t=2024-08-22-06-27-39",
+    "authorUserDisplayName": "Sukhendu Sain",
+    "authorUserName": "ssain18",
+    "comments": [
+      {
+        "id": 3532660,
+        "postDate": "2026-10-04T10:58:03.287Z",
+        "rawMarkdown": "@ryanholbrook im also facing same issue, mine one is queued since 4 hrs.",
+        "content": "<p><a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a> im also facing same issue, mine one is queued since 4 hrs.</p>",
+        "replies": [
+          {
+            "id": 3532684,
+            "postDate": "2026-10-04T12:00:41.960Z",
+            "rawMarkdown": "sadly it is a problem. but you need to wait and soon enough it will start to run. mine were sometimes queued for 5+ hours then started running",
+            "content": "<p>sadly it is a problem. but you need to wait and soon enough it will start to run. mine were sometimes queued for 5+ hours then started running</p>",
+            "parent": {},
+            "author": {
+              "displayName": "Sukhendu Sain",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2384691-kg.png?t=2024-08-22-06-27-39",
+              "url": "/ssain18",
+              "tier": "CONTRIBUTOR",
+              "id": 2384691,
+              "progressionOptOut": false
+            },
+            "authorType": "TOPIC",
+            "votes": {
+              "totalVotes": 1,
+              "canUpvote": true,
+              "totalUpvotes": 1
+            },
+            "kernelVersion": 0,
+            "competitionRanking": 59,
+            "feedbackTrackingData": {},
+            "isThankYou": false,
+            "teamUpInfo": {
+              "enabled": true,
+              "teamLeader": {
+                "displayName": "Sukhendu Sain",
+                "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2384691-kg.png?t=2024-08-22-06-27-39",
+                "url": "/ssain18",
+                "userName": "ssain18",
+                "tier": "CONTRIBUTOR",
+                "id": 2384691,
+                "profileUrl": "/ssain18",
+                "performanceTier": "CONTRIBUTOR",
+                "userId": 2384691,
+                "progressionOptOut": false
+              },
+              "intro": ""
+            }
+          }
+        ],
+        "parent": {},
+        "author": {
+          "displayName": "nusrati",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/23336356-kg.jpg?t=2026-09-29-15-06-25",
+          "url": "/nusrati",
+          "tier": "CONTRIBUTOR",
+          "id": 23336356,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "totalVotes": 1,
+          "canUpvote": true,
+          "totalUpvotes": 1
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 695,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "nusrati",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/23336356-kg.jpg?t=2026-09-29-15-06-25",
+            "url": "/nusrati",
+            "userName": "nusrati",
+            "tier": "CONTRIBUTOR",
+            "id": 23336356,
+            "profileUrl": "/nusrati",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 23336356,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3532694,
+        "postDate": "2026-10-04T12:25:14.487Z",
+        "rawMarkdown": ":-( pareille plus de 3h ",
+        "content": "<p>:-( pareille plus de 3h </p>",
+        "parent": {},
+        "author": {
+          "displayName": "ImpactOO",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/impactoo",
+          "tier": "CONTRIBUTOR",
+          "id": 35516996,
+          "progressionOptOut": true
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "reactions": [
+          {
+            "emoji": "YAY",
+            "featuredUserNames": [
+              "impactoo"
+            ],
+            "userCount": 1
+          }
+        ],
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "ImpactOO",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+            "url": "/impactoo",
+            "userName": "impactoo",
+            "tier": "CONTRIBUTOR",
+            "id": 35516996,
+            "profileUrl": "/impactoo",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 35516996,
+            "progressionOptOut": true
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3532484,
+        "postDate": "2026-10-03T18:04:00.997Z",
+        "rawMarkdown": "",
+        "parent": {},
+        "author": {
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/"
+        },
+        "authorType": "COMMENT",
+        "votes": {},
+        "canDelete": true,
+        "isUserAuthor": true,
+        "isDeleted": true,
+        "kernelVersion": 0,
+        "feedbackTrackingData": {},
+        "isThankYou": false
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3532389,
+      "postDate": "2026-10-03T12:18:55.920Z",
+      "rawMarkdown": "![Queued/Stuck Notebook Run](https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F2384691%2Ffa6ca490c5723edd0aeea50deb31230c%2FScreenshot%202026-10-03%20174711.png?generation=1791029860864236&alt=media)\n\nOne of my test notebooks with GPU queued for 3+ hours.... is there really so much demand?\nFor context: I am trying to compare frontier agents vs my Gemma Agent for solving the tasks....",
+      "content": "<p><img src=\"https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F2384691%2Ffa6ca490c5723edd0aeea50deb31230c%2FScreenshot%202026-10-03%20174711.png?generation=1791029860864236&amp;alt=media\" alt=\"Queued/Stuck Notebook Run\"></p>\n<p>One of my test notebooks with GPU queued for 3+ hours…. is there really so much demand?\nFor context: I am trying to compare frontier agents vs my Gemma Agent for solving the tasks….</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Sukhendu Sain",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2384691-kg.png?t=2024-08-22-06-27-39",
+        "url": "/ssain18",
+        "tier": "CONTRIBUTOR",
+        "id": 2384691,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 3,
+        "canUpvote": true,
+        "totalUpvotes": 3
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 59,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "enabled": true,
+        "teamLeader": {
+          "displayName": "Sukhendu Sain",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2384691-kg.png?t=2024-08-22-06-27-39",
+          "url": "/ssain18",
+          "userName": "ssain18",
+          "tier": "CONTRIBUTOR",
+          "id": 2384691,
+          "profileUrl": "/ssain18",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 2384691,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3532389,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 745625,
+    "name": "One of my test notebooks with GPU queued for 3+ hours.... is there really so much demand?",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-10-03T12:18:55.920492100Z",
+    "totalVotes": 3,
+    "url": "/competitions/gemma-4-developer-agent/discussion/745625",
+    "totalMessages": 4,
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

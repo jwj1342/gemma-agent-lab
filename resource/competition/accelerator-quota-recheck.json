@@ -1,0 +1,19 @@
+{
+  "checked_at": "2026-10-05T05:12:22.437747+00:00",
+  "quota": {
+    "quotaRefreshTime": "2026-10-10T00:00:00.000Z",
+    "gpuQuota": {
+      "timeUsed": "0s",
+      "timeReserved": "0s",
+      "totalTimeAllowed": "21600s",
+      "minimumTimeAllowed": "21600s",
+      "hasEverRun": true
+    },
+    "tpuQuota": {
+      "timeUsed": "0s",
+      "timeReserved": "0s",
+      "totalTimeAllowed": "72000s",
+      "minimumTimeAllowed": "72000s"
+    }
+  }
+}

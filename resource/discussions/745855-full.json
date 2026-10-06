@@ -1,0 +1,58 @@
+{
+  "forumTopic": {
+    "authorId": 19638554,
+    "authorThumbnailName": "19638554-kg.png?t=2024-04-01-23-05-41",
+    "authorUserDisplayName": "ayoub diri",
+    "authorUserName": "ayoubdiri",
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3532843,
+      "postDate": "2026-10-04T22:19:52.083Z",
+      "rawMarkdown": "Hi all,\n\nI'd like to check whether others are seeing the same thing, or whether I'm missing something.\n\nThe task: fastapi_15661, the first task in the list, so it's the first one every agent tries. The whole problem statement is the title \"👷 Automate release preparation\", followed by the empty PR template. The only extra hint is a link in the AI disclaimer to a PR in a different repo, which can't be opened because the sandbox is offline.\n\nWhat the hidden tests require: The test_patch imports a specific module path, a specific set of function and class names, specific CLI subcommands and options, specific environment variable names, and exact error message strings. I'm not going to list them here, but none of them appear in the task text or anywhere in the repo.\n\nWhat my agent did: It explored the repo, found an existing related script, and wrote a reasonable new script that worked when run. The result:\n\nresolved=False, exit_code=2, patch_chars=3246, tool_calls=27\n\nMy understanding is that exit code 2 is pytest stopping at collection, because the module the tests import doesn't exist under that name. I haven't confirmed this inside the harness, so please correct me if that's wrong.\n\nWhy this bothers me: Nothing in the prompt or the repo tells the agent what the file, the classes, or the env var prefix must be called. I don't think any prompt or model can get this right except by luck. A correct, working solution with different names scores the same as an empty patch.\n\nQuestions:\n\nHave you seen other tasks where the names the tests need appear nowhere in the task text?\n\nIs the benchmark meant to reward guessing names, or is this a gap in the task?\n\nHas anyone found a good way to handle these cases?\n\nSide note: the 5-minute limit was also tight. About 295 s went to 27 tool calls, mostly model generation time.\n\nThanks!",
+      "content": "<p>Hi all,</p>\n<p>I'd like to check whether others are seeing the same thing, or whether I'm missing something.</p>\n<p>The task: fastapi_15661, the first task in the list, so it's the first one every agent tries. The whole problem statement is the title \"👷 Automate release preparation\", followed by the empty PR template. The only extra hint is a link in the AI disclaimer to a PR in a different repo, which can't be opened because the sandbox is offline.</p>\n<p>What the hidden tests require: The test_patch imports a specific module path, a specific set of function and class names, specific CLI subcommands and options, specific environment variable names, and exact error message strings. I'm not going to list them here, but none of them appear in the task text or anywhere in the repo.</p>\n<p>What my agent did: It explored the repo, found an existing related script, and wrote a reasonable new script that worked when run. The result:</p>\n<p>resolved=False, exit_code=2, patch_chars=3246, tool_calls=27</p>\n<p>My understanding is that exit code 2 is pytest stopping at collection, because the module the tests import doesn't exist under that name. I haven't confirmed this inside the harness, so please correct me if that's wrong.</p>\n<p>Why this bothers me: Nothing in the prompt or the repo tells the agent what the file, the classes, or the env var prefix must be called. I don't think any prompt or model can get this right except by luck. A correct, working solution with different names scores the same as an empty patch.</p>\n<p>Questions:</p>\n<p>Have you seen other tasks where the names the tests need appear nowhere in the task text?</p>\n<p>Is the benchmark meant to reward guessing names, or is this a gap in the task?</p>\n<p>Has anyone found a good way to handle these cases?</p>\n<p>Side note: the 5-minute limit was also tight. About 295 s went to 27 tool calls, mostly model generation time.</p>\n<p>Thanks!</p>",
+      "parent": {},
+      "author": {
+        "displayName": "ayoub diri",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/19638554-kg.png?t=2024-04-01-23-05-41",
+        "url": "/ayoubdiri",
+        "tier": "CONTRIBUTOR",
+        "id": 19638554,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "canUpvote": true
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 1300,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "ayoub diri",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/19638554-kg.png?t=2024-04-01-23-05-41",
+          "url": "/ayoubdiri",
+          "userName": "ayoubdiri",
+          "tier": "CONTRIBUTOR",
+          "id": 19638554,
+          "profileUrl": "/ayoubdiri",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 19638554,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3532843,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 745855,
+    "name": "The first task in the list (fastapi_15661) seems unsolvable from the prompt alone: hidden tests import names that appear nowhere in the task",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-10-04T22:19:52.084157300Z",
+    "url": "/competitions/gemma-4-developer-agent/discussion/745855",
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

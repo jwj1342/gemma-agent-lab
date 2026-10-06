@@ -1,0 +1,30 @@
+# Compaction can't trigger at token_threshold 32,768, and overflow then discards the patch (follow-up to #743456)
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/744692
+
+## 3530742 /averywright TOPIC
+Hi @ryanholbrook, following up on https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743456 with evidence from local runs using the official wheels (swegemma 0.2.7, adk-submission 0.2.11, google-adk 1.36.1, vLLM 0.19.1):
+
+Compaction can't fire before the overflow. ADK's compaction processor checks the previous prompt's token count against token_threshold before each model call. HARNESS_README §7.2 lists 32,768 for scoring, but vLLM rejects any request where prompt + max_output_tokens > 32,768, so the prompt never reaches the threshold and the session ends with ContextWindowExceededError. With the getting-started notebook's 14,336, compaction fires and overflows are rare.
+The overflow discards the agent's work. ContextWindowExceededError is caught by the generic except Exception in run_agent_sandbox, which skips the fallback git diff capture (only TimeoutError / LlmCallsLimitExceededError reach it). The task scores 0 even when edits were applied: 44 of 44 overflowed sessions had an empty patch, 14 of them after successful edits.
+In our runs: about 12% of sessions overflowed at a threshold of 14,336, and 17–33% at 32,768 (depending on max_output_tokens).Compaction can't trigger at token_threshold 32,768, and overflow then discards the patch (follow-up to #743456)
+
+Could you confirm the scorer's token_threshold? 
+
+## 3530752 /ryanholbrook ADMIN
+Thanks, I will look into it.
+
+## 3530866 /zhukovoleksiy COMMENT
+Any update? Current harness readme says (since sep 25 update).
+
+>Compaction (EventsCompactionConfig):
+
+>compaction_interval = 5
+
+>token_threshold = 14,336
+
+Which matches public notebook and that's the value I used in local runs.
+
+But yeah +1 on confirmation. Would be great if you can tell which value scorer matches, updated 14,336 or still 32,768
+
+## 3530875 /nightfurylqd COMMENT
+I got the same issue. Wasted a daily submission 😭

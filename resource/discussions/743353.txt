@@ -1,0 +1,20 @@
+# Not able to download data
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743353
+
+## 3528257 /ayuraj TOPIC
+Running `kaggle competitions download -c gemma-4-developer-agent` gives me `404 Client Error: Not Found for url: https://api.kaggle.com/v1/competitions.CompetitionApiService/DownloadDataFiles`. The same is true when I used 
+
+```
+import kagglehub; path = kagglehub.competition_download('gemma-4-developer-agent')
+```
+
+Is this known?
+
+## 3528271 /ryanholbrook ADMIN
+Broken from the Data page, too. I will try re-uploading the dataset. Thanks for the heads up.
+
+## 3528272 /penguin069 COMMENT
+Hi Ryan, is it possible to get RTX PRO 6000 gpus instead of L4x4?
+
+## 3528277 /ryanholbrook ADMIN
+That's unlikely, unfortunately.

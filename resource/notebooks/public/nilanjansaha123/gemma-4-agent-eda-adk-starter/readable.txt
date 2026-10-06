@@ -1,0 +1,192 @@
+# CELL 0 markdown
+# Imports and Directory Setup
+
+# CELL 1 code
+import json
+import re
+import zipfile
+import yaml
+import platform
+import networkx as nx
+import pandas as pd
+import matplotlib.pyplot as plt
+from pathlib import Path
+
+# Configure paths
+WORKING = Path('/kaggle/working') if platform.system() == 'Linux' and Path('/kaggle/working').exists() else Path.cwd()
+WORKING.mkdir(parents=True, exist_ok=True)
+
+CANDIDATE_PATHS = [
+    Path("/kaggle/input/competitions/gemma-4-developer-agent"),
+    Path("/kaggle/input/gemma-4-developer-agent"),
+    Path("./competition_data"),
+]
+
+DATA_DIR = next((p for p in CANDIDATE_PATHS if p.exists()), None)
+print(f"Artifact directory: {WORKING} | Data directory: {DATA_DIR}")
+
+# CELL 2 markdown
+# EDA & Patch Parser
+
+# CELL 3 code
+HUNK_RE = re.compile(r"^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@(.*)$")
+SYMBOL_RE = re.compile(r"(?:async\s+)?(?:def|class)\s+([A-Za-z_]\w*)")
+
+def parse_patch(text):
+    files, cur = [], None
+    rem_old = rem_new = malformed = 0
+
+    def new_file(path):
+        f = {"path": path, "added": 0, "deleted": 0, "hunks": 0, "symbols": set(), "status": "modified"}
+        files.append(f)
+        return f
+
+    for line in (text or "").splitlines():
+        if rem_old > 0 or rem_new > 0:
+            tag = line[:1]
+            if tag == "+":
+                cur["added"] += 1; rem_new -= 1
+                m = SYMBOL_RE.match(line[1:].strip()); m and cur["symbols"].add(m.group(1))
+                continue
+            if tag == "-":
+                cur["deleted"] += 1; rem_old -= 1
+                m = SYMBOL_RE.match(line[1:].strip()); m and cur["symbols"].add(m.group(1))
+                continue
+            if tag == " " or line == "":
+                rem_old -= 1; rem_new -= 1
+                continue
+            malformed += 1
+            rem_old = rem_new = 0
+            
+        if line.startswith("+++ "):
+            path = line[4:].split("\t")[0].strip()
+            path = path[2:] if path.startswith("b/") else path
+            cur = new_file(path)
+            continue
+            
+        m = HUNK_RE.match(line)
+        if m and cur is not None:
+            rem_old = int(m.group(2)) if m.group(2) is not None else 1
+            rem_new = int(m.group(4)) if m.group(4) is not None else 1
+            cur["hunks"] += 1
+
+    for f in files:
+        f["symbols"] = sorted(f["symbols"])
+    return {"files": files, "malformed": malformed, "unterminated": rem_old > 0 or rem_new > 0}
+
+if DATA_DIR and (DATA_DIR / "tasks.jsonl").exists():
+    with open(DATA_DIR / "tasks.jsonl", "r", encoding="utf-8") as f:
+        df = pd.DataFrame([json.loads(line) for line in f if line.strip()])
+        
+    df["churn"] = df["patch"].apply(lambda p: sum(f["added"] + f["deleted"] for f in parse_patch(p)["files"]))
+    print(f"Loaded {len(df)} tasks. Median churn: {int(df['churn'].median())} lines.")
+
+# CELL 4 markdown
+# AST Graph Visualizer
+
+# CELL 5 code
+def visualize_code_graph(instance_id="fastapi_11194", max_nodes=25):
+    """Renders the AST call and dependency graph for a specific task."""
+    graph_path = DATA_DIR / "graphs" / f"{instance_id}.json" if DATA_DIR else None
+    G = nx.DiGraph()
+    
+    if graph_path and graph_path.exists():
+        with open(graph_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        nodes = data.get("nodes", [])[:max_nodes]
+        node_ids = {n["id"] for n in nodes}
+        for n in nodes:
+            G.add_node(n["id"].split(".")[-1])
+        for edge in data.get("edges", []):
+            if edge["source"] in node_ids and edge["target"] in node_ids:
+                G.add_edge(edge["source"].split(".")[-1], edge["target"].split(".")[-1])
+                
+        plt.figure(figsize=(10, 6))
+        nx.draw_networkx(G, nx.spring_layout(G, seed=42), node_size=1000, node_color="lightblue", font_size=8)
+        plt.title(f"AST Symbol Call Graph: {instance_id}")
+        plt.axis("off")
+        plt.show()
+
+if DATA_DIR:
+    visualize_code_graph()
+
+# CELL 6 markdown
+# ADK Agent Bundle Definition
+
+# CELL 7 code
+BUNDLE_FILES = {
+    'configs/sampling.yaml': '''temperature: 0.10
+top_p: 0.90
+max_output_tokens: 16384
+seed: 42
+thinking_config:
+  thinking_level: HIGH
+  thinking_budget: 4096
+  include_thoughts: false
+''',
+
+    'prompts/analyzer.md': '''You are a Code Comprehension & Repository Analysis specialist.
+Your mission is to locate the root cause of the issue described by the user without modifying code.
+1. Use `search_similar_code(query)` with key class/function names from the issue description.
+2. Use `get_code_neighbors(node)` to examine call relationships.
+3. Read relevant files using `read_file(filepath, start_line, end_line)`.
+4. Output a concise summary containing the exact file path(s) and the recommended fix logic.
+''',
+
+    'prompts/system.md': '''You are Black Cat, an autonomous software engineer solving one repository issue in /workspace. Your output is the actual git patch, not a proposed plan.
+1. Decode the issue and form a testable hypothesis.
+2. Use `edit_file` for focused replacements; if matching fails or is ambiguous, reread a smaller range and retry.
+3. Run `python3 -m pytest path/to/test.py -q` when a relevant test exists. Keep temporary scripts in /tmp.
+4. Call `submit_patch()` exactly once as the final tool action. It captures git diff HEAD, including intended new files.
+''',
+
+    'sub_agents/code_analyzer.yaml': '''name: code_analyzer
+model: gemma-4-31b-it-qat-w4a16-ct
+description: Analyzes repository structure, reads source code, and queries AST code graphs.
+instruction: !include ../prompts/analyzer.md
+generate_content_config: !include ../configs/sampling.yaml
+tools:
+  - read_file
+  - search_similar_code
+  - get_code_neighbors
+  - get_code_subgraph
+''',
+
+    'agent.yaml': '''name: black_cat_swe_agent_v2
+model: gemma-4-31b-it-qat-w4a16-ct
+description: Issue-driven software engineer with focused verification and explicit patch submission.
+instruction: !include prompts/system.md
+generate_content_config: !include configs/sampling.yaml
+tools:
+  - run_command
+  - read_file
+  - edit_file
+  - write_file
+  - get_status
+  - submit_patch
+  - agent_tool:
+      config_path: sub_agents/code_analyzer.yaml
+      skip_summarization: true
+'''
+}
+
+# CELL 8 markdown
+# Validator & Archiver Execution
+
+# CELL 9 code
+def write_archive(files: dict, output_path: Path):
+    """Validates files against ADK schema limits and creates submission.zip."""
+    allowed = {'.yaml', '.yml', '.md', '.txt', '.py', '.json', '.safetensors'}
+    
+    with zipfile.ZipFile(output_path, 'w', compression=zipfile.ZIP_DEFLATED) as archive:
+        for name, content in sorted(files.items()):
+            path = Path(name)
+            assert path.suffix in allowed, f"Invalid extension: {path.suffix}"
+            assert not path.is_absolute() and '..' not in path.parts, f"Path traversal blocked: {name}"
+            archive.writestr(name, content.encode('utf-8'))
+            
+    print(f"Successfully packaged {len(files)} files into {output_path.name} ({output_path.stat().st_size} bytes).")
+
+write_archive(BUNDLE_FILES, WORKING / "submission.zip")
+
+# CELL 10 code

@@ -1,0 +1,5 @@
+# inline_snapshot wheel missing for notebook environment but required by tasks
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/745850
+
+## 3532834 /dronadhikari TOPIC
+In the starter notebook, tests that import inline_snapshot fail at collection with ModuleNotFoundError (e.g. fastapi tasks where tests/ use from inline_snapshot import snapshot). The wheels/ folder has no inline-snapshot wheel. Is this expected in the scoring environment too, or does the scorer env have it installed?

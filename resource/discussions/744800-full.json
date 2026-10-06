@@ -1,0 +1,122 @@
+{
+  "forumTopic": {
+    "authorId": 25740823,
+    "authorThumbnailName": "default-thumb.png",
+    "authorUserDisplayName": "Madhukar Devarasetti",
+    "authorUserName": "madhukardevarasetti",
+    "comments": [
+      {
+        "id": 3530911,
+        "postDate": "2026-10-01T01:56:50.953Z",
+        "rawMarkdown": "Same here: submission 56729291 (2026-10-01 00:07 UTC) ended with \"Your notebook hit an unhandled error while rerunning your code\". No adapters. It's a self-contained notebook (bundle embedded, no input datasets) that writes /kaggle/working/submission.zip. The notebook run completes normally, and the zip is valid (agent.yaml at the root; it passes validate_directory and compile_submission with wheelhouse v25). The failure came about 4–7 min after submitting, likely before vLLM had finished starting. The same bundle is running fine through the official Evaluator on Kaggle 4×L4. Could you check what raised, and rerun it or restore the allowance if it was on the scorer side? Thanks!",
+        "content": "<p>Same here: submission 56729291 (2026-10-01 00:07 UTC) ended with \"Your notebook hit an unhandled error while rerunning your code\". No adapters. It's a self-contained notebook (bundle embedded, no input datasets) that writes /kaggle/working/submission.zip. The notebook run completes normally, and the zip is valid (agent.yaml at the root; it passes validate_directory and compile_submission with wheelhouse v25). The failure came about 4–7 min after submitting, likely before vLLM had finished starting. The same bundle is running fine through the official Evaluator on Kaggle 4×L4. Could you check what raised, and rerun it or restore the allowance if it was on the scorer side? Thanks!</p>",
+        "parent": {},
+        "author": {
+          "displayName": "Shengkai Su",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/13625226-gr.jpg",
+          "url": "/shengkaisu",
+          "tier": "CONTRIBUTOR",
+          "id": 13625226,
+          "progressionOptOut": true
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "totalVotes": 1,
+          "canUpvote": true,
+          "totalUpvotes": 1
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 114,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Shengkai Su",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/13625226-gr.jpg",
+            "url": "/shengkaisu",
+            "userName": "shengkaisu",
+            "tier": "CONTRIBUTOR",
+            "id": 13625226,
+            "profileUrl": "/shengkaisu",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 13625226,
+            "progressionOptOut": true
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3530909,
+        "postDate": "2026-10-01T01:55:45.103Z",
+        "rawMarkdown": "",
+        "parent": {},
+        "author": {
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/"
+        },
+        "authorType": "COMMENT",
+        "votes": {},
+        "canDelete": true,
+        "isUserAuthor": true,
+        "isDeleted": true,
+        "kernelVersion": 0,
+        "feedbackTrackingData": {},
+        "isThankYou": false
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3530901,
+      "postDate": "2026-10-01T01:25:17.093Z",
+      "rawMarkdown": "Hi @ryanholbrook, my submission from notebook notebook35c2b989ac (version DMV4, submitted on 1 Oct) ended with \"Notebook Threw Exception\" and no score. Its commit run succeeded (91 s), and in that run validate_directory, validate_single_declared_model and compile_submission (wheelhouse v25) all passed. The same notebook design scored on 28, 29 and 30 Sep; this version only changed prompt text.\n\nCould you check what raised in this run, and whether it was on the scorer side (for example during today's patches)? If so, a rerun would be much appreciated. Thanks!!",
+      "content": "<p>Hi <a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a>, my submission from notebook notebook35c2b989ac (version DMV4, submitted on 1 Oct) ended with \"Notebook Threw Exception\" and no score. Its commit run succeeded (91 s), and in that run validate_directory, validate_single_declared_model and compile_submission (wheelhouse v25) all passed. The same notebook design scored on 28, 29 and 30 Sep; this version only changed prompt text.</p>\n<p>Could you check what raised in this run, and whether it was on the scorer side (for example during today's patches)? If so, a rerun would be much appreciated. Thanks!!</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Madhukar Devarasetti",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+        "url": "/madhukardevarasetti",
+        "tier": "CONTRIBUTOR",
+        "id": 25740823,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 2,
+        "canUpvote": true,
+        "totalUpvotes": 2
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 815,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Madhukar Devarasetti",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/madhukardevarasetti",
+          "userName": "madhukardevarasetti",
+          "tier": "CONTRIBUTOR",
+          "id": 25740823,
+          "profileUrl": "/madhukardevarasetti",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 25740823,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3530901,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 744800,
+    "name": "Submission ended with \"Notebook Threw Exception\": could you check what raised?",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-10-01T01:25:17.093253200Z",
+    "totalVotes": 2,
+    "url": "/competitions/gemma-4-developer-agent/discussion/744800",
+    "totalMessages": 2,
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

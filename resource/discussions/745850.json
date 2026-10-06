@@ -1,0 +1,10 @@
+{
+  "messages": [
+    {
+      "id": 3532834,
+      "postDate": "2026-10-04T21:27:50.287Z",
+      "content": "<p>In the starter notebook, tests that import inline_snapshot fail at collection with ModuleNotFoundError (e.g. fastapi tasks where tests/ use from inline_snapshot import snapshot). The wheels/ folder has no inline-snapshot wheel. Is this expected in the scoring environment too, or does the scorer env have it installed?</p>",
+      "rawMarkdown": "In the starter notebook, tests that import inline_snapshot fail at collection with ModuleNotFoundError (e.g. fastapi tasks where tests/ use from inline_snapshot import snapshot). The wheels/ folder has no inline-snapshot wheel. Is this expected in the scoring environment too, or does the scorer env have it installed?"
+    }
+  ]
+}

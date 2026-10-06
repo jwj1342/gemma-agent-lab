@@ -1,0 +1,27 @@
+{
+  "source": "https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse",
+  "dataset_version": null,
+  "note": "Dataset version not exposed in captured metadata; pin file hashes for this snapshot. Only three small wheels downloaded.",
+  "files": [
+    {
+      "name": "adk_eval_core-0.1.0-py3-none-any.whl",
+      "bytes": 90060,
+      "sha256": "194dd8f9aab154857bfa0db9d9ec382db856ee124529e072509634d3071d8643"
+    },
+    {
+      "name": "adk_submission-0.2.12-py3-none-any.whl",
+      "bytes": 65642,
+      "sha256": "077c438c426e625b9f722081694e1d32856e6f7e932ef625002fc4a11aabdc10"
+    },
+    {
+      "name": "google_adk-1.36.1-py3-none-any.whl",
+      "bytes": 2877731,
+      "sha256": "1a2f6868c509e3151fb0de3575a7d18b45c338be86f420924dad74e7193631a0"
+    },
+    {
+      "name": "swegemma-0.2.7-py3-none-any.whl",
+      "bytes": 117587,
+      "sha256": "27a2f60f8db46c8fef5defc16df722dac0402446c9a6252e7e6b4c280e843c81"
+    }
+  ]
+}

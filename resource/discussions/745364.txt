@@ -1,0 +1,14 @@
+# Has anyone confirmed a LoRA adapter actually taking effect in a scored run?
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/745364
+
+## 3532062 /manojgowdabg TOPIC
+Before investing in training, I'd like to confirm that a trained adapter works end to end in the scoring environment. Two things reported on the forum would each make one useless:
+
+That adapters are silently dropped in the patched vLLM 0.19.1 — the submission runs, but the adapter never loads.
+That enabling LoRA shrinks the KV cache to around 7.6k tokens. Our agent uses the full 32k context, so that would truncate long tasks.
+
+Has anyone verified an adapter taking effect in a scored submission, and is there a way to confirm from the submission log that it loaded?
+
+Separately, on training: I've been unable to fit gemma-4-31b QLoRA on 2× T4 (16GB each). Sharding with device_map='auto' fails on device mismatch, and single-GPU OOMs. Is a single 80GB card the practical minimum, or has anyone trained this on less?
+
+@ryanholbrook

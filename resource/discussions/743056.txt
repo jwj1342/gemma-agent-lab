@@ -1,0 +1,34 @@
+# Gemma4 allowed variant
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743056
+
+## 3527806 /bouadoumohamedlouai TOPIC
+Hello! Are all Gemma 4 variants allowed in this competition, including E2B and E4B, or must participants use a specific version?
+I have a laptop with an RTX 4050 and 16 GB of RAM. Does the competition provide any free GPU/TPU resources or training credits?
+Are quantized models and LoRA/QLoRA fine-tuning allowed?
+Thank you!
+
+## 3527837 /fritzcremer COMMENT
+It says in www.kaggle.com/competitions/gemma-4-developer-agent/overview/model-selection-budget-and-harness-rules :
+>At present, we only support the gemma-4-31b-it-qat-w4a16-ct Gemma 4 model variant. You must choose this model for every agent and subagent.
+
+The idea is not that you upload your own model/checkpoint. You must upload a LoRA that is applied to this model.
+
+## 3528109 /bharat0 COMMENT
+Harness file says, any one of the below variants can be used. We can't use 2 different variants.
+
+"All agents in a submission must declare at most ONE unique base model (len(models) == 1). Declaring two different base models (e.g., gemma-4-31b-it in the root agent and gemma-4-9b-it in a sub-agent) raises ParticipantVisibleError."
+
+gemma-4-31b-it-qat-w4a16-ct (Starter Kit default)
+gemma-4-31b-it, gemma-4-31b
+gemma-4-27b-it, gemma-4-27b
+gemma-4-26b-a4b-it, gemma-4-26b-a4b, diffusiongemma-26b-a4b-it
+gemma-4-12b-it, gemma-4-12b
+gemma-4-9b-it, gemma-4-9b
+gemma-4-e4b-it, gemma-4-e4b
+gemma-4-e2b-it, gemma-4-e2b
+
+## 3528110 /bharat0 COMMENT
+I'm also not sure now. Is the overview section correct or the Harness md file? @elanlearns 
+
+## 3528134 /ryanholbrook ADMIN
+It's only the one model listed in the Overview. We're working on supporting others.

@@ -1,0 +1,99 @@
+{
+  "forumTopic": {
+    "authorId": 28395178,
+    "authorThumbnailName": "28395178-kg.png?t=2026-09-25-14-23-00",
+    "authorUserDisplayName": "Narendar Kumar Ale",
+    "authorUserName": "narendarkumarale",
+    "comments": [
+      {
+        "id": 3528559,
+        "postDate": "2026-09-26T07:29:30.177Z",
+        "rawMarkdown": "congrats! my first run failed with no score as failing the 12 hr ceiling just results in an error 😑. hope they fix it!",
+        "content": "<p>congrats! my first run failed with no score as failing the 12 hr ceiling just results in an error 😑. hope they fix it!</p>",
+        "parent": {},
+        "author": {
+          "displayName": "Chandram Dutta",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/14027805-kg.jpg?t=2026-04-05-06-32-03",
+          "url": "/chandramdutta",
+          "tier": "CONTRIBUTOR",
+          "id": 14027805,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 197,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Chandram Dutta",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/14027805-kg.jpg?t=2026-04-05-06-32-03",
+            "url": "/chandramdutta",
+            "userName": "chandramdutta",
+            "tier": "CONTRIBUTOR",
+            "id": 14027805,
+            "profileUrl": "/chandramdutta",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 14027805,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3528442,
+      "postDate": "2026-09-26T04:46:11.607Z",
+      "rawMarkdown": "Hi everyone,\n\nJust wanted to share a small milestone. After a first submission that errored out, my second attempt went through and scored 0.08 on the public leaderboard. It's great to see an agent built on a 4-bit Gemma 4 31B actually fix real bugs on its own, offline, on L4 GPUs.\n\nA lot of the early work went into making the run itself reliable rather than into the model: the scorer runs tasks sequentially with a 12-hour ceiling, so pacing matters as much as smarts. If your submission errored, check that your budget fits the whole run.\n\nThanks to the hosts for the harness, the wheelhouse and the quick answers on the forum. Good luck to everyone, see you further up the leaderboard!",
+      "content": "<p>Hi everyone,</p>\n<p>Just wanted to share a small milestone. After a first submission that errored out, my second attempt went through and scored 0.08 on the public leaderboard. It's great to see an agent built on a 4-bit Gemma 4 31B actually fix real bugs on its own, offline, on L4 GPUs.</p>\n<p>A lot of the early work went into making the run itself reliable rather than into the model: the scorer runs tasks sequentially with a 12-hour ceiling, so pacing matters as much as smarts. If your submission errored, check that your budget fits the whole run.</p>\n<p>Thanks to the hosts for the harness, the wheelhouse and the quick answers on the forum. Good luck to everyone, see you further up the leaderboard!</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Narendar Kumar Ale",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/28395178-kg.png?t=2026-09-25-14-23-00",
+        "url": "/narendarkumarale",
+        "tier": "CONTRIBUTOR",
+        "id": 28395178,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "canUpvote": true
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 127,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Narendar Kumar Ale",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/28395178-kg.png?t=2026-09-25-14-23-00",
+          "url": "/narendarkumarale",
+          "userName": "narendarkumarale",
+          "tier": "CONTRIBUTOR",
+          "id": 28395178,
+          "profileUrl": "/narendarkumarale",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 28395178,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3528442,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 743457,
+    "name": "First scored run on the board 🎉",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-26T04:46:11.605386900Z",
+    "url": "/competitions/gemma-4-developer-agent/discussion/743457",
+    "totalMessages": 1,
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

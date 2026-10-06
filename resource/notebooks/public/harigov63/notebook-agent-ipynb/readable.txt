@@ -1,0 +1,154 @@
+# CELL 0 markdown
+
+
+# CELL 1 code
+# This Python 3 environment comes with many helpful analytics libraries installed
+# It is defined by the kaggle/python Docker image: https://github.com/kaggle/docker-python
+# For example, here's several helpful packages to load
+
+import numpy as np # linear algebra
+import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
+
+# Input data files are available in the read-only "../input/" directory
+# For example, running this (by clicking run or pressing Shift+Enter) will list all files under the input directory
+
+import os
+for dirname, _, filenames in os.walk('/kaggle/input'):
+    for filename in filenames:
+        print(os.path.join(dirname, filename))
+
+# You can write up to 20GB to the current directory (/kaggle/working/) that gets preserved as output when you create a version using "Save & Run All" 
+# You can also write temporary files to /kaggle/temp/, but they won't be saved outside of the current session
+
+# Use the kagglehub client library to attach Kaggle resources like competitions, datasets, and models to your session
+# Learn more about kagglehub: https://github.com/Kaggle/kagglehub/blob/main/README.md
+
+import kagglehub
+# kagglehub.dataset_download('<owner>/<dataset-slug>')
+
+# CELL 2 code
+import os
+import pandas as pd
+
+# 1. Verify environment paths (Kaggle hidden test set data)
+INPUT_DIR = "/kaggle/input/gemma-4-developer-agent"
+TEST_CSV = os.path.join(INPUT_DIR, "test.csv")
+EMBEDDINGS_DIR = os.path.join(INPUT_DIR, "embeddings")
+
+def run_agent_pipeline():
+    # Placeholder for your optimized model loader & agent tool loops
+    # Load test issues
+    if os.path.exists(TEST_CSV):
+        test_df = pd.read_csv(TEST_CSV)
+    else:
+        # Fallback dummy for notebook validation during commit
+        test_df = pd.DataFrame({"issue_id": ["dummy_1"], "repo_name": ["mock_repo"]})
+        
+    predictions = []
+    
+    for idx, row in test_df.iterrows():
+        issue_id = row['issue_id']
+        
+        # -----------------------------------------------------------------
+        # AGENT EXECUTION ZONE:
+        # 1. Use graph tools to traverse code graphs inside EMBEDDINGS_DIR
+        # 2. Feed context & issue instructions into your local Gemma 4 model
+        # 3. Generate the git patch / file correction string
+        # -----------------------------------------------------------------
+        
+        predicted_patch = "def mock_fix():\n    return True" # Replace with agent output
+        
+        predictions.append({
+            "issue_id": issue_id,
+            "patched_code": predicted_patch
+        })
+        
+    # 2. Format exactly as required by the leaderboard evaluation metric
+    submission_df = pd.DataFrame(predictions)
+    submission_df.to_csv("submission.csv", index=False)
+    print("Success: submission.csv saved to working directory.")
+
+if __name__ == "__main__":
+    run_agent_pipeline()
+
+
+# CELL 3 code
+# Create a new Kaggle Notebook, paste this code, and publish it!
+import os
+import time
+import pandas as pd
+
+print("Initializing G4LA13 Agentic Framework...")
+print("Loading Model Base: gemma-4-31b-it-qat-a4b16-ct via vLLM")
+
+def mock_swegemma_inference(issue_description):
+    """Simulates the dual-phase graph loop for verification."""
+    # Phase 1: Discovery via node similarities
+    print("Executing: sg.get_similar_nodes() for entry points...")
+    time.sleep(0.5)
+    
+    # Phase 2: Compacting the context with neighbor symbols
+    print("Executing: sg.get_neighbor() to map class dependencies...")
+    time.sleep(0.5)
+    
+    # Phase 3: Generating patch via isolated native reasoning
+    print("Model hidden thinking budget initialized (4096 tokens max)...")
+    
+    generated_patch = (
+        "--- a/src/utils.py\n"
+        "+++ b/src/utils.py\n"
+        "@@ -10,4 +10,4 @@\n"
+        "-    return val / 0\n"
+        "+    return val if val != 0 else 0"
+    )
+    return generated_patch
+
+print("Framework online. System ready for offline hidden test set validation.")
+
+
+# CELL 4 markdown
+
+
+# CELL 5 code
+import os
+import kagglehub
+
+# 1. Define your specific Kaggle handles and directory paths
+# Replace <KAGGLE_USERNAME> if different from your official handle
+KAGGLE_USERNAME = "harigov63"  
+DATASET_SLUG = "g4la13-agent-hyperparameters"
+handle = f"{KAGGLE_USERNAME}/{DATASET_SLUG}"
+
+local_dataset_dir = "./g4la13_dataset"
+os.makedirs(local_dataset_dir, exist_ok=True)
+
+# 2. Write the hyperparameter configurations into the directory
+sampling_yaml_content = """
+manifest_version: "1.0"
+framework: "vllm"
+model:
+  name: "gemma-4-31b-it-qat-a4b16-ct"
+  max_sequence_length: 32768
+sampling:
+  temperature: 0.2
+  top_p: 0.95
+  thinking_budget: 4096
+"""
+
+config_path = os.path.join(local_dataset_dir, "sampling.yaml")
+with open(config_path, "w") as f:
+    f.write(sampling_yaml_content.strip())
+
+print(f"Created configuration file at: {config_path}")
+
+# 3. Create and upload the initial dataset version via kagglehub
+print(f"Uploading dataset to Kaggle as: {handle}...")
+kagglehub.dataset_upload(handle, local_dataset_dir)
+
+# 4. Optional: Code block to push updates later with version notes
+# kagglehub.dataset_upload(handle, local_dataset_dir, version_notes='Updated thinking budget layout')
+
+# CELL 6 markdown
+
+
+# CELL 7 markdown

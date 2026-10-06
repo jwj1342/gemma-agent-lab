@@ -1,0 +1,288 @@
+{
+  "forumTopic": {
+    "authorId": 10108289,
+    "authorThumbnailName": "default-thumb.png",
+    "authorUserDisplayName": "Elan Markowitz",
+    "authorUserName": "elanlearns",
+    "comments": [
+      {
+        "id": 3529562,
+        "postDate": "2026-09-28T14:08:15.187Z",
+        "rawMarkdown": "L4 ×4 session is queued for very long time. \n",
+        "content": "<p>L4 ×4 session is queued for very long time. </p>",
+        "parent": {},
+        "author": {
+          "displayName": "RISHAV KUMAR",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/12607271-kg.png?t=2026-04-07-19-13-07",
+          "url": "/atomstack001",
+          "tier": "CONTRIBUTOR",
+          "id": 12607271,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "totalVotes": 1,
+          "canUpvote": true,
+          "totalUpvotes": 1
+        },
+        "kernelVersion": 0,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "enabled": true,
+          "teamLeader": {
+            "displayName": "RISHAV KUMAR",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/12607271-kg.png?t=2026-04-07-19-13-07",
+            "url": "/atomstack001",
+            "userName": "atomstack001",
+            "tier": "CONTRIBUTOR",
+            "id": 12607271,
+            "profileUrl": "/atomstack001",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 12607271,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3528874,
+        "postDate": "2026-09-26T18:37:56.727Z",
+        "rawMarkdown": "Good skills ",
+        "content": "<p>Good skills </p>",
+        "parent": {},
+        "author": {
+          "displayName": "Satyam Vishwakarma",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/satyam1836",
+          "tier": "CONTRIBUTOR",
+          "id": 26096040,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 1552,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Satyam Vishwakarma",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+            "url": "/satyam1836",
+            "userName": "satyam1836",
+            "tier": "CONTRIBUTOR",
+            "id": 26096040,
+            "profileUrl": "/satyam1836",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 26096040,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3528756,
+        "postDate": "2026-09-26T12:18:26.770Z",
+        "rawMarkdown": "it's the best choice for deepmind to let developers to show their skills",
+        "content": "<p>it's the best choice for deepmind to let developers to show their skills</p>",
+        "parent": {},
+        "author": {
+          "displayName": "sheko",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/30803717-kg.png?t=2026-09-25-18-25-37",
+          "url": "/sharifmohamed1",
+          "tier": "CONTRIBUTOR",
+          "id": 30803717,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 1487,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "sheko",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/30803717-kg.png?t=2026-09-25-18-25-37",
+            "url": "/sharifmohamed1",
+            "userName": "sharifmohamed1",
+            "tier": "CONTRIBUTOR",
+            "id": 30803717,
+            "profileUrl": "/sharifmohamed1",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 30803717,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3527784,
+        "postDate": "2026-09-24T18:02:39.927Z",
+        "rawMarkdown": "Or post train model with api and that can be implemented for better accuracy   ",
+        "content": "<p>Or post train model with api and that can be implemented for better accuracy   </p>",
+        "parent": {},
+        "author": {
+          "displayName": "Surajgod",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/surajgod",
+          "tier": "CONTRIBUTOR",
+          "id": 36632045,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Surajgod",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+            "url": "/surajgod",
+            "userName": "surajgod",
+            "tier": "CONTRIBUTOR",
+            "id": 36632045,
+            "profileUrl": "/surajgod",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 36632045,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3527783,
+        "postDate": "2026-09-24T18:01:53.037Z",
+        "rawMarkdown": "Train gama offline?\n",
+        "content": "<p>Train gama offline?</p>",
+        "parent": {},
+        "author": {
+          "displayName": "Surajgod",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/surajgod",
+          "tier": "CONTRIBUTOR",
+          "id": 36632045,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Surajgod",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+            "url": "/surajgod",
+            "userName": "surajgod",
+            "tier": "CONTRIBUTOR",
+            "id": 36632045,
+            "profileUrl": "/surajgod",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 36632045,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3529290,
+        "postDate": "2026-09-27T21:01:10.700Z",
+        "rawMarkdown": "",
+        "parent": {},
+        "author": {
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/"
+        },
+        "authorType": "COMMENT",
+        "votes": {},
+        "canDelete": true,
+        "isUserAuthor": true,
+        "isDeleted": true,
+        "kernelVersion": 0,
+        "feedbackTrackingData": {},
+        "isThankYou": false
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3527743,
+      "postDate": "2026-09-24T15:59:36.203Z",
+      "rawMarkdown": "Hello Kagglers,\n\nToday’s most capable software engineering agents rely on massive, closed-source models running in the cloud, leaving advanced autonomous development tools out of reach for many developers.\n\nWith Gemma 4, we want to change that.\n\nOur challenge to you is to push the boundaries of open-source models and post-train Gemma 4 into an autonomous coding agent capable of navigating real-world repositories and reliably resolving software engineering tasks on consumer-grade hardware. To help you get started, we’ve provided a [starter submission](https://www.kaggle.com/competitions/gemma-4-developer-agent/data?select=sample_submission), [development tasks](https://www.kaggle.com/competitions/gemma-4-developer-agent/data?select=tasks.jsonl), and a corresponding dataset of structured [code graphs](https://www.kaggle.com/competitions/gemma-4-developer-agent/data?select=graphs) with [pre-computed embeddings](https://www.kaggle.com/competitions/gemma-4-developer-agent/data?select=embeddings) for repository-level retrieval.\n\nWhether you explore parameter-efficient fine-tuning, novel reinforcement learning approaches, or graph-based code reasoning, we want to see how far you can take local, open models. \n\nWe can't wait to see the agents you build and the solutions you invent!\n\nGoogle Research and The Gemma Team\n",
+      "content": "<p>Hello Kagglers,</p>\n<p>Today’s most capable software engineering agents rely on massive, closed-source models running in the cloud, leaving advanced autonomous development tools out of reach for many developers.</p>\n<p>With Gemma 4, we want to change that.</p>\n<p>Our challenge to you is to push the boundaries of open-source models and post-train Gemma 4 into an autonomous coding agent capable of navigating real-world repositories and reliably resolving software engineering tasks on consumer-grade hardware. To help you get started, we’ve provided a <a href=\"https://www.kaggle.com/competitions/gemma-4-developer-agent/data?select=sample_submission\" target=\"_blank\">starter submission</a>, <a href=\"https://www.kaggle.com/competitions/gemma-4-developer-agent/data?select=tasks.jsonl\" target=\"_blank\">development tasks</a>, and a corresponding dataset of structured <a href=\"https://www.kaggle.com/competitions/gemma-4-developer-agent/data?select=graphs\" target=\"_blank\">code graphs</a> with <a href=\"https://www.kaggle.com/competitions/gemma-4-developer-agent/data?select=embeddings\" target=\"_blank\">pre-computed embeddings</a> for repository-level retrieval.</p>\n<p>Whether you explore parameter-efficient fine-tuning, novel reinforcement learning approaches, or graph-based code reasoning, we want to see how far you can take local, open models. </p>\n<p>We can't wait to see the agents you build and the solutions you invent!</p>\n<p>Google Research and The Gemma Team</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Elan Markowitz",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+        "url": "/elanlearns",
+        "tier": "CONTRIBUTOR",
+        "id": 10108289,
+        "progressionOptOut": false
+      },
+      "authorType": "HOST",
+      "votes": {
+        "totalVotes": 13,
+        "canUpvote": true,
+        "totalUpvotes": 13
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "reactions": [
+        {
+          "emoji": "LOVE",
+          "featuredUserNames": [
+            "ilovechallenges",
+            "ppujari",
+            "garried",
+            "sriharshasammeta",
+            "mlneo07",
+            "abdrah",
+            "dpblueblue",
+            "shauryagulati",
+            "nesrinehebbadj",
+            "akshayggupta1",
+            "kwamenelson12",
+            "abhicodes369",
+            "moonfr4ction",
+            "tadityasasidhar",
+            "adaluvu",
+            "zhouhengyuu",
+            "balamanigurunathan",
+            "narendarkumarale",
+            "sharifmohamed1",
+            "ivaniam",
+            "junkonno",
+            "raydestar",
+            "willieallen88"
+          ],
+          "userCount": 23
+        }
+      ]
+    },
+    "firstMessageId": 3527743,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 743007,
+    "isStickied": true,
+    "name": "Welcome to the Gemma 4 Developer Agent Competition",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-24T15:59:36.202976300Z",
+    "totalVotes": 13,
+    "url": "/competitions/gemma-4-developer-agent/discussion/743007",
+    "totalMessages": 6,
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

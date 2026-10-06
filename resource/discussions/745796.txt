@@ -1,0 +1,17 @@
+# Expected domain shift between the provided repositories and hidden evaluation
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/745796
+
+## 3532706 /msd0110 TOPIC
+Hi organizers,
+
+Could you clarify how representative the four provided repositories—FastAPI, HTTPX, Rich, and Requests—are of the hidden evaluation distribution? In particular, I’m interested in the potential for domain shift along two dimensions:
+
+1. **Programming languages:** According to GitHub’s language breakdown, all four provided repositories are over 99% Python. Should we expect the hidden evaluation repositories to be similarly Python-dominated, or could they contain substantial code in other languages?
+
+2. **Application domains:** The provided repositories cover web frameworks, HTTP clients, and terminal formatting. Will the hidden evaluation draw from broadly similar domains, or could it include substantially different types of projects, such as machine learning or scientific computing libraries like PyTorch?
+
+More generally, is the evaluation intended to measure generalization within a similar set of software domains, or across a broader range of repositories and ecosystems?
+
+Any high-level guidance on the intended scope would help participants understand which assumptions about the provided data are reasonable when developing their agents.
+
+Thank you!

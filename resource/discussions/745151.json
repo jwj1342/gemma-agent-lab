@@ -1,0 +1,10 @@
+{
+  "messages": [
+    {
+      "id": 3531738,
+      "postDate": "2026-10-02T14:34:55.673Z",
+      "content": "<p>When an agent applies a patch and the validation/test fails, does the agent receive the actual test output, including the failing assertion, traceback, expected/actual values, and relevant error messages?\nIf so, is this output exactly the same information that is available during official evaluation?</p>",
+      "rawMarkdown": "When an agent applies a patch and the validation/test fails, does the agent receive the actual test output, including the failing assertion, traceback, expected/actual values, and relevant error messages?\nIf so, is this output exactly the same information that is available during official evaluation?"
+    }
+  ]
+}

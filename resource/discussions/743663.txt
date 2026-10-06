@@ -1,0 +1,12 @@
+# How much of the submission runtime is excluded as patch validation?
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743663
+
+## 3528708 /lwolwo TOPIC
+I understand that the runtime shown for a Kaggle submission is the total wall-clock time, while the 12-hour agent limit includes sandbox setup but excludes patch validation.  
+Is there any estimate of how much time patch validation typically takes across the full test set? I’m trying to understand roughly how much of the total submission runtime does not count toward the 12-hour limit, so I can estimate what total wall-clock runtime is still safe.
+
+## 3528731 /ryanholbrook ADMIN
+IIRC, patch validation takes around two hours if a patch is submitted for every task. If no patch is submitted for a task, then validation is skipped and that task just scores 0. A "no patch" submission only takes about ten minutes.
+
+## 3528734 /lwolwo TOPIC
+Thanks, that’s very helpful!

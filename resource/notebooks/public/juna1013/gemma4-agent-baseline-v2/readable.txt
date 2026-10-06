@@ -1,0 +1,452 @@
+# CELL 0 code
+# 【セル1: 設定値】役割: 実行モード、パス、1タスクあたりの時間予算をまとめて定義します。後続のセルはここで定義した値だけを参照します。
+from pathlib import Path
+import glob
+
+# ---- 実行モード ----
+RUN_LOCAL_EVAL = False   # True にすると、GPU (L4 x4) 環境でセル7・セル8のローカル評価を実行する
+N_EVAL_TASKS = 5         # ローカル評価に使うタスク数（1タスク最大4分 + 準備時間）
+EVAL_SEED = 42           # タスク抽出の乱数シード（変更前後で同じタスクを比較するために固定する）
+
+# ---- パス ----
+DATA = Path("/kaggle/input/competitions/gemma-4-developer-agent")
+SUB = Path("/kaggle/working/submission")
+WORKING = Path("/kaggle/working")
+
+def find_input(pattern):
+    # 入力データのマウント位置は追加方法によって異なるため、候補を検索する
+    hits = sorted(glob.glob(f"/kaggle/input/**/{pattern}", recursive=True))
+    return Path(hits[0]) if hits else None
+
+WHEELHOUSE_DIR = find_input("gemma-4-developer-agent-wheelhouse")
+MODEL_PATH = find_input("gemma-4-31b-it-qat-w4a16-ct/2") or find_input("gemma-4-31b-it-qat-w4a16-ct")
+print("wheelhouse:", WHEELHOUSE_DIR)
+print("model     :", MODEL_PATH)
+
+# ---- 1タスクあたりの予算（eval_config.yaml に記述する値）----
+MAX_TIME_MINUTES = 4     # セッションの制限時間（分）。整数にしておく
+MAX_TOOL_CALLS = 60      # 実質的には時間が先に上限に達する値にしている
+MAX_TURNS = 80           # LLM呼び出し回数の上限（ツール呼び出し回数より大きくする）
+COMMAND_TIMEOUT_S = 90   # 1コマンドあたりのタイムアウト（秒）
+
+# ---- 全体の実行時間の見積もり ----
+TOTAL_LIMIT_MIN = 12 * 60   # 公式ルール: 全タスクで12時間（サンドボックス準備を含み、採点は含まない）
+N_TEST_TASKS_EST = 130      # テストセットは「約120件」。余裕を持たせて多めに見積もる
+SETUP_MIN_PER_TASK = 0.5    # 1タスクあたりのサンドボックス準備時間（ログからの推定値）
+SERVER_STARTUP_MIN = 20     # vLLMサーバーの起動時間（推定値）
+
+worst_case = N_TEST_TASKS_EST * (MAX_TIME_MINUTES + SETUP_MIN_PER_TASK) + SERVER_STARTUP_MIN
+print(f"最悪ケースの所要時間: {worst_case:.0f} 分 / 上限 {TOTAL_LIMIT_MIN} 分 ({worst_case / TOTAL_LIMIT_MIN:.0%})")
+assert worst_case <= TOTAL_LIMIT_MIN * 0.9, "時間予算が全体制限の90%を超えています。MAX_TIME_MINUTES を下げてください。"
+
+# CELL 1 code
+# 【セル2: 公式ライブラリのインストール】役割: wheelhouse データセットから swegemma / adk_submission / vLLM などをインストールします。
+import importlib, os, shutil, subprocess, sys
+
+os.environ['LITELLM_LOCAL_MODEL_COST_MAP'] = 'True'
+os.environ['TRANSFORMERS_NO_TF'] = '1'
+os.environ['VLLM_WORKER_MULTIPROC_METHOD'] = 'spawn'
+os.environ['VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS'] = '1'
+os.environ['VLLM_ENGINE_READY_TIMEOUT_S'] = '1200'
+os.environ['VLLM_NO_USAGE_STATS'] = '1'
+os.environ['OTEL_SDK_DISABLED'] = 'true'
+os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
+
+HARNESS_OK = False
+if WHEELHOUSE_DIR is None:
+    print("警告: wheelhouse データセットが見つかりません。公式ライブラリによる検証とローカル評価は省略されます。")
+else:
+    # 壊れた cutlass の .pth フックを削除する（最多投票ノートブックと同じ処理）
+    for pat in ('/usr/local/lib/python*/dist-packages/*cutlass*.pth',
+                '/usr/local/lib/python*/site-packages/*cutlass*.pth'):
+        for pth in glob.glob(pat):
+            try:
+                os.unlink(pth)
+            except OSError:
+                pass
+    # Kaggleへのアップロード時に削除された '+cu128' をファイル名に戻す
+    tmp_whl = Path('/tmp/wheelhouse')
+    tmp_whl.mkdir(parents=True, exist_ok=True)
+    for w in WHEELHOUSE_DIR.glob('*.whl'):
+        if 'cutlass' in w.name.lower():
+            continue
+        name = w.name.replace('cu128', '+cu128') if ('cu128' in w.name and '+' not in w.name) else w.name
+        if not (tmp_whl / name).exists():
+            os.symlink(w, tmp_whl / name)
+    wheels = sorted(str(w) for w in tmp_whl.glob('*.whl'))
+    print(f'{len(wheels)} 個の wheel をインストールします...')
+    subprocess.run([sys.executable, '-m', 'pip', 'install', '-q', '--no-deps', '--force-reinstall', *wheels], check=True)
+    importlib.invalidate_caches()
+    try:
+        import swegemma, adk_submission  # noqa: F401
+        HARNESS_OK = True
+        print('インストール完了')
+    except Exception as e:
+        print('警告: 公式ライブラリの import に失敗しました:', repr(e))
+
+# CELL 2 code
+# 【セル3: データと仕様書の確認】役割: タスク数とリポジトリの内訳を表示し、HARNESS_README.md のうち予算・ツール・注意事項の節を表示します。
+import json, collections
+
+tasks_raw = [json.loads(l) for l in (DATA / "tasks.jsonl").read_text().splitlines() if l.strip()]
+print(f"タスク数: {len(tasks_raw)}")
+print("リポジトリ別:", dict(collections.Counter(t["repo"] for t in tasks_raw)))
+
+readme = (DATA / "HARNESS_README.md").read_text()
+sections = readme.split("\n## ")
+print("\nREADME の節一覧:")
+for s in sections[1:]:
+    print("  -", s.splitlines()[0])
+
+# 予算（7）と注意事項（10）の節だけを全文表示する
+for s in sections[1:]:
+    if s.startswith(("7.", "10.")):
+        print("\n" + "=" * 80 + "\n## " + s)
+
+# CELL 3 code
+# 【セル4: 提出ディレクトリの作成】役割: agent.yaml、configs/sampling.yaml、prompts/system.md、eval_config.yaml の4ファイルを生成します。
+if SUB.exists():
+    shutil.rmtree(SUB)
+(SUB / "prompts").mkdir(parents=True)
+(SUB / "configs").mkdir(parents=True)
+
+# ---- agent.yaml ----
+(SUB / "agent.yaml").write_text("""\
+name: swe_agent
+agent_class: LlmAgent
+model: gemma-4-31b-it-qat-w4a16-ct
+description: Software engineering agent that locates the cause of an issue, edits the source code, and submits a patch.
+instruction: !include prompts/system.md
+generate_content_config: !include configs/sampling.yaml
+tools:
+  - run_command
+  - read_file
+  - edit_file
+  - write_file
+  - get_status
+  - submit_patch
+  - search_similar_code
+  - get_code_neighbors
+  - get_code_subgraph
+""")
+
+# ---- configs/sampling.yaml ----
+(SUB / "configs" / "sampling.yaml").write_text("""\
+temperature: 0.2
+top_p: 0.95
+max_output_tokens: 8192
+thinking_config:
+  thinking_budget: 4096
+  include_thoughts: true
+""")
+
+# ---- eval_config.yaml（セル1の値から生成）----
+(SUB / "eval_config.yaml").write_text(f"""\
+evaluation:
+  timeout_seconds: {COMMAND_TIMEOUT_S}
+  max_tool_calls: {MAX_TOOL_CALLS}
+  max_time_minutes: {MAX_TIME_MINUTES}
+  max_turns: {MAX_TURNS}
+""")
+
+# ---- prompts/system.md ----
+# 注意: ADK は instruction 内の波括弧をセッション変数の置換対象として扱うため、波括弧を書かない
+(SUB / "prompts" / "system.md").write_text("""\
+You are an autonomous software engineer fixing one issue in a Python repository located at /workspace.
+After you finish, hidden tests will be applied to your patch. The task counts as solved only if those tests pass.
+
+## Budget
+- The user message states your time allowance and tool-call allowance. When the time runs out, the session is stopped immediately.
+- Edits saved to disk are kept as your patch even if the session is stopped. Therefore make your first concrete source edit before about half of the time allowance has passed, then verify and refine it.
+- Use get_status if you need to know the remaining budget.
+
+## Workflow
+1. Read the problem statement and hints. Note every exact name they mention: functions, classes, parameters, default values, exception types, error messages, CLI options, file paths, and expected output.
+2. Locate the relevant code with run_command and grep. Restrict the search to Python files and limit the output, for example:
+   grep -rn "symbol_name" --include=*.py . | grep -v "/tests/" | head -n 30
+   Use search_similar_code only when grep returns nothing useful.
+3. Read only the relevant region with read_file, using start_line and end_line. Do not read entire large files.
+4. If the expected behaviour is unclear, read one existing test file for the affected module to see how the code is called (for example: ls tests | grep -i keyword). Do not run the whole test suite.
+5. Edit with edit_file. Copy old_string exactly from the read_file output, including indentation, and include 2 to 4 surrounding lines so that the match is unique.
+6. Verify with one short check: a python3 -c snippet, a small script in /tmp, or a single targeted test such as python3 -m pytest tests/test_module.py -x -q -k keyword. Ignore failures that are unrelated to your change and existed before it.
+7. Call submit_patch and confirm that patch_size is greater than 0. If you change anything after submitting, call submit_patch again. Finally, reply with a one-sentence summary and no tool call to end the session.
+
+## Rules that decide whether the hidden tests pass
+- Use names, signatures, default values, exception types, and message strings exactly as written in the issue. The hidden tests import and compare them literally.
+- For a feature request, implement the complete public behaviour: new parameters, return values, exports in __init__.py, and the type hints used in the project.
+- Keep backward compatibility. Do not rename or remove existing public functions, classes, or parameters.
+- For FastAPI tasks that mention documentation examples, the executable examples are under docs_src/ and are imported by the tests. Create or update them when the issue requires it.
+- Never create, modify, or delete test files, conftest.py, or pytest.ini. Change packaging files such as pyproject.toml only when the issue explicitly requires it.
+- Write scratch scripts only under /tmp. Every new file under /workspace becomes part of your patch.
+- Do not run pip install. The environment is offline and all dependencies are already installed.
+- Do not run bare pytest or the full test suite. It exceeds the command timeout.
+
+## Style
+Keep your reasoning short. Call a tool in every turn until you have submitted the patch.
+""")
+
+for p in sorted(SUB.rglob("*")):
+    if p.is_file():
+        print(f"{p.relative_to(SUB)}  ({p.stat().st_size} bytes)")
+
+# CELL 4 code
+# 【セル5: 静的検証】役割: 公式ライブラリがなくても実行できる範囲で、提出物の形式を検査します。
+import yaml
+
+ALLOWED_EXT = {".yaml", ".yml", ".md", ".txt", ".py", ".json", ".safetensors"}
+ALLOWED_MODEL = "gemma-4-31b-it-qat-w4a16-ct"
+KNOWN_TOOLS = {
+    "run_command", "read_file", "edit_file", "write_file", "get_status",
+    "submit_patch", "get_code_neighbors", "search_similar_code", "get_code_subgraph",
+}
+
+class IncludeLoader(yaml.SafeLoader):
+    pass
+
+def _include(loader, node):
+    rel = loader.construct_scalar(node)
+    assert not os.path.isabs(rel) and ".." not in rel, f"不正な include: {rel}"
+    p = SUB / rel
+    if rel.endswith((".md", ".txt")):
+        return p.read_text()
+    return yaml.load(p.read_text(), Loader=IncludeLoader)
+
+IncludeLoader.add_constructor("!include", _include)
+errors = []
+
+# 1. ルート設定ファイルが1つだけか
+roots = [f for f in ["agent.yaml", "agent.yml", "root_agent.yaml", "root_agent.yml"] if (SUB / f).exists()]
+if len(roots) != 1:
+    errors.append(f"ルート設定ファイルが {len(roots)} 個あります: {roots}")
+
+# 2. 拡張子・シンボリックリンク・合計サイズ・プロンプト内の波括弧
+total = 0
+for p in SUB.rglob("*"):
+    if p.is_symlink():
+        errors.append(f"シンボリックリンク: {p}")
+    if p.is_file():
+        total += p.stat().st_size
+        if p.suffix not in ALLOWED_EXT:
+            errors.append(f"許可されない拡張子: {p}")
+        if p.suffix == ".md" and ("{" in p.read_text() or "}" in p.read_text()):
+            errors.append(f"波括弧を含むプロンプト: {p}（ADK のテンプレート置換の対象になります）")
+if total >= 3 * 1024**3:
+    errors.append(f"合計サイズ超過: {total} bytes")
+
+# 3. agent.yaml の内容
+cfg = yaml.load((SUB / "agent.yaml").read_text(), Loader=IncludeLoader)
+if cfg.get("model") != ALLOWED_MODEL:
+    errors.append(f"model が不正です: {cfg.get('model')}")
+unknown = set(cfg.get("tools", [])) - KNOWN_TOOLS
+if unknown:
+    errors.append(f"未知のツール: {unknown}")
+
+# 4. 生成設定の範囲
+gen = cfg.get("generate_content_config", {}) or {}
+if not 1 <= gen.get("max_output_tokens", 16384) <= 32768:
+    errors.append("max_output_tokens が 1〜32768 の範囲外です")
+if not 0 <= gen.get("thinking_config", {}).get("thinking_budget", 4096) <= 32768:
+    errors.append("thinking_budget が 0〜32768 の範囲外です")
+
+# 5. eval_config.yaml の予算
+ev = yaml.safe_load((SUB / "eval_config.yaml").read_text())["evaluation"]
+if ev["max_time_minutes"] != MAX_TIME_MINUTES:
+    errors.append("eval_config.yaml の max_time_minutes がセル1の値と一致しません")
+if ev["max_time_minutes"] <= 1:
+    errors.append("max_time_minutes が1分以下です（元の提出の失敗原因）")
+if ev["max_turns"] <= ev["max_tool_calls"]:
+    errors.append("max_turns は max_tool_calls より大きくしてください")
+
+print(f"合計サイズ: {total} bytes")
+print(f"eval_config: {ev}")
+print("検証エラーなし" if not errors else "\n".join(errors))
+assert not errors
+
+# CELL 5 code
+# 【セル6: 公式ライブラリによるコンパイル検証】役割: 採点環境と同じ adk_submission.compile_submission で提出物をコンパイルし、構文・ツール名等を検証します。
+if not HARNESS_OK:
+    print("公式ライブラリがないため省略します（セル2の警告を確認してください）")
+else:
+    from adk_submission import compile_submission, validate_directory, ModelRegistry
+    from google.adk.models.lite_llm import LiteLlm
+    from swegemma.config import build_submission_limits
+    from swegemma.models.discovery import validate_single_declared_model
+
+    limits, gen_constraints = build_submission_limits()
+    validate_directory(SUB, limits)
+    print("ディレクトリ検証: OK")
+    print("宣言モデル:", validate_single_declared_model(SUB))
+
+    def _dummy_tool(name):
+        def f(x: str = "") -> dict:
+            "dummy"
+            return {}
+        f.__name__ = name
+        return f
+
+    reg = ModelRegistry()
+    reg.register(ALLOWED_MODEL, LiteLlm(model="openai/dummy", api_base="http://127.0.0.1:1/v1", api_key="x"))
+    agent = compile_submission(
+        SUB,
+        tool_registry={n: _dummy_tool(n) for n in KNOWN_TOOLS},
+        model_registry=reg,
+        limits=limits,
+        generation_constraints=gen_constraints,
+    )
+    print("コンパイル: OK ->", type(agent).__name__, agent.name)
+    print("ツール:", [getattr(t, "name", getattr(t, "__name__", t)) for t in agent.tools])
+    gc = agent.generate_content_config
+    print(f"生成設定: temperature={gc.temperature}, max_output_tokens={gc.max_output_tokens}, "
+          f"thinking_budget={gc.thinking_config.thinking_budget}")
+
+# CELL 6 code
+# 【セル7: vLLMサーバーの起動】役割: ローカル評価用に Gemma 4 31B を vLLM で起動します（GPU L4 x4 かつ RUN_LOCAL_EVAL = True のときのみ）。
+import torch
+
+LOCAL_EVAL_READY = False
+if not RUN_LOCAL_EVAL:
+    print("RUN_LOCAL_EVAL = False のため省略します")
+elif not (HARNESS_OK and torch.cuda.is_available() and MODEL_PATH is not None):
+    print("GPU・公式ライブラリ・モデルのいずれかが不足しているため省略します")
+else:
+    import litellm
+    from adk_submission import VllmConfig, VllmServer, discover_adapters
+    from swegemma.config import ALLOWED_ADAPTER_EXTENSIONS
+    from swegemma.models.discovery import validate_single_declared_model
+
+    litellm.drop_params = True
+    declared_model = validate_single_declared_model(SUB)
+    adapters = discover_adapters(str(SUB), adapter_extensions=ALLOWED_ADAPTER_EXTENSIONS)
+
+    gpu_count = torch.cuda.device_count()
+    tp_size = 4 if gpu_count >= 4 else (2 if gpu_count >= 2 else 1)
+    if tp_size < 4:
+        print(f"注意: GPUが {gpu_count} 枚です。採点環境（L4 x4）とは速度が異なります。")
+
+    vllm_cfg = VllmConfig(
+        model=str(MODEL_PATH),
+        port=8000,
+        host='127.0.0.1',
+        tool_call_parser='gemma4',
+        reasoning_parser='gemma4',
+        max_model_len=32768,
+        dtype='bfloat16' if torch.cuda.is_bf16_supported() else 'auto',
+        gpu_memory_utilization=0.80,                          # 採点環境と同じ値
+        default_chat_template_kwargs={'enable_thinking': True},  # 採点環境と同じ値
+        enable_auto_tool_choice=True,
+        enable_lora=True,
+        max_loras=8,
+        max_lora_rank=128,
+        tensor_parallel_size=tp_size,
+        startup_timeout=60 * 20,
+    )
+    server = VllmServer(vllm_cfg, adapter_manifest=adapters)
+    server.start()
+    models = server.create_model_registry(
+        aliases=[declared_model, ALLOWED_MODEL], model_prefix='openai/', api_key='EMPTY',
+    )
+    LOCAL_EVAL_READY = True
+    print(f"vLLM 起動完了: {server.base_url} (tp={tp_size})")
+
+# CELL 7 code
+# 【セル8: ローカル評価】役割: 訓練用タスクから N_EVAL_TASKS 件を抽出し、採点と同じ2段階（エージェント実行 → テスト検証）で評価します。
+import asyncio, concurrent.futures, random
+import pandas as pd
+
+def run_sync(coro_fn, *args, **kwargs):
+    # ノートブックのイベントループ内で非同期関数を同期的に実行する
+    fn = lambda: coro_fn(*args, **kwargs)
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
+    if loop is not None and loop.is_running():
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+            return pool.submit(lambda: asyncio.run(fn())).result()
+    return asyncio.run(fn())
+
+if not LOCAL_EVAL_READY:
+    print("セル7が実行されていないため省略します")
+else:
+    from google.adk.agents.context_cache_config import ContextCacheConfig
+    from google.adk.apps._configs import EventsCompactionConfig
+    from swegemma.config import EvalConfig, build_submission_limits
+    from swegemma.evaluate import Evaluator
+    from swegemma.models import load_tasks
+
+    tasks = load_tasks(DATA / "tasks.jsonl")
+    sample_tasks = random.Random(EVAL_SEED).sample(tasks, N_EVAL_TASKS)
+    ev = yaml.safe_load((SUB / "eval_config.yaml").read_text())["evaluation"]
+    limits, gen_constraints = build_submission_limits()
+    out_dir = WORKING / "local_eval"
+
+    eval_config = EvalConfig(
+        tasks_path=DATA / "tasks.jsonl",
+        snapshots_dir=DATA / "snapshots",
+        results_dir=out_dir,
+        submission_dir=SUB,
+        models=models,
+        sandbox="subprocess",
+        timeout_seconds=int(ev["timeout_seconds"]),
+        max_time_minutes=float(ev["max_time_minutes"]),
+        max_tool_calls=int(ev["max_tool_calls"]),
+        max_turns=int(ev["max_turns"]),
+        limits=limits,
+        generation_constraints=gen_constraints,
+        adapter_manifest=adapters,
+        context_cache_config=ContextCacheConfig(min_tokens=2048, ttl_seconds=1800, cache_intervals=10),
+        events_compaction_config=EventsCompactionConfig(
+            compaction_interval=15, overlap_size=2, token_threshold=14336, event_retention_size=5,
+        ),
+        graph_dir=str(DATA / "graphs"),
+        embeddings_dir=str(DATA / "embeddings"),
+        wheels_dir=DATA / "wheels",
+        verbose=False,
+    )
+    evaluator = Evaluator(eval_config)
+
+    rows = []
+    for i, task in enumerate(sample_tasks, start=1):
+        print(f"[{i}/{len(sample_tasks)}] {task.instance_id} を評価中...")
+        r = run_sync(evaluator.evaluate_task, task=task, task_index=i, total_tasks=len(sample_tasks))
+        rows.append({
+            "id": task.instance_id,
+            "resolved": r.resolved,
+            "has_patch": bool((r.agent_patch or "").strip()),
+            "patch_chars": len(r.agent_patch or ""),
+            "tool_calls": r.tool_calls,
+            "duration_s": round(r.duration_seconds, 1),
+            "test_exit_code": r.test_exit_code,
+            "status": r.status,
+            "error": (getattr(r, "error_message", None) or "")[:120],
+        })
+        print("   ->", rows[-1])
+
+    df = pd.DataFrame(rows)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    df.to_csv(out_dir / "results.csv", index=False)
+    display(df)
+    print(f"解決率: {df.resolved.mean():.0%} / パッチ生成率: {df.has_patch.mean():.0%} / 平均所要時間: {df.duration_s.mean():.0f} 秒")
+
+# CELL 8 code
+# 【セル9: zip化と最終確認】役割: submission/ の中身を submission.zip のルートに格納し、構造・拡張子・サイズを確認します。
+import zipfile
+
+zip_base = WORKING / "submission"
+zip_path = Path(shutil.make_archive(str(zip_base), "zip", root_dir=SUB))
+
+with zipfile.ZipFile(zip_path) as z:
+    infos = [i for i in z.infolist() if not i.is_dir()]
+names = [i.filename for i in infos]
+print(names)
+
+assert "agent.yaml" in names, "agent.yaml が zip のルートにありません"
+assert not any(n.startswith("submission/") for n in names), "余分なディレクトリ階層があります"
+for required in ["eval_config.yaml", "prompts/system.md", "configs/sampling.yaml"]:
+    assert required in names, f"{required} がありません"
+for i in infos:
+    assert Path(i.filename).suffix in ALLOWED_EXT, f"許可されない拡張子: {i.filename}"
+assert sum(i.file_size for i in infos) < 3 * 1024**3
+
+print(f"zip 構造 OK: {zip_path} ({zip_path.stat().st_size} bytes)")
+print("提出: ノートブックを保存（Save Version）後、出力の submission.zip を提出してください。")

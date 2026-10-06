@@ -1,0 +1,10 @@
+{
+  "id": 681780,
+  "slug": "gemma-4-31b-it-qat-w4a16-ct",
+  "framework": "MODEL_FRAMEWORK_OTHER",
+  "versionId": 897258,
+  "versionNumber": 2,
+  "url": "https://www.kaggle.com/models/google/gemma-4/Other/gemma-4-31b-it-qat-w4a16-ct",
+  "licenseName": "Apache 2.0",
+  "totalUncompressedBytes": 23297590856
+}

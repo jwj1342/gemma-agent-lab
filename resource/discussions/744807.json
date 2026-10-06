@@ -1,0 +1,158 @@
+{
+  "messages": [
+    {
+      "id": 3530914,
+      "postDate": "2026-10-01T02:01:14.843Z",
+      "content": "<p>Hello <a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a>, </p>\n<p>My submission, 56722615, stopped after about 20 minutes with \"Your notebook hit an unhandled error while rerunning your code.\" It's my first upload since the September 30 wheelhouse update. My earlier submissions scored normally, and this one validates and runs fine locally. Any idea what went wrong? </p>",
+      "rawMarkdown": "Hello @ryanholbrook, \n\nMy submission, 56722615, stopped after about 20 minutes with \"Your notebook hit an unhandled error while rerunning your code.\" It's my first upload since the September 30 wheelhouse update. My earlier submissions scored normally, and this one validates and runs fine locally. Any idea what went wrong? ",
+      "votes": 20
+    },
+    {
+      "id": 3531130,
+      "postDate": "2026-10-01T10:33:59.770Z",
+      "content": "<p>Yes this is an issue. My submission id: 56747946</p>\n<p>Also I think if the daily submission limit is 1, we should only count it towards a successful submission. Anything that's infra related should not be counted towards a submission.</p>\n<p>2ndly It would be nice to know what's the underlying stack that's running:</p>\n<ul>\n<li>does inference recover itself in case it goes down?</li>\n<li>does sandboxes have retries as well?</li>\n</ul>\n<p>I think a bit more clarity on how the infrastructure is designed/wired together will help.</p>",
+      "rawMarkdown": "Yes this is an issue. My submission id: 56747946\n\nAlso I think if the daily submission limit is 1, we should only count it towards a successful submission. Anything that's infra related should not be counted towards a submission.\n\n2ndly It would be nice to know what's the underlying stack that's running:\n- does inference recover itself in case it goes down?\n- does sandboxes have retries as well?\n\nI think a bit more clarity on how the infrastructure is designed/wired together will help.",
+      "votes": 5
+    },
+    {
+      "id": 3530948,
+      "postDate": "2026-10-01T03:57:48.207Z",
+      "content": "<p>Same here: submission 56726945 (2026-10-01 00:06 UTC) ended with \"Your notebook hit an unhandled error while rerunning your code\" and no score. It validates locally with the Sep 30 wheelhouse.</p>\n<p><a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a> could you check what raised, and let us know when it is safe to resubmit? Thanks!</p>",
+      "rawMarkdown": "Same here: submission 56726945 (2026-10-01 00:06 UTC) ended with \"Your notebook hit an unhandled error while rerunning your code\" and no score. It validates locally with the Sep 30 wheelhouse.\n\n@ryanholbrook could you check what raised, and let us know when it is safe to resubmit? Thanks!",
+      "votes": 3
+    },
+    {
+      "id": 3531241,
+      "postDate": "2026-10-01T14:45:21.513Z",
+      "content": "<p>We had a GPU outage overnight. Resolved now, and submissions should be working again.</p>",
+      "rawMarkdown": "We had a GPU outage overnight. Resolved now, and submissions should be working again.",
+      "votes": 2,
+      "isPinned": true,
+      "replies": [
+        {
+          "id": 3531299,
+          "postDate": "2026-10-01T16:37:35.270Z",
+          "content": "<p>would be great if the failed runs are started again or the daily limit be reset!</p>",
+          "rawMarkdown": "would be great if the failed runs are started again or the daily limit be reset!",
+          "votes": 5
+        },
+        {
+          "id": 3532001,
+          "postDate": "2026-10-03T01:43:27.737Z",
+          "content": "<p>Hi <a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a>, same issue on Oct 3. Both notebooks ran COMPLETE (344s / 679s, local validator passed, model <code>gemma-4-31b-it-qat-w4a16-ct</code>), but both submissions ended as <code>SubmissionStatus.ERROR</code> with only the generic \"A system error. Please try resubmitting to resolve the error and contact Kaggle Support if it persists.\" and no score:</p>\n<ul>\n<li>56784230 (Getting Started notebook, 2026-10-03T00:00:13Z)</li>\n<li>56785158 (Gemma 4 SuperAgent, 2026-10-03T00:16:03Z)\nBundles validate locally (UTF-8 clean, no BOM, agent.yaml at zip root). Could you please check if these were hit by the same backend issue, and rerun them / restore the daily slot if so? Thanks!</li>\n</ul>",
+          "rawMarkdown": "Hi @ryanholbrook, same issue on Oct 3. Both notebooks ran COMPLETE (344s / 679s, local validator passed, model `gemma-4-31b-it-qat-w4a16-ct`), but both submissions ended as `SubmissionStatus.ERROR` with only the generic \"A system error. Please try resubmitting to resolve the error and contact Kaggle Support if it persists.\" and no score:\n- 56784230 (Getting Started notebook, 2026-10-03T00:00:13Z)\n- 56785158 (Gemma 4 SuperAgent, 2026-10-03T00:16:03Z)\nBundles validate locally (UTF-8 clean, no BOM, agent.yaml at zip root). Could you please check if these were hit by the same backend issue, and rerun them / restore the daily slot if so? Thanks!"
+        }
+      ]
+    },
+    {
+      "id": 3531117,
+      "postDate": "2026-10-01T10:02:34.347Z",
+      "content": "<p>Same here.</p>\n<p>I re-uploaded a byte-identical submission for rescoring: same four files, verified by sha256 per file against the archive that scored normally on 25 Sep. Nothing changed on my side.</p>\n<p>Since you offered to rerun the affected submissions in #743683 so people wouldn't lose a slot, would the same apply to these? </p>\n<p>Happy to supply submission ids or anything else useful.</p>",
+      "rawMarkdown": "Same here.\n\nI re-uploaded a byte-identical submission for rescoring: same four files, verified by sha256 per file against the archive that scored normally on 25 Sep. Nothing changed on my side.\n\nSince you offered to rerun the affected submissions in #743683 so people wouldn't lose a slot, would the same apply to these? \n\nHappy to supply submission ids or anything else useful.",
+      "votes": 1
+    },
+    {
+      "id": 3531111,
+      "postDate": "2026-10-01T09:55:44.573Z",
+      "content": "<p><a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a>, could you check what broke? If it’s on the scorer side, could 56745031 be rerun or the daily allowance restored? And please let us know when it’s safe to resubmit. Thanks!</p>",
+      "rawMarkdown": "@ryanholbrook, could you check what broke? If it’s on the scorer side, could 56745031 be rerun or the daily allowance restored? And please let us know when it’s safe to resubmit. Thanks!",
+      "votes": 1
+    },
+    {
+      "id": 3531107,
+      "postDate": "2026-10-01T09:44:35.153Z",
+      "content": "<p>Same here: submission 56732762 (2026-10-01 00:17 UTC) ended with \"Notebook Threw Exception\" about 5 minutes after submitting, with no score.</p>\n<p>It is byte-identical to our submission 56574678 (same zip, sha256 e4e62d2d…), which scored 0.10 on 2026-09-26. The packaging notebook is a CPU script that writes an embedded 4-file zip (agent.yaml, prompt, sampling, eval_config; no adapters or skills) and reads nothing from /kaggle/input.</p>\n<p>The same zip runs fine on 4x L4 with the current wheelhouse (adk-submission 0.2.12): vLLM 0.19.1 starts with the new --reasoning-config and --no-scheduler-reserve-full-isl flags in about 340 s, and the agent jobs complete. So the failure seems to happen earlier in the scoring pipeline.</p>\n<p><a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a> could you check what raised, rerun it or restore the daily allowance, and let us know when it is safe to resubmit? Thanks!</p>",
+      "rawMarkdown": "Same here: submission 56732762 (2026-10-01 00:17 UTC) ended with \"Notebook Threw Exception\" about 5 minutes after submitting, with no score.\n\nIt is byte-identical to our submission 56574678 (same zip, sha256 e4e62d2d…), which scored 0.10 on 2026-09-26. The packaging notebook is a CPU script that writes an embedded 4-file zip (agent.yaml, prompt, sampling, eval_config; no adapters or skills) and reads nothing from /kaggle/input.\n\nThe same zip runs fine on 4x L4 with the current wheelhouse (adk-submission 0.2.12): vLLM 0.19.1 starts with the new --reasoning-config and --no-scheduler-reserve-full-isl flags in about 340 s, and the agent jobs complete. So the failure seems to happen earlier in the scoring pipeline.\n\n@ryanholbrook could you check what raised, rerun it or restore the daily allowance, and let us know when it is safe to resubmit? Thanks!",
+      "votes": 1
+    },
+    {
+      "id": 3531054,
+      "postDate": "2026-10-01T08:10:18.653Z",
+      "content": "<p>Same issue: submission 56746524 (2026-10-01 07:39 UTC) ended after ~12 minutes with \"Notebook Threw Exception\". The same zip ran cleanly in an offline 4xL4 notebook with the current wheelhouse a few hours earlier.\n<a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a> could you check what raised and, if it's on the scorer side, rerun it or restore the allowance? Thanks!</p>",
+      "rawMarkdown": "Same issue: submission 56746524 (2026-10-01 07:39 UTC) ended after ~12 minutes with \"Notebook Threw Exception\". The same zip ran cleanly in an offline 4xL4 notebook with the current wheelhouse a few hours earlier.\n@ryanholbrook could you check what raised and, if it's on the scorer side, rerun it or restore the allowance? Thanks!",
+      "votes": 1
+    },
+    {
+      "id": 3531033,
+      "postDate": "2026-10-01T07:28:36.730Z",
+      "content": "<p>Hi <a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a>, I am also experiencing this issue with submission 56740062, submitted on Oct 1 at 01:04:37 UTC. It ended with “Notebook Threw Exception” and no score.</p>\n<p>My packaging notebook (version 10) completed normally. I downloaded the actual submitted ZIP and confirmed that it is byte-identical to the bundle tested with the official Evaluator on Kaggle 4×L4. Both public development cases passed verification, with 40 tests passing in total.</p>\n<p>The bundle uses the required Gemma model and no LoRA adapters. The packaging notebook only writes an embedded ZIP; it does not run inference or read task data. It uses CPU and a 300-second session timeout. I have not established the root cause of the scoring failure.</p>\n<p>Could you inspect the underlying exception for submission 56740062? If this was a scoring infrastructure issue, could the submission be rerun or the daily allowance restored? This failed submission used my only allowance today.</p>\n<p>Please also let us know when it is safe to resubmit. Thank you!</p>",
+      "rawMarkdown": "Hi @ryanholbrook, I am also experiencing this issue with submission 56740062, submitted on Oct 1 at 01:04:37 UTC. It ended with “Notebook Threw Exception” and no score.\n\nMy packaging notebook (version 10) completed normally. I downloaded the actual submitted ZIP and confirmed that it is byte-identical to the bundle tested with the official Evaluator on Kaggle 4×L4. Both public development cases passed verification, with 40 tests passing in total.\n\nThe bundle uses the required Gemma model and no LoRA adapters. The packaging notebook only writes an embedded ZIP; it does not run inference or read task data. It uses CPU and a 300-second session timeout. I have not established the root cause of the scoring failure.\n\nCould you inspect the underlying exception for submission 56740062? If this was a scoring infrastructure issue, could the submission be rerun or the daily allowance restored? This failed submission used my only allowance today.\n\nPlease also let us know when it is safe to resubmit. Thank you!",
+      "votes": 1
+    },
+    {
+      "id": 3531010,
+      "postDate": "2026-10-01T06:52:04.637Z",
+      "content": "<p>Hi, my submission also failed with \"Notebook Threw Exception\" today (submitted around 04:45 UTC on 1 Oct). The same agent.yaml and prompt scored 0.05 on 30 Sep. Only eval_config.yaml values changed (max_time_minutes 10, max_tool_calls 60).</p>\n<p>Two questions:</p>\n<p>Is the wheelhouse issue fixed now, so new submissions will run normally?\nWill daily submission slots lost to this error be restored?</p>",
+      "rawMarkdown": "Hi, my submission also failed with \"Notebook Threw Exception\" today (submitted around 04:45 UTC on 1 Oct). The same agent.yaml and prompt scored 0.05 on 30 Sep. Only eval_config.yaml values changed (max_time_minutes 10, max_tool_calls 60).\n\nTwo questions:\n\nIs the wheelhouse issue fixed now, so new submissions will run normally?\nWill daily submission slots lost to this error be restored?",
+      "votes": 1
+    },
+    {
+      "id": 3530976,
+      "postDate": "2026-10-01T05:29:50.567Z",
+      "content": "<p>hello <a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a>,\nSame issue facing with my latest submission <code>id:56741974</code>, getting status as failed. It is passing in local bench like previous submission.</p>",
+      "rawMarkdown": "hello @ryanholbrook,\nSame issue facing with my latest submission `id:56741974`, getting status as failed. It is passing in local bench like previous submission.\n",
+      "votes": 1
+    },
+    {
+      "id": 3530975,
+      "postDate": "2026-10-01T05:29:33.487Z",
+      "content": "<p>It happened to me too, and it cancelled my submission.</p>",
+      "rawMarkdown": "It happened to me too, and it cancelled my submission.",
+      "votes": 1
+    },
+    {
+      "id": 3530925,
+      "postDate": "2026-10-01T02:28:41.063Z",
+      "content": "<p>Same issue with submission 56722759. The only change from my previous submission, which scored normally before the wheelhouse update, was the time budget in eval_config.yaml.</p>",
+      "rawMarkdown": "Same issue with submission 56722759. The only change from my previous submission, which scored normally before the wheelhouse update, was the time budget in eval_config.yaml.",
+      "votes": 1
+    },
+    {
+      "id": 3530939,
+      "postDate": "2026-10-01T03:09:23.087Z",
+      "content": "<p>Same here — submission 56739457 (Oct 1, 00:30 UTC): a prompt-only bundle (no adapters), validated locally against the official harness + wheelhouse on all 129 public tasks. It died with \"Notebook Threw Exception\". Our previous prompt-only submission (Sep 30, 04:21 UTC) scored normally (0.10), so nothing on our side changed except the scoring environment. Thanks for looking into it!</p>",
+      "rawMarkdown": "Same here — submission 56739457 (Oct 1, 00:30 UTC): a prompt-only bundle (no adapters), validated locally against the official harness + wheelhouse on all 129 public tasks. It died with \"Notebook Threw Exception\". Our previous prompt-only submission (Sep 30, 04:21 UTC) scored normally (0.10), so nothing on our side changed except the scoring environment. Thanks for looking into it!",
+      "votes": 2
+    },
+    {
+      "id": 3530933,
+      "postDate": "2026-10-01T02:49:28.260Z",
+      "content": "<p>Same error here. Submission 56741570 (Oct 1, 02:33 UTC) failed about 7 minutes after submitting with \"Your notebook hit an unhandled error while rerunning your code\". The notebook only writes a 4-file submission.zip (agent.yaml, prompts/system.md, configs/sampling.yaml, eval_config.yaml; no adapters or skills) from strings embedded in the notebook, and reads nothing from /kaggle/input. The same agent files ran without errors on 40 public tasks in an eval notebook on the 4x L4 machine, with the wheelhouse dataset attached on Oct 1. Our earlier submission 56719705 (Sep 30, 21:57 UTC) failed with the same message.</p>",
+      "rawMarkdown": "Same error here. Submission 56741570 (Oct 1, 02:33 UTC) failed about 7 minutes after submitting with \"Your notebook hit an unhandled error while rerunning your code\". The notebook only writes a 4-file submission.zip (agent.yaml, prompts/system.md, configs/sampling.yaml, eval_config.yaml; no adapters or skills) from strings embedded in the notebook, and reads nothing from /kaggle/input. The same agent files ran without errors on 40 public tasks in an eval notebook on the 4x L4 machine, with the wheelhouse dataset attached on Oct 1. Our earlier submission 56719705 (Sep 30, 21:57 UTC) failed with the same message.",
+      "votes": 2
+    },
+    {
+      "id": 3530923,
+      "postDate": "2026-10-01T02:19:19.413Z",
+      "content": "<p>Similar issues with submission 56740906. Previous uploads before the wheelhouse update was all working fine</p>",
+      "rawMarkdown": "Similar issues with submission 56740906. Previous uploads before the wheelhouse update was all working fine\n",
+      "votes": 2,
+      "replies": [
+        {
+          "id": 3531610,
+          "postDate": "2026-10-02T08:01:36.773Z",
+          "content": "<p>The submission was made with the kaggle CLI uploading a submission.zip containing an agent.yaml, subagents and role divisions, configs,.yaml files, no lora adapters yet. other participants are seeing the same issue, this might not be isolated. </p>",
+          "rawMarkdown": "The submission was made with the kaggle CLI uploading a submission.zip containing an agent.yaml, subagents and role divisions, configs,.yaml files, no lora adapters yet. other participants are seeing the same issue, this might not be isolated. "
+        }
+      ]
+    },
+    {
+      "id": 3531348,
+      "postDate": "2026-10-01T17:59:31.803Z",
+      "content": "<p>Hi <a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a>, thanks for confirming the GPU outage was resolved.</p>\n<p>Our submission 56747846 (2026-10-01 08:52 UTC, prompt-only bundle, no adapters, same Gemma model) ended after about 5 minutes with \"Your notebook hit an unhandled error while rerunning your code\" and no score. The same archive ran 20 public tasks cleanly on a 4×L4 notebook with the current wheelhouse a few hours earlier, so we believe the failure was the overnight outage, not the submission.</p>\n<p>That failure used our daily allowance (a retry today is refused: \"daily Submission allowance (1) used\"). Could it be rerun, or the allowance restored for the affected submissions? Thanks!</p>",
+      "rawMarkdown": "Hi @ryanholbrook, thanks for confirming the GPU outage was resolved.\n\nOur submission 56747846 (2026-10-01 08:52 UTC, prompt-only bundle, no adapters, same Gemma model) ended after about 5 minutes with \"Your notebook hit an unhandled error while rerunning your code\" and no score. The same archive ran 20 public tasks cleanly on a 4×L4 notebook with the current wheelhouse a few hours earlier, so we believe the failure was the overnight outage, not the submission.\n\nThat failure used our daily allowance (a retry today is refused: \"daily Submission allowance (1) used\"). Could it be rerun, or the allowance restored for the affected submissions? Thanks!"
+    },
+    {
+      "id": 3531188,
+      "postDate": "2026-10-01T13:04:28.843Z",
+      "content": "<p>Same here, and it was my first submission :/</p>",
+      "rawMarkdown": "Same here, and it was my first submission :/"
+    },
+    {
+      "id": 3531184,
+      "postDate": "2026-10-01T12:59:46.703Z",
+      "content": "<p>Same. My submission 56740087 (2026-10-01 01:06 UTC) ended with \"Notebook Threw Exception\" and no score. It's a prompt-only bundle (no adapters) that differs from my previous submission 56691354 only in max_output_tokens </p>",
+      "rawMarkdown": "Same. My submission 56740087 (2026-10-01 01:06 UTC) ended with \"Notebook Threw Exception\" and no score. It's a prompt-only bundle (no adapters) that differs from my previous submission 56691354 only in max_output_tokens "
+    }
+  ]
+}

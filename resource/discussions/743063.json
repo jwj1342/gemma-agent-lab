@@ -1,0 +1,58 @@
+{
+  "messages": [
+    {
+      "id": 3531474,
+      "postDate": "2026-10-01T23:23:11.230Z",
+      "content": "<p><a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a> do we have control on adaptive budget like out of 12 hours, i wnat 1 task to take 8 minutes, otehr to take 4 minte. This adaptive control in our hand extremely crucial or do you have your own time. Please answer this as soon as possible.</p>",
+      "rawMarkdown": "@ryanholbrook do we have control on adaptive budget like out of 12 hours, i wnat 1 task to take 8 minutes, otehr to take 4 minte. This adaptive control in our hand extremely crucial or do you have your own time. Please answer this as soon as possible.",
+      "votes": 1
+    },
+    {
+      "id": 3527819,
+      "postDate": "2026-09-24T19:48:21.303Z",
+      "content": "<ol>\n<li>Sequentially.</li>\n<li>The scorer reads those, and only those, four fields. The default is no limit.</li>\n<li>Currently, hitting the 12-hour limit will error, but I'm planning on a fix that will score unfinished tasks as 0. You may want to set <code>max_time_minutes</code> to something moderate as a failsafe.</li>\n</ol>",
+      "rawMarkdown": "1. Sequentially.\n2. The scorer reads those, and only those, four fields. The default is no limit.\n3. Currently, hitting the 12-hour limit will error, but I'm planning on a fix that will score unfinished tasks as 0. You may want to set `max_time_minutes` to something moderate as a failsafe.",
+      "votes": 6,
+      "replies": [
+        {
+          "id": 3529633,
+          "postDate": "2026-09-28T17:05:39.793Z",
+          "content": "<p>Hi <a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a> , a follow-up on this:</p>\n<blockquote>\n  <p>Currently, hitting the 12-hour limit will error, but I'm planning on a fix that will score unfinished tasks as 0.</p>\n</blockquote>\n<p>Is this fix live yet? I'd also like to raise a side effect that concerns me.</p>\n<p>Right now, going over 12 hours errors the whole submission, and I've hit that couple days ago. So every team has to fit all ~120 tasks into the limit. And part of my research in this competition so far has been about this optimization. With unfinished tasks scored as 0, a submission could instead spend most of the 12 hours on say the first 30-40 tasks and never start the rest. The tasks are clearly hard for the model, so a lot more time per task might solve more of those early tasks than a run that gives every task an equal share.</p>\n<ul>\n<li>Is \"solve as many tasks as possible within 12 hours, however the time is split\" the intended goal, or should a good submission attempt every task?</li>\n<li>Do tasks run in the same order every time, and are public and private tasks mixed through that order? If the public tasks come first, a submission that only reaches the early tasks could look strong on the public leaderboard and then collapse on the private one.</li>\n<li>If this isn't intended, would you consider a required per-task time cap, or some other way to reward attempting every task? For example, instead of giving 0 to unattempted tasks they receive some negative score.</li>\n</ul>",
+          "rawMarkdown": "Hi @ryanholbrook , a follow-up on this:\n\n>Currently, hitting the 12-hour limit will error, but I'm planning on a fix that will score unfinished tasks as 0.\n\nIs this fix live yet? I'd also like to raise a side effect that concerns me.\n\nRight now, going over 12 hours errors the whole submission, and I've hit that couple days ago. So every team has to fit all ~120 tasks into the limit. And part of my research in this competition so far has been about this optimization. With unfinished tasks scored as 0, a submission could instead spend most of the 12 hours on say the first 30-40 tasks and never start the rest. The tasks are clearly hard for the model, so a lot more time per task might solve more of those early tasks than a run that gives every task an equal share.\n\n- Is \"solve as many tasks as possible within 12 hours, however the time is split\" the intended goal, or should a good submission attempt every task?\n- Do tasks run in the same order every time, and are public and private tasks mixed through that order? If the public tasks come first, a submission that only reaches the early tasks could look strong on the public leaderboard and then collapse on the private one.\n- If this isn't intended, would you consider a required per-task time cap, or some other way to reward attempting every task? For example, instead of giving 0 to unattempted tasks they receive some negative score.",
+          "votes": 1
+        },
+        {
+          "id": 3530039,
+          "postDate": "2026-09-29T12:23:27.320Z",
+          "content": "<p>hi <a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a>, do you have any update on scoring unfinished tasks as 0? </p>",
+          "rawMarkdown": "hi @ryanholbrook, do you have any update on scoring unfinished tasks as 0? "
+        },
+        {
+          "id": 3530047,
+          "postDate": "2026-09-29T12:38:23.663Z",
+          "content": "<p>Hey <a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a> \nScoring unfinished tasks as 0 and accepting the submission would be a great fix!\nPlease do provide an update</p>",
+          "rawMarkdown": "Hey @ryanholbrook \nScoring unfinished tasks as 0 and accepting the submission would be a great fix!\nPlease do provide an update"
+        },
+        {
+          "id": 3532311,
+          "postDate": "2026-10-03T09:34:34.953Z",
+          "content": "<blockquote>\n  <ol>\n  <li>The scorer reads those, and only those, four fields. The default is no limit.</li>\n  <li>Currently, hitting the 12-hour limit will error, but I'm planning on a fix that will score unfinished tasks as 0. You may want to set <code>max_time_minutes</code> to something moderate as a failsafe.</li>\n  </ol>\n</blockquote>\n<p>I have made a couple of submissions for which the time taken to evaluate crossed the 12h limit and still scored successfully(IDs 56667603 and 56701670). The submission I made yesterday, however, ended in an error after crossing 12hrs. Can you fix this bug?</p>",
+          "rawMarkdown": "> 2. The scorer reads those, and only those, four fields. The default is no limit.\n> 3. Currently, hitting the 12-hour limit will error, but I'm planning on a fix that will score unfinished tasks as 0. You may want to set `max_time_minutes` to something moderate as a failsafe.\n\nI have made a couple of submissions for which the time taken to evaluate crossed the 12h limit and still scored successfully(IDs 56667603 and 56701670). The submission I made yesterday, however, ended in an error after crossing 12hrs. Can you fix this bug?"
+        },
+        {
+          "id": 3532745,
+          "postDate": "2026-10-04T15:29:51.190Z",
+          "content": "<p>Hi <a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a> , following up on this thread, since several of us are planning our time budgets around the 12-hour limit:</p>\n<ol>\n<li><p>Has the change to score unfinished tasks as 0, rather than erroring the entire submission, been deployed? If so, from what date or scorer version does it apply? If not, is it still planned?</p></li>\n<li><p>A participant reported two submissions that ran past 12 hours and still received scores, and another that errored after 12 hours. Is that expected under the current system? Could differences in how elapsed time is measured or the submissions are processed explain these outcomes?</p></li>\n<li><p>Are hidden tasks run in the same order for every submission? Are public- and private-leaderboard tasks interleaved or grouped?</p></li>\n</ol>\n<p>Until we hear back, we'll plan for the entire run to finish within 12 hours and attempt every task. Thanks!</p>",
+          "rawMarkdown": "Hi @ryanholbrook , following up on this thread, since several of us are planning our time budgets around the 12-hour limit:\n\n1. Has the change to score unfinished tasks as 0, rather than erroring the entire submission, been deployed? If so, from what date or scorer version does it apply? If not, is it still planned?\n\n2. A participant reported two submissions that ran past 12 hours and still received scores, and another that errored after 12 hours. Is that expected under the current system? Could differences in how elapsed time is measured or the submissions are processed explain these outcomes?\n\n3. Are hidden tasks run in the same order for every submission? Are public- and private-leaderboard tasks interleaved or grouped?\n\nUntil we hear back, we'll plan for the entire run to finish within 12 hours and attempt every task. Thanks!"
+        }
+      ]
+    },
+    {
+      "id": 3527814,
+      "postDate": "2026-09-24T19:22:17.197Z",
+      "content": "<p>Hi hosts, thanks for releasing the wheelhouse! Three questions about the scoring run that affect how we budget time per task:</p>\n<ol>\n<li><p>Are hidden tasks evaluated sequentially or with some concurrency? If concurrent, how many tasks can run at once, and is that configurable?</p></li>\n<li><p>Which fields of <code>eval_config.yaml</code> does the scorer actually read? In particular, are <code>timeout_seconds</code>, <code>max_tool_calls</code>, <code>max_time_minutes</code>, and <code>max_turns</code> all supported, and what defaults apply when the file or individual fields are omitted?</p></li>\n<li><p>If a submission reaches the 12-hour global limit, how are unfinished tasks handled? Are they scored as failures, or does the submission itself terminate/error?</p></li>\n</ol>",
+      "rawMarkdown": "Hi hosts, thanks for releasing the wheelhouse! Three questions about the scoring run that affect how we budget time per task:\n\n1. Are hidden tasks evaluated sequentially or with some concurrency? If concurrent, how many tasks can run at once, and is that configurable?\n\n2. Which fields of `eval_config.yaml` does the scorer actually read? In particular, are `timeout_seconds`, `max_tool_calls`, `max_time_minutes`, and `max_turns` all supported, and what defaults apply when the file or individual fields are omitted?\n\n3. If a submission reaches the 12-hour global limit, how are unfinished tasks handled? Are they scored as failures, or does the submission itself terminate/error?\n",
+      "votes": 6
+    }
+  ]
+}

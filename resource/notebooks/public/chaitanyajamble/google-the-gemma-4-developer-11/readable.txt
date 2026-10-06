@@ -1,0 +1,446 @@
+# CELL 0 markdown
+# Gemma 4 Developer Agent — Baseline Submission Builder
+
+This notebook builds a minimal, rule-compliant `submission.zip` for the
+**Google - The Gemma 4 Developer Agent Competition**. It is deliberately a
+*baseline*: one flat agent, no sub-agents, no LoRA adapters, no nested
+`!include` chains — every piece is something the rules explicitly allow and
+that can be validated locally before submitting.
+
+**Design decisions, each tied to a rule from the competition page:**
+
+* **Exactly one agent, no `sub_agents`/`agent_tool`.** The rules only require
+  a single root `agent.yaml`; sub-agents are optional. Every extra hop is one
+  more thing that can silently break during the hidden re-run, so the
+  baseline skips it.
+* **No adapters.** The rules say LoRA adapters are optional
+  (*"You may, but are not required, to include ... LoRA adapters"*). Shipping
+  an `adapter:` reference without real, correctly-shaped trained weights adds
+  risk for zero benefit, so the baseline omits `adapters/` entirely and
+  relies on the base `gemma-4-31b-it-qat-w4a16-ct` model alone.
+* **No `../` anywhere.** The rules state plainly under *Tool, Prompt, and
+  Skill Rules*: *"Sandboxing: Path traversal outside the submission root
+  (e.g., via `../` or symlinks) is not allowed."* Every `!include` in this
+  notebook stays inside the directory of the file that references it, so
+  there is nothing for the sandbox to reject.
+* **Exact model string on the only agent.** *"You must choose this model for
+  every agent and subagent"* — `gemma-4-31b-it-qat-w4a16-ct`, verified
+  programmatically before the archive is written.
+* **Only predefined tools.** Only the 9 tools the harness actually exposes
+  (`run_command`, `read_file`, `edit_file`, `write_file`, `get_status`,
+  `submit_patch`, `get_code_neighbors`, `search_similar_code`,
+  `get_code_subgraph`) are referenced — nothing invented.
+* **A generous, explicit `eval_config.yaml`.** The rules say per-task limits
+  are optional and participant-set. A too-tight budget (e.g. a 1-minute
+  ceiling) guarantees every task times out before `submit_patch()` is ever
+  called, which floors the score at 0% regardless of agent quality. This
+  baseline sets a deliberately roomy — but still bounded, so a stuck task
+  can't eat the whole 12-hour budget — per-task ceiling instead.
+* **`/kaggle/working` ends with exactly one file: `submission.zip`.** Nothing
+  else is written there, so there is never any ambiguity about which file to
+  select as the competition output.
+
+Nothing in Section 1 (EDA) can block Section 3 (packaging) — it's wrapped in
+`try/except` throughout, because a missing file or a different hidden-set
+shape must never prevent `submission.zip` from being written.
+
+
+# CELL 1 code
+from pathlib import Path, PurePosixPath
+import hashlib
+import json
+import platform
+import posixpath
+import re
+import zipfile
+
+import yaml
+
+WORKING = Path("/kaggle/working") if Path("/kaggle/working").exists() else Path.cwd()
+WORKING.mkdir(parents=True, exist_ok=True)
+
+print(f"Python {platform.python_version()}")
+print(f"Working directory: {WORKING}")
+
+
+# CELL 2 markdown
+## 1. Public development data (descriptive only, optional)
+
+Purely exploratory. If `tasks.jsonl` isn't attached, or the hidden set turns
+out to be shaped differently, this section degrades to a print statement and
+nothing downstream depends on it.
+
+
+# CELL 3 code
+import pandas as pd
+
+def find_tasks_file():
+    candidates = [
+        Path("/kaggle/input/competitions/gemma-4-developer-agent/tasks.jsonl"),
+        Path("/kaggle/input/gemma-4-developer-agent/tasks.jsonl"),
+        Path.cwd() / "tasks.jsonl",
+    ]
+    input_root = Path("/kaggle/input")
+    if input_root.exists():
+        candidates += sorted(input_root.rglob("tasks.jsonl"))
+    return next((p for p in candidates if p.exists()), None)
+
+tasks = None
+try:
+    task_path = find_tasks_file()
+    if task_path is None:
+        print("tasks.jsonl not found under /kaggle/input; skipping EDA. "
+              "Agent packaging in Section 3 does not depend on this.")
+    else:
+        rows = []
+        with task_path.open(encoding="utf-8") as handle:
+            for line in handle:
+                line = line.strip()
+                if line:
+                    rows.append(json.loads(line))
+        tasks = pd.DataFrame({
+            "id": [r.get("instance_id", f"row_{i}") for i, r in enumerate(rows)],
+            "repository": [r.get("repo", "unknown") for r in rows],
+            "issue_chars": [len(r.get("problem_statement") or "") for r in rows],
+            "patch_bytes": [len((r.get("patch") or "").encode("utf-8")) for r in rows],
+        })
+        print(f"Loaded {len(tasks)} public tasks across {tasks.repository.nunique()} repositories "
+              f"from {task_path}")
+        print(tasks.groupby("repository").size().sort_values(ascending=False))
+except Exception as exc:
+    # Descriptive only -- never allowed to block Section 3.
+    print(f"EDA skipped ({type(exc).__name__}: {exc})")
+
+
+# CELL 4 markdown
+## 2. Agent configuration
+
+One root agent, one system prompt, one sampling config. All three files sit
+at or directly under the archive root, so every `!include` target is a
+sibling or a child directory of the file that references it — never `../`.
+
+
+# CELL 5 code
+MODEL_ID = "gemma-4-31b-it-qat-w4a16-ct"  # the only model variant the harness supports
+
+# Exactly the 9 tools documented on the competition page -- nothing invented.
+HARNESS_TOOLS = [
+    "run_command",
+    "read_file",
+    "edit_file",
+    "write_file",
+    "get_status",
+    "submit_patch",
+    "get_code_neighbors",
+    "search_similar_code",
+    "get_code_subgraph",
+]
+
+AGENT_YAML = (
+    "name: baseline_swe_agent\n"
+    f"model: {MODEL_ID}\n"
+    "description: Investigates one repository issue, makes a minimal source fix, "
+    "verifies it and submits a git patch.\n"
+    "instruction: !include prompts/system.md\n"
+    "tools:\n"
+    + "".join(f"  - {tool}\n" for tool in HARNESS_TOOLS)
+    + "generate_content_config: !include configs/sampling.yaml\n"
+)
+
+SAMPLING_YAML = (
+    "temperature: 0.2\n"
+    "top_p: 0.95\n"
+    "max_output_tokens: 8192\n"
+)
+
+SYSTEM_PROMPT_MD = """You are an autonomous software engineer working inside a single Python \
+repository checkout at /workspace. Your only deliverable is one git patch, produced by calling \
+submit_patch() exactly once, that resolves the issue in the first user message. The patch is \
+applied to a fresh checkout at its base commit and graded by hidden tests you cannot see. A run \
+that ends without calling submit_patch() always scores zero, so always finish with your best \
+defensible fix rather than stopping early. Never claim a check passed unless a tool call actually \
+showed that result.
+
+WORKFLOW
+
+1. Decode the issue.
+   Read the title and body. Real issues are sometimes copied from pull-request templates, so \
+ignore boilerplate (checklists, discussion links, contribution guidelines) and extract the \
+concrete requested behavior, the affected API or symbol, any literal error text, and named edge \
+cases. A short, terse title is still an actionable specification -- do not stop just because no \
+reproduction script or failing test was supplied.
+
+2. Locate before editing.
+   Once you have a concrete symbol or literal error string, run one bounded search with \
+run_command (prefer `rg -n`, fall back to `grep -R` if unavailable). Read focused line ranges \
+with read_file rather than whole large files. Use get_code_neighbors, search_similar_code and \
+get_code_subgraph only once a real symbol name is known from a search you already ran; if a graph \
+call errors or returns nothing, fall back to plain source search rather than guessing.
+
+3. Form one testable hypothesis.
+   Trace the reported input through the affected function and its callers until you can state, in \
+one sentence, why current code produces the wrong behavior. Prefer fixing the earliest incorrect \
+layer over patching a downstream symptom. Consider both the ordinary path and any boundary cases \
+named in the issue (empty input, a missing field, a type variation, exception behavior).
+
+4. Make the smallest complete fix.
+   Use edit_file for targeted replacements; if a match is ambiguous, re-read a narrower range and \
+retry rather than guessing at which occurrence to change. Use write_file only when a new source \
+file is genuinely required. Keep public signatures and unrelated behavior unchanged. Never modify \
+test files, pytest.ini, conftest.py, or anything that looks like grading configuration.
+
+5. Verify with the smallest useful check.
+   Run one targeted existing test (`python3 -m pytest path::test_name -q`) or a short inline \
+reproduction (`python3 -c ...`) that exercises the changed behavior. Do not run the full test \
+suite, install packages, or use the network -- the environment is offline. Keep any scratch script \
+under /tmp so it never becomes part of the patch. If a check fails, decide whether it is a real \
+regression from your change or a pre-existing environment issue before reacting to it.
+
+6. Review, then submit once.
+   Run `git status --short` and `git diff` (narrowing the range if the diff is large) to confirm \
+every changed file is intentional and nothing stray was touched. Call get_status() if remaining \
+time or tool budget is unclear. Call submit_patch() exactly once as your final action. If time is \
+running low, submit the best defensible working edit rather than nothing at all.
+
+OPERATING RULES
+- Keep every command and file read small and specific; tool output may be truncated.
+- The environment is offline: never attempt network access or package installation.
+- Never fabricate file contents, symbol names, or test results.
+- Spend the available budget on evidence and a working patch, not on long unstructured narration.
+"""
+
+EVAL_CONFIG_YAML = (
+    "# Participant-set per-task budgets (optional per the competition rules).\n"
+    "# Deliberately generous relative to a minimal search/edit/verify/submit loop,\n"
+    "# but still bounded so a single stuck task cannot consume the 12-hour run budget.\n"
+    "evaluation:\n"
+    "  timeout_seconds: 120\n"
+    "  max_tool_calls: 30\n"
+    "  max_time_minutes: 8\n"
+    "  max_turns: 40\n"
+)
+
+FILES = {
+    "agent.yaml": AGENT_YAML,
+    "configs/sampling.yaml": SAMPLING_YAML,
+    "prompts/system.md": SYSTEM_PROMPT_MD,
+    "eval_config.yaml": EVAL_CONFIG_YAML,
+}
+
+print(f"Agent files: {list(FILES)}")
+print(f"Model: {MODEL_ID} | tools: {len(HARNESS_TOOLS)} | prompt: {len(SYSTEM_PROMPT_MD)} chars")
+
+
+# CELL 6 markdown
+## 3. Validate and package `submission.zip`
+
+Every check below maps to a rule from the competition page or the submission
+layout it documents. `validate_files` raises on anything that would make the
+archive invalid or unsafe; `write_archive` only writes the zip once
+validation passes, then re-opens it to confirm the archive itself is sound.
+
+
+# CELL 7 code
+ALLOWED_TOP_LEVEL = {"agent.yaml", "eval_config.yaml", "configs", "prompts",
+                     "sub_agents", "adapters", "skills"}
+ALLOWED_EXTENSIONS = {".yaml", ".yml", ".md", ".txt", ".json", ".py", ".safetensors"}
+FORBIDDEN_SUBSTRINGS = ("instance_id", "problem_statement", "reference_patch", "test_patch")
+INCLUDE_RE = re.compile(r"!include[ \t]+([^\s#]+)")
+
+
+def include_targets(text):
+    return [t.strip("'\"") for t in INCLUDE_RE.findall(text)]
+
+
+def load_yaml_lenient(text):
+    """Parse agent YAML with !include replaced by null; includes are checked separately."""
+    return yaml.safe_load(INCLUDE_RE.sub("null", text))
+
+
+def validate_files(files):
+    errors = []
+
+    if "agent.yaml" not in files:
+        errors.append("agent.yaml must be present at the archive root")
+
+    for name, content in files.items():
+        path = PurePosixPath(name)
+
+        # --- Sandboxing rule: "Path traversal outside the submission root
+        # (e.g., via ../ or symlinks) is not allowed." ---------------------
+        if path.is_absolute() or ".." in path.parts:
+            errors.append(f"disallowed path traversal in member name: {name!r}")
+        if path.suffix not in ALLOWED_EXTENSIONS:
+            errors.append(f"disallowed extension: {name!r}")
+        if path.parts[0] not in ALLOWED_TOP_LEVEL:
+            errors.append(f"unexpected top-level entry: {path.parts[0]!r}")
+        if not isinstance(content, str) or not content.strip():
+            errors.append(f"file is empty or not text: {name}")
+            continue
+
+        lowered = content.lower()
+        for token in FORBIDDEN_SUBSTRINGS:
+            if token in lowered:
+                errors.append(f"{name} mentions {token!r}; the archive must not carry task data")
+        if name.endswith(".md") and ("{" in content or "}" in content):
+            # ADK interpolates {name} in instructions from session.state -- an
+            # unintended literal brace would silently become a state lookup.
+            errors.append(f"{name} contains curly braces; ADK treats {{name}} as a state variable")
+
+        # --- !include targets must resolve to a sibling/child file that is
+        # actually in the archive, and must never use ../ ---------------------
+        if path.suffix in (".yaml", ".yml"):
+            for target in include_targets(content):
+                if ".." in PurePosixPath(target).parts or target.startswith("/"):
+                    errors.append(f"{name}: !include target {target!r} escapes the submission root")
+                    continue
+                resolved = posixpath.normpath(posixpath.join(posixpath.dirname(name), target))
+                if resolved not in files:
+                    errors.append(f"{name}: !include target {target!r} -> {resolved!r} not in archive")
+
+    root_cfg = load_yaml_lenient(files["agent.yaml"]) if "agent.yaml" in files else None
+    if not isinstance(root_cfg, dict):
+        errors.append("agent.yaml did not parse to a mapping")
+    else:
+        # --- "You must choose this model for every agent and subagent." ------
+        if root_cfg.get("model") != MODEL_ID:
+            errors.append(f"agent.yaml model is {root_cfg.get('model')!r}, expected {MODEL_ID!r}")
+
+        raw_tools = root_cfg.get("tools") or []
+        names = [t if isinstance(t, str) else next(iter(t), None) for t in raw_tools]
+        bad_tools = [t for t in names if t not in HARNESS_TOOLS and t != "agent_tool"]
+        if bad_tools:
+            errors.append(f"tools not in the documented harness tool list: {bad_tools}")
+        if "submit_patch" not in names:
+            errors.append("root agent must declare submit_patch")
+
+        # Every referenced sub-agent config must also pin the same model --
+        # checked here even though the baseline ships none, so this keeps
+        # working unchanged if sub_agents/ is added later.
+        for entry in raw_tools:
+            if isinstance(entry, dict) and "agent_tool" in entry:
+                cfg_path = (entry["agent_tool"] or {}).get("config_path")
+                if cfg_path and cfg_path in files:
+                    sub_cfg = load_yaml_lenient(files[cfg_path])
+                    if isinstance(sub_cfg, dict) and sub_cfg.get("model") != MODEL_ID:
+                        errors.append(f"{cfg_path} model is {sub_cfg.get('model')!r}, "
+                                      f"expected {MODEL_ID!r}")
+
+    if errors:
+        raise ValueError("; ".join(errors))
+
+
+def write_archive(files, output_path):
+    validate_files(files)
+    output_path = Path(output_path)
+    if output_path.exists():
+        output_path.unlink()
+    with zipfile.ZipFile(output_path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+        for name in sorted(files):  # agent.yaml sorts first among these paths
+            archive.writestr(name, files[name].encode("utf-8"))
+    with zipfile.ZipFile(output_path) as archive:
+        assert archive.testzip() is None, "corrupt archive"
+        assert sorted(archive.namelist()) == sorted(files), "archive members differ from intended files"
+        assert archive.namelist().count("agent.yaml") == 1
+    return output_path
+
+
+SUBMISSION_ZIP = WORKING / "submission.zip"
+write_archive(FILES, SUBMISSION_ZIP)
+print(f"Wrote {SUBMISSION_ZIP} ({SUBMISSION_ZIP.stat().st_size:,} bytes)")
+print("sha256:", hashlib.sha256(SUBMISSION_ZIP.read_bytes()).hexdigest()[:16], "...")
+
+# /kaggle/working must end with exactly one file: submission.zip
+other_files = sorted(p.name for p in WORKING.iterdir()
+                      if p.name not in {"submission.zip", "__notebook__.ipynb"})
+if other_files:
+    print(f"WARNING: unexpected extra files in {WORKING}: {other_files}")
+else:
+    print(f"{WORKING} contains only submission.zip (plus the notebook file Kaggle always keeps).")
+
+
+# CELL 8 markdown
+## 4. Read-back smoke test (informational, never fails the run)
+
+Re-opens the zip the way the harness's loader would: every `!include` is
+resolved *inside the archive*, using the same relative-to-owner rule the
+competition page documents, and the root config is parsed with a custom
+loader. A problem here is printed as a warning only — a failure after the
+archive is already written must never turn a valid submission into a failed
+run.
+
+
+# CELL 9 code
+class _IncludeLoader(yaml.SafeLoader):
+    pass
+
+
+def _make_include_constructor(archive, owner):
+    def construct(loader, node):
+        target = loader.construct_scalar(node)
+        if ".." in PurePosixPath(target).parts or target.startswith("/"):
+            raise ValueError(f"{owner}: !include {target!r} would escape the submission root")
+        cand = posixpath.normpath(posixpath.join(posixpath.dirname(owner), target))
+        if cand not in archive.namelist():
+            raise FileNotFoundError(f"{owner}: !include {target!r} -> {cand!r} not in archive")
+        raw = archive.read(cand).decode("utf-8")
+        return yaml.safe_load(raw) if cand.endswith((".yaml", ".yml")) else raw
+    return construct
+
+
+try:
+    with zipfile.ZipFile(SUBMISSION_ZIP) as archive:
+        loader_cls = type("Loader", (_IncludeLoader,), {})
+        loader_cls.add_constructor("!include", _make_include_constructor(archive, "agent.yaml"))
+        compiled = yaml.load(archive.read("agent.yaml").decode("utf-8"), Loader=loader_cls)
+    print("name            :", compiled.get("name"))
+    print("model           :", compiled.get("model"))
+    print("tools           :", compiled.get("tools"))
+    instruction = compiled.get("instruction")
+    print("instruction     :", f"{len(instruction)} chars" if isinstance(instruction, str) else type(instruction).__name__)
+    print("generate config :", compiled.get("generate_content_config"))
+except Exception as exc:
+    print(f"Read-back smoke test could not complete ({type(exc).__name__}: {exc}). "
+          "submission.zip was still written above; check the build log if this looks wrong.")
+
+
+# CELL 10 markdown
+## 5. Where to take this next
+
+This baseline intentionally leaves performance on the table in exchange for
+being simple to trust. Reasonable next steps, roughly in order of
+risk/reward:
+
+1. **Iterate on the system prompt** (Section 2) — it's the highest-leverage,
+   lowest-risk lever, since it never touches the archive schema.
+2. **Tune `eval_config.yaml`** once you've observed how long real tasks take
+   in a private test run, rather than guessing.
+3. **Add a real LoRA adapter** only after verifying end-to-end that your
+   training pipeline actually produces non-empty, correctly-shaped
+   `adapter_model.safetensors` weights for `gemma-4-31b-it-qat-w4a16-ct` —
+   and reference it with `adapter: <name>` only once that's confirmed, since
+   an untrained or malformed adapter is worse than no adapter at all.
+4. **Add a sub-agent (`agent_tool`)** only if you've profiled that the root
+   agent is burning too much context on exploration — and keep every
+   `!include` inside that sub-agent's own directory or below, never `../`,
+   per the sandboxing rule quoted in Section 0.
+
+Each of these adds a new way for the hidden re-run to differ from this local
+run, so validate any change with the same read-back smoke test in Section 4
+before trusting it.
+
+
+# CELL 11 markdown
+## 6. Hardware and how to submit
+
+* This notebook only packages configuration files — it runs on **CPU** with
+  **Internet off**, and does not itself run the agent; the organizers'
+  harness does that in its own sandbox during scoring.
+* Submit the **saved version**: *Save Version* → *Save & Run All*, then
+  choose **`submission.zip`** as the output file.
+* The harness produces `submission.parquet` itself during scoring — this
+  notebook does not write it.
+* The overall budget is 12 hours for all tasks, including sandbox setup
+  (excluding validation time). `eval_config.yaml`'s per-task ceilings only
+  cap a single stuck task — a task that finishes quickly still finishes
+  quickly.

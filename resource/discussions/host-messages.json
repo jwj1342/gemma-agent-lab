@@ -1,0 +1,4436 @@
+[
+  {
+    "topic_id": 742815,
+    "title": "How to get started + Competition's Official Discord",
+    "message": {
+      "id": 3527365,
+      "postDate": "2026-09-23T16:34:50.717Z",
+      "rawMarkdown": "### Information for newbies\n\nWelcome! \n**New to machine learning and data science?** No question is too basic or too simple. Feel free to start your own thread, or use this thread as a place to post any first-timer clarifying questions for the Kaggle community to help you with!\n\n**New to Kaggle?** Take a look at a few videos to learn a bit more about [site etiquette](https://www.youtube.com/watch?v=aIus8si_Et0), [Kaggle lingo](https://www.youtube.com/watch?v=sEJHyuWKd-s), and [how to enter a competition using Kaggle Notebooks](https://www.youtube.com/watch?&v=GJBOMWpLpTQ). Publish and share your [models on Kaggle Models](https://www.kaggle.com/docs/models#publishing-a-model)!\n\n**Participants under 18 years old:** If you are under 18 years old and want to participate in this competition, you need to submit a couple of forms:\n- Form #1: [Parent/Guardian consent for minor's use of kaggle.com](https://www.kaggle.com/guardian-consent-minor-use). You only have to fill this out once, and it is valid for any competitions on Kaggle. If you already filled this out in the past, you can move on to the next form. \n- Form #2: [Parent/Guardian consent for minor's participation in Kaggle competition](https://www.kaggle.com/consent-minors-process). You have to fill out form #2 for this and any future competitions you want to join. \nKids under 13 years of age are not allowed to participate on Kaggle. If you have any questions, please leave a comment and we'll follow up with you!\n\n**Looking for a team?** Express your interest in joining a team through our [Team Up](https://www.kaggle.com/discussions/product-feedback/341195) feature.\n\n**Remember**: Kaggle is for everyone. Whether you're teaming up or sharing tips in the competition forum, we expect everyone to follow our Kaggle community guidelines.\n\n### Competition's Official Discord\nIn addition to this competition forum, you can continue the discussion in our official Kaggle Discord Server here:\n# [discord.gg/kaggle](http://discord.gg/kaggle)\n \nThe Discord is a great place to ask getting started questions, chat about the nuances of this competition, and connect with potential team mates. Learn more about Discord at our [announcement here](https://www.kaggle.com/discussions/general/429933). Here are a few things to keep in mind though:\n\n**1. Discord Competition Channels are 'Public' - Don't Share Private Information**\n\nDiscord channels for specific competitions are considered 'public' spaces where you are allowed to talk about competition details. Please remember that private sharing of competition code or data outside of your team is, as always, not permitted. Code sharing must always be done publicly through the Kaggle forums/notebooks.\n\n**2. Discord Competition Channels are Not Monitored by Staff - Keep Important Information on the Kaggle Forums**\n\nKaggle Staff and Hosts running competitions will not monitor Discord or be available to answer questions in Discord. This is intended to be a more casual space to discuss competitions and help each other. Please keep important questions, insights, writeups, and other valuable conversation on the Kaggle forums. \n\nHappy modeling! ",
+      "content": "<h3>Information for newbies</h3>\n<p>Welcome! \n<strong>New to machine learning and data science?</strong> No question is too basic or too simple. Feel free to start your own thread, or use this thread as a place to post any first-timer clarifying questions for the Kaggle community to help you with!</p>\n<p><strong>New to Kaggle?</strong> Take a look at a few videos to learn a bit more about <a href=\"https://www.youtube.com/watch?v=aIus8si_Et0\" target=\"_blank\">site etiquette</a>, <a href=\"https://www.youtube.com/watch?v=sEJHyuWKd-s\" target=\"_blank\">Kaggle lingo</a>, and <a href=\"https://www.youtube.com/watch?&amp;v=GJBOMWpLpTQ\" target=\"_blank\">how to enter a competition using Kaggle Notebooks</a>. Publish and share your <a href=\"https://www.kaggle.com/docs/models#publishing-a-model\" target=\"_blank\">models on Kaggle Models</a>!</p>\n<p><strong>Participants under 18 years old:</strong> If you are under 18 years old and want to participate in this competition, you need to submit a couple of forms:</p>\n<ul>\n<li>Form #1: <a href=\"https://www.kaggle.com/guardian-consent-minor-use\" target=\"_blank\">Parent/Guardian consent for minor's use of kaggle.com</a>. You only have to fill this out once, and it is valid for any competitions on Kaggle. If you already filled this out in the past, you can move on to the next form. </li>\n<li>Form #2: <a href=\"https://www.kaggle.com/consent-minors-process\" target=\"_blank\">Parent/Guardian consent for minor's participation in Kaggle competition</a>. You have to fill out form #2 for this and any future competitions you want to join. \nKids under 13 years of age are not allowed to participate on Kaggle. If you have any questions, please leave a comment and we'll follow up with you!</li>\n</ul>\n<p><strong>Looking for a team?</strong> Express your interest in joining a team through our <a href=\"https://www.kaggle.com/discussions/product-feedback/341195\" target=\"_blank\">Team Up</a> feature.</p>\n<p><strong>Remember</strong>: Kaggle is for everyone. Whether you're teaming up or sharing tips in the competition forum, we expect everyone to follow our Kaggle community guidelines.</p>\n<h3>Competition's Official Discord</h3>\n<p>In addition to this competition forum, you can continue the discussion in our official Kaggle Discord Server here:</p>\n<h1><a href=\"http://discord.gg/kaggle\" target=\"_blank\">discord.gg/kaggle</a></h1>\n<p>The Discord is a great place to ask getting started questions, chat about the nuances of this competition, and connect with potential team mates. Learn more about Discord at our <a href=\"https://www.kaggle.com/discussions/general/429933\" target=\"_blank\">announcement here</a>. Here are a few things to keep in mind though:</p>\n<p><strong>1. Discord Competition Channels are 'Public' - Don't Share Private Information</strong></p>\n<p>Discord channels for specific competitions are considered 'public' spaces where you are allowed to talk about competition details. Please remember that private sharing of competition code or data outside of your team is, as always, not permitted. Code sharing must always be done publicly through the Kaggle forums/notebooks.</p>\n<p><strong>2. Discord Competition Channels are Not Monitored by Staff - Keep Important Information on the Kaggle Forums</strong></p>\n<p>Kaggle Staff and Hosts running competitions will not monitor Discord or be available to answer questions in Discord. This is intended to be a more casual space to discuss competitions and help each other. Please keep important questions, insights, writeups, and other valuable conversation on the Kaggle forums. </p>\n<p>Happy modeling! </p>",
+      "parent": {},
+      "author": {
+        "displayName": "Ashley Oldacre",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/8939556-kg.png?t=2025-08-22-16-55-54",
+        "url": "/ashleyoldacre",
+        "tier": "STAFF",
+        "id": 8939556,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "totalVotes": 5,
+        "canUpvote": true,
+        "totalUpvotes": 6
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "reactions": [
+        {
+          "emoji": "LOVE",
+          "featuredUserNames": [
+            "yashraj2308",
+            "cuongduc",
+            "carsonrodrigues",
+            "senku04",
+            "philgear",
+            "ambr1942",
+            "ahmedalmarwani",
+            "danielolajide",
+            "i1ravenov",
+            "ivaniam",
+            "johnnydougherty",
+            "theayankhan",
+            "mehraty12",
+            "iamjgarciao"
+          ],
+          "userCount": 14
+        }
+      ],
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ashley Oldacre",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/8939556-kg.png?t=2025-08-22-16-55-54",
+          "url": "/ashleyoldacre",
+          "userName": "ashleyoldacre",
+          "tier": "STAFF",
+          "id": 8939556,
+          "profileUrl": "/ashleyoldacre",
+          "performanceTier": "STAFF",
+          "userId": 8939556,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    }
+  },
+  {
+    "topic_id": 743007,
+    "title": "Welcome to the Gemma 4 Developer Agent Competition",
+    "message": {
+      "id": 3527743,
+      "postDate": "2026-09-24T15:59:36.203Z",
+      "rawMarkdown": "Hello Kagglers,\n\nToday’s most capable software engineering agents rely on massive, closed-source models running in the cloud, leaving advanced autonomous development tools out of reach for many developers.\n\nWith Gemma 4, we want to change that.\n\nOur challenge to you is to push the boundaries of open-source models and post-train Gemma 4 into an autonomous coding agent capable of navigating real-world repositories and reliably resolving software engineering tasks on consumer-grade hardware. To help you get started, we’ve provided a [starter submission](https://www.kaggle.com/competitions/gemma-4-developer-agent/data?select=sample_submission), [development tasks](https://www.kaggle.com/competitions/gemma-4-developer-agent/data?select=tasks.jsonl), and a corresponding dataset of structured [code graphs](https://www.kaggle.com/competitions/gemma-4-developer-agent/data?select=graphs) with [pre-computed embeddings](https://www.kaggle.com/competitions/gemma-4-developer-agent/data?select=embeddings) for repository-level retrieval.\n\nWhether you explore parameter-efficient fine-tuning, novel reinforcement learning approaches, or graph-based code reasoning, we want to see how far you can take local, open models. \n\nWe can't wait to see the agents you build and the solutions you invent!\n\nGoogle Research and The Gemma Team\n",
+      "content": "<p>Hello Kagglers,</p>\n<p>Today’s most capable software engineering agents rely on massive, closed-source models running in the cloud, leaving advanced autonomous development tools out of reach for many developers.</p>\n<p>With Gemma 4, we want to change that.</p>\n<p>Our challenge to you is to push the boundaries of open-source models and post-train Gemma 4 into an autonomous coding agent capable of navigating real-world repositories and reliably resolving software engineering tasks on consumer-grade hardware. To help you get started, we’ve provided a <a href=\"https://www.kaggle.com/competitions/gemma-4-developer-agent/data?select=sample_submission\" target=\"_blank\">starter submission</a>, <a href=\"https://www.kaggle.com/competitions/gemma-4-developer-agent/data?select=tasks.jsonl\" target=\"_blank\">development tasks</a>, and a corresponding dataset of structured <a href=\"https://www.kaggle.com/competitions/gemma-4-developer-agent/data?select=graphs\" target=\"_blank\">code graphs</a> with <a href=\"https://www.kaggle.com/competitions/gemma-4-developer-agent/data?select=embeddings\" target=\"_blank\">pre-computed embeddings</a> for repository-level retrieval.</p>\n<p>Whether you explore parameter-efficient fine-tuning, novel reinforcement learning approaches, or graph-based code reasoning, we want to see how far you can take local, open models. </p>\n<p>We can't wait to see the agents you build and the solutions you invent!</p>\n<p>Google Research and The Gemma Team</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Elan Markowitz",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+        "url": "/elanlearns",
+        "tier": "CONTRIBUTOR",
+        "id": 10108289,
+        "progressionOptOut": false
+      },
+      "authorType": "HOST",
+      "votes": {
+        "totalVotes": 13,
+        "canUpvote": true,
+        "totalUpvotes": 13
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "reactions": [
+        {
+          "emoji": "LOVE",
+          "featuredUserNames": [
+            "ilovechallenges",
+            "ppujari",
+            "garried",
+            "sriharshasammeta",
+            "mlneo07",
+            "abdrah",
+            "dpblueblue",
+            "shauryagulati",
+            "nesrinehebbadj",
+            "akshayggupta1",
+            "kwamenelson12",
+            "abhicodes369",
+            "moonfr4ction",
+            "tadityasasidhar",
+            "adaluvu",
+            "zhouhengyuu",
+            "balamanigurunathan",
+            "narendarkumarale",
+            "sharifmohamed1",
+            "ivaniam",
+            "junkonno",
+            "raydestar",
+            "willieallen88"
+          ],
+          "userCount": 23
+        }
+      ]
+    }
+  },
+  {
+    "topic_id": 743683,
+    "title": "Rerunning Failed Submissions",
+    "message": {
+      "id": 3528752,
+      "postDate": "2026-09-26T12:01:49.977Z",
+      "rawMarkdown": "Hi everyone,\n\nSome submissions since yesterday were failing with `\"Your notebook has requested more CPU, GPU or TPU resources than are available.\"` I believe I've resolved the issue, though please let me know if you're still having issues. I will rerun the affected submissions on Monday so that you won't be losing a submission.",
+      "content": "<p>Hi everyone,</p>\n<p>Some submissions since yesterday were failing with <code>\"Your notebook has requested more CPU, GPU or TPU resources than are available.\"</code> I believe I've resolved the issue, though please let me know if you're still having issues. I will rerun the affected submissions on Monday so that you won't be losing a submission.</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Ryan Holbrook",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+        "url": "/ryanholbrook",
+        "tier": "STAFF",
+        "id": 2003505,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "totalVotes": 12,
+        "canUpvote": true,
+        "totalUpvotes": 12
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "reactions": [
+        {
+          "emoji": "THANK_YOU",
+          "featuredUserNames": [
+            "tammamalasha",
+            "goyashuto",
+            "zhukovoleksiy",
+            "tonylica",
+            "adaluvu",
+            "sharifmohamed1",
+            "saltice",
+            "doaimabt"
+          ],
+          "userCount": 8
+        },
+        {
+          "emoji": "LOVE",
+          "featuredUserNames": [
+            "goyashuto",
+            "rokotorbarina",
+            "tonylica",
+            "sharifmohamed1",
+            "saltice",
+            "raydestar"
+          ],
+          "userCount": 6
+        }
+      ],
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "userName": "ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "profileUrl": "/ryanholbrook",
+          "performanceTier": "STAFF",
+          "userId": 2003505,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    }
+  },
+  {
+    "topic_id": 743683,
+    "title": "Rerunning Failed Submissions",
+    "message": {
+      "id": 3529544,
+      "postDate": "2026-09-28T13:17:43.667Z",
+      "rawMarkdown": "Hi everyone,\n\nI'm going to pause the rescore until we can resolve the queueing for the L4x4 machines. I will get it going as soon as I can.",
+      "content": "<p>Hi everyone,</p>\n<p>I'm going to pause the rescore until we can resolve the queueing for the L4x4 machines. I will get it going as soon as I can.</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Ryan Holbrook",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+        "url": "/ryanholbrook",
+        "tier": "STAFF",
+        "id": 2003505,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "totalVotes": 2,
+        "canUpvote": true,
+        "totalUpvotes": 2
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isPinned": true,
+      "isThankYou": false,
+      "reactions": [
+        {
+          "emoji": "THANK_YOU",
+          "featuredUserNames": [
+            "nicupetridean",
+            "connortynan"
+          ],
+          "userCount": 2
+        }
+      ],
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "userName": "ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "profileUrl": "/ryanholbrook",
+          "performanceTier": "STAFF",
+          "userId": 2003505,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    }
+  },
+  {
+    "topic_id": 743683,
+    "title": "Rerunning Failed Submissions",
+    "message": {
+      "id": 3528777,
+      "postDate": "2026-09-26T13:43:51.750Z",
+      "rawMarkdown": "Has this submission run successfully in the past? I'm seeing `Did not find output file 'submission.zip' in the submitted Notebook.`",
+      "content": "<p>Has this submission run successfully in the past? I'm seeing <code>Did not find output file 'submission.zip' in the submitted Notebook.</code></p>",
+      "replies": [
+        {
+          "id": 3529487,
+          "postDate": "2026-09-28T11:11:59.483Z",
+          "rawMarkdown": "if i 'save version', successfully run the notebook and then 'submit', then the submission is scored \n\nbut if i click 'submit' b4 saving the notebook, it fails",
+          "content": "<p>if i 'save version', successfully run the notebook and then 'submit', then the submission is scored </p>\n<p>but if i click 'submit' b4 saving the notebook, it fails</p>",
+          "parent": {},
+          "author": {
+            "displayName": "parthenos",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/15559822-kg.png?t=2026-08-13-14-46-51",
+            "url": "/nihilisticneuralnet",
+            "tier": "MASTER",
+            "id": 15559822,
+            "progressionOptOut": false
+          },
+          "authorType": "COMMENT",
+          "votes": {
+            "canUpvote": true
+          },
+          "kernelVersion": 0,
+          "competitionRanking": 466,
+          "feedbackTrackingData": {},
+          "isThankYou": false,
+          "teamUpInfo": {
+            "teamLeader": {
+              "displayName": "parthenos",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/15559822-kg.png?t=2026-08-13-14-46-51",
+              "url": "/nihilisticneuralnet",
+              "userName": "nihilisticneuralnet",
+              "tier": "MASTER",
+              "id": 15559822,
+              "profileUrl": "/nihilisticneuralnet",
+              "performanceTier": "MASTER",
+              "userId": 15559822,
+              "progressionOptOut": false
+            },
+            "intro": ""
+          }
+        },
+        {
+          "id": 3529541,
+          "postDate": "2026-09-28T13:12:55.657Z",
+          "rawMarkdown": "I think this is WAI. Your notebook needs to generate a submission file (`submission.zip`) before that submission can be scored. The workflow seems a little confusing, though. I will give feedback to the team.",
+          "content": "<p>I think this is WAI. Your notebook needs to generate a submission file (<code>submission.zip</code>) before that submission can be scored. The workflow seems a little confusing, though. I will give feedback to the team.</p>",
+          "parent": {},
+          "author": {
+            "displayName": "Ryan Holbrook",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+            "url": "/ryanholbrook",
+            "tier": "STAFF",
+            "id": 2003505,
+            "progressionOptOut": false
+          },
+          "authorType": "ADMIN",
+          "votes": {
+            "totalVotes": 1,
+            "canUpvote": true,
+            "totalUpvotes": 1
+          },
+          "kernelVersion": 0,
+          "feedbackTrackingData": {},
+          "isThankYou": false,
+          "teamUpInfo": {
+            "teamLeader": {
+              "displayName": "Ryan Holbrook",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+              "url": "/ryanholbrook",
+              "userName": "ryanholbrook",
+              "tier": "STAFF",
+              "id": 2003505,
+              "profileUrl": "/ryanholbrook",
+              "performanceTier": "STAFF",
+              "userId": 2003505,
+              "progressionOptOut": false
+            },
+            "intro": ""
+          }
+        }
+      ],
+      "parent": {},
+      "author": {
+        "displayName": "Ryan Holbrook",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+        "url": "/ryanholbrook",
+        "tier": "STAFF",
+        "id": 2003505,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "canUpvote": true
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "userName": "ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "profileUrl": "/ryanholbrook",
+          "performanceTier": "STAFF",
+          "userId": 2003505,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    }
+  },
+  {
+    "topic_id": 743683,
+    "title": "Rerunning Failed Submissions",
+    "message": {
+      "id": 3529541,
+      "postDate": "2026-09-28T13:12:55.657Z",
+      "rawMarkdown": "I think this is WAI. Your notebook needs to generate a submission file (`submission.zip`) before that submission can be scored. The workflow seems a little confusing, though. I will give feedback to the team.",
+      "content": "<p>I think this is WAI. Your notebook needs to generate a submission file (<code>submission.zip</code>) before that submission can be scored. The workflow seems a little confusing, though. I will give feedback to the team.</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Ryan Holbrook",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+        "url": "/ryanholbrook",
+        "tier": "STAFF",
+        "id": 2003505,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "totalVotes": 1,
+        "canUpvote": true,
+        "totalUpvotes": 1
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "userName": "ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "profileUrl": "/ryanholbrook",
+          "performanceTier": "STAFF",
+          "userId": 2003505,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    }
+  },
+  {
+    "topic_id": 743063,
+    "title": "Scoring-run questions: task concurrency, eval_config keys, and the 12 h limit ",
+    "message": {
+      "id": 3527819,
+      "postDate": "2026-09-24T19:48:21.303Z",
+      "rawMarkdown": "1. Sequentially.\n2. The scorer reads those, and only those, four fields. The default is no limit.\n3. Currently, hitting the 12-hour limit will error, but I'm planning on a fix that will score unfinished tasks as 0. You may want to set `max_time_minutes` to something moderate as a failsafe.",
+      "content": "<ol>\n<li>Sequentially.</li>\n<li>The scorer reads those, and only those, four fields. The default is no limit.</li>\n<li>Currently, hitting the 12-hour limit will error, but I'm planning on a fix that will score unfinished tasks as 0. You may want to set <code>max_time_minutes</code> to something moderate as a failsafe.</li>\n</ol>",
+      "replies": [
+        {
+          "id": 3529633,
+          "postDate": "2026-09-28T17:05:39.793Z",
+          "rawMarkdown": "Hi @ryanholbrook , a follow-up on this:\n\n>Currently, hitting the 12-hour limit will error, but I'm planning on a fix that will score unfinished tasks as 0.\n\nIs this fix live yet? I'd also like to raise a side effect that concerns me.\n\nRight now, going over 12 hours errors the whole submission, and I've hit that couple days ago. So every team has to fit all ~120 tasks into the limit. And part of my research in this competition so far has been about this optimization. With unfinished tasks scored as 0, a submission could instead spend most of the 12 hours on say the first 30-40 tasks and never start the rest. The tasks are clearly hard for the model, so a lot more time per task might solve more of those early tasks than a run that gives every task an equal share.\n\n- Is \"solve as many tasks as possible within 12 hours, however the time is split\" the intended goal, or should a good submission attempt every task?\n- Do tasks run in the same order every time, and are public and private tasks mixed through that order? If the public tasks come first, a submission that only reaches the early tasks could look strong on the public leaderboard and then collapse on the private one.\n- If this isn't intended, would you consider a required per-task time cap, or some other way to reward attempting every task? For example, instead of giving 0 to unattempted tasks they receive some negative score.",
+          "content": "<p>Hi <a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a> , a follow-up on this:</p>\n<blockquote>\n  <p>Currently, hitting the 12-hour limit will error, but I'm planning on a fix that will score unfinished tasks as 0.</p>\n</blockquote>\n<p>Is this fix live yet? I'd also like to raise a side effect that concerns me.</p>\n<p>Right now, going over 12 hours errors the whole submission, and I've hit that couple days ago. So every team has to fit all ~120 tasks into the limit. And part of my research in this competition so far has been about this optimization. With unfinished tasks scored as 0, a submission could instead spend most of the 12 hours on say the first 30-40 tasks and never start the rest. The tasks are clearly hard for the model, so a lot more time per task might solve more of those early tasks than a run that gives every task an equal share.</p>\n<ul>\n<li>Is \"solve as many tasks as possible within 12 hours, however the time is split\" the intended goal, or should a good submission attempt every task?</li>\n<li>Do tasks run in the same order every time, and are public and private tasks mixed through that order? If the public tasks come first, a submission that only reaches the early tasks could look strong on the public leaderboard and then collapse on the private one.</li>\n<li>If this isn't intended, would you consider a required per-task time cap, or some other way to reward attempting every task? For example, instead of giving 0 to unattempted tasks they receive some negative score.</li>\n</ul>",
+          "parent": {},
+          "author": {
+            "displayName": "Oleksii Zhukov",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/6082025-kg.png?t=2026-08-01-19-49-46",
+            "url": "/zhukovoleksiy",
+            "tier": "MASTER",
+            "id": 6082025,
+            "progressionOptOut": false
+          },
+          "authorType": "COMMENT",
+          "votes": {
+            "totalVotes": 1,
+            "canUpvote": true,
+            "totalUpvotes": 1
+          },
+          "kernelVersion": 0,
+          "competitionRanking": 285,
+          "feedbackTrackingData": {},
+          "isThankYou": false,
+          "reactions": [
+            {
+              "emoji": "LOVE",
+              "featuredUserNames": [
+                "gholamaliaminian"
+              ],
+              "userCount": 1
+            }
+          ],
+          "teamUpInfo": {
+            "teamLeader": {
+              "displayName": "Oleksii Zhukov",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/6082025-kg.png?t=2026-08-01-19-49-46",
+              "url": "/zhukovoleksiy",
+              "userName": "zhukovoleksiy",
+              "tier": "MASTER",
+              "id": 6082025,
+              "profileUrl": "/zhukovoleksiy",
+              "performanceTier": "MASTER",
+              "userId": 6082025,
+              "progressionOptOut": false
+            },
+            "intro": ""
+          }
+        },
+        {
+          "id": 3530039,
+          "postDate": "2026-09-29T12:23:27.320Z",
+          "rawMarkdown": "hi @ryanholbrook, do you have any update on scoring unfinished tasks as 0? ",
+          "content": "<p>hi <a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a>, do you have any update on scoring unfinished tasks as 0? </p>",
+          "parent": {},
+          "author": {
+            "displayName": "Gholamali Aminian",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/5093103-kg.jpg?t=2026-09-29-12-27-20",
+            "url": "/gholamaliaminian",
+            "tier": "CONTRIBUTOR",
+            "id": 5093103,
+            "progressionOptOut": false
+          },
+          "authorType": "COMMENT",
+          "votes": {
+            "canUpvote": true
+          },
+          "kernelVersion": 0,
+          "competitionRanking": 103,
+          "feedbackTrackingData": {},
+          "isThankYou": false,
+          "isCollapsed": true,
+          "teamUpInfo": {
+            "teamLeader": {
+              "displayName": "Gholamali Aminian",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/5093103-kg.jpg?t=2026-09-29-12-27-20",
+              "url": "/gholamaliaminian",
+              "userName": "gholamaliaminian",
+              "tier": "CONTRIBUTOR",
+              "id": 5093103,
+              "profileUrl": "/gholamaliaminian",
+              "performanceTier": "CONTRIBUTOR",
+              "userId": 5093103,
+              "progressionOptOut": false
+            },
+            "intro": ""
+          }
+        },
+        {
+          "id": 3530047,
+          "postDate": "2026-09-29T12:38:23.663Z",
+          "rawMarkdown": "Hey @ryanholbrook \nScoring unfinished tasks as 0 and accepting the submission would be a great fix!\nPlease do provide an update",
+          "content": "<p>Hey <a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a> \nScoring unfinished tasks as 0 and accepting the submission would be a great fix!\nPlease do provide an update</p>",
+          "parent": {},
+          "author": {
+            "displayName": "Aditya Sreedhar",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+            "url": "/adityasreedhar",
+            "tier": "CONTRIBUTOR",
+            "id": 5326021,
+            "progressionOptOut": false
+          },
+          "authorType": "COMMENT",
+          "votes": {
+            "canUpvote": true
+          },
+          "kernelVersion": 0,
+          "competitionRanking": 1210,
+          "feedbackTrackingData": {},
+          "isThankYou": false,
+          "isCollapsed": true,
+          "teamUpInfo": {
+            "teamLeader": {
+              "displayName": "Aditya Sreedhar",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+              "url": "/adityasreedhar",
+              "userName": "adityasreedhar",
+              "tier": "CONTRIBUTOR",
+              "id": 5326021,
+              "profileUrl": "/adityasreedhar",
+              "performanceTier": "CONTRIBUTOR",
+              "userId": 5326021,
+              "progressionOptOut": false
+            },
+            "intro": ""
+          }
+        },
+        {
+          "id": 3532311,
+          "postDate": "2026-10-03T09:34:34.953Z",
+          "rawMarkdown": "> 2. The scorer reads those, and only those, four fields. The default is no limit.\n> 3. Currently, hitting the 12-hour limit will error, but I'm planning on a fix that will score unfinished tasks as 0. You may want to set `max_time_minutes` to something moderate as a failsafe.\n\nI have made a couple of submissions for which the time taken to evaluate crossed the 12h limit and still scored successfully(IDs 56667603 and 56701670). The submission I made yesterday, however, ended in an error after crossing 12hrs. Can you fix this bug?",
+          "content": "<blockquote>\n  <ol>\n  <li>The scorer reads those, and only those, four fields. The default is no limit.</li>\n  <li>Currently, hitting the 12-hour limit will error, but I'm planning on a fix that will score unfinished tasks as 0. You may want to set <code>max_time_minutes</code> to something moderate as a failsafe.</li>\n  </ol>\n</blockquote>\n<p>I have made a couple of submissions for which the time taken to evaluate crossed the 12h limit and still scored successfully(IDs 56667603 and 56701670). The submission I made yesterday, however, ended in an error after crossing 12hrs. Can you fix this bug?</p>",
+          "parent": {},
+          "author": {
+            "displayName": "Varun Ambadi",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+            "url": "/varunambadi",
+            "tier": "CONTRIBUTOR",
+            "id": 31268718,
+            "progressionOptOut": false
+          },
+          "authorType": "COMMENT",
+          "votes": {
+            "canUpvote": true
+          },
+          "kernelVersion": 0,
+          "competitionRanking": 293,
+          "feedbackTrackingData": {},
+          "isThankYou": false,
+          "isCollapsed": true,
+          "teamUpInfo": {
+            "teamLeader": {
+              "displayName": "Varun Ambadi",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+              "url": "/varunambadi",
+              "userName": "varunambadi",
+              "tier": "CONTRIBUTOR",
+              "id": 31268718,
+              "profileUrl": "/varunambadi",
+              "performanceTier": "CONTRIBUTOR",
+              "userId": 31268718,
+              "progressionOptOut": false
+            },
+            "intro": ""
+          }
+        },
+        {
+          "id": 3532745,
+          "postDate": "2026-10-04T15:29:51.190Z",
+          "rawMarkdown": "Hi @ryanholbrook , following up on this thread, since several of us are planning our time budgets around the 12-hour limit:\n\n1. Has the change to score unfinished tasks as 0, rather than erroring the entire submission, been deployed? If so, from what date or scorer version does it apply? If not, is it still planned?\n\n2. A participant reported two submissions that ran past 12 hours and still received scores, and another that errored after 12 hours. Is that expected under the current system? Could differences in how elapsed time is measured or the submissions are processed explain these outcomes?\n\n3. Are hidden tasks run in the same order for every submission? Are public- and private-leaderboard tasks interleaved or grouped?\n\nUntil we hear back, we'll plan for the entire run to finish within 12 hours and attempt every task. Thanks!",
+          "content": "<p>Hi <a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a> , following up on this thread, since several of us are planning our time budgets around the 12-hour limit:</p>\n<ol>\n<li><p>Has the change to score unfinished tasks as 0, rather than erroring the entire submission, been deployed? If so, from what date or scorer version does it apply? If not, is it still planned?</p></li>\n<li><p>A participant reported two submissions that ran past 12 hours and still received scores, and another that errored after 12 hours. Is that expected under the current system? Could differences in how elapsed time is measured or the submissions are processed explain these outcomes?</p></li>\n<li><p>Are hidden tasks run in the same order for every submission? Are public- and private-leaderboard tasks interleaved or grouped?</p></li>\n</ol>\n<p>Until we hear back, we'll plan for the entire run to finish within 12 hours and attempt every task. Thanks!</p>",
+          "parent": {},
+          "author": {
+            "displayName": "E84111201_曾士朋",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+            "url": "/andrewzhengtw",
+            "tier": "CONTRIBUTOR",
+            "id": 22108458,
+            "progressionOptOut": false
+          },
+          "authorType": "COMMENT",
+          "votes": {
+            "canUpvote": true
+          },
+          "kernelVersion": 0,
+          "competitionRanking": 631,
+          "feedbackTrackingData": {},
+          "isThankYou": false,
+          "isCollapsed": true,
+          "reactions": [
+            {
+              "emoji": "LOVE",
+              "featuredUserNames": [
+                "andrewzhengtw"
+              ],
+              "userCount": 1
+            }
+          ],
+          "teamUpInfo": {
+            "teamLeader": {
+              "displayName": "E84111201_曾士朋",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+              "url": "/andrewzhengtw",
+              "userName": "andrewzhengtw",
+              "tier": "CONTRIBUTOR",
+              "id": 22108458,
+              "profileUrl": "/andrewzhengtw",
+              "performanceTier": "CONTRIBUTOR",
+              "userId": 22108458,
+              "progressionOptOut": false
+            },
+            "intro": ""
+          }
+        }
+      ],
+      "parent": {},
+      "author": {
+        "displayName": "Ryan Holbrook",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+        "url": "/ryanholbrook",
+        "tier": "STAFF",
+        "id": 2003505,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "totalVotes": 6,
+        "canUpvote": true,
+        "totalUpvotes": 6
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "reactions": [
+        {
+          "emoji": "YAY",
+          "featuredUserNames": [
+            "rathko",
+            "gholamaliaminian",
+            "ayoubdiri",
+            "josephadamski91"
+          ],
+          "userCount": 4
+        }
+      ],
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "userName": "ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "profileUrl": "/ryanholbrook",
+          "performanceTier": "STAFF",
+          "userId": 2003505,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    }
+  },
+  {
+    "topic_id": 744331,
+    "title": "With LoRA enabled, the 4xL4 KV cache shrinks to ~7.6k tokens; requests longer than that hang",
+    "message": {
+      "id": 3530648,
+      "postDate": "2026-09-30T16:30:40.227Z",
+      "rawMarkdown": "Thanks for the report. I will patch to set the `loras` parameters based on the submission. It looks like a bug in our vLLM version is causing the hang, but I think I have a workaround.",
+      "content": "<p>Thanks for the report. I will patch to set the <code>loras</code> parameters based on the submission. It looks like a bug in our vLLM version is causing the hang, but I think I have a workaround.</p>",
+      "replies": [
+        {
+          "id": 3530845,
+          "postDate": "2026-09-30T23:12:53.807Z",
+          "rawMarkdown": "A related data point: our adapter submission 56719837 (sent 2026-09-30 22:04 UTC) completed after about 30 minutes with no score and \"Your notebook hit an unhandled error while rerunning your code.\" The bundle is identical to our submission 56659914, which scored 0.06, plus adapters/trained_lora/ (PEFT LoRA, r=64, lora_alpha=64, target_modules q/k/v/o/gate/up/down_proj, 980 MB safetensors). It's referenced as adapter: trained_lora on the root agent and on both AgentTool sub-agents. It is within the HARNESS_README limits, and it compiles with the v25 wheels. An adapter of the same shape loaded and served ~4K-token prompts through VllmServer in a Kaggle 4xL4 notebook. Could you check what raised in this run, and whether it's related to the loras patch? If it was on the scorer side, a rerun once the fix is live would be much appreciated.",
+          "content": "<p>A related data point: our adapter submission 56719837 (sent 2026-09-30 22:04 UTC) completed after about 30 minutes with no score and \"Your notebook hit an unhandled error while rerunning your code.\" The bundle is identical to our submission 56659914, which scored 0.06, plus adapters/trained_lora/ (PEFT LoRA, r=64, lora_alpha=64, target_modules q/k/v/o/gate/up/down_proj, 980 MB safetensors). It's referenced as adapter: trained_lora on the root agent and on both AgentTool sub-agents. It is within the HARNESS_README limits, and it compiles with the v25 wheels. An adapter of the same shape loaded and served ~4K-token prompts through VllmServer in a Kaggle 4xL4 notebook. Could you check what raised in this run, and whether it's related to the loras patch? If it was on the scorer side, a rerun once the fix is live would be much appreciated.</p>",
+          "parent": {},
+          "author": {
+            "displayName": "whoami",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/3115479-kg.jpg",
+            "url": "/whoamircc",
+            "tier": "CONTRIBUTOR",
+            "id": 3115479,
+            "progressionOptOut": false
+          },
+          "authorType": "COMMENT",
+          "votes": {
+            "canUpvote": true
+          },
+          "kernelVersion": 0,
+          "competitionRanking": 727,
+          "feedbackTrackingData": {},
+          "isThankYou": false,
+          "teamUpInfo": {
+            "teamLeader": {
+              "displayName": "whoami",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/3115479-kg.jpg",
+              "url": "/whoamircc",
+              "userName": "whoamircc",
+              "tier": "CONTRIBUTOR",
+              "id": 3115479,
+              "profileUrl": "/whoamircc",
+              "performanceTier": "CONTRIBUTOR",
+              "userId": 3115479,
+              "progressionOptOut": false
+            },
+            "intro": ""
+          }
+        }
+      ],
+      "parent": {},
+      "author": {
+        "displayName": "Ryan Holbrook",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+        "url": "/ryanholbrook",
+        "tier": "STAFF",
+        "id": 2003505,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "canUpvote": true
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "reactions": [
+        {
+          "emoji": "LOVE",
+          "featuredUserNames": [
+            "whoamircc"
+          ],
+          "userCount": 1
+        }
+      ],
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "userName": "ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "profileUrl": "/ryanholbrook",
+          "performanceTier": "STAFF",
+          "userId": 2003505,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    }
+  },
+  {
+    "topic_id": 744951,
+    "title": "Hidden test set",
+    "message": {
+      "id": 3531258,
+      "postDate": "2026-10-01T15:04:55.670Z",
+      "rawMarkdown": "No, the test set draws from private repositories not available publicly.",
+      "content": "<p>No, the test set draws from private repositories not available publicly.</p>",
+      "replies": [
+        {
+          "id": 3532630,
+          "postDate": "2026-10-04T08:22:28.760Z",
+          "rawMarkdown": "Does this mean that the test set will contain completely different topics from the training tasks, or will it be fastapi, rich, requests and httpx, but in a different proportion? ",
+          "content": "<p>Does this mean that the test set will contain completely different topics from the training tasks, or will it be fastapi, rich, requests and httpx, but in a different proportion? </p>",
+          "parent": {},
+          "author": {
+            "displayName": "Varun Ambadi",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+            "url": "/varunambadi",
+            "tier": "CONTRIBUTOR",
+            "id": 31268718,
+            "progressionOptOut": false
+          },
+          "authorType": "COMMENT",
+          "votes": {
+            "canUpvote": true
+          },
+          "kernelVersion": 0,
+          "competitionRanking": 284,
+          "feedbackTrackingData": {},
+          "isThankYou": false,
+          "teamUpInfo": {
+            "teamLeader": {
+              "displayName": "Varun Ambadi",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+              "url": "/varunambadi",
+              "userName": "varunambadi",
+              "tier": "CONTRIBUTOR",
+              "id": 31268718,
+              "profileUrl": "/varunambadi",
+              "performanceTier": "CONTRIBUTOR",
+              "userId": 31268718,
+              "progressionOptOut": false
+            },
+            "intro": ""
+          }
+        }
+      ],
+      "parent": {},
+      "author": {
+        "displayName": "Ryan Holbrook",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+        "url": "/ryanholbrook",
+        "tier": "STAFF",
+        "id": 2003505,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "totalVotes": 2,
+        "canUpvote": true,
+        "totalUpvotes": 2
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "userName": "ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "profileUrl": "/ryanholbrook",
+          "performanceTier": "STAFF",
+          "userId": 2003505,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    }
+  },
+  {
+    "topic_id": 742882,
+    "title": "Is the swegemma harness available for local evaluation?",
+    "message": {
+      "id": 3527656,
+      "postDate": "2026-09-24T10:45:26.967Z",
+      "rawMarkdown": "Hi @shimondanziger,\n\nHere is a wheelhouse with the packages: [Gemma 4 Developer Agent Wheelhouse](https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse/data).\n\nI'll post a notebook later today illustrating how to run everything on Kaggle.",
+      "content": "<p>Hi <a href=\"/shimondanziger\" target=\"_blank\">@shimondanziger</a>,</p>\n<p>Here is a wheelhouse with the packages: <a href=\"https://www.kaggle.com/datasets/metric/gemma-4-developer-agent-wheelhouse/data\" target=\"_blank\">Gemma 4 Developer Agent Wheelhouse</a>.</p>\n<p>I'll post a notebook later today illustrating how to run everything on Kaggle.</p>",
+      "replies": [
+        {
+          "id": 3528156,
+          "postDate": "2026-09-25T14:24:09.787Z",
+          "rawMarkdown": "",
+          "parent": {},
+          "author": {
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+            "url": "/"
+          },
+          "authorType": "COMMENT",
+          "votes": {},
+          "canDelete": true,
+          "isUserAuthor": true,
+          "isDeleted": true,
+          "kernelVersion": 0,
+          "feedbackTrackingData": {},
+          "isThankYou": false
+        }
+      ],
+      "parent": {},
+      "author": {
+        "displayName": "Ryan Holbrook",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+        "url": "/ryanholbrook",
+        "tier": "STAFF",
+        "id": 2003505,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "totalVotes": 10,
+        "canUpvote": true,
+        "totalUpvotes": 10
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "reactions": [
+        {
+          "emoji": "YAY",
+          "featuredUserNames": [
+            "adithyagiri",
+            "i1ravenov"
+          ],
+          "userCount": 2
+        },
+        {
+          "emoji": "KAGGLE",
+          "featuredUserNames": [
+            "i1ravenov"
+          ],
+          "userCount": 1
+        }
+      ],
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "userName": "ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "profileUrl": "/ryanholbrook",
+          "performanceTier": "STAFF",
+          "userId": 2003505,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    }
+  },
+  {
+    "topic_id": 742882,
+    "title": "Is the swegemma harness available for local evaluation?",
+    "message": {
+      "id": 3528281,
+      "postDate": "2026-09-25T18:42:51.693Z",
+      "rawMarkdown": "It's here: https://www.kaggle.com/code/ryanholbrook/getting-started-gemma-4-developer-agent",
+      "content": "<p>It's here: <a href=\"https://www.kaggle.com/code/ryanholbrook/getting-started-gemma-4-developer-agent\" target=\"_blank\">https://www.kaggle.com/code/ryanholbrook/getting-started-gemma-4-developer-agent</a></p>",
+      "parent": {},
+      "author": {
+        "displayName": "Ryan Holbrook",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+        "url": "/ryanholbrook",
+        "tier": "STAFF",
+        "id": 2003505,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "totalVotes": 1,
+        "canUpvote": true,
+        "totalUpvotes": 1
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "reactions": [
+        {
+          "emoji": "LOVE",
+          "featuredUserNames": [
+            "irfanparaniya"
+          ],
+          "userCount": 1
+        }
+      ],
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "userName": "ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "profileUrl": "/ryanholbrook",
+          "performanceTier": "STAFF",
+          "userId": 2003505,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    }
+  },
+  {
+    "topic_id": 742882,
+    "title": "Is the swegemma harness available for local evaluation?",
+    "message": {
+      "id": 3528750,
+      "postDate": "2026-09-26T11:49:05.143Z",
+      "rawMarkdown": "Hi @irfanparaniya,\n\nThanks for the report. I will look into it (likely on Monday). For now, I can verify at least that the evaluation metric correctly validates a gold-patch submission at 100%.",
+      "content": "<p>Hi <a href=\"/irfanparaniya\" target=\"_blank\">@irfanparaniya</a>,</p>\n<p>Thanks for the report. I will look into it (likely on Monday). For now, I can verify at least that the evaluation metric correctly validates a gold-patch submission at 100%.</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Ryan Holbrook",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+        "url": "/ryanholbrook",
+        "tier": "STAFF",
+        "id": 2003505,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "canUpvote": true
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "isCollapsed": true,
+      "reactions": [
+        {
+          "emoji": "THANK_YOU",
+          "featuredUserNames": [
+            "irfanparaniya"
+          ],
+          "userCount": 1
+        }
+      ],
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "userName": "ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "profileUrl": "/ryanholbrook",
+          "performanceTier": "STAFF",
+          "userId": 2003505,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    }
+  },
+  {
+    "topic_id": 742882,
+    "title": "Is the swegemma harness available for local evaluation?",
+    "message": {
+      "id": 3529110,
+      "postDate": "2026-09-27T11:12:58.517Z",
+      "rawMarkdown": "This may be a problem with the subprocess sandbox. I don't recall seeing these failures using the Docker sandbox. The private Docker sandbox uses the same base image but installs a different set of dependencies because the test issues come from a different set of repos.\n\nI'll look into getting a more reliable setup going in the notebook environment.",
+      "content": "<p>This may be a problem with the subprocess sandbox. I don't recall seeing these failures using the Docker sandbox. The private Docker sandbox uses the same base image but installs a different set of dependencies because the test issues come from a different set of repos.</p>\n<p>I'll look into getting a more reliable setup going in the notebook environment.</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Ryan Holbrook",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+        "url": "/ryanholbrook",
+        "tier": "STAFF",
+        "id": 2003505,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "canUpvote": true
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "isCollapsed": true,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "userName": "ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "profileUrl": "/ryanholbrook",
+          "performanceTier": "STAFF",
+          "userId": 2003505,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    }
+  },
+  {
+    "topic_id": 744807,
+    "title": "Submission errors after the Sep 30 wheelhouse update",
+    "message": {
+      "id": 3531241,
+      "postDate": "2026-10-01T14:45:21.513Z",
+      "rawMarkdown": "We had a GPU outage overnight. Resolved now, and submissions should be working again.",
+      "content": "<p>We had a GPU outage overnight. Resolved now, and submissions should be working again.</p>",
+      "replies": [
+        {
+          "id": 3531299,
+          "postDate": "2026-10-01T16:37:35.270Z",
+          "rawMarkdown": "would be great if the failed runs are started again or the daily limit be reset!",
+          "content": "<p>would be great if the failed runs are started again or the daily limit be reset!</p>",
+          "parent": {},
+          "author": {
+            "displayName": "Chandram Dutta",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/14027805-kg.jpg?t=2026-04-05-06-32-03",
+            "url": "/chandramdutta",
+            "tier": "CONTRIBUTOR",
+            "id": 14027805,
+            "progressionOptOut": false
+          },
+          "authorType": "COMMENT",
+          "votes": {
+            "totalVotes": 5,
+            "canUpvote": true,
+            "totalUpvotes": 5
+          },
+          "kernelVersion": 0,
+          "competitionRanking": 188,
+          "feedbackTrackingData": {},
+          "isThankYou": false,
+          "reactions": [
+            {
+              "emoji": "LOVE",
+              "featuredUserNames": [
+                "ahmedalmarwani"
+              ],
+              "userCount": 1
+            }
+          ],
+          "teamUpInfo": {
+            "teamLeader": {
+              "displayName": "Chandram Dutta",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/14027805-kg.jpg?t=2026-04-05-06-32-03",
+              "url": "/chandramdutta",
+              "userName": "chandramdutta",
+              "tier": "CONTRIBUTOR",
+              "id": 14027805,
+              "profileUrl": "/chandramdutta",
+              "performanceTier": "CONTRIBUTOR",
+              "userId": 14027805,
+              "progressionOptOut": false
+            },
+            "intro": ""
+          }
+        },
+        {
+          "id": 3532001,
+          "postDate": "2026-10-03T01:43:27.737Z",
+          "rawMarkdown": "Hi @ryanholbrook, same issue on Oct 3. Both notebooks ran COMPLETE (344s / 679s, local validator passed, model `gemma-4-31b-it-qat-w4a16-ct`), but both submissions ended as `SubmissionStatus.ERROR` with only the generic \"A system error. Please try resubmitting to resolve the error and contact Kaggle Support if it persists.\" and no score:\n- 56784230 (Getting Started notebook, 2026-10-03T00:00:13Z)\n- 56785158 (Gemma 4 SuperAgent, 2026-10-03T00:16:03Z)\nBundles validate locally (UTF-8 clean, no BOM, agent.yaml at zip root). Could you please check if these were hit by the same backend issue, and rerun them / restore the daily slot if so? Thanks!",
+          "content": "<p>Hi <a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a>, same issue on Oct 3. Both notebooks ran COMPLETE (344s / 679s, local validator passed, model <code>gemma-4-31b-it-qat-w4a16-ct</code>), but both submissions ended as <code>SubmissionStatus.ERROR</code> with only the generic \"A system error. Please try resubmitting to resolve the error and contact Kaggle Support if it persists.\" and no score:</p>\n<ul>\n<li>56784230 (Getting Started notebook, 2026-10-03T00:00:13Z)</li>\n<li>56785158 (Gemma 4 SuperAgent, 2026-10-03T00:16:03Z)\nBundles validate locally (UTF-8 clean, no BOM, agent.yaml at zip root). Could you please check if these were hit by the same backend issue, and rerun them / restore the daily slot if so? Thanks!</li>\n</ul>",
+          "parent": {},
+          "author": {
+            "displayName": "Neo Juan",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+            "url": "/neojuan",
+            "tier": "CONTRIBUTOR",
+            "id": 29196489,
+            "progressionOptOut": false
+          },
+          "authorType": "COMMENT",
+          "votes": {
+            "canUpvote": true
+          },
+          "kernelVersion": 0,
+          "competitionRanking": 764,
+          "feedbackTrackingData": {},
+          "isThankYou": false,
+          "teamUpInfo": {
+            "teamLeader": {
+              "displayName": "Neo Juan",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+              "url": "/neojuan",
+              "userName": "neojuan",
+              "tier": "CONTRIBUTOR",
+              "id": 29196489,
+              "profileUrl": "/neojuan",
+              "performanceTier": "CONTRIBUTOR",
+              "userId": 29196489,
+              "progressionOptOut": false
+            },
+            "intro": ""
+          }
+        }
+      ],
+      "parent": {},
+      "author": {
+        "displayName": "Ryan Holbrook",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+        "url": "/ryanholbrook",
+        "tier": "STAFF",
+        "id": 2003505,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "totalVotes": 2,
+        "canUpvote": true,
+        "totalUpvotes": 2
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isPinned": true,
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "userName": "ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "profileUrl": "/ryanholbrook",
+          "performanceTier": "STAFF",
+          "userId": 2003505,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    }
+  },
+  {
+    "topic_id": 745028,
+    "title": " undeclared tool ends the task and discards the patch",
+    "message": {
+      "id": 3531436,
+      "postDate": "2026-10-01T20:52:57.740Z",
+      "rawMarkdown": "Yes, let me look into it and I'll implement something.",
+      "content": "<p>Yes, let me look into it and I'll implement something.</p>",
+      "replies": [
+        {
+          "id": 3531444,
+          "postDate": "2026-10-01T21:28:15.373Z",
+          "rawMarkdown": "",
+          "parent": {},
+          "author": {
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+            "url": "/"
+          },
+          "authorType": "COMMENT",
+          "votes": {},
+          "canDelete": true,
+          "isUserAuthor": true,
+          "isDeleted": true,
+          "kernelVersion": 0,
+          "feedbackTrackingData": {},
+          "isThankYou": false
+        }
+      ],
+      "parent": {},
+      "author": {
+        "displayName": "Ryan Holbrook",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+        "url": "/ryanholbrook",
+        "tier": "STAFF",
+        "id": 2003505,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "totalVotes": 1,
+        "canUpvote": true,
+        "totalUpvotes": 1
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "reactions": [
+        {
+          "emoji": "THANK_YOU",
+          "featuredUserNames": [
+            "zhukovoleksiy"
+          ],
+          "userCount": 1
+        }
+      ],
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "userName": "ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "profileUrl": "/ryanholbrook",
+          "performanceTier": "STAFF",
+          "userId": 2003505,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    }
+  },
+  {
+    "topic_id": 744272,
+    "title": "Tool results reach the model double-JSON-encoded: a line of code with quotes turns into a wall of backslashes",
+    "message": {
+      "id": 3530081,
+      "postDate": "2026-09-29T14:03:21.077Z",
+      "rawMarkdown": "Thanks for the report. Addressing now.",
+      "content": "<p>Thanks for the report. Addressing now.</p>",
+      "replies": [
+        {
+          "id": 3531043,
+          "postDate": "2026-10-01T07:41:15.560Z",
+          "rawMarkdown": "hi, what's the latest on this? this has a major influence on how training data is generated, it's important to address before people sink too much time into this competition ",
+          "content": "<p>hi, what's the latest on this? this has a major influence on how training data is generated, it's important to address before people sink too much time into this competition </p>",
+          "replies": [
+            {
+              "id": 3531343,
+              "postDate": "2026-10-01T17:53:47.807Z",
+              "rawMarkdown": "The latest wheelhouse should have this fixed.",
+              "content": "<p>The latest wheelhouse should have this fixed.</p>",
+              "parent": {},
+              "author": {
+                "displayName": "Ryan Holbrook",
+                "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+                "url": "/ryanholbrook",
+                "tier": "STAFF",
+                "id": 2003505,
+                "progressionOptOut": false
+              },
+              "authorType": "ADMIN",
+              "votes": {
+                "canUpvote": true
+              },
+              "kernelVersion": 0,
+              "feedbackTrackingData": {},
+              "isThankYou": false,
+              "teamUpInfo": {
+                "teamLeader": {
+                  "displayName": "Ryan Holbrook",
+                  "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+                  "url": "/ryanholbrook",
+                  "userName": "ryanholbrook",
+                  "tier": "STAFF",
+                  "id": 2003505,
+                  "profileUrl": "/ryanholbrook",
+                  "performanceTier": "STAFF",
+                  "userId": 2003505,
+                  "progressionOptOut": false
+                },
+                "intro": ""
+              }
+            }
+          ],
+          "parent": {},
+          "author": {
+            "displayName": "MrMadsheep",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/32895152-gr.jpg",
+            "url": "/marcinstecki",
+            "tier": "CONTRIBUTOR",
+            "id": 32895152,
+            "progressionOptOut": true
+          },
+          "authorType": "COMMENT",
+          "votes": {
+            "totalVotes": 1,
+            "canUpvote": true,
+            "totalUpvotes": 1
+          },
+          "kernelVersion": 0,
+          "competitionRanking": 89,
+          "feedbackTrackingData": {},
+          "isThankYou": false,
+          "teamUpInfo": {
+            "teamLeader": {
+              "displayName": "MrMadsheep",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/32895152-gr.jpg",
+              "url": "/marcinstecki",
+              "userName": "marcinstecki",
+              "tier": "CONTRIBUTOR",
+              "id": 32895152,
+              "profileUrl": "/marcinstecki",
+              "performanceTier": "CONTRIBUTOR",
+              "userId": 32895152,
+              "progressionOptOut": true
+            },
+            "intro": ""
+          }
+        }
+      ],
+      "parent": {},
+      "author": {
+        "displayName": "Ryan Holbrook",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+        "url": "/ryanholbrook",
+        "tier": "STAFF",
+        "id": 2003505,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "canUpvote": true
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "userName": "ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "profileUrl": "/ryanholbrook",
+          "performanceTier": "STAFF",
+          "userId": 2003505,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    }
+  },
+  {
+    "topic_id": 744272,
+    "title": "Tool results reach the model double-JSON-encoded: a line of code with quotes turns into a wall of backslashes",
+    "message": {
+      "id": 3531343,
+      "postDate": "2026-10-01T17:53:47.807Z",
+      "rawMarkdown": "The latest wheelhouse should have this fixed.",
+      "content": "<p>The latest wheelhouse should have this fixed.</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Ryan Holbrook",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+        "url": "/ryanholbrook",
+        "tier": "STAFF",
+        "id": 2003505,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "canUpvote": true
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "userName": "ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "profileUrl": "/ryanholbrook",
+          "performanceTier": "STAFF",
+          "userId": 2003505,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    }
+  },
+  {
+    "topic_id": 744794,
+    "title": "Several harness issues make results hard to trust: request for fixes and a status update",
+    "message": {
+      "id": 3531245,
+      "postDate": "2026-10-01T14:51:52.190Z",
+      "rawMarkdown": "- I'll look into the compaction issue.\n- The KV-cache drop with LoRA should be addressed. Now vLLM will set its LoRA params dynamically based on what you actually submit. Submitting fewer adapters with lower rank (or no adapters) leaves more memory for KV-cache.\n- KV-cache, double-encoded tool output, thoughts dropped, and thinking_budget / seed not sent are all fixed in the latest wheelhouse.\n- Hard to estimate as it depends on the tool and how the model responds. You could experiment in a notebook on the training set to try to get estimates.",
+      "content": "<ul>\n<li>I'll look into the compaction issue.</li>\n<li>The KV-cache drop with LoRA should be addressed. Now vLLM will set its LoRA params dynamically based on what you actually submit. Submitting fewer adapters with lower rank (or no adapters) leaves more memory for KV-cache.</li>\n<li>KV-cache, double-encoded tool output, thoughts dropped, and thinking_budget / seed not sent are all fixed in the latest wheelhouse.</li>\n<li>Hard to estimate as it depends on the tool and how the model responds. You could experiment in a notebook on the training set to try to get estimates.</li>\n</ul>",
+      "replies": [
+        {
+          "id": 3531692,
+          "postDate": "2026-10-02T12:38:05.897Z",
+          "rawMarkdown": "Hi Ryan, \nIs there a way to higher the compaction threshold ? like reduce max output. For now it's 14k on starter submission, I guess same setup on eval. \nThank you",
+          "content": "<p>Hi Ryan, \nIs there a way to higher the compaction threshold ? like reduce max output. For now it's 14k on starter submission, I guess same setup on eval. \nThank you</p>",
+          "parent": {},
+          "author": {
+            "displayName": "Dat LQ.",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/17180946-kg.jpeg?t=2023-10-22-08-20-33",
+            "url": "/nightfurylqd",
+            "tier": "CONTRIBUTOR",
+            "id": 17180946,
+            "progressionOptOut": false
+          },
+          "authorType": "COMMENT",
+          "votes": {
+            "canUpvote": true
+          },
+          "kernelVersion": 0,
+          "competitionRanking": 1386,
+          "feedbackTrackingData": {},
+          "isThankYou": false,
+          "teamUpInfo": {
+            "teamLeader": {
+              "displayName": "Dat LQ.",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/17180946-kg.jpeg?t=2023-10-22-08-20-33",
+              "url": "/nightfurylqd",
+              "userName": "nightfurylqd",
+              "tier": "CONTRIBUTOR",
+              "id": 17180946,
+              "profileUrl": "/nightfurylqd",
+              "performanceTier": "CONTRIBUTOR",
+              "userId": 17180946,
+              "progressionOptOut": false
+            },
+            "intro": ""
+          }
+        }
+      ],
+      "parent": {},
+      "author": {
+        "displayName": "Ryan Holbrook",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+        "url": "/ryanholbrook",
+        "tier": "STAFF",
+        "id": 2003505,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "totalVotes": 1,
+        "canUpvote": true,
+        "totalUpvotes": 1
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "userName": "ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "profileUrl": "/ryanholbrook",
+          "performanceTier": "STAFF",
+          "userId": 2003505,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    }
+  },
+  {
+    "topic_id": 744354,
+    "title": "Thinking mode drops the model's thoughts between tool calls (vLLM ignores `reasoning_content`). Will the scoring environment be patched?",
+    "message": {
+      "id": 3530145,
+      "postDate": "2026-09-29T16:41:31.640Z",
+      "rawMarkdown": "Thanks for the heads up. Looks like this is a bug/incompatibility in how ADK and vLLM process reasoning tokens. vLLM [fixed](https://github.com/vllm-project/vllm/pull/42664) this in a later version. I'll add a patch accordingly and try to deploy later today. Unfortunately, due to compute constraints, we won't be able to rescore all existing submissions.",
+      "content": "<p>Thanks for the heads up. Looks like this is a bug/incompatibility in how ADK and vLLM process reasoning tokens. vLLM <a href=\"https://github.com/vllm-project/vllm/pull/42664\" target=\"_blank\">fixed</a> this in a later version. I'll add a patch accordingly and try to deploy later today. Unfortunately, due to compute constraints, we won't be able to rescore all existing submissions.</p>",
+      "replies": [
+        {
+          "id": 3530683,
+          "postDate": "2026-09-30T17:28:15.950Z",
+          "rawMarkdown": "@ryanholbrook any update on this? Thanks",
+          "content": "<p><a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a> any update on this? Thanks</p>",
+          "replies": [
+            {
+              "id": 3530709,
+              "postDate": "2026-09-30T18:32:23.863Z",
+              "rawMarkdown": "It's incoming.",
+              "content": "<p>It's incoming.</p>",
+              "parent": {},
+              "author": {
+                "displayName": "Ryan Holbrook",
+                "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+                "url": "/ryanholbrook",
+                "tier": "STAFF",
+                "id": 2003505,
+                "progressionOptOut": false
+              },
+              "authorType": "ADMIN",
+              "votes": {
+                "totalVotes": 2,
+                "canUpvote": true,
+                "totalUpvotes": 2
+              },
+              "kernelVersion": 0,
+              "feedbackTrackingData": {},
+              "isThankYou": false,
+              "reactions": [
+                {
+                  "emoji": "LOVE",
+                  "featuredUserNames": [
+                    "caleboleary",
+                    "moazeldegwy"
+                  ],
+                  "userCount": 2
+                }
+              ],
+              "teamUpInfo": {
+                "teamLeader": {
+                  "displayName": "Ryan Holbrook",
+                  "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+                  "url": "/ryanholbrook",
+                  "userName": "ryanholbrook",
+                  "tier": "STAFF",
+                  "id": 2003505,
+                  "profileUrl": "/ryanholbrook",
+                  "performanceTier": "STAFF",
+                  "userId": 2003505,
+                  "progressionOptOut": false
+                },
+                "intro": ""
+              }
+            }
+          ],
+          "parent": {},
+          "author": {
+            "displayName": "CTO",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/3279985-kg.jpg",
+            "url": "/caleboleary",
+            "tier": "CONTRIBUTOR",
+            "id": 3279985,
+            "progressionOptOut": false
+          },
+          "authorType": "COMMENT",
+          "votes": {
+            "canUpvote": true
+          },
+          "kernelVersion": 0,
+          "competitionRanking": 90,
+          "feedbackTrackingData": {},
+          "isThankYou": false,
+          "teamUpInfo": {
+            "teamLeader": {
+              "displayName": "CTO",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/3279985-kg.jpg",
+              "url": "/caleboleary",
+              "userName": "caleboleary",
+              "tier": "CONTRIBUTOR",
+              "id": 3279985,
+              "profileUrl": "/caleboleary",
+              "performanceTier": "CONTRIBUTOR",
+              "userId": 3279985,
+              "progressionOptOut": false
+            },
+            "intro": ""
+          }
+        },
+        {
+          "id": 3531449,
+          "postDate": "2026-10-01T21:35:47.470Z",
+          "rawMarkdown": "Yeah I was wondering why my SFT was rederiving its own reasoning so much. ",
+          "content": "<p>Yeah I was wondering why my SFT was rederiving its own reasoning so much. </p>",
+          "parent": {},
+          "author": {
+            "displayName": "TheFusionCube",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+            "url": "/thefusioncube",
+            "tier": "CONTRIBUTOR",
+            "id": 35891656,
+            "progressionOptOut": false
+          },
+          "authorType": "COMMENT",
+          "votes": {
+            "canUpvote": true
+          },
+          "kernelVersion": 0,
+          "competitionRanking": 1166,
+          "feedbackTrackingData": {},
+          "isThankYou": false,
+          "teamUpInfo": {
+            "teamLeader": {
+              "displayName": "TheFusionCube",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+              "url": "/thefusioncube",
+              "userName": "thefusioncube",
+              "tier": "CONTRIBUTOR",
+              "id": 35891656,
+              "profileUrl": "/thefusioncube",
+              "performanceTier": "CONTRIBUTOR",
+              "userId": 35891656,
+              "progressionOptOut": false
+            },
+            "intro": ""
+          }
+        }
+      ],
+      "parent": {},
+      "author": {
+        "displayName": "Ryan Holbrook",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+        "url": "/ryanholbrook",
+        "tier": "STAFF",
+        "id": 2003505,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "totalVotes": 3,
+        "canUpvote": true,
+        "totalUpvotes": 3
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "userName": "ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "profileUrl": "/ryanholbrook",
+          "performanceTier": "STAFF",
+          "userId": 2003505,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    }
+  },
+  {
+    "topic_id": 744354,
+    "title": "Thinking mode drops the model's thoughts between tool calls (vLLM ignores `reasoning_content`). Will the scoring environment be patched?",
+    "message": {
+      "id": 3530709,
+      "postDate": "2026-09-30T18:32:23.863Z",
+      "rawMarkdown": "It's incoming.",
+      "content": "<p>It's incoming.</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Ryan Holbrook",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+        "url": "/ryanholbrook",
+        "tier": "STAFF",
+        "id": 2003505,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "totalVotes": 2,
+        "canUpvote": true,
+        "totalUpvotes": 2
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "reactions": [
+        {
+          "emoji": "LOVE",
+          "featuredUserNames": [
+            "caleboleary",
+            "moazeldegwy"
+          ],
+          "userCount": 2
+        }
+      ],
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "userName": "ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "profileUrl": "/ryanholbrook",
+          "performanceTier": "STAFF",
+          "userId": 2003505,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    }
+  },
+  {
+    "topic_id": 744354,
+    "title": "Thinking mode drops the model's thoughts between tool calls (vLLM ignores `reasoning_content`). Will the scoring environment be patched?",
+    "message": {
+      "id": 3531244,
+      "postDate": "2026-10-01T14:46:47.410Z",
+      "rawMarkdown": "Yes, this is unambiguously a bug. The fix should be in the current wheelhouse.",
+      "content": "<p>Yes, this is unambiguously a bug. The fix should be in the current wheelhouse.</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Ryan Holbrook",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+        "url": "/ryanholbrook",
+        "tier": "STAFF",
+        "id": 2003505,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "totalVotes": 2,
+        "canUpvote": true,
+        "totalUpvotes": 2
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "userName": "ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "profileUrl": "/ryanholbrook",
+          "performanceTier": "STAFF",
+          "userId": 2003505,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    }
+  },
+  {
+    "topic_id": 744825,
+    "title": "Test-file reset before test_patch is a no-op (git checkout aborts on missing pathspecs)",
+    "message": {
+      "id": 3531354,
+      "postDate": "2026-10-01T18:06:11.787Z",
+      "rawMarkdown": "Addressing now.",
+      "content": "<p>Addressing now.</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Ryan Holbrook",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+        "url": "/ryanholbrook",
+        "tier": "STAFF",
+        "id": 2003505,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "totalVotes": 2,
+        "canUpvote": true,
+        "totalUpvotes": 2
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "reactions": [
+        {
+          "emoji": "THANK_YOU",
+          "featuredUserNames": [
+            "isakatsuyoshi"
+          ],
+          "userCount": 1
+        }
+      ],
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "userName": "ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "profileUrl": "/ryanholbrook",
+          "performanceTier": "STAFF",
+          "userId": 2003505,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    }
+  },
+  {
+    "topic_id": 744678,
+    "title": "\"'>' not supported between instances of 'int' and 'str'\". Is this same for everyone?",
+    "message": {
+      "id": 3530769,
+      "postDate": "2026-09-30T20:33:55.190Z",
+      "rawMarkdown": "Fix incoming.",
+      "content": "<p>Fix incoming.</p>",
+      "replies": [
+        {
+          "id": 3531265,
+          "postDate": "2026-10-01T15:18:32.503Z",
+          "rawMarkdown": "@ryanholbrook is this because of adk or vllm?",
+          "content": "<p><a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a> is this because of adk or vllm?</p>",
+          "parent": {},
+          "author": {
+            "displayName": "RISHAV KUMAR",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/12607271-kg.png?t=2026-04-07-19-13-07",
+            "url": "/atomstack001",
+            "tier": "CONTRIBUTOR",
+            "id": 12607271,
+            "progressionOptOut": false
+          },
+          "authorType": "TOPIC",
+          "votes": {
+            "canUpvote": true
+          },
+          "kernelVersion": 0,
+          "feedbackTrackingData": {},
+          "isThankYou": false,
+          "teamUpInfo": {
+            "enabled": true,
+            "teamLeader": {
+              "displayName": "RISHAV KUMAR",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/12607271-kg.png?t=2026-04-07-19-13-07",
+              "url": "/atomstack001",
+              "userName": "atomstack001",
+              "tier": "CONTRIBUTOR",
+              "id": 12607271,
+              "profileUrl": "/atomstack001",
+              "performanceTier": "CONTRIBUTOR",
+              "userId": 12607271,
+              "progressionOptOut": false
+            },
+            "intro": ""
+          }
+        },
+        {
+          "id": 3531266,
+          "postDate": "2026-10-01T15:22:02.333Z",
+          "rawMarkdown": "@ryanholbrook I have setup this whole repo locally, sicen the repo deps are changing can u recommend how to patch these issues in my local after the fix is done?",
+          "content": "<p><a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a> I have setup this whole repo locally, sicen the repo deps are changing can u recommend how to patch these issues in my local after the fix is done?</p>",
+          "replies": [
+            {
+              "id": 3531314,
+              "postDate": "2026-10-01T17:02:45.830Z",
+              "rawMarkdown": "The fix should be in the current wheelhouse. I recommend just updating the packages.",
+              "content": "<p>The fix should be in the current wheelhouse. I recommend just updating the packages.</p>",
+              "parent": {},
+              "author": {
+                "displayName": "Ryan Holbrook",
+                "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+                "url": "/ryanholbrook",
+                "tier": "STAFF",
+                "id": 2003505,
+                "progressionOptOut": false
+              },
+              "authorType": "ADMIN",
+              "votes": {
+                "canUpvote": true
+              },
+              "kernelVersion": 0,
+              "feedbackTrackingData": {},
+              "isThankYou": false,
+              "teamUpInfo": {
+                "teamLeader": {
+                  "displayName": "Ryan Holbrook",
+                  "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+                  "url": "/ryanholbrook",
+                  "userName": "ryanholbrook",
+                  "tier": "STAFF",
+                  "id": 2003505,
+                  "profileUrl": "/ryanholbrook",
+                  "performanceTier": "STAFF",
+                  "userId": 2003505,
+                  "progressionOptOut": false
+                },
+                "intro": ""
+              }
+            }
+          ],
+          "parent": {},
+          "author": {
+            "displayName": "RISHAV KUMAR",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/12607271-kg.png?t=2026-04-07-19-13-07",
+            "url": "/atomstack001",
+            "tier": "CONTRIBUTOR",
+            "id": 12607271,
+            "progressionOptOut": false
+          },
+          "authorType": "TOPIC",
+          "votes": {
+            "canUpvote": true
+          },
+          "kernelVersion": 0,
+          "feedbackTrackingData": {},
+          "isThankYou": false,
+          "teamUpInfo": {
+            "enabled": true,
+            "teamLeader": {
+              "displayName": "RISHAV KUMAR",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/12607271-kg.png?t=2026-04-07-19-13-07",
+              "url": "/atomstack001",
+              "userName": "atomstack001",
+              "tier": "CONTRIBUTOR",
+              "id": 12607271,
+              "profileUrl": "/atomstack001",
+              "performanceTier": "CONTRIBUTOR",
+              "userId": 12607271,
+              "progressionOptOut": false
+            },
+            "intro": ""
+          }
+        }
+      ],
+      "parent": {},
+      "author": {
+        "displayName": "Ryan Holbrook",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+        "url": "/ryanholbrook",
+        "tier": "STAFF",
+        "id": 2003505,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "canUpvote": true
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "userName": "ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "profileUrl": "/ryanholbrook",
+          "performanceTier": "STAFF",
+          "userId": 2003505,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    }
+  },
+  {
+    "topic_id": 744678,
+    "title": "\"'>' not supported between instances of 'int' and 'str'\". Is this same for everyone?",
+    "message": {
+      "id": 3531314,
+      "postDate": "2026-10-01T17:02:45.830Z",
+      "rawMarkdown": "The fix should be in the current wheelhouse. I recommend just updating the packages.",
+      "content": "<p>The fix should be in the current wheelhouse. I recommend just updating the packages.</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Ryan Holbrook",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+        "url": "/ryanholbrook",
+        "tier": "STAFF",
+        "id": 2003505,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "canUpvote": true
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "userName": "ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "profileUrl": "/ryanholbrook",
+          "performanceTier": "STAFF",
+          "userId": 2003505,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    }
+  },
+  {
+    "topic_id": 744692,
+    "title": "Compaction can't trigger at token_threshold 32,768, and overflow then discards the patch (follow-up to #743456)",
+    "message": {
+      "id": 3530752,
+      "postDate": "2026-09-30T19:58:49.873Z",
+      "rawMarkdown": "Thanks, I will look into it.",
+      "content": "<p>Thanks, I will look into it.</p>",
+      "replies": [
+        {
+          "id": 3530866,
+          "postDate": "2026-10-01T00:00:31.713Z",
+          "rawMarkdown": "Any update? Current harness readme says (since sep 25 update).\n\n>Compaction (EventsCompactionConfig):\n\n>compaction_interval = 5\n\n>token_threshold = 14,336\n\nWhich matches public notebook and that's the value I used in local runs.\n\nBut yeah +1 on confirmation. Would be great if you can tell which value scorer matches, updated 14,336 or still 32,768",
+          "content": "<p>Any update? Current harness readme says (since sep 25 update).</p>\n<blockquote>\n  <p>Compaction (EventsCompactionConfig):</p>\n  <p>compaction_interval = 5</p>\n  <p>token_threshold = 14,336</p>\n</blockquote>\n<p>Which matches public notebook and that's the value I used in local runs.</p>\n<p>But yeah +1 on confirmation. Would be great if you can tell which value scorer matches, updated 14,336 or still 32,768</p>",
+          "parent": {},
+          "author": {
+            "displayName": "Oleksii Zhukov",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/6082025-kg.png?t=2026-08-01-19-49-46",
+            "url": "/zhukovoleksiy",
+            "tier": "MASTER",
+            "id": 6082025,
+            "progressionOptOut": false
+          },
+          "authorType": "COMMENT",
+          "votes": {
+            "totalVotes": 2,
+            "canUpvote": true,
+            "totalUpvotes": 2
+          },
+          "kernelVersion": 0,
+          "competitionRanking": 281,
+          "feedbackTrackingData": {},
+          "isThankYou": false,
+          "teamUpInfo": {
+            "teamLeader": {
+              "displayName": "Oleksii Zhukov",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/6082025-kg.png?t=2026-08-01-19-49-46",
+              "url": "/zhukovoleksiy",
+              "userName": "zhukovoleksiy",
+              "tier": "MASTER",
+              "id": 6082025,
+              "profileUrl": "/zhukovoleksiy",
+              "performanceTier": "MASTER",
+              "userId": 6082025,
+              "progressionOptOut": false
+            },
+            "intro": ""
+          }
+        },
+        {
+          "id": 3530875,
+          "postDate": "2026-10-01T00:23:18.813Z",
+          "rawMarkdown": "I got the same issue. Wasted a daily submission 😭",
+          "content": "<p>I got the same issue. Wasted a daily submission 😭</p>",
+          "parent": {},
+          "author": {
+            "displayName": "Dat LQ.",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/17180946-kg.jpeg?t=2023-10-22-08-20-33",
+            "url": "/nightfurylqd",
+            "tier": "CONTRIBUTOR",
+            "id": 17180946,
+            "progressionOptOut": false
+          },
+          "authorType": "COMMENT",
+          "votes": {
+            "totalVotes": 1,
+            "canUpvote": true,
+            "totalUpvotes": 1
+          },
+          "kernelVersion": 0,
+          "competitionRanking": 1405,
+          "feedbackTrackingData": {},
+          "isThankYou": false,
+          "teamUpInfo": {
+            "teamLeader": {
+              "displayName": "Dat LQ.",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/17180946-kg.jpeg?t=2023-10-22-08-20-33",
+              "url": "/nightfurylqd",
+              "userName": "nightfurylqd",
+              "tier": "CONTRIBUTOR",
+              "id": 17180946,
+              "profileUrl": "/nightfurylqd",
+              "performanceTier": "CONTRIBUTOR",
+              "userId": 17180946,
+              "progressionOptOut": false
+            },
+            "intro": ""
+          }
+        }
+      ],
+      "parent": {},
+      "author": {
+        "displayName": "Ryan Holbrook",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+        "url": "/ryanholbrook",
+        "tier": "STAFF",
+        "id": 2003505,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "totalVotes": 3,
+        "canUpvote": true,
+        "totalUpvotes": 3
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "userName": "ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "profileUrl": "/ryanholbrook",
+          "performanceTier": "STAFF",
+          "userId": 2003505,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    }
+  },
+  {
+    "topic_id": 744566,
+    "title": "thinking_budget and seed are missing from HTTP requests in my wheelhouse test",
+    "message": {
+      "id": 3530630,
+      "postDate": "2026-09-30T15:52:50.227Z",
+      "rawMarkdown": "Hi @veronikayaitskikh,\n\nThanks for the heads up. I will patch.",
+      "content": "<p>Hi <a href=\"/veronikayaitskikh\" target=\"_blank\">@veronikayaitskikh</a>,</p>\n<p>Thanks for the heads up. I will patch.</p>",
+      "replies": [
+        {
+          "id": 3530731,
+          "postDate": "2026-09-30T19:10:59.720Z",
+          "rawMarkdown": "How we can reproduce that patch in our systems?",
+          "content": "<p>How we can reproduce that patch in our systems?</p>",
+          "replies": [
+            {
+              "id": 3530753,
+              "postDate": "2026-09-30T19:59:18.313Z",
+              "rawMarkdown": "The most recent wheelhouse dataset should have the patches.",
+              "content": "<p>The most recent wheelhouse dataset should have the patches.</p>",
+              "parent": {},
+              "author": {
+                "displayName": "Ryan Holbrook",
+                "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+                "url": "/ryanholbrook",
+                "tier": "STAFF",
+                "id": 2003505,
+                "progressionOptOut": false
+              },
+              "authorType": "ADMIN",
+              "votes": {
+                "canUpvote": true
+              },
+              "kernelVersion": 0,
+              "feedbackTrackingData": {},
+              "isThankYou": false,
+              "teamUpInfo": {
+                "teamLeader": {
+                  "displayName": "Ryan Holbrook",
+                  "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+                  "url": "/ryanholbrook",
+                  "userName": "ryanholbrook",
+                  "tier": "STAFF",
+                  "id": 2003505,
+                  "profileUrl": "/ryanholbrook",
+                  "performanceTier": "STAFF",
+                  "userId": 2003505,
+                  "progressionOptOut": false
+                },
+                "intro": ""
+              }
+            }
+          ],
+          "parent": {},
+          "author": {
+            "displayName": "RISHAV KUMAR",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/12607271-kg.png?t=2026-04-07-19-13-07",
+            "url": "/atomstack001",
+            "tier": "CONTRIBUTOR",
+            "id": 12607271,
+            "progressionOptOut": false
+          },
+          "authorType": "COMMENT",
+          "votes": {
+            "canUpvote": true
+          },
+          "kernelVersion": 0,
+          "feedbackTrackingData": {},
+          "isThankYou": false,
+          "teamUpInfo": {
+            "enabled": true,
+            "teamLeader": {
+              "displayName": "RISHAV KUMAR",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/12607271-kg.png?t=2026-04-07-19-13-07",
+              "url": "/atomstack001",
+              "userName": "atomstack001",
+              "tier": "CONTRIBUTOR",
+              "id": 12607271,
+              "profileUrl": "/atomstack001",
+              "performanceTier": "CONTRIBUTOR",
+              "userId": 12607271,
+              "progressionOptOut": false
+            },
+            "intro": ""
+          }
+        }
+      ],
+      "parent": {},
+      "author": {
+        "displayName": "Ryan Holbrook",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+        "url": "/ryanholbrook",
+        "tier": "STAFF",
+        "id": 2003505,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "canUpvote": true
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "userName": "ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "profileUrl": "/ryanholbrook",
+          "performanceTier": "STAFF",
+          "userId": 2003505,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    }
+  },
+  {
+    "topic_id": 744566,
+    "title": "thinking_budget and seed are missing from HTTP requests in my wheelhouse test",
+    "message": {
+      "id": 3530753,
+      "postDate": "2026-09-30T19:59:18.313Z",
+      "rawMarkdown": "The most recent wheelhouse dataset should have the patches.",
+      "content": "<p>The most recent wheelhouse dataset should have the patches.</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Ryan Holbrook",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+        "url": "/ryanholbrook",
+        "tier": "STAFF",
+        "id": 2003505,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "canUpvote": true
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "userName": "ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "profileUrl": "/ryanholbrook",
+          "performanceTier": "STAFF",
+          "userId": 2003505,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    }
+  },
+  {
+    "topic_id": 744577,
+    "title": "ONLY ONE search_similar_code call can blow your context up",
+    "message": {
+      "id": 3530710,
+      "postDate": "2026-09-30T18:33:13.853Z",
+      "rawMarkdown": "Thanks for the heads up. I will limit to `max_stdout_chars` like other tools. Glad you're liking the graph tools!",
+      "content": "<p>Thanks for the heads up. I will limit to <code>max_stdout_chars</code> like other tools. Glad you're liking the graph tools!</p>",
+      "replies": [
+        {
+          "id": 3530724,
+          "postDate": "2026-09-30T19:06:50.233Z",
+          "rawMarkdown": "How we can limit in our local setup ?",
+          "content": "<p>How we can limit in our local setup ?</p>",
+          "parent": {},
+          "author": {
+            "displayName": "RISHAV KUMAR",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/12607271-kg.png?t=2026-04-07-19-13-07",
+            "url": "/atomstack001",
+            "tier": "CONTRIBUTOR",
+            "id": 12607271,
+            "progressionOptOut": false
+          },
+          "authorType": "COMMENT",
+          "votes": {
+            "canUpvote": true
+          },
+          "kernelVersion": 0,
+          "feedbackTrackingData": {},
+          "isThankYou": false,
+          "teamUpInfo": {
+            "enabled": true,
+            "teamLeader": {
+              "displayName": "RISHAV KUMAR",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/12607271-kg.png?t=2026-04-07-19-13-07",
+              "url": "/atomstack001",
+              "userName": "atomstack001",
+              "tier": "CONTRIBUTOR",
+              "id": 12607271,
+              "profileUrl": "/atomstack001",
+              "performanceTier": "CONTRIBUTOR",
+              "userId": 12607271,
+              "progressionOptOut": false
+            },
+            "intro": ""
+          }
+        }
+      ],
+      "parent": {},
+      "author": {
+        "displayName": "Ryan Holbrook",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+        "url": "/ryanholbrook",
+        "tier": "STAFF",
+        "id": 2003505,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "canUpvote": true
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "reactions": [
+        {
+          "emoji": "THANK_YOU",
+          "featuredUserNames": [
+            "atomstack001"
+          ],
+          "userCount": 1
+        }
+      ],
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "userName": "ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "profileUrl": "/ryanholbrook",
+          "performanceTier": "STAFF",
+          "userId": 2003505,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    }
+  },
+  {
+    "topic_id": 743508,
+    "title": "LoRA adapters are silently wiped in the patched vLLM 0.19.1 (Gemma4 decoder layers registered twice)",
+    "message": {
+      "id": 3530598,
+      "postDate": "2026-09-30T14:34:38.550Z",
+      "rawMarkdown": "1. The zeroing fix landed in v23 of the wheelhouse dataset (now on v25). You might check that your notebook has the most recent version.\n2. Yes, it should. `discover_adapters` expects the submission root, so make sure you're passing that and not the adapter directory.",
+      "content": "<ol>\n<li>The zeroing fix landed in v23 of the wheelhouse dataset (now on v25). You might check that your notebook has the most recent version.</li>\n<li>Yes, it should. <code>discover_adapters</code> expects the submission root, so make sure you're passing that and not the adapter directory.</li>\n</ol>",
+      "parent": {},
+      "author": {
+        "displayName": "Ryan Holbrook",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+        "url": "/ryanholbrook",
+        "tier": "STAFF",
+        "id": 2003505,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "canUpvote": true
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "userName": "ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "profileUrl": "/ryanholbrook",
+          "performanceTier": "STAFF",
+          "userId": 2003505,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    }
+  },
+  {
+    "topic_id": 743508,
+    "title": "LoRA adapters are silently wiped in the patched vLLM 0.19.1 (Gemma4 decoder layers registered twice)",
+    "message": {
+      "id": 3528725,
+      "postDate": "2026-09-26T11:19:21.103Z",
+      "rawMarkdown": "Thanks for the report. I will address.",
+      "content": "<p>Thanks for the report. I will address.</p>",
+      "replies": [
+        {
+          "id": 3530558,
+          "postDate": "2026-09-30T12:53:50.507Z",
+          "rawMarkdown": "Is there an update on this @ryanholbrook? Appreciate all the help but I think this is a serious bug for anyone attempting to use adapters.",
+          "content": "<p>Is there an update on this <a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a>? Appreciate all the help but I think this is a serious bug for anyone attempting to use adapters.</p>",
+          "replies": [
+            {
+              "id": 3530599,
+              "postDate": "2026-09-30T14:34:58.417Z",
+              "rawMarkdown": "It should be fixed in the most recent wheelhouse version, but please let me know if it seems otherwise.",
+              "content": "<p>It should be fixed in the most recent wheelhouse version, but please let me know if it seems otherwise.</p>",
+              "parent": {},
+              "author": {
+                "displayName": "Ryan Holbrook",
+                "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+                "url": "/ryanholbrook",
+                "tier": "STAFF",
+                "id": 2003505,
+                "progressionOptOut": false
+              },
+              "authorType": "ADMIN",
+              "votes": {
+                "canUpvote": true
+              },
+              "kernelVersion": 0,
+              "feedbackTrackingData": {},
+              "isThankYou": false,
+              "teamUpInfo": {
+                "teamLeader": {
+                  "displayName": "Ryan Holbrook",
+                  "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+                  "url": "/ryanholbrook",
+                  "userName": "ryanholbrook",
+                  "tier": "STAFF",
+                  "id": 2003505,
+                  "profileUrl": "/ryanholbrook",
+                  "performanceTier": "STAFF",
+                  "userId": 2003505,
+                  "progressionOptOut": false
+                },
+                "intro": ""
+              }
+            }
+          ],
+          "parent": {},
+          "author": {
+            "displayName": "Ayush Thakur",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2212893-kg.jpg?t=2023-09-12-07-15-57",
+            "url": "/ayuraj",
+            "tier": "MASTER",
+            "id": 2212893,
+            "progressionOptOut": false
+          },
+          "authorType": "COMMENT",
+          "votes": {
+            "canUpvote": true
+          },
+          "kernelVersion": 0,
+          "feedbackTrackingData": {},
+          "isThankYou": false,
+          "teamUpInfo": {
+            "teamLeader": {
+              "displayName": "Ayush Thakur",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2212893-kg.jpg?t=2023-09-12-07-15-57",
+              "url": "/ayuraj",
+              "userName": "ayuraj",
+              "tier": "MASTER",
+              "id": 2212893,
+              "profileUrl": "/ayuraj",
+              "performanceTier": "MASTER",
+              "userId": 2212893,
+              "progressionOptOut": false
+            },
+            "intro": ""
+          }
+        }
+      ],
+      "parent": {},
+      "author": {
+        "displayName": "Ryan Holbrook",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+        "url": "/ryanholbrook",
+        "tier": "STAFF",
+        "id": 2003505,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "canUpvote": true
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "userName": "ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "profileUrl": "/ryanholbrook",
+          "performanceTier": "STAFF",
+          "userId": 2003505,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    }
+  },
+  {
+    "topic_id": 743508,
+    "title": "LoRA adapters are silently wiped in the patched vLLM 0.19.1 (Gemma4 decoder layers registered twice)",
+    "message": {
+      "id": 3530599,
+      "postDate": "2026-09-30T14:34:58.417Z",
+      "rawMarkdown": "It should be fixed in the most recent wheelhouse version, but please let me know if it seems otherwise.",
+      "content": "<p>It should be fixed in the most recent wheelhouse version, but please let me know if it seems otherwise.</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Ryan Holbrook",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+        "url": "/ryanholbrook",
+        "tier": "STAFF",
+        "id": 2003505,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "canUpvote": true
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "userName": "ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "profileUrl": "/ryanholbrook",
+          "performanceTier": "STAFF",
+          "userId": 2003505,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    }
+  },
+  {
+    "topic_id": 744370,
+    "title": "FastApi tasks fail even with the gold patch, typing_inspection seems to be missing",
+    "message": {
+      "id": 3530187,
+      "postDate": "2026-09-29T18:25:19.877Z",
+      "rawMarkdown": "I can confirm that the hidden tasks validate at 100% with a \"gold patch\" submission.",
+      "content": "<p>I can confirm that the hidden tasks validate at 100% with a \"gold patch\" submission.</p>",
+      "replies": [
+        {
+          "id": 3530263,
+          "postDate": "2026-09-29T20:56:51.750Z",
+          "rawMarkdown": "Could you please fix the training data, inline snapshots are missing in a lot of the fastapi tasks. ",
+          "content": "<p>Could you please fix the training data, inline snapshots are missing in a lot of the fastapi tasks. </p>",
+          "parent": {},
+          "author": {
+            "displayName": "Ritwika Kancharla",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/30571045-kg.png?t=2026-02-03-02-51-14",
+            "url": "/ritwikakancharla",
+            "tier": "CONTRIBUTOR",
+            "id": 30571045,
+            "progressionOptOut": false
+          },
+          "authorType": "COMMENT",
+          "votes": {
+            "totalVotes": 1,
+            "canUpvote": true,
+            "totalUpvotes": 1
+          },
+          "kernelVersion": 0,
+          "competitionRanking": 100,
+          "feedbackTrackingData": {},
+          "isThankYou": false,
+          "teamUpInfo": {
+            "teamLeader": {
+              "displayName": "Ritwika Kancharla",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/30571045-kg.png?t=2026-02-03-02-51-14",
+              "url": "/ritwikakancharla",
+              "userName": "ritwikakancharla",
+              "tier": "CONTRIBUTOR",
+              "id": 30571045,
+              "profileUrl": "/ritwikakancharla",
+              "performanceTier": "CONTRIBUTOR",
+              "userId": 30571045,
+              "progressionOptOut": false
+            },
+            "intro": ""
+          }
+        }
+      ],
+      "parent": {},
+      "author": {
+        "displayName": "Ryan Holbrook",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+        "url": "/ryanholbrook",
+        "tier": "STAFF",
+        "id": 2003505,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "totalVotes": 1,
+        "canUpvote": true,
+        "totalUpvotes": 1
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "userName": "ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "profileUrl": "/ryanholbrook",
+          "performanceTier": "STAFF",
+          "userId": 2003505,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    }
+  },
+  {
+    "topic_id": 742807,
+    "title": "Clarification on distillation from external LLMs",
+    "message": {
+      "id": 3530102,
+      "postDate": "2026-09-29T14:58:14.727Z",
+      "rawMarkdown": "Hello and thank you for your question and your patience. As long as you are using those models in accordance with their model license terms, and the output you're using to submit to that competition doesn't 'conflict with the license requirement of the rules of this competition, you may use them. ",
+      "content": "<p>Hello and thank you for your question and your patience. As long as you are using those models in accordance with their model license terms, and the output you're using to submit to that competition doesn't 'conflict with the license requirement of the rules of this competition, you may use them. </p>",
+      "replies": [
+        {
+          "id": 3530104,
+          "postDate": "2026-09-29T15:10:11.167Z",
+          "rawMarkdown": "So models like Claude and GPT are off the table, but Muse and Chinese aren’t?",
+          "content": "<p>So models like Claude and GPT are off the table, but Muse and Chinese aren’t?</p>",
+          "parent": {},
+          "author": {
+            "displayName": "JohnParkerson",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+            "url": "/johnparkerson",
+            "tier": "CONTRIBUTOR",
+            "id": 36840669,
+            "progressionOptOut": false
+          },
+          "authorType": "COMMENT",
+          "votes": {
+            "totalVotes": -1,
+            "canUpvote": true
+          },
+          "kernelVersion": 0,
+          "competitionRanking": 530,
+          "feedbackTrackingData": {},
+          "isThankYou": false,
+          "teamUpInfo": {
+            "teamLeader": {
+              "displayName": "JohnParkerson",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+              "url": "/johnparkerson",
+              "userName": "johnparkerson",
+              "tier": "CONTRIBUTOR",
+              "id": 36840669,
+              "profileUrl": "/johnparkerson",
+              "performanceTier": "CONTRIBUTOR",
+              "userId": 36840669,
+              "progressionOptOut": false
+            },
+            "intro": ""
+          }
+        }
+      ],
+      "parent": {},
+      "author": {
+        "displayName": "Ashley Oldacre",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/8939556-kg.png?t=2025-08-22-16-55-54",
+        "url": "/ashleyoldacre",
+        "tier": "STAFF",
+        "id": 8939556,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "totalVotes": 3,
+        "canUpvote": true,
+        "totalUpvotes": 3
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isPinned": true,
+      "isThankYou": false,
+      "reactions": [
+        {
+          "emoji": "KAGGLE",
+          "featuredUserNames": [
+            "varunambadi"
+          ],
+          "userCount": 1
+        }
+      ],
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ashley Oldacre",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/8939556-kg.png?t=2025-08-22-16-55-54",
+          "url": "/ashleyoldacre",
+          "userName": "ashleyoldacre",
+          "tier": "STAFF",
+          "id": 8939556,
+          "profileUrl": "/ashleyoldacre",
+          "performanceTier": "STAFF",
+          "userId": 8939556,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    }
+  },
+  {
+    "topic_id": 742807,
+    "title": "Clarification on distillation from external LLMs",
+    "message": {
+      "id": 3527657,
+      "postDate": "2026-09-24T10:46:39.967Z",
+      "rawMarkdown": "Hi @cnumber,\n\nWe are confering and will have an answer for you soon.",
+      "content": "<p>Hi <a href=\"/cnumber\" target=\"_blank\">@cnumber</a>,</p>\n<p>We are confering and will have an answer for you soon.</p>",
+      "replies": [
+        {
+          "id": 3529121,
+          "postDate": "2026-09-27T12:02:33.733Z",
+          "rawMarkdown": "any updates? :) ",
+          "content": "<p>any updates? :) </p>",
+          "parent": {},
+          "author": {
+            "displayName": "whoami",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/3115479-kg.jpg",
+            "url": "/whoamircc",
+            "tier": "CONTRIBUTOR",
+            "id": 3115479,
+            "progressionOptOut": false
+          },
+          "authorType": "COMMENT",
+          "votes": {
+            "totalVotes": 3,
+            "canUpvote": true,
+            "totalUpvotes": 3
+          },
+          "kernelVersion": 0,
+          "competitionRanking": 730,
+          "feedbackTrackingData": {},
+          "isThankYou": false,
+          "reactions": [
+            {
+              "emoji": "KAGGLE",
+              "featuredUserNames": [
+                "tadityasasidhar"
+              ],
+              "userCount": 1
+            }
+          ],
+          "teamUpInfo": {
+            "teamLeader": {
+              "displayName": "whoami",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/3115479-kg.jpg",
+              "url": "/whoamircc",
+              "userName": "whoamircc",
+              "tier": "CONTRIBUTOR",
+              "id": 3115479,
+              "profileUrl": "/whoamircc",
+              "performanceTier": "CONTRIBUTOR",
+              "userId": 3115479,
+              "progressionOptOut": false
+            },
+            "intro": ""
+          }
+        },
+        {
+          "id": 3529944,
+          "postDate": "2026-09-29T08:14:11.043Z",
+          "rawMarkdown": "> Hi @cnumber,\n> \n> We are confering and will have an answer for you soon.\n\nAny updates? If not, I’ll just start with GLM 5.3",
+          "content": "<blockquote>\n  <p>Hi <a href=\"/cnumber\" target=\"_blank\">@cnumber</a>,</p>\n  <p>We are confering and will have an answer for you soon.</p>\n</blockquote>\n<p>Any updates? If not, I’ll just start with GLM 5.3</p>",
+          "parent": {},
+          "author": {
+            "displayName": "JohnParkerson",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+            "url": "/johnparkerson",
+            "tier": "CONTRIBUTOR",
+            "id": 36840669,
+            "progressionOptOut": false
+          },
+          "authorType": "COMMENT",
+          "votes": {
+            "canUpvote": true
+          },
+          "kernelVersion": 0,
+          "competitionRanking": 530,
+          "feedbackTrackingData": {},
+          "isThankYou": false,
+          "teamUpInfo": {
+            "teamLeader": {
+              "displayName": "JohnParkerson",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+              "url": "/johnparkerson",
+              "userName": "johnparkerson",
+              "tier": "CONTRIBUTOR",
+              "id": 36840669,
+              "profileUrl": "/johnparkerson",
+              "performanceTier": "CONTRIBUTOR",
+              "userId": 36840669,
+              "progressionOptOut": false
+            },
+            "intro": ""
+          }
+        }
+      ],
+      "parent": {},
+      "author": {
+        "displayName": "Ryan Holbrook",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+        "url": "/ryanholbrook",
+        "tier": "STAFF",
+        "id": 2003505,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "totalVotes": 5,
+        "canUpvote": true,
+        "totalUpvotes": 5
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "reactions": [
+        {
+          "emoji": "THANK_YOU",
+          "featuredUserNames": [
+            "ttahara",
+            "abdrah",
+            "agrover112",
+            "whoamircc",
+            "yeoyunsianggeremie",
+            "kevin1742064161",
+            "isakatsuyoshi",
+            "cnumber",
+            "fritzcremer",
+            "giulianodigiuseppe",
+            "dhruvpaidukle",
+            "chandramdutta",
+            "averywright",
+            "moazeldegwy",
+            "nightfurylqd",
+            "davis0178",
+            "masakishiraishi",
+            "shubhayug"
+          ],
+          "userCount": 18
+        },
+        {
+          "emoji": "YAY",
+          "featuredUserNames": [
+            "adithyagiri"
+          ],
+          "userCount": 1
+        },
+        {
+          "emoji": "LOVE",
+          "featuredUserNames": [
+            "tadityasasidhar",
+            "promptfail"
+          ],
+          "userCount": 2
+        }
+      ],
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "userName": "ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "profileUrl": "/ryanholbrook",
+          "performanceTier": "STAFF",
+          "userId": 2003505,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    }
+  },
+  {
+    "topic_id": 744259,
+    "title": "Reference patches fail for most FastAPI tasks in the public sandbox: are hidden tasks filtered?",
+    "message": {
+      "id": 3530086,
+      "postDate": "2026-09-29T14:06:43.420Z",
+      "rawMarkdown": "The tasks in the test set have been more rigorously filtered. I can confirm that a submission with \"gold patches\" validates at 100%. We will work on improving the training set.",
+      "content": "<p>The tasks in the test set have been more rigorously filtered. I can confirm that a submission with \"gold patches\" validates at 100%. We will work on improving the training set.</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Ryan Holbrook",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+        "url": "/ryanholbrook",
+        "tier": "STAFF",
+        "id": 2003505,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "totalVotes": 1,
+        "canUpvote": true,
+        "totalUpvotes": 1
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "reactions": [
+        {
+          "emoji": "THANK_YOU",
+          "featuredUserNames": [
+            "isakatsuyoshi",
+            "erhiteshkumar"
+          ],
+          "userCount": 2
+        }
+      ],
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "userName": "ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "profileUrl": "/ryanholbrook",
+          "performanceTier": "STAFF",
+          "userId": 2003505,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    }
+  },
+  {
+    "topic_id": 744258,
+    "title": "Does one scoring run cover both hidden partitions (~240 tasks) in the 12-hour window?",
+    "message": {
+      "id": 3530082,
+      "postDate": "2026-09-29T14:04:39.260Z",
+      "rawMarkdown": "There are ~120 tasks in the test set, or about 60 in each of the public and private splits. They are scored during the same 12-hour run.",
+      "content": "<p>There are ~120 tasks in the test set, or about 60 in each of the public and private splits. They are scored during the same 12-hour run.</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Ryan Holbrook",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+        "url": "/ryanholbrook",
+        "tier": "STAFF",
+        "id": 2003505,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "totalVotes": 2,
+        "canUpvote": true,
+        "totalUpvotes": 2
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "userName": "ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "profileUrl": "/ryanholbrook",
+          "performanceTier": "STAFF",
+          "userId": 2003505,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    }
+  },
+  {
+    "topic_id": 743964,
+    "title": "Clarifications on 12h overrun, ParallelAgent concurrency, LoRA loading, and self-generated training data",
+    "message": {
+      "id": 3529469,
+      "postDate": "2026-09-28T10:32:57.800Z",
+      "rawMarkdown": "- 12h overrun: Not yet. Budget per task using `eval_config.yaml`.\n- Parallel: I we don't support parallel calls.\n- LoRA: I applied a fix for LoRA loading yesterday. You can see the limits on rank and size in the getting started notebook and also in the `HARNESS_README.md`. There's also a total submission limit of 3GB.\n- Training data: Training on gemma-4-31b itself is fine. We'll try to have an answer for outputs from other models soon.",
+      "content": "<ul>\n<li>12h overrun: Not yet. Budget per task using <code>eval_config.yaml</code>.</li>\n<li>Parallel: I we don't support parallel calls.</li>\n<li>LoRA: I applied a fix for LoRA loading yesterday. You can see the limits on rank and size in the getting started notebook and also in the <code>HARNESS_README.md</code>. There's also a total submission limit of 3GB.</li>\n<li>Training data: Training on gemma-4-31b itself is fine. We'll try to have an answer for outputs from other models soon.</li>\n</ul>",
+      "replies": [
+        {
+          "id": 3529772,
+          "postDate": "2026-09-28T23:39:55.577Z",
+          "rawMarkdown": "Hi @ryanholbrook , thanks for the earlier answers. Two follow-up questions about the agent schema:\n\nCallbacks: SandboxedLlmAgentConfig accepts before_model_callbacks, after_model_callbacks, before_tool_callbacks and after_tool_callbacks (resolved by name from CallbackRegistry), but the registry seems to be empty in adk-submission 0.2.11. Are any callbacks registered in the scoring environment, or planned? For example, a pre-approved callback that stops an agent after N identical consecutive tool calls, or one that restarts the agent with a fresh context. In our traces, the most common failure of gemma-4-31b is repeating the same tool call many times until the time budget runs out.\nForcing tool calls: a model reply without a function call ends an LlmAgent. Is there a supported way to require a tool call on every turn (like tool_config / function-calling mode ANY in ADK), or is that intentionally not exposed?",
+          "content": "<p>Hi <a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a> , thanks for the earlier answers. Two follow-up questions about the agent schema:</p>\n<p>Callbacks: SandboxedLlmAgentConfig accepts before_model_callbacks, after_model_callbacks, before_tool_callbacks and after_tool_callbacks (resolved by name from CallbackRegistry), but the registry seems to be empty in adk-submission 0.2.11. Are any callbacks registered in the scoring environment, or planned? For example, a pre-approved callback that stops an agent after N identical consecutive tool calls, or one that restarts the agent with a fresh context. In our traces, the most common failure of gemma-4-31b is repeating the same tool call many times until the time budget runs out.\nForcing tool calls: a model reply without a function call ends an LlmAgent. Is there a supported way to require a tool call on every turn (like tool_config / function-calling mode ANY in ADK), or is that intentionally not exposed?</p>",
+          "parent": {},
+          "author": {
+            "displayName": "Tarun Singhal",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/11228484-kg.jpg?t=2024-06-28-18-22-55",
+            "url": "/singhaltarun",
+            "tier": "CONTRIBUTOR",
+            "id": 11228484,
+            "progressionOptOut": false
+          },
+          "authorType": "TOPIC",
+          "votes": {
+            "canUpvote": true
+          },
+          "kernelVersion": 0,
+          "competitionRanking": 61,
+          "feedbackTrackingData": {},
+          "isThankYou": false,
+          "teamUpInfo": {
+            "teamLeader": {
+              "displayName": "Tarun Singhal",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/11228484-kg.jpg?t=2024-06-28-18-22-55",
+              "url": "/singhaltarun",
+              "userName": "singhaltarun",
+              "tier": "CONTRIBUTOR",
+              "id": 11228484,
+              "profileUrl": "/singhaltarun",
+              "performanceTier": "CONTRIBUTOR",
+              "userId": 11228484,
+              "progressionOptOut": false
+            },
+            "intro": ""
+          }
+        }
+      ],
+      "parent": {},
+      "author": {
+        "displayName": "Ryan Holbrook",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+        "url": "/ryanholbrook",
+        "tier": "STAFF",
+        "id": 2003505,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "totalVotes": 1,
+        "canUpvote": true,
+        "totalUpvotes": 1
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "userName": "ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "profileUrl": "/ryanholbrook",
+          "performanceTier": "STAFF",
+          "userId": 2003505,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    }
+  },
+  {
+    "topic_id": 744070,
+    "title": "Can the scoring server load Gemma 4 LoRA adapters?",
+    "message": {
+      "id": 3529575,
+      "postDate": "2026-09-28T14:48:48.127Z",
+      "rawMarkdown": "We're using a patched version of vLLM 0.19, updated in the wheelhouse recently. You might try re-downloading or updating your wheelhouse dataset if you haven't recently. The [getting started](https://www.kaggle.com/code/ryanholbrook/getting-started-gemma-4-developer-agent) notebook appears to show it working.",
+      "content": "<p>We're using a patched version of vLLM 0.19, updated in the wheelhouse recently. You might try re-downloading or updating your wheelhouse dataset if you haven't recently. The <a href=\"https://www.kaggle.com/code/ryanholbrook/getting-started-gemma-4-developer-agent\" target=\"_blank\">getting started</a> notebook appears to show it working.</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Ryan Holbrook",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+        "url": "/ryanholbrook",
+        "tier": "STAFF",
+        "id": 2003505,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "totalVotes": 1,
+        "canUpvote": true,
+        "totalUpvotes": 1
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "userName": "ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "profileUrl": "/ryanholbrook",
+          "performanceTier": "STAFF",
+          "userId": 2003505,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    }
+  },
+  {
+    "topic_id": 743800,
+    "title": "Which google-adk versions and YAML features does the official evaluator support?",
+    "message": {
+      "id": 3529108,
+      "postDate": "2026-09-27T11:05:56.893Z",
+      "rawMarkdown": "1. I would take the set of packages in the wheelhouse dataset as the authoritative set of packages for this competition.\n2. We do not support for ADK 2.x features for this competition (maybe for future competitions). The scoring environment has a fixed set of packages installed which cannot be modified.\n3. The `HARNESS_README.md` has some of this information. Almost any kind of ADK 1.x configuration is allowed, as described in the [Agent Config spec](https://adk.dev/api-reference/agentconfig/). We block anything that allows arbitrary code execution.",
+      "content": "<ol>\n<li>I would take the set of packages in the wheelhouse dataset as the authoritative set of packages for this competition.</li>\n<li>We do not support for ADK 2.x features for this competition (maybe for future competitions). The scoring environment has a fixed set of packages installed which cannot be modified.</li>\n<li>The <code>HARNESS_README.md</code> has some of this information. Almost any kind of ADK 1.x configuration is allowed, as described in the <a href=\"https://adk.dev/api-reference/agentconfig/\" target=\"_blank\">Agent Config spec</a>. We block anything that allows arbitrary code execution.</li>\n</ol>",
+      "parent": {},
+      "author": {
+        "displayName": "Ryan Holbrook",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+        "url": "/ryanholbrook",
+        "tier": "STAFF",
+        "id": 2003505,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "totalVotes": 2,
+        "canUpvote": true,
+        "totalUpvotes": 2
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "userName": "ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "profileUrl": "/ryanholbrook",
+          "performanceTier": "STAFF",
+          "userId": 2003505,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    }
+  },
+  {
+    "topic_id": 743817,
+    "title": "Task Verification Question",
+    "message": {
+      "id": 3529102,
+      "postDate": "2026-09-27T10:58:17.303Z",
+      "rawMarkdown": "We did much more extensive reviewing and editing of the test tasks than the training tasks. \"Impossible\" tasks like you've described are one of the things we checked for. We also checked that a failing test case for the frontier model's patch was something it could have gotten correct with the information given. Unfortunately, time and resource constraints meant that we weren't able to do the same kind of review for the training set.",
+      "content": "<p>We did much more extensive reviewing and editing of the test tasks than the training tasks. \"Impossible\" tasks like you've described are one of the things we checked for. We also checked that a failing test case for the frontier model's patch was something it could have gotten correct with the information given. Unfortunately, time and resource constraints meant that we weren't able to do the same kind of review for the training set.</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Ryan Holbrook",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+        "url": "/ryanholbrook",
+        "tier": "STAFF",
+        "id": 2003505,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "totalVotes": 1,
+        "canUpvote": true,
+        "totalUpvotes": 1
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "userName": "ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "profileUrl": "/ryanholbrook",
+          "performanceTier": "STAFF",
+          "userId": 2003505,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    }
+  },
+  {
+    "topic_id": 743316,
+    "title": "The $65k prize is cheaper than the GPUs you need to win it...",
+    "message": {
+      "id": 3528212,
+      "postDate": "2026-09-25T16:42:04.003Z",
+      "rawMarkdown": "Hi @lordfirlefans,\n\nThanks for your feedback. We're working on adding support for the other Gemma 4 dense variants (e2b, e4b, and 12b) and possibly the 26b MoE and diffusion models as well. Those should hopefully be working early next week. We're also providing 4xL4 GPU (4x24GB) machines for competition participants. I hope you'll participate!",
+      "content": "<p>Hi <a href=\"/lordfirlefans\" target=\"_blank\">@lordfirlefans</a>,</p>\n<p>Thanks for your feedback. We're working on adding support for the other Gemma 4 dense variants (e2b, e4b, and 12b) and possibly the 26b MoE and diffusion models as well. Those should hopefully be working early next week. We're also providing 4xL4 GPU (4x24GB) machines for competition participants. I hope you'll participate!</p>",
+      "replies": [
+        {
+          "id": 3528449,
+          "postDate": "2026-09-26T05:00:12.550Z",
+          "rawMarkdown": "Is QLora feasible? I have a 64gb vram rig",
+          "content": "<p>Is QLora feasible? I have a 64gb vram rig</p>",
+          "parent": {},
+          "author": {
+            "displayName": "JohnParkerson",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+            "url": "/johnparkerson",
+            "tier": "CONTRIBUTOR",
+            "id": 36840669,
+            "progressionOptOut": false
+          },
+          "authorType": "COMMENT",
+          "votes": {
+            "canUpvote": true
+          },
+          "kernelVersion": 0,
+          "competitionRanking": 533,
+          "feedbackTrackingData": {},
+          "isThankYou": false,
+          "teamUpInfo": {
+            "teamLeader": {
+              "displayName": "JohnParkerson",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+              "url": "/johnparkerson",
+              "userName": "johnparkerson",
+              "tier": "CONTRIBUTOR",
+              "id": 36840669,
+              "profileUrl": "/johnparkerson",
+              "performanceTier": "CONTRIBUTOR",
+              "userId": 36840669,
+              "progressionOptOut": false
+            },
+            "intro": ""
+          }
+        }
+      ],
+      "parent": {},
+      "author": {
+        "displayName": "Ryan Holbrook",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+        "url": "/ryanholbrook",
+        "tier": "STAFF",
+        "id": 2003505,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "totalVotes": 10,
+        "canUpvote": true,
+        "totalUpvotes": 10
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "reactions": [
+        {
+          "emoji": "LOVE",
+          "featuredUserNames": [
+            "ankitmishra0",
+            "agrover112",
+            "jazivxt",
+            "skuro0315",
+            "nathanbangwa",
+            "adaluvu"
+          ],
+          "userCount": 6
+        },
+        {
+          "emoji": "YAY",
+          "featuredUserNames": [
+            "agrover112",
+            "jazivxt",
+            "adithyagiri",
+            "skuro0315",
+            "adaluvu",
+            "alisalmanrana",
+            "laoshansong",
+            "raydestar"
+          ],
+          "userCount": 8
+        }
+      ],
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "userName": "ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "profileUrl": "/ryanholbrook",
+          "performanceTier": "STAFF",
+          "userId": 2003505,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    }
+  },
+  {
+    "topic_id": 743213,
+    "title": "Official sample_submission scores FAILED — are submitted adapters meant to be registered as named LoRA modules?",
+    "message": {
+      "id": 3528095,
+      "postDate": "2026-09-25T10:55:01.093Z",
+      "rawMarkdown": "Hi @dominicjamil,\n\nI have a fix incoming. Will try to post a demo notebook later today.",
+      "content": "<p>Hi <a href=\"/dominicjamil\" target=\"_blank\">@dominicjamil</a>,</p>\n<p>I have a fix incoming. Will try to post a demo notebook later today.</p>",
+      "replies": [
+        {
+          "id": 3528283,
+          "postDate": "2026-09-25T18:56:08.387Z",
+          "rawMarkdown": "Confirming this is still happening as of just now (2026-09-26). I submitted the sample_submission/ bundle completely unmodified (byte-for-byte copy, adapters/main_lora and adapters/tool_lora included, no edits at all) and it also failed with the generic Kaggle Error, same as @dominicjamil reported ~8 hours ago. I also tried several of our own bundles beforehand (no adapters, various tool/sub-agent configurations, with and without eval_config.yaml) and every single one failed identically before this test, so it does not look specific to adapters or to any particular bundle structure on our end. Wanted to flag that the fix does not appear to be live yet, in case that's useful. Happy to share exact repro steps if it helps.",
+          "content": "<p>Confirming this is still happening as of just now (2026-09-26). I submitted the sample_submission/ bundle completely unmodified (byte-for-byte copy, adapters/main_lora and adapters/tool_lora included, no edits at all) and it also failed with the generic Kaggle Error, same as <a href=\"/dominicjamil\" target=\"_blank\">@dominicjamil</a> reported ~8 hours ago. I also tried several of our own bundles beforehand (no adapters, various tool/sub-agent configurations, with and without eval_config.yaml) and every single one failed identically before this test, so it does not look specific to adapters or to any particular bundle structure on our end. Wanted to flag that the fix does not appear to be live yet, in case that's useful. Happy to share exact repro steps if it helps.</p>",
+          "replies": [
+            {
+              "id": 3528298,
+              "postDate": "2026-09-25T19:31:19.847Z",
+              "rawMarkdown": "I'll check again. There might have been a data bundle that didn't catch the update. It's working in the Getting Started notebook, at least.",
+              "content": "<p>I'll check again. There might have been a data bundle that didn't catch the update. It's working in the Getting Started notebook, at least.</p>",
+              "parent": {},
+              "author": {
+                "displayName": "Ryan Holbrook",
+                "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+                "url": "/ryanholbrook",
+                "tier": "STAFF",
+                "id": 2003505,
+                "progressionOptOut": false
+              },
+              "authorType": "ADMIN",
+              "votes": {
+                "canUpvote": true
+              },
+              "kernelVersion": 0,
+              "feedbackTrackingData": {},
+              "isThankYou": false,
+              "teamUpInfo": {
+                "teamLeader": {
+                  "displayName": "Ryan Holbrook",
+                  "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+                  "url": "/ryanholbrook",
+                  "userName": "ryanholbrook",
+                  "tier": "STAFF",
+                  "id": 2003505,
+                  "profileUrl": "/ryanholbrook",
+                  "performanceTier": "STAFF",
+                  "userId": 2003505,
+                  "progressionOptOut": false
+                },
+                "intro": ""
+              }
+            },
+            {
+              "id": 3528735,
+              "postDate": "2026-09-26T11:29:34.573Z",
+              "rawMarkdown": "Are you referring to this notebook? https://www.kaggle.com/code/ryanholbrook/getting-started-gemma-4-developer-agent/notebook because I downloaded and submitted the submission.zip file to the leaderboard 2hrs ago and it crashed with this error just now: ![](https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F31268718%2Fb53344e9ed5ab42942b31fbe8ff68922%2FScreenshot%202026-09-26%20165754.png?generation=1790422130716964&alt=media) ",
+              "content": "<p>Are you referring to this notebook? <a href=\"https://www.kaggle.com/code/ryanholbrook/getting-started-gemma-4-developer-agent/notebook\" target=\"_blank\">https://www.kaggle.com/code/ryanholbrook/getting-started-gemma-4-developer-agent/notebook</a> because I downloaded and submitted the submission.zip file to the leaderboard 2hrs ago and it crashed with this error just now: <img src=\"https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F31268718%2Fb53344e9ed5ab42942b31fbe8ff68922%2FScreenshot%202026-09-26%20165754.png?generation=1790422130716964&amp;alt=media\" alt=\"\"> </p>",
+              "parent": {},
+              "author": {
+                "displayName": "Varun Ambadi",
+                "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+                "url": "/varunambadi",
+                "tier": "CONTRIBUTOR",
+                "id": 31268718,
+                "progressionOptOut": false
+              },
+              "authorType": "COMMENT",
+              "votes": {
+                "canUpvote": true
+              },
+              "kernelVersion": 0,
+              "competitionRanking": 289,
+              "feedbackTrackingData": {},
+              "isThankYou": false,
+              "teamUpInfo": {
+                "teamLeader": {
+                  "displayName": "Varun Ambadi",
+                  "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+                  "url": "/varunambadi",
+                  "userName": "varunambadi",
+                  "tier": "CONTRIBUTOR",
+                  "id": 31268718,
+                  "profileUrl": "/varunambadi",
+                  "performanceTier": "CONTRIBUTOR",
+                  "userId": 31268718,
+                  "progressionOptOut": false
+                },
+                "intro": ""
+              }
+            }
+          ],
+          "parent": {},
+          "author": {
+            "displayName": "SmitBailwal",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+            "url": "/smitbailwal",
+            "tier": "CONTRIBUTOR",
+            "id": 35132404,
+            "progressionOptOut": false
+          },
+          "authorType": "COMMENT",
+          "votes": {
+            "canUpvote": true
+          },
+          "kernelVersion": 0,
+          "competitionRanking": 913,
+          "feedbackTrackingData": {},
+          "isThankYou": false,
+          "teamUpInfo": {
+            "teamLeader": {
+              "displayName": "SmitBailwal",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+              "url": "/smitbailwal",
+              "userName": "smitbailwal",
+              "tier": "CONTRIBUTOR",
+              "id": 35132404,
+              "profileUrl": "/smitbailwal",
+              "performanceTier": "CONTRIBUTOR",
+              "userId": 35132404,
+              "progressionOptOut": false
+            },
+            "intro": ""
+          }
+        }
+      ],
+      "parent": {},
+      "author": {
+        "displayName": "Ryan Holbrook",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+        "url": "/ryanholbrook",
+        "tier": "STAFF",
+        "id": 2003505,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "totalVotes": 3,
+        "canUpvote": true,
+        "totalUpvotes": 3
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "userName": "ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "profileUrl": "/ryanholbrook",
+          "performanceTier": "STAFF",
+          "userId": 2003505,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    }
+  },
+  {
+    "topic_id": 743213,
+    "title": "Official sample_submission scores FAILED — are submitted adapters meant to be registered as named LoRA modules?",
+    "message": {
+      "id": 3528298,
+      "postDate": "2026-09-25T19:31:19.847Z",
+      "rawMarkdown": "I'll check again. There might have been a data bundle that didn't catch the update. It's working in the Getting Started notebook, at least.",
+      "content": "<p>I'll check again. There might have been a data bundle that didn't catch the update. It's working in the Getting Started notebook, at least.</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Ryan Holbrook",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+        "url": "/ryanholbrook",
+        "tier": "STAFF",
+        "id": 2003505,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "canUpvote": true
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "userName": "ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "profileUrl": "/ryanholbrook",
+          "performanceTier": "STAFF",
+          "userId": 2003505,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    }
+  },
+  {
+    "topic_id": 743213,
+    "title": "Official sample_submission scores FAILED — are submitted adapters meant to be registered as named LoRA modules?",
+    "message": {
+      "id": 3528740,
+      "postDate": "2026-09-26T11:36:00.160Z",
+      "rawMarkdown": "Thanks for the report. I think I've resolved this one, but please let me know.",
+      "content": "<p>Thanks for the report. I think I've resolved this one, but please let me know.</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Ryan Holbrook",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+        "url": "/ryanholbrook",
+        "tier": "STAFF",
+        "id": 2003505,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "canUpvote": true
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "userName": "ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "profileUrl": "/ryanholbrook",
+          "performanceTier": "STAFF",
+          "userId": 2003505,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    }
+  },
+  {
+    "topic_id": 743383,
+    "title": "Rules: Only LORA allowed?",
+    "message": {
+      "id": 3528316,
+      "postDate": "2026-09-25T20:33:42.767Z",
+      "rawMarkdown": "Our evaluation system in this competition is only able to accept LoRA adapters.",
+      "content": "<p>Our evaluation system in this competition is only able to accept LoRA adapters.</p>",
+      "replies": [
+        {
+          "id": 3528317,
+          "postDate": "2026-09-25T20:38:06.733Z",
+          "rawMarkdown": "So If I pre-train and post-train a 120B coder variant of gemma 4 you would not allow it into the competition? ",
+          "content": "<p>So If I pre-train and post-train a 120B coder variant of gemma 4 you would not allow it into the competition? </p>",
+          "replies": [
+            {
+              "id": 3528363,
+              "postDate": "2026-09-26T00:16:50.423Z",
+              "rawMarkdown": "I'm a competitor but here are the [Gemma Docs](https://ai.google.dev/gemma/docs/tune) on tuning. Using Lora with swappable heads is likely the best path. ",
+              "content": "<p>I'm a competitor but here are the <a href=\"https://ai.google.dev/gemma/docs/tune\" target=\"_blank\">Gemma Docs</a> on tuning. Using Lora with swappable heads is likely the best path. </p>",
+              "parent": {},
+              "author": {
+                "displayName": "Justin Scott",
+                "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/3881280-kg.jpg?t=2026-09-25-14-44-26",
+                "url": "/mjustinscott",
+                "tier": "CONTRIBUTOR",
+                "id": 3881280,
+                "progressionOptOut": false
+              },
+              "authorType": "COMMENT",
+              "votes": {
+                "totalVotes": 1,
+                "canUpvote": true,
+                "totalUpvotes": 1
+              },
+              "kernelVersion": 0,
+              "feedbackTrackingData": {},
+              "isThankYou": false,
+              "teamUpInfo": {
+                "teamLeader": {
+                  "displayName": "Justin Scott",
+                  "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/3881280-kg.jpg?t=2026-09-25-14-44-26",
+                  "url": "/mjustinscott",
+                  "userName": "mjustinscott",
+                  "tier": "CONTRIBUTOR",
+                  "id": 3881280,
+                  "profileUrl": "/mjustinscott",
+                  "performanceTier": "CONTRIBUTOR",
+                  "userId": 3881280,
+                  "progressionOptOut": false
+                },
+                "intro": ""
+              }
+            },
+            {
+              "id": 3528430,
+              "postDate": "2026-09-26T04:22:24.427Z",
+              "rawMarkdown": "I have my own methods ive been working on for about a year now. I can provide weights.",
+              "content": "<p>I have my own methods ive been working on for about a year now. I can provide weights.</p>",
+              "parent": {},
+              "author": {
+                "displayName": "Vladrad_",
+                "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+                "url": "/vladradd",
+                "tier": "CONTRIBUTOR",
+                "id": 36929342,
+                "progressionOptOut": false
+              },
+              "authorType": "TOPIC",
+              "votes": {
+                "canUpvote": true
+              },
+              "kernelVersion": 0,
+              "feedbackTrackingData": {},
+              "isThankYou": false,
+              "teamUpInfo": {
+                "teamLeader": {
+                  "displayName": "Vladrad_",
+                  "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+                  "url": "/vladradd",
+                  "userName": "vladradd",
+                  "tier": "CONTRIBUTOR",
+                  "id": 36929342,
+                  "profileUrl": "/vladradd",
+                  "performanceTier": "CONTRIBUTOR",
+                  "userId": 36929342,
+                  "progressionOptOut": false
+                },
+                "intro": ""
+              }
+            },
+            {
+              "id": 3528749,
+              "postDate": "2026-09-26T11:46:00.320Z",
+              "rawMarkdown": "It's not against the rules per se, it's just that our system isn't configured to run it. For one, we don't have the GPUs. The system is configured to accept LoRA adapters, so if you tried to submit it, the script would just throw an error. We chose to accept LoRA adapters to allow some amount of finetuning while also keeping submission file sizes moderate and for being more accessible under the hardware people are likely to have access to.",
+              "content": "<p>It's not against the rules per se, it's just that our system isn't configured to run it. For one, we don't have the GPUs. The system is configured to accept LoRA adapters, so if you tried to submit it, the script would just throw an error. We chose to accept LoRA adapters to allow some amount of finetuning while also keeping submission file sizes moderate and for being more accessible under the hardware people are likely to have access to.</p>",
+              "parent": {},
+              "author": {
+                "displayName": "Ryan Holbrook",
+                "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+                "url": "/ryanholbrook",
+                "tier": "STAFF",
+                "id": 2003505,
+                "progressionOptOut": false
+              },
+              "authorType": "ADMIN",
+              "votes": {
+                "totalVotes": 1,
+                "canUpvote": true,
+                "totalUpvotes": 1
+              },
+              "kernelVersion": 0,
+              "feedbackTrackingData": {},
+              "isThankYou": false,
+              "teamUpInfo": {
+                "teamLeader": {
+                  "displayName": "Ryan Holbrook",
+                  "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+                  "url": "/ryanholbrook",
+                  "userName": "ryanholbrook",
+                  "tier": "STAFF",
+                  "id": 2003505,
+                  "profileUrl": "/ryanholbrook",
+                  "performanceTier": "STAFF",
+                  "userId": 2003505,
+                  "progressionOptOut": false
+                },
+                "intro": ""
+              }
+            }
+          ],
+          "parent": {},
+          "author": {
+            "displayName": "Vladrad_",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+            "url": "/vladradd",
+            "tier": "CONTRIBUTOR",
+            "id": 36929342,
+            "progressionOptOut": false
+          },
+          "authorType": "TOPIC",
+          "votes": {
+            "canUpvote": true
+          },
+          "kernelVersion": 0,
+          "feedbackTrackingData": {},
+          "isThankYou": false,
+          "teamUpInfo": {
+            "teamLeader": {
+              "displayName": "Vladrad_",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+              "url": "/vladradd",
+              "userName": "vladradd",
+              "tier": "CONTRIBUTOR",
+              "id": 36929342,
+              "profileUrl": "/vladradd",
+              "performanceTier": "CONTRIBUTOR",
+              "userId": 36929342,
+              "progressionOptOut": false
+            },
+            "intro": ""
+          }
+        }
+      ],
+      "parent": {},
+      "author": {
+        "displayName": "Ryan Holbrook",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+        "url": "/ryanholbrook",
+        "tier": "STAFF",
+        "id": 2003505,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "totalVotes": 2,
+        "canUpvote": true,
+        "totalUpvotes": 2
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "userName": "ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "profileUrl": "/ryanholbrook",
+          "performanceTier": "STAFF",
+          "userId": 2003505,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    }
+  },
+  {
+    "topic_id": 743383,
+    "title": "Rules: Only LORA allowed?",
+    "message": {
+      "id": 3528749,
+      "postDate": "2026-09-26T11:46:00.320Z",
+      "rawMarkdown": "It's not against the rules per se, it's just that our system isn't configured to run it. For one, we don't have the GPUs. The system is configured to accept LoRA adapters, so if you tried to submit it, the script would just throw an error. We chose to accept LoRA adapters to allow some amount of finetuning while also keeping submission file sizes moderate and for being more accessible under the hardware people are likely to have access to.",
+      "content": "<p>It's not against the rules per se, it's just that our system isn't configured to run it. For one, we don't have the GPUs. The system is configured to accept LoRA adapters, so if you tried to submit it, the script would just throw an error. We chose to accept LoRA adapters to allow some amount of finetuning while also keeping submission file sizes moderate and for being more accessible under the hardware people are likely to have access to.</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Ryan Holbrook",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+        "url": "/ryanholbrook",
+        "tier": "STAFF",
+        "id": 2003505,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "totalVotes": 1,
+        "canUpvote": true,
+        "totalUpvotes": 1
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "userName": "ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "profileUrl": "/ryanholbrook",
+          "performanceTier": "STAFF",
+          "userId": 2003505,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    }
+  },
+  {
+    "topic_id": 743573,
+    "title": "How to package and resolve custom Python tools in submission.zip given adk-submission's closed ToolRegistry?",
+    "message": {
+      "id": 3528747,
+      "postDate": "2026-09-26T11:38:42.687Z",
+      "rawMarkdown": "Include them as scripts in a skill. They will be available in the sandbox and your agent can execute them there.",
+      "content": "<p>Include them as scripts in a skill. They will be available in the sandbox and your agent can execute them there.</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Ryan Holbrook",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+        "url": "/ryanholbrook",
+        "tier": "STAFF",
+        "id": 2003505,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "canUpvote": true
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "reactions": [
+        {
+          "emoji": "THANK_YOU",
+          "featuredUserNames": [
+            "doaimabt",
+            "ajithsudo"
+          ],
+          "userCount": 2
+        }
+      ],
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "userName": "ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "profileUrl": "/ryanholbrook",
+          "performanceTier": "STAFF",
+          "userId": 2003505,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    }
+  },
+  {
+    "topic_id": 742911,
+    "title": "Two data issues: half the graph/embedding files download empty, and the graphs contain no async functions",
+    "message": {
+      "id": 3527654,
+      "postDate": "2026-09-24T10:39:42.147Z",
+      "rawMarkdown": "Hi @jasonwold,\n\nThanks for the report. We will investigate and get back to you.",
+      "content": "<p>Hi <a href=\"/jasonwold\" target=\"_blank\">@jasonwold</a>,</p>\n<p>Thanks for the report. We will investigate and get back to you.</p>",
+      "replies": [
+        {
+          "id": 3528710,
+          "postDate": "2026-09-26T10:48:30.373Z",
+          "rawMarkdown": "Has this issue been fixed now? Do we need to re-download the dataset? Thanks!",
+          "content": "<p>Has this issue been fixed now? Do we need to re-download the dataset? Thanks!</p>",
+          "replies": [
+            {
+              "id": 3528743,
+              "postDate": "2026-09-26T11:37:01.650Z",
+              "rawMarkdown": "The embeddings are no longer empty; that has been fixed. The missing `async` functions are still missing. I don't have an ETA on that yet.",
+              "content": "<p>The embeddings are no longer empty; that has been fixed. The missing <code>async</code> functions are still missing. I don't have an ETA on that yet.</p>",
+              "parent": {},
+              "author": {
+                "displayName": "Ryan Holbrook",
+                "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+                "url": "/ryanholbrook",
+                "tier": "STAFF",
+                "id": 2003505,
+                "progressionOptOut": false
+              },
+              "authorType": "ADMIN",
+              "votes": {
+                "canUpvote": true
+              },
+              "kernelVersion": 0,
+              "feedbackTrackingData": {},
+              "isThankYou": false,
+              "teamUpInfo": {
+                "teamLeader": {
+                  "displayName": "Ryan Holbrook",
+                  "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+                  "url": "/ryanholbrook",
+                  "userName": "ryanholbrook",
+                  "tier": "STAFF",
+                  "id": 2003505,
+                  "profileUrl": "/ryanholbrook",
+                  "performanceTier": "STAFF",
+                  "userId": 2003505,
+                  "progressionOptOut": false
+                },
+                "intro": ""
+              }
+            }
+          ],
+          "parent": {},
+          "author": {
+            "displayName": "wsc-MISX",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/18505507-kg.jpg?t=2024-06-30-12-27-19",
+            "url": "/wscmisx",
+            "tier": "MASTER",
+            "id": 18505507,
+            "progressionOptOut": false
+          },
+          "authorType": "COMMENT",
+          "votes": {
+            "canUpvote": true
+          },
+          "kernelVersion": 0,
+          "feedbackTrackingData": {},
+          "isThankYou": false,
+          "teamUpInfo": {
+            "teamLeader": {
+              "displayName": "wsc-MISX",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/18505507-kg.jpg?t=2024-06-30-12-27-19",
+              "url": "/wscmisx",
+              "userName": "wscmisx",
+              "tier": "MASTER",
+              "id": 18505507,
+              "profileUrl": "/wscmisx",
+              "performanceTier": "MASTER",
+              "userId": 18505507,
+              "progressionOptOut": false
+            },
+            "intro": ""
+          }
+        }
+      ],
+      "parent": {},
+      "author": {
+        "displayName": "Ryan Holbrook",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+        "url": "/ryanholbrook",
+        "tier": "STAFF",
+        "id": 2003505,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "canUpvote": true
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "reactions": [
+        {
+          "emoji": "KAGGLE",
+          "featuredUserNames": [
+            "adithyagiri",
+            "jasonwold"
+          ],
+          "userCount": 2
+        }
+      ],
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "userName": "ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "profileUrl": "/ryanholbrook",
+          "performanceTier": "STAFF",
+          "userId": 2003505,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    }
+  },
+  {
+    "topic_id": 742911,
+    "title": "Two data issues: half the graph/embedding files download empty, and the graphs contain no async functions",
+    "message": {
+      "id": 3528743,
+      "postDate": "2026-09-26T11:37:01.650Z",
+      "rawMarkdown": "The embeddings are no longer empty; that has been fixed. The missing `async` functions are still missing. I don't have an ETA on that yet.",
+      "content": "<p>The embeddings are no longer empty; that has been fixed. The missing <code>async</code> functions are still missing. I don't have an ETA on that yet.</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Ryan Holbrook",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+        "url": "/ryanholbrook",
+        "tier": "STAFF",
+        "id": 2003505,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "canUpvote": true
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "userName": "ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "profileUrl": "/ryanholbrook",
+          "performanceTier": "STAFF",
+          "userId": 2003505,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    }
+  },
+  {
+    "topic_id": 743663,
+    "title": "How much of the submission runtime is excluded as patch validation?",
+    "message": {
+      "id": 3528731,
+      "postDate": "2026-09-26T11:24:41.307Z",
+      "rawMarkdown": "IIRC, patch validation takes around two hours if a patch is submitted for every task. If no patch is submitted for a task, then validation is skipped and that task just scores 0. A \"no patch\" submission only takes about ten minutes.",
+      "content": "<p>IIRC, patch validation takes around two hours if a patch is submitted for every task. If no patch is submitted for a task, then validation is skipped and that task just scores 0. A \"no patch\" submission only takes about ten minutes.</p>",
+      "replies": [
+        {
+          "id": 3528734,
+          "postDate": "2026-09-26T11:29:27.233Z",
+          "rawMarkdown": "Thanks, that’s very helpful!",
+          "content": "<p>Thanks, that’s very helpful!</p>",
+          "parent": {},
+          "author": {
+            "displayName": "Łukasz Wodniakowski",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/12406882-kg.jpg?t=2025-06-06-05-27-51",
+            "url": "/lwolwo",
+            "tier": "EXPERT",
+            "id": 12406882,
+            "progressionOptOut": false
+          },
+          "authorType": "TOPIC",
+          "votes": {
+            "canUpvote": true
+          },
+          "kernelVersion": 0,
+          "competitionRanking": 870,
+          "feedbackTrackingData": {},
+          "isThankYou": false,
+          "teamUpInfo": {
+            "teamLeader": {
+              "displayName": "Łukasz Wodniakowski",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/12406882-kg.jpg?t=2025-06-06-05-27-51",
+              "url": "/lwolwo",
+              "userName": "lwolwo",
+              "tier": "EXPERT",
+              "id": 12406882,
+              "profileUrl": "/lwolwo",
+              "performanceTier": "EXPERT",
+              "userId": 12406882,
+              "progressionOptOut": false
+            },
+            "intro": ""
+          }
+        }
+      ],
+      "parent": {},
+      "author": {
+        "displayName": "Ryan Holbrook",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+        "url": "/ryanholbrook",
+        "tier": "STAFF",
+        "id": 2003505,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "totalVotes": 1,
+        "canUpvote": true,
+        "totalUpvotes": 1
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "userName": "ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "profileUrl": "/ryanholbrook",
+          "performanceTier": "STAFF",
+          "userId": 2003505,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    }
+  },
+  {
+    "topic_id": 743353,
+    "title": "Not able to download data",
+    "message": {
+      "id": 3528271,
+      "postDate": "2026-09-25T18:25:56.137Z",
+      "rawMarkdown": "Broken from the Data page, too. I will try re-uploading the dataset. Thanks for the heads up.",
+      "content": "<p>Broken from the Data page, too. I will try re-uploading the dataset. Thanks for the heads up.</p>",
+      "replies": [
+        {
+          "id": 3528272,
+          "postDate": "2026-09-25T18:28:24.183Z",
+          "rawMarkdown": "Hi Ryan, is it possible to get RTX PRO 6000 gpus instead of L4x4?",
+          "content": "<p>Hi Ryan, is it possible to get RTX PRO 6000 gpus instead of L4x4?</p>",
+          "replies": [
+            {
+              "id": 3528277,
+              "postDate": "2026-09-25T18:34:51.520Z",
+              "rawMarkdown": "That's unlikely, unfortunately.",
+              "content": "<p>That's unlikely, unfortunately.</p>",
+              "parent": {},
+              "author": {
+                "displayName": "Ryan Holbrook",
+                "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+                "url": "/ryanholbrook",
+                "tier": "STAFF",
+                "id": 2003505,
+                "progressionOptOut": false
+              },
+              "authorType": "ADMIN",
+              "votes": {
+                "canUpvote": true
+              },
+              "kernelVersion": 0,
+              "feedbackTrackingData": {},
+              "isThankYou": false,
+              "reactions": [
+                {
+                  "emoji": "LOVE",
+                  "featuredUserNames": [
+                    "penguin069"
+                  ],
+                  "userCount": 1
+                }
+              ],
+              "teamUpInfo": {
+                "teamLeader": {
+                  "displayName": "Ryan Holbrook",
+                  "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+                  "url": "/ryanholbrook",
+                  "userName": "ryanholbrook",
+                  "tier": "STAFF",
+                  "id": 2003505,
+                  "profileUrl": "/ryanholbrook",
+                  "performanceTier": "STAFF",
+                  "userId": 2003505,
+                  "progressionOptOut": false
+                },
+                "intro": ""
+              }
+            }
+          ],
+          "parent": {},
+          "author": {
+            "displayName": "Penguin",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+            "url": "/penguin069",
+            "tier": "CONTRIBUTOR",
+            "id": 33714352,
+            "progressionOptOut": false
+          },
+          "authorType": "COMMENT",
+          "votes": {
+            "canUpvote": true
+          },
+          "kernelVersion": 0,
+          "competitionRanking": 427,
+          "feedbackTrackingData": {},
+          "isThankYou": false,
+          "teamUpInfo": {
+            "teamLeader": {
+              "displayName": "Penguin",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+              "url": "/penguin069",
+              "userName": "penguin069",
+              "tier": "CONTRIBUTOR",
+              "id": 33714352,
+              "profileUrl": "/penguin069",
+              "performanceTier": "CONTRIBUTOR",
+              "userId": 33714352,
+              "progressionOptOut": false
+            },
+            "intro": ""
+          }
+        }
+      ],
+      "parent": {},
+      "author": {
+        "displayName": "Ryan Holbrook",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+        "url": "/ryanholbrook",
+        "tier": "STAFF",
+        "id": 2003505,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "canUpvote": true
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "reactions": [
+        {
+          "emoji": "THANK_YOU",
+          "featuredUserNames": [
+            "ayuraj"
+          ],
+          "userCount": 1
+        }
+      ],
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "userName": "ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "profileUrl": "/ryanholbrook",
+          "performanceTier": "STAFF",
+          "userId": 2003505,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    }
+  },
+  {
+    "topic_id": 743353,
+    "title": "Not able to download data",
+    "message": {
+      "id": 3528277,
+      "postDate": "2026-09-25T18:34:51.520Z",
+      "rawMarkdown": "That's unlikely, unfortunately.",
+      "content": "<p>That's unlikely, unfortunately.</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Ryan Holbrook",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+        "url": "/ryanholbrook",
+        "tier": "STAFF",
+        "id": 2003505,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "canUpvote": true
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "reactions": [
+        {
+          "emoji": "LOVE",
+          "featuredUserNames": [
+            "penguin069"
+          ],
+          "userCount": 1
+        }
+      ],
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "userName": "ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "profileUrl": "/ryanholbrook",
+          "performanceTier": "STAFF",
+          "userId": 2003505,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    }
+  },
+  {
+    "topic_id": 743056,
+    "title": "Gemma4 allowed variant",
+    "message": {
+      "id": 3528134,
+      "postDate": "2026-09-25T13:37:58.260Z",
+      "rawMarkdown": "It's only the one model listed in the Overview. We're working on supporting others.",
+      "content": "<p>It's only the one model listed in the Overview. We're working on supporting others.</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Ryan Holbrook",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+        "url": "/ryanholbrook",
+        "tier": "STAFF",
+        "id": 2003505,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "totalVotes": 3,
+        "canUpvote": true,
+        "totalUpvotes": 3
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "reactions": [
+        {
+          "emoji": "THANK_YOU",
+          "featuredUserNames": [
+            "bharat0"
+          ],
+          "userCount": 1
+        },
+        {
+          "emoji": "LOVE",
+          "featuredUserNames": [
+            "bouadoumohamedlouai"
+          ],
+          "userCount": 1
+        }
+      ],
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "userName": "ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "profileUrl": "/ryanholbrook",
+          "performanceTier": "STAFF",
+          "userId": 2003505,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    }
+  }
+]

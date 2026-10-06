@@ -1,0 +1,24 @@
+{
+  "id": 758684,
+  "ref": "mousumiroy250/mt5-base",
+  "title": "mt5-base",
+  "author": "Mousumiroy250",
+  "slug": "mt5-base",
+  "instances": [
+    {
+      "id": 747982,
+      "slug": "default",
+      "framework": "MODEL_FRAMEWORK_TRANSFORMERS",
+      "fineTunable": true,
+      "versionId": 995857,
+      "versionNumber": 1,
+      "url": "https://www.kaggle.com/models/mousumiroy250/mt5-base/Transformers/default",
+      "licenseName": "Apache 2.0",
+      "totalUncompressedBytes": 6993840981
+    }
+  ],
+  "url": "https://www.kaggle.com/models/mousumiroy250/mt5-base",
+  "voteCount": 0,
+  "authorImageUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+  "updateTime": "2026-09-17T05:59:20.831Z"
+}

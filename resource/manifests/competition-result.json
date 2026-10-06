@@ -1,0 +1,12 @@
+{
+  "checked_at": "2026-10-05T18:30:44.022909+00:00",
+  "competition": "gemma-4-developer-agent",
+  "submission_ref": 56844353,
+  "status": "COMPLETE",
+  "public_score": "0.12",
+  "private_score": null,
+  "error_description": "",
+  "archive_sha256": "02bb939095ded0c970088fc9d19634e203e2d3119a36a5feff20bad55c9343fc",
+  "scope": "Official public score. Private/final score and current leaderboard rank are not inferred.",
+  "source": "Authenticated Kaggle API competition_submissions"
+}

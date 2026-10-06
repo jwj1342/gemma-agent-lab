@@ -1,0 +1,102 @@
+{
+  "forumTopic": {
+    "authorId": 11228484,
+    "authorThumbnailName": "11228484-kg.jpg?t=2024-06-28-18-22-55",
+    "authorUserDisplayName": "Tarun Singhal",
+    "authorUserName": "singhaltarun",
+    "comments": [
+      {
+        "id": 3529841,
+        "postDate": "2026-09-29T03:24:58.357Z",
+        "rawMarkdown": "Independent check on our side, consistent with yours: on fastapi_14246 the node embeddings give a mean random-pair cosine of 0.78 (7% of pairs >= 0.99; 2,635 distinct vectors among 3,619 nodes), and on rich_3905 0.90 (11% >= 0.99).\n\nA related coverage issue in the graphs themselves (one commit per repo checked): every edge has type `calls`, and no `async def` function appears as a node: 0 of 57 async functions in fastapi's package (e.g. routing.run_endpoint_function, routing.serialize_response, dependencies.utils.solve_dependencies) and 0 of 100 in httpx's async client (src/ahttpx). rich and requests have no async code, so they are unaffected.\n\n@ryanholbrook: does the hidden test set use the same graph/embedding pipeline, and could async functions (and ideally import/containment edges) be included? Also, which embedding model produced the 256-d vectors?",
+        "content": "<p>Independent check on our side, consistent with yours: on fastapi_14246 the node embeddings give a mean random-pair cosine of 0.78 (7% of pairs &gt;= 0.99; 2,635 distinct vectors among 3,619 nodes), and on rich_3905 0.90 (11% &gt;= 0.99).</p>\n<p>A related coverage issue in the graphs themselves (one commit per repo checked): every edge has type <code>calls</code>, and no <code>async def</code> function appears as a node: 0 of 57 async functions in fastapi's package (e.g. routing.run_endpoint_function, routing.serialize_response, dependencies.utils.solve_dependencies) and 0 of 100 in httpx's async client (src/ahttpx). rich and requests have no async code, so they are unaffected.</p>\n<p><a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a>: does the hidden test set use the same graph/embedding pipeline, and could async functions (and ideally import/containment edges) be included? Also, which embedding model produced the 256-d vectors?</p>",
+        "parent": {},
+        "author": {
+          "displayName": "Adithya Giridharan",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/4384588-kg.jpg?t=2026-06-08-17-51-32",
+          "url": "/adithyagiri",
+          "tier": "CONTRIBUTOR",
+          "id": 4384588,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 350,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Adithya Giridharan",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/4384588-kg.jpg?t=2026-06-08-17-51-32",
+            "url": "/adithyagiri",
+            "userName": "adithyagiri",
+            "tier": "CONTRIBUTOR",
+            "id": 4384588,
+            "profileUrl": "/adithyagiri",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 4384588,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3529499,
+      "postDate": "2026-09-28T11:39:35.773Z",
+      "rawMarkdown": "Hi @ryanholbrook , One data issue: in the current embeddings, random node pairs have mean cosine similarity 0.78 (fastapi) to 0.90 (rich), and 8–19% of random pairs are ≥ 0.99. Querying the exact name of a task's gold function returns unrelated test functions, all at similarity 1.0. Across 129 training tasks, the gold file appears in the top 10 for 35 tasks, versus 67 for a plain grep on the issue's identifiers.\n\n1. Is this expected (e.g., a model that embeds mostly boilerplate), or could the embedding step be regenerated?\n2. Does the hidden test set use the same embeddings pipeline?\n3. **search_similar_code** only accepts an existing node name. Is a text query encoder planned, or is node-name lookup the intended use?",
+      "content": "<p>Hi <a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a> , One data issue: in the current embeddings, random node pairs have mean cosine similarity 0.78 (fastapi) to 0.90 (rich), and 8–19% of random pairs are ≥ 0.99. Querying the exact name of a task's gold function returns unrelated test functions, all at similarity 1.0. Across 129 training tasks, the gold file appears in the top 10 for 35 tasks, versus 67 for a plain grep on the issue's identifiers.</p>\n<ol>\n<li>Is this expected (e.g., a model that embeds mostly boilerplate), or could the embedding step be regenerated?</li>\n<li>Does the hidden test set use the same embeddings pipeline?</li>\n<li><strong>search_similar_code</strong> only accepts an existing node name. Is a text query encoder planned, or is node-name lookup the intended use?</li>\n</ol>",
+      "parent": {},
+      "author": {
+        "displayName": "Tarun Singhal",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/11228484-kg.jpg?t=2024-06-28-18-22-55",
+        "url": "/singhaltarun",
+        "tier": "CONTRIBUTOR",
+        "id": 11228484,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 1,
+        "canUpvote": true,
+        "totalUpvotes": 1
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 61,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Tarun Singhal",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/11228484-kg.jpg?t=2024-06-28-18-22-55",
+          "url": "/singhaltarun",
+          "userName": "singhaltarun",
+          "tier": "CONTRIBUTOR",
+          "id": 11228484,
+          "profileUrl": "/singhaltarun",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 11228484,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3529499,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 744040,
+    "name": "Embeddings for search_similar_code appear near-collapsed",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-28T11:39:35.773612100Z",
+    "totalVotes": 1,
+    "url": "/competitions/gemma-4-developer-agent/discussion/744040",
+    "totalMessages": 1,
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

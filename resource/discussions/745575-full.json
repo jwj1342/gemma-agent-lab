@@ -1,0 +1,57 @@
+{
+  "forumTopic": {
+    "authorId": 103979,
+    "authorThumbnailName": "default-thumb.png",
+    "authorUserDisplayName": "Anabasis",
+    "authorUserName": "tcristea",
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3532316,
+      "postDate": "2026-10-03T09:41:18.157Z",
+      "rawMarkdown": "Can one use TPU end-to-end, including for submission in this competition?\n\nThanks.",
+      "content": "<p>Can one use TPU end-to-end, including for submission in this competition?</p>\n<p>Thanks.</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Anabasis",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+        "url": "/tcristea",
+        "tier": "EXPERT",
+        "id": 103979,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "canUpvote": true
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Anabasis",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/tcristea",
+          "userName": "tcristea",
+          "tier": "EXPERT",
+          "id": 103979,
+          "profileUrl": "/tcristea",
+          "performanceTier": "EXPERT",
+          "userId": 103979,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3532316,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 745575,
+    "name": "Can TPU be used?",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-10-03T09:41:18.156872600Z",
+    "url": "/competitions/gemma-4-developer-agent/discussion/745575",
+    "authorPerformanceTier": "EXPERT",
+    "authorProgressionOptOut": false
+  }
+}

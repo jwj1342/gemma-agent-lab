@@ -1,0 +1,61 @@
+{
+  "forumTopic": {
+    "authorId": 24807521,
+    "authorThumbnailName": "24807521-kg.png?t=2026-05-18-16-49-34",
+    "authorUserDisplayName": "Rahul Rathnavel K",
+    "authorUserName": "rahulrathnavel",
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3528894,
+      "postDate": "2026-09-26T19:32:18.003Z",
+      "rawMarkdown": "A.Agent architecture\n1)can a custom skill carry substantial precomputed repository metadata?(what it should not carry list can be pretty useful)\n2)how many LLM sub-agents can be invoked?\n3)are sub-agent calls counted against the same global task time?\n4)re parallel sub-agents actually useful given sequential task execution?\n5)is there a limit on nested agent depth?\n6)are custom tools limited to deterministic code?\n\nB.Graph/embedding resources\n1)Is the graph built from AST only or AST + semantic dependencies or how in which basis?\n2)what exactly does embedding similarity represent?\n3)are embeddings indexed per snapshot/commit?\n4)are the zero-byte graph files a known release bug?\n5)will corrected graph files be released?how soon?\n6)will corrected embedding files be released?how soon?\n7)are async functions intentionally missing or a preprocessing bug?",
+      "content": "<p>A.Agent architecture\n1)can a custom skill carry substantial precomputed repository metadata?(what it should not carry list can be pretty useful)\n2)how many LLM sub-agents can be invoked?\n3)are sub-agent calls counted against the same global task time?\n4)re parallel sub-agents actually useful given sequential task execution?\n5)is there a limit on nested agent depth?\n6)are custom tools limited to deterministic code?</p>\n<p>B.Graph/embedding resources\n1)Is the graph built from AST only or AST + semantic dependencies or how in which basis?\n2)what exactly does embedding similarity represent?\n3)are embeddings indexed per snapshot/commit?\n4)are the zero-byte graph files a known release bug?\n5)will corrected graph files be released?how soon?\n6)will corrected embedding files be released?how soon?\n7)are async functions intentionally missing or a preprocessing bug?</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Rahul Rathnavel K",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/24807521-kg.png?t=2026-05-18-16-49-34",
+        "url": "/rahulrathnavel",
+        "tier": "CONTRIBUTOR",
+        "id": 24807521,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 1,
+        "canUpvote": true,
+        "totalUpvotes": 1
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 187,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Rahul Rathnavel K",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/24807521-kg.png?t=2026-05-18-16-49-34",
+          "url": "/rahulrathnavel",
+          "userName": "rahulrathnavel",
+          "tier": "CONTRIBUTOR",
+          "id": 24807521,
+          "profileUrl": "/rahulrathnavel",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 24807521,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3528894,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 743751,
+    "name": "Needs clarifications on Agent Architecture + Graph/Embeddings",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-26T19:32:18.001684600Z",
+    "totalVotes": 1,
+    "url": "/competitions/gemma-4-developer-agent/discussion/743751",
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

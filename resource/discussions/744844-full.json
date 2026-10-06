@@ -1,0 +1,154 @@
+{
+  "forumTopic": {
+    "authorId": 1668870,
+    "authorThumbnailName": "1668870-kg.jpg",
+    "authorUserDisplayName": "Amanie El-Hajj",
+    "authorUserName": "aelhajj",
+    "comments": [
+      {
+        "id": 3531961,
+        "postDate": "2026-10-02T22:48:54.397Z",
+        "rawMarkdown": "The July canonical template still has a turn-boundary bug for OpenAI-format messages where the assistant returns **visible text together with tool calls**.\n\nI reproduced this with commit [`88c090599fb794134cba57e022082043afcc7bf8`](<https://huggingface.co/google/gemma-4-31B-it-qat-w4a16-ct/blob/88c090599fb794134cba57e022082043afcc7bf8/chat_template.jinja>), using `add_generation_prompt=True` and `enable_thinking=False`. No model inference is needed.\n\nMinimal reproduction:\n\n```\nfrom transformers import AutoTokenizer\n\ntok = AutoTokenizer.from_pretrained(\n    \"google/gemma-4-31B-it-qat-w4a16-ct\",\n    revision=\"88c090599fb794134cba57e022082043afcc7bf8\",\n)\n\nmessages = [\n    {\"role\": \"user\", \"content\": \"Read x.py.\"},\n    {\n        \"role\": \"assistant\",\n        \"content\": \"NOTE_BEFORE_CALL\",\n        \"tool_calls\": [{\n            \"id\": \"c1\",\n            \"type\": \"function\",\n            \"function\": {\n                \"name\": \"read_file\",\n                \"arguments\": {\"filepath\": \"x.py\"},\n            },\n        }],\n    },\n    {\"role\": \"tool\", \"tool_call_id\": \"c1\", \"content\": \"RESULT\"},\n]\n\ntext = tok.apply_chat_template(\n    messages,\n    tokenize=False,\n    add_generation_prompt=True,\n    enable_thinking=False,\n)\nprint(repr(text[-200:]))\n```\n\nThe prompt ends with:\n\n```\n...RESULT<|\"|>}<tool_response|>NOTE_BEFORE_CALL<turn|>\\n\n```\n\nThe model turn has been closed, but **no new `<|turn>model` header is added**. Setting the assistant’s content to `None` instead leaves the turn open at `<tool_response|>`.\n\nThe cause appears to be:\n\n- The template renders tool calls, then tool responses, then assistant content.\n- Nonempty content triggers `<turn|>`.\n- `ns.prev_message_type` remains `tool_response`, so the generation-prompt branch suppresses the new model header.\n\nThe updated `continues_into_next` check fixes historical boundaries when another assistant message is already present. At the end of a generation prompt, that next assistant message does not exist yet, so this case remains broken.\n\nThere is also a chronology issue: OpenAI assistant content accompanying tool calls can be a note emitted **before** execution, but the template moves it after the tool result.\n\nCould this case be checked alongside the proposed template update? A swap to the July canonical version alone does not resolve this final boundary. This is a reproducible formatting issue; I have not measured its effect on task scores.",
+        "content": "<p>The July canonical template still has a turn-boundary bug for OpenAI-format messages where the assistant returns <strong>visible text together with tool calls</strong>.</p>\n<p>I reproduced this with commit <a href=\"https://huggingface.co/google/gemma-4-31B-it-qat-w4a16-ct/blob/88c090599fb794134cba57e022082043afcc7bf8/chat_template.jinja\" target=\"_blank\"><code>88c090599fb794134cba57e022082043afcc7bf8</code></a>, using <code>add_generation_prompt=True</code> and <code>enable_thinking=False</code>. No model inference is needed.</p>\n<p>Minimal reproduction:</p>\n<pre><code>from transformers import AutoTokenizer\n\ntok = AutoTokenizer.from_pretrained(\n    \"google/gemma-4-31B-it-qat-w4a16-ct\",\n    revision=\"88c090599fb794134cba57e022082043afcc7bf8\",\n)\n\nmessages = [\n    {\"role\": \"user\", \"content\": \"Read x.py.\"},\n    {\n        \"role\": \"assistant\",\n        \"content\": \"NOTE_BEFORE_CALL\",\n        \"tool_calls\": [{\n            \"id\": \"c1\",\n            \"type\": \"function\",\n            \"function\": {\n                \"name\": \"read_file\",\n                \"arguments\": {\"filepath\": \"x.py\"},\n            },\n        }],\n    },\n    {\"role\": \"tool\", \"tool_call_id\": \"c1\", \"content\": \"RESULT\"},\n]\n\ntext = tok.apply_chat_template(\n    messages,\n    tokenize=False,\n    add_generation_prompt=True,\n    enable_thinking=False,\n)\nprint(repr(text[-200:]))\n</code></pre>\n<p>The prompt ends with:</p>\n<pre><code>...RESULT&lt;|\"|&gt;}&lt;tool_response|&gt;NOTE_BEFORE_CALL&lt;turn|&gt;\\n\n</code></pre>\n<p>The model turn has been closed, but <strong>no new <code>&lt;|turn&gt;model</code> header is added</strong>. Setting the assistant’s content to <code>None</code> instead leaves the turn open at <code>&lt;tool_response|&gt;</code>.</p>\n<p>The cause appears to be:</p>\n<ul>\n<li>The template renders tool calls, then tool responses, then assistant content.</li>\n<li>Nonempty content triggers <code>&lt;turn|&gt;</code>.</li>\n<li><code>ns.prev_message_type</code> remains <code>tool_response</code>, so the generation-prompt branch suppresses the new model header.</li>\n</ul>\n<p>The updated <code>continues_into_next</code> check fixes historical boundaries when another assistant message is already present. At the end of a generation prompt, that next assistant message does not exist yet, so this case remains broken.</p>\n<p>There is also a chronology issue: OpenAI assistant content accompanying tool calls can be a note emitted <strong>before</strong> execution, but the template moves it after the tool result.</p>\n<p>Could this case be checked alongside the proposed template update? A swap to the July canonical version alone does not resolve this final boundary. This is a reproducible formatting issue; I have not measured its effect on task scores.</p>",
+        "replies": [
+          {
+            "id": 3532175,
+            "postDate": "2026-10-03T05:57:46.450Z",
+            "rawMarkdown": "Some errors are still expected with a 31B model, but at least an update will resolve the bigger ones that are already readily fixed.",
+            "content": "<p>Some errors are still expected with a 31B model, but at least an update will resolve the bigger ones that are already readily fixed.</p>",
+            "parent": {},
+            "author": {
+              "displayName": "Amanie El-Hajj",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/1668870-kg.jpg",
+              "url": "/aelhajj",
+              "tier": "CONTRIBUTOR",
+              "id": 1668870,
+              "progressionOptOut": false
+            },
+            "authorType": "TOPIC",
+            "votes": {
+              "canUpvote": true
+            },
+            "kernelVersion": 0,
+            "competitionRanking": 960,
+            "feedbackTrackingData": {},
+            "isThankYou": false,
+            "teamUpInfo": {
+              "teamLeader": {
+                "displayName": "Amanie El-Hajj",
+                "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/1668870-kg.jpg",
+                "url": "/aelhajj",
+                "userName": "aelhajj",
+                "tier": "CONTRIBUTOR",
+                "id": 1668870,
+                "profileUrl": "/aelhajj",
+                "performanceTier": "CONTRIBUTOR",
+                "userId": 1668870,
+                "progressionOptOut": false
+              },
+              "intro": ""
+            }
+          }
+        ],
+        "parent": {},
+        "author": {
+          "displayName": "Zacchaeus",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/4080021-kg.jpeg?t=2026-08-13-21-23-56",
+          "url": "/zacchaeus",
+          "tier": "MASTER",
+          "id": 4080021,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Zacchaeus",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/4080021-kg.jpeg?t=2026-08-13-21-23-56",
+            "url": "/zacchaeus",
+            "userName": "zacchaeus",
+            "tier": "MASTER",
+            "id": 4080021,
+            "profileUrl": "/zacchaeus",
+            "performanceTier": "MASTER",
+            "userId": 4080021,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3531011,
+      "postDate": "2026-10-01T06:52:10.497Z",
+      "rawMarkdown": "The competition model (gemma-4-31b-it-qat-w4a16-ct, version 2, files dated 2026-06-05) ships the\noriginal chat_template.jinja. On 2026-07-15, Google replaced it in the same HF repo (google/gemma-4-31B-it-qat-w4a16-ct, commit 88c0905) with the canonical Gemma 4 template.\n\nGoogle reports better tool-calling reliability with the refresh.\n\nSubmissions can't change the template: the harness starts vLLM without --chat-template and the generation config has no template field. Loops and malformed tool calls are a large share of failures for every agent here, so this would help all teams equally.\n\nWould the organizers consider serving the updated template (or passing --chat-template) for scoring?\n\nWeights are unchanged; it is a single-file swap.",
+      "content": "<p>The competition model (gemma-4-31b-it-qat-w4a16-ct, version 2, files dated 2026-06-05) ships the\noriginal chat_template.jinja. On 2026-07-15, Google replaced it in the same HF repo (google/gemma-4-31B-it-qat-w4a16-ct, commit 88c0905) with the canonical Gemma 4 template.</p>\n<p>Google reports better tool-calling reliability with the refresh.</p>\n<p>Submissions can't change the template: the harness starts vLLM without --chat-template and the generation config has no template field. Loops and malformed tool calls are a large share of failures for every agent here, so this would help all teams equally.</p>\n<p>Would the organizers consider serving the updated template (or passing --chat-template) for scoring?</p>\n<p>Weights are unchanged; it is a single-file swap.</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Amanie El-Hajj",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/1668870-kg.jpg",
+        "url": "/aelhajj",
+        "tier": "CONTRIBUTOR",
+        "id": 1668870,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 1,
+        "canUpvote": true,
+        "totalUpvotes": 1
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 960,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "reactions": [
+        {
+          "emoji": "THANK_YOU",
+          "featuredUserNames": [
+            "aatiffraz",
+            "singhaltarun",
+            "nightfurylqd",
+            "ahmedalmarwani",
+            "whisperlast"
+          ],
+          "userCount": 5
+        }
+      ],
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Amanie El-Hajj",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/1668870-kg.jpg",
+          "url": "/aelhajj",
+          "userName": "aelhajj",
+          "tier": "CONTRIBUTOR",
+          "id": 1668870,
+          "profileUrl": "/aelhajj",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 1668870,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3531011,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 744844,
+    "name": "Updating the Gemma 4 template to have July 15th fixes",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-10-01T06:52:10.496611500Z",
+    "totalVotes": 1,
+    "url": "/competitions/gemma-4-developer-agent/discussion/744844",
+    "totalMessages": 2,
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

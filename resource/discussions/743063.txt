@@ -1,0 +1,58 @@
+# Scoring-run questions: task concurrency, eval_config keys, and the 12 h limit 
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743063
+
+## 3527814 /iztanmaymohan TOPIC
+Hi hosts, thanks for releasing the wheelhouse! Three questions about the scoring run that affect how we budget time per task:
+
+1. Are hidden tasks evaluated sequentially or with some concurrency? If concurrent, how many tasks can run at once, and is that configurable?
+
+2. Which fields of `eval_config.yaml` does the scorer actually read? In particular, are `timeout_seconds`, `max_tool_calls`, `max_time_minutes`, and `max_turns` all supported, and what defaults apply when the file or individual fields are omitted?
+
+3. If a submission reaches the 12-hour global limit, how are unfinished tasks handled? Are they scored as failures, or does the submission itself terminate/error?
+
+
+## 3531474 /anjalinarendra COMMENT
+@ryanholbrook do we have control on adaptive budget like out of 12 hours, i wnat 1 task to take 8 minutes, otehr to take 4 minte. This adaptive control in our hand extremely crucial or do you have your own time. Please answer this as soon as possible.
+
+## 3527819 /ryanholbrook ADMIN
+1. Sequentially.
+2. The scorer reads those, and only those, four fields. The default is no limit.
+3. Currently, hitting the 12-hour limit will error, but I'm planning on a fix that will score unfinished tasks as 0. You may want to set `max_time_minutes` to something moderate as a failsafe.
+
+## 3529633 /zhukovoleksiy COMMENT
+Hi @ryanholbrook , a follow-up on this:
+
+>Currently, hitting the 12-hour limit will error, but I'm planning on a fix that will score unfinished tasks as 0.
+
+Is this fix live yet? I'd also like to raise a side effect that concerns me.
+
+Right now, going over 12 hours errors the whole submission, and I've hit that couple days ago. So every team has to fit all ~120 tasks into the limit. And part of my research in this competition so far has been about this optimization. With unfinished tasks scored as 0, a submission could instead spend most of the 12 hours on say the first 30-40 tasks and never start the rest. The tasks are clearly hard for the model, so a lot more time per task might solve more of those early tasks than a run that gives every task an equal share.
+
+- Is "solve as many tasks as possible within 12 hours, however the time is split" the intended goal, or should a good submission attempt every task?
+- Do tasks run in the same order every time, and are public and private tasks mixed through that order? If the public tasks come first, a submission that only reaches the early tasks could look strong on the public leaderboard and then collapse on the private one.
+- If this isn't intended, would you consider a required per-task time cap, or some other way to reward attempting every task? For example, instead of giving 0 to unattempted tasks they receive some negative score.
+
+## 3530039 /gholamaliaminian COMMENT
+hi @ryanholbrook, do you have any update on scoring unfinished tasks as 0? 
+
+## 3530047 /adityasreedhar COMMENT
+Hey @ryanholbrook 
+Scoring unfinished tasks as 0 and accepting the submission would be a great fix!
+Please do provide an update
+
+## 3532311 /varunambadi COMMENT
+> 2. The scorer reads those, and only those, four fields. The default is no limit.
+> 3. Currently, hitting the 12-hour limit will error, but I'm planning on a fix that will score unfinished tasks as 0. You may want to set `max_time_minutes` to something moderate as a failsafe.
+
+I have made a couple of submissions for which the time taken to evaluate crossed the 12h limit and still scored successfully(IDs 56667603 and 56701670). The submission I made yesterday, however, ended in an error after crossing 12hrs. Can you fix this bug?
+
+## 3532745 /andrewzhengtw COMMENT
+Hi @ryanholbrook , following up on this thread, since several of us are planning our time budgets around the 12-hour limit:
+
+1. Has the change to score unfinished tasks as 0, rather than erroring the entire submission, been deployed? If so, from what date or scorer version does it apply? If not, is it still planned?
+
+2. A participant reported two submissions that ran past 12 hours and still received scores, and another that errored after 12 hours. Is that expected under the current system? Could differences in how elapsed time is measured or the submissions are processed explain these outcomes?
+
+3. Are hidden tasks run in the same order for every submission? Are public- and private-leaderboard tasks interleaved or grouped?
+
+Until we hear back, we'll plan for the entire run to finish within 12 hours and attempt every task. Thanks!

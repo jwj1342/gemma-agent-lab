@@ -1,0 +1,513 @@
+# CELL 0 markdown
+# RQ4: Query-Side Text Encoding vs the Shipped Name-Matching Protocol
+
+The shipped `search_similar_code` resolves a query by matching it against **node names**
+(swegemma/graph/embedding_utils.py: exact → `repo;node` → suffix; no match → empty result)
+— there is no text encoder on the query side. RQ2 showed this channel reaches file R@10
+0.271 vs 0.605 for plain TF-IDF, and we hypothesized the binding constraint is the query
+protocol, not the index.
+
+This kernel tests that hypothesis directly: encode the issue text **as text** with a small
+open code-embedding model (jina-embeddings-v2-base-code, 161M, CPU), encode node source
+texts the same way, and rank by cosine — comparing against (a) TF-IDF and (b) the shipped
+name-matching protocol on identical task subsets. File and function level, Recall@k / MRR.
+
+
+# CELL 1 code
+import ast
+import collections
+import io
+import json
+import math
+import pathlib
+import re
+import statistics
+import tarfile
+import tempfile
+import zipfile
+
+import numpy as np
+
+# Locate the competition data mount by searching for tasks.jsonl (Kaggle mounts may nest it)
+DATA = None
+ROOTS = [pathlib.Path("/kaggle/input"), pathlib.Path("data"), pathlib.Path("../data")]
+for root in ROOTS:
+    if not root.exists():
+        continue
+    hits = [p for p in [root / "tasks.jsonl", *root.rglob("tasks.jsonl")] if p.exists()]
+    if hits:
+        DATA = hits[0].parent
+        break
+if DATA is None:
+    root = pathlib.Path("/kaggle/input")
+    if root.exists():
+        for p in sorted(root.glob("*/*"))[:40]:
+            print("INPUT:", p)
+    raise AssertionError("tasks.jsonl not found under /kaggle/input or ./data")
+print("DATA =", DATA)
+tasks = [json.loads(l) for l in open(DATA / "tasks.jsonl")]
+print(f"{len(tasks)} tasks")
+
+
+def find_dir(name):
+    """graphs/embeddings/snapshots 可能在 DATA、其祖先或其子树。"""
+    cands = [d for d in (DATA, *DATA.parents) if (d / name).exists() and any((d / name).iterdir())]
+    if cands:
+        return cands[0] / name
+    hits = sorted(DATA.rglob(name))
+    return hits[0] if hits else None
+
+
+GRAPHS, EMB, SNAP = find_dir("graphs"), find_dir("embeddings"), find_dir("snapshots")
+print(GRAPHS, EMB, SNAP)
+
+
+# CELL 2 code
+# ---- Gold: files + hunk→def 映射 ----
+TESTPATH = re.compile(r"(^|/)tests?/|test_[^/]*\.py$|_test\.py$")
+HUNK_RE = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@(.*)$", re.M)
+
+
+def files_of(diff):
+    return re.findall(r"^--- a/(\S+)", diff, flags=re.M)
+
+
+def lib_files_of(t):
+    return [f for f in files_of(t["patch"])
+            if f.endswith(".py") and not TESTPATH.search(f)]
+
+
+def hunk_new_ranges(patch, fname):
+    """该文件的 hunk 在新文件中的行区间 [(start, end)]。"""
+    ranges, cur_file = [], None
+    for line in patch.split("\n"):
+        m = re.match(r"^--- a/(\S+)", line)
+        if m:
+            cur_file = m.group(1)
+            continue
+        if cur_file == fname:
+            h = re.match(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@", line)
+            if h:
+                start = int(h.group(1))
+                count = int(h.group(2) or 1)
+                ranges.append((start, start + max(count - 1, 0)))
+    return ranges
+
+
+def defs_with_spans(py_text):
+    """[(qualname, kind, start_line, end_line)] 顶级含方法(1-indexed, 含装饰器)。"""
+    out = []
+    try:
+        tree = ast.parse(py_text)
+    except SyntaxError:
+        return out
+
+    def walk(node, prefix):
+        for ch in ast.iter_child_nodes(node):
+            if isinstance(ch, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                q = prefix + ch.name
+                kind = ("asyncfunc" if isinstance(ch, ast.AsyncFunctionDef)
+                        else "func" if isinstance(ch, ast.FunctionDef) else "class")
+                start = min([ch.lineno] + [d.lineno for d in ch.decorator_list])
+                out.append((q, kind, start, ch.end_lineno or ch.lineno))
+                if isinstance(ch, ast.ClassDef):
+                    walk(ch, q + ".")
+
+    walk(tree, "")
+    return out
+
+
+def gold_functions(t, base_dir):
+    """[(file, qualname, kind)] — hunk 行落点所在的 def(仅函数/异步,不含 class)。"""
+    gold = []
+    for f in lib_files_of(t):
+        p = base_dir / f
+        if not p.exists():
+            continue
+        spans = defs_with_spans(p.read_text(errors="replace"))
+        for start, end in hunk_new_ranges(t["patch"], f):
+            for q, kind, s, e in spans:
+                if kind != "class" and s <= start <= e:
+                    gold.append((f, q, kind))
+                    break
+    return gold
+
+
+# CELL 3 code
+# ---- 快照提取: 只取 .py 文件; 兼容 hardlink 修复 ----
+def readable_copy(task, ext, sizes):
+    d = GRAPHS if ext == ".json" else EMB
+    want = task["instance_id"] + ext
+    if sizes.get(want, 0) > 100:
+        return d / want
+    short = task["repo"].split("/")[-1]
+    if sizes.get(f"{short}_{task['base_commit']}{ext}", 0) > 100:
+        return d / f"{short}_{task['base_commit']}{ext}"
+    # 同 commit 兄弟任务名(共享 hardlink 组)
+    for other, ot in TASK_BY_ID.items():
+        if other != task["instance_id"] and ot["base_commit"] == task["base_commit"]:
+            if sizes.get(other + ext, 0) > 100:
+                return d / (other + ext)
+    return None
+
+
+TASK_BY_ID = {t["instance_id"]: t for t in tasks}
+GSZ = {f.name: f.stat().st_size for f in GRAPHS.glob("*")} if GRAPHS else {}
+ESZ = {f.name: f.stat().st_size for f in EMB.glob("*")} if EMB else {}
+print(f"graphs {len(GSZ)} files/{sum(1 for v in GSZ.values() if v == 0)} empty; "
+      f"embeddings {len(ESZ)}/{sum(1 for v in ESZ.values() if v == 0)}")
+
+
+def extract_py_files(task, max_bytes=2_000_000):
+    """{relpath: source_text} 仅 .py,跳过 .git 与超大文件。"""
+    snap = SNAP / f"{task['instance_id']}.tgz"
+    if not snap.exists():
+        return {}
+    out = {}
+    try:
+        with tarfile.open(snap) as tf:
+            for m in tf.getmembers():
+                name = m.name.lstrip("./")
+                if not name.endswith(".py") or m.size > max_bytes:
+                    continue
+                if TESTPATH.search(name):
+                    continue
+                f = tf.extractfile(m)
+                if f is not None:
+                    out[name] = f.read().decode("utf-8", errors="replace")
+    except Exception as e:  # noqa: BLE001
+        print("extract err", task["instance_id"], str(e)[:80])
+    return out
+
+
+# CELL 4 code
+# ---- 文本编码通道(查询侧编码 = 修复假设的直接验证) ----
+import subprocess, sys as _sys
+subprocess.run([_sys.executable, "-m", "pip", "install", "-q", "sentence-transformers"],
+               capture_output=True)
+from sentence_transformers import SentenceTransformer  # noqa: E402
+
+try:
+    EMBA = SentenceTransformer("jinaai/jina-embeddings-v2-base-code", trust_remote_code=True)
+    EMB_NAME = "jina-code"
+except Exception as e:  # noqa: BLE001
+    print("jina-code load failed, fallback bge-small:", str(e)[:120])
+    EMBA = SentenceTransformer("BAAI/bge-small-en-v1.5")
+    EMB_NAME = "bge-small"
+print("embed model:", EMB_NAME, "dim:", EMBA.get_sentence_embedding_dimension())
+
+
+def textemb_rank(query, docs, batch=64, cap=700):
+    """docs: {key: text} -> cosine 排序(查询与文档同为文本编码)。"""
+    if not docs:
+        return []
+    keys = list(docs)
+    texts = [docs[k][:cap] for k in keys]
+    Q = EMBA.encode([query[:2000]], normalize_embeddings=True)
+    D = EMBA.encode(texts, batch_size=batch, normalize_embeddings=True,
+                    show_progress_bar=False)
+    sims = D @ Q.T
+    order = np.argsort(-sims[:, 0])
+    return [(keys[i], float(sims[i, 0])) for i in order]
+
+
+# CELL 5 code
+# ---- 方法1: code-aware TF-IDF (文件级 + 函数级) ----
+from sklearn.feature_extraction.text import TfidfVectorizer  # noqa: E402
+
+ID_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]{2,}")
+PART_RE = re.compile(r"[A-Z]?[a-z]+|[A-Z]+(?![a-z])|\d+")
+
+
+def code_tokens(text):
+    toks = []
+    for ident in ID_RE.findall(text):
+        if "_" in ident:
+            toks.extend(p for p in ident.lower().split("_") if len(p) > 1)
+        else:
+            toks.extend(p.lower() for p in PART_RE.findall(ident) if len(p) > 1)
+    return toks
+
+
+def tfidf_rank(query, docs):
+    """docs: {key: text}; 返回按余弦降序的 [(key, score)]。"""
+    if not docs:
+        return []
+    keys = list(docs)
+    vec = TfidfVectorizer(tokenizer=code_tokens, token_pattern=None, lowercase=False)
+    try:
+        M = vec.fit_transform([docs[k] for k in keys] + [query])
+    except ValueError:
+        return []
+    q = M[-1]
+    sims = (M[:-1] @ q.T).toarray().ravel()
+    order = np.argsort(-sims)
+    return [(keys[i], float(sims[i])) for i in order]
+
+
+# ---- 方法2: 嵌入余弦 (复刻 search_similar_code 的离线协议) ----
+def load_emb(task):
+    p = readable_copy(task, ".npz", ESZ)
+    if p is None:
+        return None
+    try:
+        z = np.load(p, allow_pickle=True)
+        ids = [k for k in z.files if not k.startswith("__")]
+        if not ids:
+            return None
+        X = np.stack([z[k].ravel().astype(np.float32) for k in ids])
+        n = np.linalg.norm(X, axis=1, keepdims=True)
+        n[n == 0] = 1.0
+        return ids, X / n
+    except Exception as e:  # noqa: BLE001
+        print("emb err", task["instance_id"], str(e)[:80])
+        return None
+
+
+def emb_rank(task, query, emb):
+    """query 经标识符匹配到种子节点,取其向量与全部节点余弦(多种子取均值)。"""
+    if emb is None:
+        return []
+    ids, X = emb
+    q_ids = [i for i in code_tokens(query) if len(i) > 2][:20]
+    seed_rows = []
+    for i, nid in enumerate(ids):
+        parts = set(code_tokens(nid))
+        if parts & set(q_ids):
+            seed_rows.append(i)
+    if not seed_rows:
+        # 回退: 名称子串匹配
+        ql = query.lower()
+        for i, nid in enumerate(ids):
+            if nid.split(".")[-1].lower() in ql:
+                seed_rows.append(i)
+    if not seed_rows:
+        return []
+    qv = X[seed_rows].mean(axis=0)
+    qv /= max(np.linalg.norm(qv), 1e-9)
+    sims = X @ qv
+    order = np.argsort(-sims)
+    return [(ids[i], float(sims[i])) for i in order]
+
+
+# ---- 方法3: 图扩散 (Personalized PageRank, 纯 numpy 幂迭代) ----
+def load_graph(task):
+    p = readable_copy(task, ".json", GSZ)
+    if p is None:
+        return None
+    try:
+        g = json.load(open(p))
+        return g
+    except Exception as e:  # noqa: BLE001
+        print("graph err", task["instance_id"], str(e)[:80])
+        return None
+
+
+def ppr_rank(task, query, g, emb_ranking, alpha=0.85, iters=30, topk_seed=5):
+    nodes = [n["id"] for n in g["nodes"]]
+    idx = {n: i for i, n in enumerate(nodes)}
+    N = len(nodes)
+    if N == 0:
+        return []
+    A = np.zeros((N, N), dtype=np.float32)
+    for e in g["edges"]:
+        s, t = idx.get(e.get("source")), idx.get(e.get("target"))
+        if s is not None and t is not None:
+            A[s, t] += 1.0
+    outdeg = A.sum(axis=1, keepdims=True)
+    outdeg[outdeg == 0] = 1.0
+    P = A / outdeg
+    # 种子: 嵌入排名的 topk 节点(按名字命中图)
+    seeds = []
+    if emb_ranking:
+        emb_names = {nid.split(".")[-1]: r for r, (nid, _) in enumerate(emb_ranking[:50])}
+        for i, n in enumerate(nodes):
+            r = emb_names.get(n.split(".")[-1])
+            if r is not None and r < topk_seed * 3:
+                seeds.append(i)
+    if not seeds:
+        q_ids = set(code_tokens(query))
+        for i, n in enumerate(nodes):
+            if set(code_tokens(n)) & q_ids:
+                seeds.append(i)
+    if not seeds:
+        return []
+    s = np.zeros(N, dtype=np.float32)
+    s[seeds] = 1.0 / len(seeds)
+    r = s.copy()
+    for _ in range(iters):
+        r = alpha * (P.T @ r) + (1 - alpha) * s
+    order = np.argsort(-r)
+    return [(nodes[i], float(r[i])) for i in order if r[i] > 0]
+
+
+# ---- 节点id → 文件路径 ----
+def node_to_file(nid, fileset):
+    parts = nid.split(".")
+    cands = ["/".join(parts[:cut]) + ".py" for cut in range(len(parts) - 1, 0, -1)]
+    for cand in cands:
+        if cand in fileset:
+            return cand
+    # src 布局等: 逐候选尝试后缀匹配(取最短命中)
+    for cand in cands:
+        best = None
+        for f in fileset:
+            if f == cand or f.endswith("/" + cand):
+                if best is None or len(f) < len(best):
+                    best = f
+        if best is not None:
+            return best
+    return None
+
+
+def rrf_fuse(rankings, k=60):
+    """reciprocal rank fusion: {key: score}"""
+    agg = collections.defaultdict(float)
+    for rk in rankings:
+        if not rk:
+            continue
+        for pos, (key, _) in enumerate(rk[:200]):
+            agg[key] += 1.0 / (k + pos + 1)
+    return sorted(agg.items(), key=lambda x: -x[1])
+
+
+# CELL 6 code
+# ---- 逐任务: TF-IDF / 官方协议 / 文本编码 / 融合 ----
+def metrics(ranked_keys, gold_set, ks=(1, 5, 10)):
+    out = {}
+    first = None
+    for pos, key in enumerate(ranked_keys):
+        if key in gold_set:
+            first = pos + 1
+            break
+    for k in ks:
+        out[f"recall@{k}"] = 1.0 if any(key in gold_set for key in ranked_keys[:k]) else 0.0
+    out["mrr"] = (1.0 / first) if first else 0.0
+    out["first_rank"] = first or 10**9
+    return out
+
+
+def mentions_gold_symbol(query, gold_funcs):
+    q = query.lower()
+    for _, qname, _ in gold_funcs:
+        last = qname.split(".")[-1].lower()
+        if len(last) > 3 and last in q:
+            return True
+    return False
+
+
+results = []
+for ti, t in enumerate(tasks):
+    row = {"instance_id": t["instance_id"], "repo": t["repo"]}
+    try:
+        files = extract_py_files(t)
+        gf = []
+        for f in lib_files_of(t):
+            if f in files:
+                spans = defs_with_spans(files[f])
+                for start, end in hunk_new_ranges(t["patch"], f):
+                    for q, kind, s, e in spans:
+                        if kind != "class" and s <= start <= e:
+                            gf.append((f, q, kind))
+                            break
+        gold_files = set(lib_files_of(t))
+        gold_fn = {(f, q.split(".")[-1]) for f, q, _ in gf}
+        row["n_gold_files"], row["n_gold_fn"] = len(gold_files), len(gold_fn)
+        row["mentions_symbol"] = mentions_gold_symbol(t["problem_statement"], gf)
+        fileset = set(files)
+
+        emb = load_emb(t)
+        g = load_graph(t)
+
+        # --- 文件级 ---
+        tf_file = tfidf_rank(t["problem_statement"], files)
+        emb_node = emb_rank(t, t["problem_statement"], emb)
+        node_scores = collections.defaultdict(float)
+        for nid, s in (emb_node or [])[:500]:
+            fp = node_to_file(nid, fileset)
+            if fp and s > node_scores[fp]:
+                node_scores[fp] = s
+        emb_file = sorted(node_scores.items(), key=lambda x: -x[1])
+        # 文本编码: 文件全文(截断) — 查询侧直接编码
+        temb_file = textemb_rank(t["problem_statement"], files, batch=32, cap=2000)
+        hyb_file = rrf_fuse([tf_file, emb_file, temb_file])
+
+        for name, rk in [("tfidf", tf_file), ("emb", emb_file),
+                         ("textemb", temb_file), ("hybrid", hyb_file)]:
+            row[f"file_{name}"] = metrics([k for k, _ in rk], gold_files)
+
+        # --- 函数级(图节点宇宙,节点文本) ---
+        if g:
+            fn_docs, node_file = {}, {}
+            for n in g["nodes"]:
+                fp = node_to_file(n["id"], fileset)
+                if fp:
+                    fn_docs[n["id"]] = n.get("text", "")
+                    node_file[n["id"]] = fp
+            tf_fn = tfidf_rank(t["problem_statement"], fn_docs)
+            temb_fn = textemb_rank(t["problem_statement"], fn_docs, batch=64, cap=700)
+            gold_nodes = {nid for nid in fn_docs
+                          if (node_file[nid], nid.split(".")[-1]) in gold_fn}
+            row["n_gold_nodes"] = len(gold_nodes)
+            for name, rk in [("tfidf", tf_fn), ("emb", emb_node),
+                             ("textemb", temb_fn), ("hybrid", rrf_fuse([tf_fn, temb_fn, emb_node]))]:
+                row[f"fn_{name}"] = metrics([k for k, _ in rk], gold_nodes)
+        results.append(row)
+    except Exception as e:  # noqa: BLE001
+        row["error"] = str(e)[:150]
+        results.append(row)
+    if (ti + 1) % 10 == 0:
+        print(f"{ti + 1}/{len(tasks)}", flush=True)
+
+OUT = pathlib.Path("/kaggle/working") if pathlib.Path("/kaggle").exists() else pathlib.Path(".")
+json.dump({"embed_model": EMB_NAME, "results": results}, open(OUT / "rq4_results.json", "w"))
+print("saved", len(results), "| model:", EMB_NAME)
+
+
+# CELL 7 code
+# ---- 汇总报告 ----
+def agg(rows, prefix, keys=("recall@1", "recall@5", "recall@10", "mrr")):
+    out = {}
+    for name in ("tfidf", "emb", "textemb", "hybrid"):
+        col = f"{prefix}_{name}"
+        vals = [r[col] for r in rows if col in r and "error" not in r]
+        if not vals:
+            continue
+        out[name] = {k: (sum(v[k] for v in vals) / len(vals)) for k in keys}
+        out[name]["n"] = len(vals)
+    return out
+
+
+def show(title, table):
+    print(f"\n=== {title} ===")
+    hdr = f"{'method':8s} " + " ".join(f"{k:>10s}" for k in ("recall@1", "recall@5", "recall@10", "mrr")) + "   n"
+    print(hdr)
+    for name, m in table.items():
+        print(f"{name:8s} " + " ".join(f"{m[k]:10.3f}" for k in ("recall@1", "recall@5", "recall@10", "mrr")) + f" {m['n']:4d}")
+
+
+ok = [r for r in results if "error" not in r]
+print(f"tasks ok: {len(ok)}/{len(results)}; errors: {len(results) - len(ok)}")
+show("FILE-level localization (all tasks)", agg(ok, "file"))
+fng_all = [r for r in ok if "fn_tfidf" in r]
+unreach = [r for r in fng_all if r.get("n_gold_fn", 0) > 0 and r.get("n_gold_nodes", 0) == 0]
+fng = [r for r in fng_all if r.get("n_gold_nodes", 0) > 0]
+print(f"\nfunction-gold tasks: {len(fng_all)}; gold unreachable in node universe: {len(unreach)} "
+      f"({(len(unreach) / max(len(fng_all), 1)) * 100:.0f}%) — the coverage ceiling")
+show(f"FUNCTION-level localization (reachable gold only, n={len(fng)})", agg(fng, "fn"))
+
+for repo in ("fastapi/fastapi", "Textualize/rich", "psf/requests"):
+    sub = [r for r in ok if r["repo"] == repo]
+    if sub:
+        show(f"FILE-level {repo} (n={len(sub)})", agg(sub, "file"))
+
+for label, sel in [("issue mentions gold symbol", True), ("no symbol mention", False)]:
+    sub = [r for r in ok if r.get("mentions_symbol") is sel]
+    if sub:
+        show(f"FILE-level | {label} (n={len(sub)})", agg(sub, "file"))
+
+async_hit = [r for r in ok if r.get("gold_async", 0) > 0]
+if async_hit:
+    show(f"FILE-level | tasks whose gold touches async defs (n={len(async_hit)})", agg(async_hit, "file"))
+print(f"\ntasks with async gold: {len(async_hit)}; avg gold files/task: "
+      f"{statistics.mean(r['n_gold_files'] for r in ok):.2f}")

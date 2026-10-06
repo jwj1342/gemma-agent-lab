@@ -1,0 +1,81 @@
+{
+  "unpinnedModelInstances": [
+    {
+      "modelInstanceId": 681780,
+      "bestPublicScore": 0.08,
+      "numDistinctAuthors": 10,
+      "owner": {
+        "id": 855,
+        "imageUrl": "https://storage.googleapis.com/kaggle-organizations/855/thumbnail.png",
+        "isOrganization": true,
+        "name": "Google",
+        "slug": "google",
+        "userTier": "STAFF"
+      },
+      "framework": "MODEL_FRAMEWORK_OTHER",
+      "modelSubtitle": "Gemma is a family of lightweight, state-of-the-art open models from Google, built from the same research and technology used to create the Gemini models.",
+      "modelTitle": "Gemma 4",
+      "currentVariationSlug": "gemma-4-31b-it-qat-w4a16-ct",
+      "modelInstanceUrl": "/models/google/gemma-4/Other/gemma-4-31b-it-qat-w4a16-ct",
+      "currentModelInstanceVersionId": 897258,
+      "downloadUrl": "/models/google/gemma-4/Other/gemma-4-31b-it-qat-w4a16-ct/2/download",
+      "modelCreateTime": "2026-03-26T18:26:55.100257300Z"
+    },
+    {
+      "modelInstanceId": 757208,
+      "bestPublicScore": 0.08,
+      "numDistinctAuthors": 1,
+      "owner": {
+        "id": 32451058,
+        "imageUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/32451058-kg.jpg?t=2026-03-22-18-52-37",
+        "name": "Jeki Wan Taufik",
+        "slug": "jek1wantaufik",
+        "userTier": "EXPERT"
+      },
+      "framework": "MODEL_FRAMEWORK_TRANSFORMERS",
+      "modelSubtitle": "An open machine learning model designed for flexible inference, fine-tuning, and AI experimentation",
+      "modelTitle": "ModelBuddy",
+      "currentVariationSlug": "gemma4",
+      "modelInstanceUrl": "/models/jek1wantaufik/buddy/Transformers/gemma4",
+      "currentModelInstanceVersionId": 1011280,
+      "downloadUrl": "/models/jek1wantaufik/buddy/Transformers/gemma4/1/download",
+      "modelCreateTime": "2026-04-22T12:49:38.044824700Z"
+    },
+    {
+      "modelInstanceId": 747982,
+      "numDistinctAuthors": 1,
+      "owner": {
+        "id": 36713834,
+        "imageUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+        "name": "Mousumiroy250",
+        "slug": "mousumiroy250",
+        "userTier": "CONTRIBUTOR"
+      },
+      "framework": "MODEL_FRAMEWORK_TRANSFORMERS",
+      "modelTitle": "mt5-base",
+      "currentVariationSlug": "default",
+      "modelInstanceUrl": "/models/mousumiroy250/mt5-base/Transformers/default",
+      "currentModelInstanceVersionId": 995857,
+      "downloadUrl": "/models/mousumiroy250/mt5-base/Transformers/default/1/download",
+      "modelCreateTime": "2026-09-17T05:59:20.305535200Z"
+    },
+    {
+      "modelInstanceId": 185265,
+      "numDistinctAuthors": 1,
+      "owner": {
+        "id": 18360293,
+        "imageUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/18360293-kg.png?t=2025-10-30-02-53-31",
+        "name": "Muhammad Ukasha",
+        "slug": "muhammadukasha09",
+        "userTier": "CONTRIBUTOR"
+      },
+      "framework": "MODEL_FRAMEWORK_TRANSFORMERS",
+      "modelTitle": "bert-base-multilingual-cased",
+      "currentVariationSlug": "default",
+      "modelInstanceUrl": "/models/muhammadukasha09/bert-base-multilingual-cased/Transformers/default",
+      "currentModelInstanceVersionId": 217271,
+      "downloadUrl": "/models/muhammadukasha09/bert-base-multilingual-cased/Transformers/default/1/download",
+      "modelCreateTime": "2025-01-02T18:07:48.519695500Z"
+    }
+  ]
+}

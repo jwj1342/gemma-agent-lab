@@ -1,0 +1,139 @@
+{
+  "forumTopic": {
+    "authorId": 2034098,
+    "authorThumbnailName": "2034098-kg.jpg",
+    "authorUserDisplayName": "Slawek Biel",
+    "authorUserName": "slawekbiel",
+    "comments": [
+      {
+        "id": 3528871,
+        "postDate": "2026-09-26T18:24:37.830Z",
+        "rawMarkdown": "Depends. Sometimes you can do some RAM offloading. But for 24g, post training is off the table. ",
+        "content": "<p>Depends. Sometimes you can do some RAM offloading. But for 24g, post training is off the table. </p>",
+        "parent": {},
+        "author": {
+          "displayName": "JohnParkerson",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/johnparkerson",
+          "tier": "CONTRIBUTOR",
+          "id": 36840669,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 529,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "JohnParkerson",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+            "url": "/johnparkerson",
+            "userName": "johnparkerson",
+            "tier": "CONTRIBUTOR",
+            "id": 36840669,
+            "profileUrl": "/johnparkerson",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 36840669,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3528262,
+        "postDate": "2026-09-25T18:19:35.120Z",
+        "rawMarkdown": "I'm only figuring things out myself right now, but my 1 day tests are:\n\nOn Mac: 26-29 for one agent task at the full 32k context. Local but Kaggle style (4 tasks in parallel) - 70-76 GB. ",
+        "content": "<p>I'm only figuring things out myself right now, but my 1 day tests are:</p>\n<p>On Mac: 26-29 for one agent task at the full 32k context. Local but Kaggle style (4 tasks in parallel) - 70-76 GB. </p>",
+        "parent": {},
+        "author": {
+          "displayName": "Joseph Adamski",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/33210778-kg.jpg?t=2026-09-02-13-53-56",
+          "url": "/josephadamski91",
+          "tier": "EXPERT",
+          "id": 33210778,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 311,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Joseph Adamski",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/33210778-kg.jpg?t=2026-09-02-13-53-56",
+            "url": "/josephadamski91",
+            "userName": "josephadamski91",
+            "tier": "EXPERT",
+            "id": 33210778,
+            "profileUrl": "/josephadamski91",
+            "performanceTier": "EXPERT",
+            "userId": 33210778,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3528189,
+      "postDate": "2026-09-25T16:08:26.147Z",
+      "rawMarkdown": "Hello!\n\nWhat's the minimal amount of memory needed to run inference on a single GPU? Has anyone managed to run it successfully with full context length on 24GB?",
+      "content": "<p>Hello!</p>\n<p>What's the minimal amount of memory needed to run inference on a single GPU? Has anyone managed to run it successfully with full context length on 24GB?</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Slawek Biel",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2034098-kg.jpg",
+        "url": "/slawekbiel",
+        "tier": "MASTER",
+        "id": 2034098,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 1,
+        "canUpvote": true,
+        "totalUpvotes": 1
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Slawek Biel",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2034098-kg.jpg",
+          "url": "/slawekbiel",
+          "userName": "slawekbiel",
+          "tier": "MASTER",
+          "id": 2034098,
+          "profileUrl": "/slawekbiel",
+          "performanceTier": "MASTER",
+          "userId": 2034098,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3528189,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 743308,
+    "name": "VRAM to run Gemma locally",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-25T16:08:26.145742500Z",
+    "totalVotes": 1,
+    "url": "/competitions/gemma-4-developer-agent/discussion/743308",
+    "totalMessages": 2,
+    "authorPerformanceTier": "MASTER",
+    "authorProgressionOptOut": false
+  }
+}

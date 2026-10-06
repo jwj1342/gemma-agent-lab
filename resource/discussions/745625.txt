@@ -1,0 +1,20 @@
+# One of my test notebooks with GPU queued for 3+ hours.... is there really so much demand?
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/745625
+
+## 3532389 /ssain18 TOPIC
+![Queued/Stuck Notebook Run](https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F2384691%2Ffa6ca490c5723edd0aeea50deb31230c%2FScreenshot%202026-10-03%20174711.png?generation=1791029860864236&alt=media)
+
+One of my test notebooks with GPU queued for 3+ hours.... is there really so much demand?
+For context: I am trying to compare frontier agents vs my Gemma Agent for solving the tasks....
+
+## 3532660 /nusrati COMMENT
+@ryanholbrook im also facing same issue, mine one is queued since 4 hrs.
+
+## 3532684 /ssain18 TOPIC
+sadly it is a problem. but you need to wait and soon enough it will start to run. mine were sometimes queued for 5+ hours then started running
+
+## 3532694 /impactoo COMMENT
+:-( pareille plus de 3h 
+
+## 3532484 / COMMENT
+

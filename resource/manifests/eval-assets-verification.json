@@ -1,0 +1,256 @@
+{
+  "checked_at": "2026-10-05T04:57:56.211223+00:00",
+  "model_handle": "google/gemma-4/Other/gemma-4-31b-it-qat-w4a16-ct/2",
+  "model_bytes": 23297590856,
+  "model_files": [
+    {
+      "path": "README.md",
+      "bytes": 28499,
+      "sha256": "b68c4f66b6bbe75f72f54a5aed65ed08a7faf6ca056bdf11beefedf8591adad3"
+    },
+    {
+      "path": "chat_template.jinja",
+      "bytes": 16934,
+      "sha256": "94899c0f917d93f6fe81c95744d1e8ddab2d21d39228d2e4aec1fb2a25bff413"
+    },
+    {
+      "path": "config.json",
+      "bytes": 18711,
+      "sha256": "b100d85e571c25b688e82919d819253063a1defb0e6cee3b9b1c1fbad99bd0c2"
+    },
+    {
+      "path": "generation_config.json",
+      "bytes": 208,
+      "sha256": "70110aa886fa7ee25ce47346d102dd29ca5f967500490b4362fc72068e1db70a"
+    },
+    {
+      "path": "model.safetensors",
+      "bytes": 23265352448,
+      "sha256": "1b9b1d622a93f02c0d33f98e502f233b5d707443af6ddc464ed0bf5498506c20"
+    },
+    {
+      "path": "processor_config.json",
+      "bytes": 1689,
+      "sha256": "32bdf45d2ad4cc29a0822ddd157a182de76644f0419a6228d151495256e9813c"
+    },
+    {
+      "path": "tokenizer.json",
+      "bytes": 32169626,
+      "sha256": "cc8d3a0ce36466ccc1278bf987df5f71db1719b9ca6b4118264f45cb627bfe0f"
+    },
+    {
+      "path": "tokenizer_config.json",
+      "bytes": 2741,
+      "sha256": "a284d1243b62be31faa9c13e1c28cece940c4abaa7bd9ad87b94f61b40687200"
+    }
+  ],
+  "model_tensors": 2009,
+  "wheelhouse_files": [
+    {
+      "path": "adk_eval_core-0.1.0-py3-none-any.whl",
+      "bytes": 90060,
+      "sha256": "194dd8f9aab154857bfa0db9d9ec382db856ee124529e072509634d3071d8643"
+    },
+    {
+      "path": "adk_submission-0.2.12-py3-none-any.whl",
+      "bytes": 65642,
+      "sha256": "077c438c426e625b9f722081694e1d32856e6f7e932ef625002fc4a11aabdc10"
+    },
+    {
+      "path": "anthropic-1.4.0-py3-none-any.whl",
+      "bytes": 1300390,
+      "sha256": "590e85bff75b713a123b03f586d68f02266b5fdc49f70dd75f721ced93a4716c"
+    },
+    {
+      "path": "apache_tvm_ffi-0.1.13.post3-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl",
+      "bytes": 2955490,
+      "sha256": "edaca70656f87831c3b4989169b1d85fe563ccd6d2e2cadc1f4f5880e1295f7a"
+    },
+    {
+      "path": "astor-0.8.1-py2.py3-none-any.whl",
+      "bytes": 27488,
+      "sha256": "070a54e890cefb5b3739d19f30f5a5ec840ffc9c50ffa7d23cc9fc1a38ebbfc5"
+    },
+    {
+      "path": "bitsandbytes-0.46.1-py3-none-manylinux_2_24_x86_64.whl",
+      "bytes": 72865511,
+      "sha256": "b0ee4a204fb926d4eae02bc2f5468ae3c11c011cfa849a4c771d4c6b201f57ae"
+    },
+    {
+      "path": "cbor2-6.1.4-cp312-cp312-manylinux_2_28_x86_64.whl",
+      "bytes": 461193,
+      "sha256": "310f3dfb296ba48fe9b63c5cf26e691e3548a1eae6901d2f0c18e941d151f220"
+    },
+    {
+      "path": "compressed_tensors-0.15.0.1-py3-none-any.whl",
+      "bytes": 194260,
+      "sha256": "e1b1f322e82e475715e242bad46925a304ea8e5c98b5055a15b8eb22fb6bfea9"
+    },
+    {
+      "path": "depyf-0.20.0-py3-none-any.whl",
+      "bytes": 39381,
+      "sha256": "d31effad4261cebecb58955d832e448ace88f432328f95f82fd99c30fd9308d4"
+    },
+    {
+      "path": "diskcache-5.6.3-py3-none-any.whl",
+      "bytes": 45550,
+      "sha256": "5e31b2d5fbad117cc363ebaf6b689474db18a1f6438bc82358b024abd4c2ca19"
+    },
+    {
+      "path": "flashinfer_cubin-0.6.6-py3-none-any.whl",
+      "bytes": 267661457,
+      "sha256": "36508dfc792eb5ecfb15d2c140a7702812e1fa1ab0fb03929b2ed55e3e8191f3"
+    },
+    {
+      "path": "flashinfer_python-0.6.6-py3-none-any.whl",
+      "bytes": 7817047,
+      "sha256": "078f158636969eec1a0d3dea19c3ca90b426b66df89bbf7b7b8276ce2ec08148"
+    },
+    {
+      "path": "gguf-0.19.0-py3-none-any.whl",
+      "bytes": 118475,
+      "sha256": "70bcd10edfe697fb2dad6e40af2234b9d8ece9a41a99761405121ebda1c3c1cd"
+    },
+    {
+      "path": "google_adk-1.36.1-py3-none-any.whl",
+      "bytes": 2877731,
+      "sha256": "1a2f6868c509e3151fb0de3575a7d18b45c338be86f420924dad74e7193631a0"
+    },
+    {
+      "path": "google_genai-2.11.0-py3-none-any.whl",
+      "bytes": 984162,
+      "sha256": "5bc8186100e1d34d691fbe0cba392b7e04e98d286ca952323a6672d054accf95"
+    },
+    {
+      "path": "ijson-3.5.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl",
+      "bytes": 149848,
+      "sha256": "e4fcebfe1685bb7ba06a8255a5d428ea6b4b895d7acf979cb637d8bbc9db2f47"
+    },
+    {
+      "path": "interegular-0.3.3-py37-none-any.whl",
+      "bytes": 23635,
+      "sha256": "b0c07007d48c89d6d19f7204972d369b2a77222722e126b6aa63aa721dc3b19c"
+    },
+    {
+      "path": "llguidance-1.3.0-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "bytes": 3033133,
+      "sha256": "bc17e9dd602c3879bf91664a64bf72f54c74dbfbeb24ccfab6a5fe435b12f7aa"
+    },
+    {
+      "path": "lm_format_enforcer-0.11.3-py3-none-any.whl",
+      "bytes": 45418,
+      "sha256": "cf586350875def1ae7a8fba84fcbbfc8371424b6c9d05c1fcba70aa233fbf06f"
+    },
+    {
+      "path": "loguru-0.7.3-py3-none-any.whl",
+      "bytes": 61595,
+      "sha256": "31a33c10c8e1e10422bfd431aeb5d351c7cf7fa671e3c4df004162264b28220c"
+    },
+    {
+      "path": "mistral_common-1.11.7-py3-none-any.whl",
+      "bytes": 6553583,
+      "sha256": "a9511b88eacacbe7dacddd9d3498c1739f56847b7fdddbd5a22e7844fd9def95"
+    },
+    {
+      "path": "model_hosting_container_standards-0.1.16-py3-none-any.whl",
+      "bytes": 125666,
+      "sha256": "47f4f65713120bc3a69feb022981a38db9e557aedf88dbd72077f20588caa12b"
+    },
+    {
+      "path": "msgspec-0.21.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl",
+      "bytes": 225025,
+      "sha256": "21995e74b5c598c2e004110ad66ec7f1b8c20bf2bcf3b2de8fd9a3094422d3ff"
+    },
+    {
+      "path": "nvidia_cudnn_frontend-1.18.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl",
+      "bytes": 2159245,
+      "sha256": "6c023539ca6de99234cf5102c3ec0d6af817f5396fc93028a22ba5b834a35b8a"
+    },
+    {
+      "path": "openai_harmony-0.0.8-cp38-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "bytes": 2953260,
+      "sha256": "c007d277218a50db8839e599ed78e0fffe5130f614c3f6d93ae257f282071a29"
+    },
+    {
+      "path": "opentelemetry_exporter_otlp-1.44.0-py3-none-any.whl",
+      "bytes": 6727,
+      "sha256": "4a498fa8d8fd8be9e8e2d175fe5524a3fe581ccffadd8509db86526a5fb97051"
+    },
+    {
+      "path": "opentelemetry_semantic_conventions_ai-0.5.1-py3-none-any.whl",
+      "bytes": 11250,
+      "sha256": "25aeb22bd261543b4898a73824026d96770e5351209c7d07a0b1314762b1f6e4"
+    },
+    {
+      "path": "outlines_core-0.2.11-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "bytes": 2287677,
+      "sha256": "86df9740368866295077346440d911df4972da2b3f1f54b8125e6f329e8a8891"
+    },
+    {
+      "path": "partial_json_parser-0.2.1.1.post7-py3-none-any.whl",
+      "bytes": 10877,
+      "sha256": "145119e5eabcf80cbb13844a6b50a85c68bf99d376f8ed771e2a3c3b03e653ae"
+    },
+    {
+      "path": "prometheus_fastapi_instrumentator-8.1.0-py3-none-any.whl",
+      "bytes": 19649,
+      "sha256": "b9f40b2cff3f7891ca0610b3ae4fc6ec723fd326b04bb659819aaeb821a0fc7d"
+    },
+    {
+      "path": "pybase64-1.5.0-cp312-cp312-manylinux1_x86_64.manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_5_x86_64.whl",
+      "bytes": 94681,
+      "sha256": "1a2b9cf39b4d30f600df8c56cccbc03adfc6e1ae8c04cd6b181105a432d4a515"
+    },
+    {
+      "path": "pycountry-26.2.16-py3-none-any.whl",
+      "bytes": 8044600,
+      "sha256": "115c4baf7cceaa30f59a4694d79483c9167dbce7a9de4d3d571c5f3ea77c305a"
+    },
+    {
+      "path": "pydantic_extra_types-2.11.2-py3-none-any.whl",
+      "bytes": 82851,
+      "sha256": "683b8943252543e49760f89733b1519bc62f31d1a287ebbdc5a7b7959fb4acfd"
+    },
+    {
+      "path": "quack_kernels-0.6.4-py3-none-any.whl",
+      "bytes": 728458,
+      "sha256": "e77c5d1f1299b0b38487fe8737df6c6975daa16bca7f7eb883bd1a74d09e7e78"
+    },
+    {
+      "path": "safetensors-0.8.0-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "bytes": 506502,
+      "sha256": "f216afd4ba743e744c86cbd08e7185efa8749e4c905f14e4e977d65576466cb0"
+    },
+    {
+      "path": "setproctitle-1.3.7-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl",
+      "bytes": 32932,
+      "sha256": "2906b6c7959cdb75f46159bf0acd8cc9906cf1361c9e1ded0d065fe8f9039629"
+    },
+    {
+      "path": "swegemma-0.2.7-py3-none-any.whl",
+      "bytes": 117587,
+      "sha256": "27a2f60f8db46c8fef5defc16df722dac0402446c9a6252e7e6b4c280e843c81"
+    },
+    {
+      "path": "tokenizers-0.22.2-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "bytes": 3274982,
+      "sha256": "369cc9fc8cc10cb24143873a0d95438bb8ee257bb80c71989e3ee290e8d72c67"
+    },
+    {
+      "path": "transformers-5.13.1-py3-none-any.whl",
+      "bytes": 11503977,
+      "sha256": "53f0ea8aa397e29244c2377ba981bcaf0c87adcf44fbdd447ef6306522afcacd"
+    },
+    {
+      "path": "vllm-0.19.1-cp38-abi3-manylinux_2_31_x86_64.whl",
+      "bytes": 433132506,
+      "sha256": "6b29fdc200966eda4d0cc4d10b8c338ec32620bb069ad3629d8a78e3b35fd3fa"
+    },
+    {
+      "path": "xgrammar-0.2.5.post1-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl",
+      "bytes": 48149933,
+      "sha256": "8df76e57eabf0576023826bd179dd2dddb56c1663dab74fd64086452487b795b"
+    }
+  ],
+  "scope": "Size comparison, SHA256 fingerprints, wheel ZIP CRC, safetensors offset bounds. No model execution."
+}

@@ -1,0 +1,199 @@
+{
+  "forumTopic": {
+    "authorId": 34341355,
+    "authorThumbnailName": "default-thumb.png",
+    "authorUserDisplayName": "phe",
+    "authorUserName": "suryagaur1408",
+    "comments": [
+      {
+        "id": 3529035,
+        "postDate": "2026-09-27T07:41:21.177Z",
+        "rawMarkdown": "Kowinski prize: https://www.kaggle.com/competitions/konwinski-prize",
+        "content": "<p>Kowinski prize: <a href=\"https://www.kaggle.com/competitions/konwinski-prize\" target=\"_blank\">https://www.kaggle.com/competitions/konwinski-prize</a></p>",
+        "parent": {},
+        "author": {
+          "displayName": "parthenos",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/15559822-kg.png?t=2026-08-13-14-46-51",
+          "url": "/nihilisticneuralnet",
+          "tier": "MASTER",
+          "id": 15559822,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "canUpvote": true,
+          "totalUpvotes": 1
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 486,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "parthenos",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/15559822-kg.png?t=2026-08-13-14-46-51",
+            "url": "/nihilisticneuralnet",
+            "userName": "nihilisticneuralnet",
+            "tier": "MASTER",
+            "id": 15559822,
+            "profileUrl": "/nihilisticneuralnet",
+            "performanceTier": "MASTER",
+            "userId": 15559822,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3528701,
+        "postDate": "2026-09-26T10:35:51.567Z",
+        "rawMarkdown": "Hi! Welcome to the exciting field of Agentic-AI and Autonomous Software Engineering!\nThe **Google - The Gemma 4 Developer Agent Competition** is actually a landmark event because it is the **first official Kaggle competition that evaluates full-lifecycle coding agents on real-world SWE-bench benchmarks** in an air-gapped container environment using local quantized models.\nHere are the most relevant historical benchmarks, research open-source projects, and papers with direct links to help you get started:\n### 1. Direct Benchmarks & Prior Art\n* **SWE-bench / SWE-bench Verified**: The gold standard benchmark created by Princeton & Stanford that this competition is built upon. Check their official leaderboard and paper:\n  * Website: [swebench.com](https://www.swebench.com/)\n  * GitHub: [princeton-nlp/SWE-bench](https://github.com/princeton-nlp/SWE-bench)\n  * Paper: *\"SWE-bench: Can Language Models Resolve Real-World GitHub Issues?\"* ([arXiv:2310.06770](https://arxiv.org/abs/2310.06770))\n* **SWE-agent (Princeton NLP)**: One of the pioneering autonomous agents running inside Docker containers with a specialized Agent-Computer Interface (ACI).\n  * GitHub: [princeton-nlp/SWE-agent](https://github.com/princeton-nlp/SWE-agent)\n* **Agentless (UIUC)**: A brilliant open-source project by Prof. Lingming Zhang's group that challenges complex multi-turn agent loops. It uses a clean 2-phase approach (Localization -> Repair) and achieves competitive solve rates at a fraction of the cost.\n  * GitHub: [OpenAutoCoder/Agentless](https://github.com/OpenAutoCoder/Agentless)\n  * Paper: *\"Agentless: Demystifying LLM-based Software Engineering Agents\"* ([arXiv:2407.01489](https://arxiv.org/abs/2407.01489))\n### 2. Similar Competitive Environments on Kaggle\n* **Kaggle AI Mathematical Olympiad (AIMO)**: Great reference for tool-augmented multi-step reasoning under strict memory and hardware timeouts.\n* **Kaggle LLM Science Exam**: Excellent reference for handling air-gapped inference and packaging custom libraries without internet access.\n### 3. Vital Tips for Beginners (To Avoid Burning Your Evaluation Quota)\nSince Kaggle enforces strict runtime budgets (e.g., total 12-hour limit across all tasks, 4GB RAM/2 vCPUs per container), here are a few golden rules:\n1. **Token Economy is King**: Avoid letting the model output massive thinking blocks or full-file rewrites. The context window can easily saturate. Keeping generation lean and focused directly saves you from Out-Of-Memory (OOM) or token limit errors.\n2. **Micro-Surgical Edits Over Refactoring**: In real software bugs, over 70% of fixes require fewer than 15 lines of code (e.g., adding a None check, stripping whitespace, or fixing parameter types). Avoid having the agent refactor surrounding code, as it almost always breaks pre-existing unit tests.\n3. **Fail-Fast Strategy**: Don't let your agent burn 30 minutes on a single broken or unsolvable issue. Set a tight timeout/turn cap so it moves on quickly to solvable tasks.\nIf you ever want to discuss agent architectures, toolsets, or evaluation setups in more depth, feel free to reach out via email at: **maplemagilabsvn@protonmail.com**.\nBest of luck on your competition journey! 🚀",
+        "content": "<p>Hi! Welcome to the exciting field of Agentic-AI and Autonomous Software Engineering!\nThe <strong>Google - The Gemma 4 Developer Agent Competition</strong> is actually a landmark event because it is the <strong>first official Kaggle competition that evaluates full-lifecycle coding agents on real-world SWE-bench benchmarks</strong> in an air-gapped container environment using local quantized models.\nHere are the most relevant historical benchmarks, research open-source projects, and papers with direct links to help you get started:</p>\n<h3>1. Direct Benchmarks &amp; Prior Art</h3>\n<ul>\n<li><strong>SWE-bench / SWE-bench Verified</strong>: The gold standard benchmark created by Princeton &amp; Stanford that this competition is built upon. Check their official leaderboard and paper:<ul>\n<li>Website: <a href=\"https://www.swebench.com/\" target=\"_blank\">swebench.com</a></li>\n<li>GitHub: <a href=\"https://github.com/princeton-nlp/SWE-bench\" target=\"_blank\">princeton-nlp/SWE-bench</a></li>\n<li>Paper: <em>\"SWE-bench: Can Language Models Resolve Real-World GitHub Issues?\"</em> (<a href=\"https://arxiv.org/abs/2310.06770\" target=\"_blank\">arXiv:2310.06770</a>)</li></ul></li>\n<li><strong>SWE-agent (Princeton NLP)</strong>: One of the pioneering autonomous agents running inside Docker containers with a specialized Agent-Computer Interface (ACI).<ul>\n<li>GitHub: <a href=\"https://github.com/princeton-nlp/SWE-agent\" target=\"_blank\">princeton-nlp/SWE-agent</a></li></ul></li>\n<li><strong>Agentless (UIUC)</strong>: A brilliant open-source project by Prof. Lingming Zhang's group that challenges complex multi-turn agent loops. It uses a clean 2-phase approach (Localization -&gt; Repair) and achieves competitive solve rates at a fraction of the cost.<ul>\n<li>GitHub: <a href=\"https://github.com/OpenAutoCoder/Agentless\" target=\"_blank\">OpenAutoCoder/Agentless</a></li>\n<li>Paper: <em>\"Agentless: Demystifying LLM-based Software Engineering Agents\"</em> (<a href=\"https://arxiv.org/abs/2407.01489\" target=\"_blank\">arXiv:2407.01489</a>)</li></ul></li>\n</ul>\n<h3>2. Similar Competitive Environments on Kaggle</h3>\n<ul>\n<li><strong>Kaggle AI Mathematical Olympiad (AIMO)</strong>: Great reference for tool-augmented multi-step reasoning under strict memory and hardware timeouts.</li>\n<li><strong>Kaggle LLM Science Exam</strong>: Excellent reference for handling air-gapped inference and packaging custom libraries without internet access.</li>\n</ul>\n<h3>3. Vital Tips for Beginners (To Avoid Burning Your Evaluation Quota)</h3>\n<p>Since Kaggle enforces strict runtime budgets (e.g., total 12-hour limit across all tasks, 4GB RAM/2 vCPUs per container), here are a few golden rules:</p>\n<ol>\n<li><strong>Token Economy is King</strong>: Avoid letting the model output massive thinking blocks or full-file rewrites. The context window can easily saturate. Keeping generation lean and focused directly saves you from Out-Of-Memory (OOM) or token limit errors.</li>\n<li><strong>Micro-Surgical Edits Over Refactoring</strong>: In real software bugs, over 70% of fixes require fewer than 15 lines of code (e.g., adding a None check, stripping whitespace, or fixing parameter types). Avoid having the agent refactor surrounding code, as it almost always breaks pre-existing unit tests.</li>\n<li><strong>Fail-Fast Strategy</strong>: Don't let your agent burn 30 minutes on a single broken or unsolvable issue. Set a tight timeout/turn cap so it moves on quickly to solvable tasks.\nIf you ever want to discuss agent architectures, toolsets, or evaluation setups in more depth, feel free to reach out via email at: <strong>maplemagilabsvn@protonmail.com</strong>.\nBest of luck on your competition journey! 🚀</li>\n</ol>",
+        "parent": {},
+        "author": {
+          "displayName": "M.A.P.L.E MAGI Labs",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/doaimabt",
+          "tier": "CONTRIBUTOR",
+          "id": 34567520,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "canUpvote": true,
+          "totalUpvotes": 2
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 1661,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "reactions": [
+          {
+            "emoji": "THANK_YOU",
+            "featuredUserNames": [
+              "hlly34",
+              "suryagaur1408"
+            ],
+            "userCount": 2
+          }
+        ],
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "M.A.P.L.E MAGI Labs",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+            "url": "/doaimabt",
+            "userName": "doaimabt",
+            "tier": "CONTRIBUTOR",
+            "id": 34567520,
+            "profileUrl": "/doaimabt",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 34567520,
+            "progressionOptOut": false
+          },
+          "intro": "Ðu?c r?i ... tôi mu?n tìm d?ng d?i (ngu?i Vi?t gi?ng tôi) cung dang tham gia cu?c thi này.\nVà c?m on b?n dã d?c nó!"
+        }
+      },
+      {
+        "id": 3528935,
+        "postDate": "2026-09-26T21:56:32.570Z",
+        "rawMarkdown": "You may also want to check out the Nemotron Reasoning Challenge (https://www.kaggle.com/competitions/nvidia-nemotron-model-reasoning-challenge). Kinda similar in that you're adding a LoRA adapter to an existing model, albeit with a different target.",
+        "content": "<p>You may also want to check out the Nemotron Reasoning Challenge (<a href=\"https://www.kaggle.com/competitions/nvidia-nemotron-model-reasoning-challenge)\" target=\"_blank\">https://www.kaggle.com/competitions/nvidia-nemotron-model-reasoning-challenge)</a>. Kinda similar in that you're adding a LoRA adapter to an existing model, albeit with a different target.</p>",
+        "parent": {},
+        "author": {
+          "displayName": "TwangyGarlic449",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/twangygarlic449",
+          "tier": "CONTRIBUTOR",
+          "id": 25196579,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 829,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "reactions": [
+          {
+            "emoji": "THANK_YOU",
+            "featuredUserNames": [
+              "hlly34",
+              "suryagaur1408"
+            ],
+            "userCount": 2
+          }
+        ],
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "TwangyGarlic449",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+            "url": "/twangygarlic449",
+            "userName": "twangygarlic449",
+            "tier": "CONTRIBUTOR",
+            "id": 25196579,
+            "profileUrl": "/twangygarlic449",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 25196579,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3528139,
+      "postDate": "2026-09-25T13:53:29.333Z",
+      "rawMarkdown": "Hi I am new to this Agentic-AI world and still going through its early phase of learning. Can anyone know Past competitions similar to this one so I can take reference from it. \n\nThanks in advance.!!",
+      "content": "<p>Hi I am new to this Agentic-AI world and still going through its early phase of learning. Can anyone know Past competitions similar to this one so I can take reference from it. </p>\n<p>Thanks in advance.!!</p>",
+      "parent": {},
+      "author": {
+        "displayName": "phe",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+        "url": "/suryagaur1408",
+        "tier": "CONTRIBUTOR",
+        "id": 34341355,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 3,
+        "canUpvote": true,
+        "totalUpvotes": 3
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "phe",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/suryagaur1408",
+          "userName": "suryagaur1408",
+          "tier": "CONTRIBUTOR",
+          "id": 34341355,
+          "profileUrl": "/suryagaur1408",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 34341355,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3528139,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 743275,
+    "name": "Past Competition Reference ? (Anyone)",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-25T13:53:29.333725700Z",
+    "totalVotes": 3,
+    "url": "/competitions/gemma-4-developer-agent/discussion/743275",
+    "totalMessages": 3,
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

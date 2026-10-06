@@ -1,0 +1,49 @@
+{
+  "languageNullable": "python",
+  "kernelTypeNullable": "notebook",
+  "isPrivateNullable": false,
+  "enableGpuNullable": true,
+  "enableTpuNullable": false,
+  "enableInternetNullable": false,
+  "currentVersionNumberNullable": 2,
+  "dockerImageNullable": "gcr.io/kaggle-private-byod/python@sha256:37c64f7dd9c54116ecd1bcc88817c5469b88387388fade02bfa8bf3fc647d461",
+  "machineShapeNullable": "NvidiaL4",
+  "id": 135692529,
+  "ref": "ryanholbrook/getting-started-gemma-4-developer-agent",
+  "title": "Getting Started - Gemma 4 Developer Agent",
+  "author": "Ryan Holbrook",
+  "slug": "getting-started-gemma-4-developer-agent",
+  "lastRunTime": "2026-10-02T03:28:14.0594699Z",
+  "language": "python",
+  "hasLanguage": true,
+  "kernelType": "notebook",
+  "hasKernelType": true,
+  "isPrivate": false,
+  "hasIsPrivate": true,
+  "enableGpu": true,
+  "hasEnableGpu": true,
+  "enableTpu": false,
+  "hasEnableTpu": true,
+  "enableInternet": false,
+  "hasEnableInternet": true,
+  "categoryIds": [
+    "gpu"
+  ],
+  "datasetDataSources": [
+    "metric/gemma-4-developer-agent-wheelhouse"
+  ],
+  "kernelDataSources": [],
+  "competitionDataSources": [
+    "gemma-4-developer-agent"
+  ],
+  "modelDataSources": [
+    "google/gemma-4/Other/gemma-4-31b-it-qat-w4a16-ct/2"
+  ],
+  "totalVotes": 774,
+  "currentVersionNumber": 2,
+  "hasCurrentVersionNumber": true,
+  "dockerImage": "gcr.io/kaggle-private-byod/python@sha256:37c64f7dd9c54116ecd1bcc88817c5469b88387388fade02bfa8bf3fc647d461",
+  "hasDockerImage": true,
+  "machineShape": "NvidiaL4",
+  "hasMachineShape": true
+}

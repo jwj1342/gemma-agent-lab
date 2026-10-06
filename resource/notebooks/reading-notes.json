@@ -1,0 +1,2789 @@
+{
+  "updated_at": "2026-10-05T06:57:49.666921+00:00",
+  "total_snapshot_entries": 112,
+  "entries": [
+    {
+      "index": 0,
+      "ref": "segamega/chronos-completion-authority-separated-agent-harn",
+      "role": "本地评测与日志审计",
+      "implementation": "复制官方 sample，运行前五题 Evaluator；额外记录 claim/resolved、事件链和 divergence。最终 ZIP 只打包 Agent 目录。",
+      "reuse": "保存真实补丁、测试 verdict 和异常；将“产生补丁”与“解决问题”分开统计。",
+      "caveats": "GATE 仅改变 notebook 内的 preds，没有写入最终 Agent ZIP；hash-chain 审计模块也不在提交包中。不能把外围实验直接当作评分服务会执行的策略。",
+      "evidence_lines": [
+        [
+          180,
+          230
+        ],
+        [
+          260,
+          349
+        ]
+      ],
+      "readable_sha256": "b6191531b21f27269993cdf65d8cac261213bc59aa2ce54cbc57968935d6eb30",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 1,
+      "ref": "lucifer19/agentic-counterexample-lab",
+      "role": "反例探针 skill 的提交构建",
+      "implementation": "构建单 coder 和 probe.py：最多三项探针，先保存 assertion-fail 基线，再按相同 hash 重跑；区分 ERROR/TIMEOUT/PASS。",
+      "reuse": "生成探针要先验证能复现，再验证修复；保留断言并限制探针时间，helper 失败时继续正常修复。",
+      "caveats": "notebook 主要做 CPU 打包，GPU pilot 与得分未在此独立复现。include_thoughts=false 在当前定制 harness 会关闭 thinking；冻结文件与 agent 同属一个沙箱，不是不可篡改的评分边界。",
+      "evidence_lines": [
+        [
+          1,
+          28
+        ],
+        [
+          41,
+          127
+        ]
+      ],
+      "readable_sha256": "5c971ea417bdb70b4768ace1bd6888906e60f604f8f1ff4d048bac1785d887fd",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 2,
+      "ref": "hitarthjain0/gemma-4-agent-run-the-real-evaluator-locally",
+      "role": "真实 evaluator 多题入口",
+      "implementation": "按 tasks[::13][:10] 跑官方 Evaluator，统计 patch、测试状态、命令次数和重复命令。作者报告同配置多次结果波动。",
+      "reuse": "复用逐题诊断和重复调用计数；同一配置重复运行，避免根据一两题差异做结论。",
+      "caveats": "10 分钟每题不能直接覆盖约 120 题的 12 小时总预算；样本不是按仓库留出。重复检测把命令截为前 200 字符，可能把不同长命令合并；3/10 等为作者报告。",
+      "evidence_lines": [
+        [
+          1,
+          22
+        ],
+        [
+          87,
+          94
+        ],
+        [
+          228,
+          243
+        ],
+        [
+          250,
+          310
+        ]
+      ],
+      "readable_sha256": "9cc45e386c6dbe238f94fcf8ca1e089a689cfe2ef3c97ada79bf09132dd4bcd5",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 3,
+      "ref": "hsiaosuan/gemma-developer-agent-0-13-submission",
+      "role": "已打包配置发布",
+      "implementation": "base64 ZIP 内是 SequentialAgent：只读 explore 先输出 repair_plan，coder 再编辑和提交；无 LoRA，5 分钟/60 tools/100 turns。",
+      "reuse": "短规划交接、限制图查询、固定提交字节与 SHA256，适合作为受控对照。",
+      "caveats": "0.13 为作者自述，未独立复现。已静态解码内嵌 YAML；include_thoughts=false，不能按非零 thinking_budget 认定开启 thinking。",
+      "evidence_lines": [
+        [
+          1,
+          26
+        ]
+      ],
+      "readable_sha256": "92ba29ee432d6ac8cb6212df33263ac280af497bc7e9bff8b4c76a13fd2365ae",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 4,
+      "ref": "aryangupta85/gemma-4-developer-agent-swe-architecture",
+      "role": "空源码条目",
+      "implementation": "下载记录成功，但公开源码内容为空。",
+      "reuse": "保留条目，避免把空文件误认为抓取遗漏或实现证据。",
+      "caveats": "无法审阅其架构、执行路径或结果；不能从标题补造实现。",
+      "evidence_lines": [],
+      "readable_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 5,
+      "ref": "abelmatas/the-gemma-4-developer-agent-complete-eda",
+      "role": "数据 EDA",
+      "implementation": "扫描文件清单、任务/schema、diff 规模、graph/NPZ/snapshot/wheel 与 sample 配置；用正则给任务附启发式类别。",
+      "reuse": "团队入门和数据分布分析；字段、体量及标签来源透明。",
+      "caveats": "类别特征混合 issue、gold patch、test_patch，是离线标签分析，不能作为无答案评测输入；token 数按字符估算，不是实测 tokenizer。没有 Agent 运行或得分证据。",
+      "evidence_lines": [
+        [
+          363,
+          374
+        ],
+        [
+          475,
+          515
+        ],
+        [
+          564,
+          650
+        ]
+      ],
+      "readable_sha256": "31b70a6c3573e5e816ad0c415bc87f5a916996af60143897ea8067a96d2002b6",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 6,
+      "ref": "juna1013/gemma4-agent-baseline-v2",
+      "role": "可选单 agent 基线与评测",
+      "implementation": "写四个主要配置文件，4 分钟/60 tools/80 turns；可选固定 seed 抽五题执行真实 Evaluator，但 RUN_LOCAL_EVAL 默认 false。",
+      "reuse": "显式预算、固定抽样、区分仅打包和开启 GPU 实验。",
+      "caveats": "编译检查用 dummy tool 签名，因此不等同官方工具完整行为验证；默认跑完 notebook 不能证明 GPU 评测通过。",
+      "evidence_lines": [
+        [
+          1,
+          31
+        ],
+        [
+          266,
+          300
+        ],
+        [
+          350,
+          419
+        ]
+      ],
+      "readable_sha256": "502bed6a37153b58968c4a6f56cd0ce59172fdec30022dd422555ddaa70bfc81",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 7,
+      "ref": "liujiahua2358/gemma-4-v0-walkthrough-first-submission",
+      "role": "版本对照导读与基线构建",
+      "implementation": "解析 sample、示例 LoRA、graph/embedding，并构建 analyzer+coder 的迭代版本；末尾打包提交。",
+      "reuse": "读取每次版本变更及其来源；检查 graph 输出大小、正确读取测试尾部和固定 wheel hash。",
+      "caveats": "同一文档含旧版与后续修订说法，thinking/seed 转发须以当前 wheel 源码为准；引用的榜单分数不是其独立消融证明。",
+      "evidence_lines": [
+        [
+          1,
+          15
+        ],
+        [
+          275,
+          318
+        ],
+        [
+          380,
+          410
+        ],
+        [
+          630,
+          653
+        ]
+      ],
+      "readable_sha256": "f42412524f0bf673d500cb02911d91ce60804558af719985f68d79ad0d3b8f57",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 8,
+      "ref": "hajimekumami/gemma-4-where-is-the-bug-hop-distance-analysis",
+      "role": "图定位离线分析",
+      "implementation": "内嵌 gzip/base64 的 analysis.py 做 gold edit-site 映射、issue anchors、最短 hop、检索及 leave-one-repo-out；另修补 commit 文件名定位。",
+      "reuse": "按仓库留出选择定位超参；分别统计无 anchor、无 gold node 与图距离。",
+      "caveats": "已静态解码脚本文本，未执行。原实现使用仓库 clone/git show，迁移离线环境应改用已给 snapshots；涉及 gold 的标签统计不能直接喂给解题 Agent。",
+      "evidence_lines": [
+        [
+          26,
+          45
+        ]
+      ],
+      "readable_sha256": "8315fe3fb48323a84eaed24fdc8bc668867717eceb340e3353729d7ce221149b",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 9,
+      "ref": "sujanmajhisuzan/gemma4-agent-run1",
+      "role": "嵌入基线的 GPU 运行适配",
+      "implementation": "解码已有 bundle，前八题真实 Evaluator；按 GPU capability 选 dtype，并为 T4 路径设置 disable-custom-all-reduce。",
+      "reuse": "诊断模型启动、记录逐题运行结果和 bundle 一致性。",
+      "caveats": "跳过若干官方二进制 wheels 的安装，且专门考虑 T4；不能据此声称与正式 L4 环境等价。未独立复现其吞吐或正确率。",
+      "evidence_lines": [
+        [
+          17,
+          30
+        ],
+        [
+          114,
+          169
+        ],
+        [
+          202,
+          244
+        ]
+      ],
+      "readable_sha256": "9e9d7ef2285dc3d0a47ec2c1929dfa081d34a0a4c56939aaf24460903357a1e1",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 10,
+      "ref": "liuuu114514/gemma4-agent-0-12points",
+      "role": "EDA、词法定位与提示词构建",
+      "implementation": "TF-IDF 定位分析后写 coder/analyzer prompts 和 ZIP；提示词增加复现、编辑后编译、测试及有限重试。",
+      "reuse": "短定位报告和失败分类可用作 prompt 消融；EDA 与真实评测分开。",
+      "caveats": "提示词要求在已修改工作树上再次 git apply --check 正向 diff，失败时 checkout，可能误判并撤销有效修改；不能原样照搬。缺数据时有 synthetic demo；标题 0.12 不是独立复现实测。",
+      "evidence_lines": [
+        [
+          187,
+          191
+        ],
+        [
+          1253,
+          1274
+        ],
+        [
+          1280,
+          1315
+        ]
+      ],
+      "readable_sha256": "52dfa0c64d0aee29c675ac0e52ef1c136a98b0d3c325ddc180db53fb2dadd3d7",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 11,
+      "ref": "jek1wantaufik/gemma-4-agent-research-artifact",
+      "role": "研究产物归档",
+      "implementation": "读取 buddy 模型页附带的 experiment_card/submission/bundle，解析 includes、哈希文件并复制为 paper_artifact。",
+      "reuse": "按文件记录来源、配置和 hash，便于论文与复现实验交付。",
+      "caveats": "输入是第三方已保存的产物；manifest、配置检查和复制不证明训练或评测执行，也不使 Models 页附带模型成为允许底座。",
+      "evidence_lines": [
+        [
+          18,
+          38
+        ],
+        [
+          535,
+          583
+        ],
+        [
+          765,
+          813
+        ]
+      ],
+      "readable_sha256": "d8cf57a7ff5e829055797bf4a0fa3b30499a25cca8f00577537009dd026c76d2",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 12,
+      "ref": "cylik93/gemma4-data-eda",
+      "role": "检索与图覆盖 EDA",
+      "implementation": "从公开 gold diff 定位修改行，测 grep 覆盖、文件长度、图缺失和工具输出截断，保存 per_task.csv。",
+      "reuse": "评估“目标在检索结果中”与“目标在截断后实际可见”之间的差距。",
+      "caveats": "5,000 字符、150 行等工具限制应随当前 harness 核实；基于公开分布的 hints 为空不能当作所有隐藏题保证。Gold 只作标签，未执行完整 SWE Agent。",
+      "evidence_lines": [
+        [
+          64,
+          68
+        ],
+        [
+          92,
+          118
+        ],
+        [
+          202,
+          221
+        ],
+        [
+          469,
+          487
+        ]
+      ],
+      "readable_sha256": "0c637e2e09fdc66165a3dd85dd87756bc4b5f82db645071797b9ae65ed51b0c1",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 13,
+      "ref": "jek1wantaufik/gemma-4-developer-agent-lean",
+      "role": "已有模型页产物检查与重打包",
+      "implementation": "从 buddy 输入选择 submission 或 submission_bundle，读取 experiment_card、YAML 和 ZIP SHA，再复制并重打包。",
+      "reuse": "追踪配置来源、includes 与归档一致性。",
+      "caveats": "不存在新的训练/推理入口；依赖额外挂载的第三方产物。模型页条目名称不是许可模型校验。",
+      "evidence_lines": [
+        [
+          12,
+          38
+        ],
+        [
+          255,
+          278
+        ],
+        [
+          378,
+          425
+        ]
+      ],
+      "readable_sha256": "e04724bbec245a5e1ce5c5b19c9ad70a4832fbaf209048487c523236c70cb3b8",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 14,
+      "ref": "kevlarzanderchi/gemma4-prompt-improvement-agent",
+      "role": "提示词变体与回退包",
+      "implementation": "输出 v12、原 v10 和 v11 三个 ZIP；v12 在已有系统提示词中加入 inline AST helper 与环境说明，其余文件保持明确差异。",
+      "reuse": "保留精确 anchor 与单项变更，使用文件 hash 确认比较对象。",
+      "caveats": "三个包均未带 eval_config，预算依赖评分默认；自写 validator 不代替官方 compile 和真实任务。非零 thinking_budget 与 include_thoughts=false 并存。",
+      "evidence_lines": [
+        [
+          1,
+          12
+        ],
+        [
+          15,
+          45
+        ],
+        [
+          69,
+          128
+        ]
+      ],
+      "readable_sha256": "d092d11b6283b8d6ee9203052d94180e7a812fde087f9c15ed256fe9451da68c",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 15,
+      "ref": "matterhorn3838/gemma-gemini-the-ultimate-duo",
+      "role": "多基线 profile 构建与 EDA",
+      "implementation": "默认 top_bundle；custom 分支可切单 agent、图工具、提示词规则和采样设置；按 profile 打包并记录 diff/hash。",
+      "reuse": "显式开关与已知 anchor 的字节比较，便于消融控制。",
+      "caveats": "标题含 Gemini，但检查的提交路径仍构建指定 Gemma 配置；不应据标题推断允许第二底座。将 include_thoughts=false 解释成仅隐藏文本不适用当前定制 harness；默认无 eval_config，作者引用分数不构成因果证据。",
+      "evidence_lines": [
+        [
+          80,
+          113
+        ],
+        [
+          1880,
+          1923
+        ],
+        [
+          2144,
+          2156
+        ]
+      ],
+      "readable_sha256": "eefb9ae8555e301999e774d51eb584fa87692c540e92335dd8b3c84b16d5c55b",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 16,
+      "ref": "abelog/pass2",
+      "role": "图扩展研究原型",
+      "implementation": "比较 centroid 检索、固定 hop 与自适应扩展，统计 patch/test_patch 文件召回和上下文大小。",
+      "reuse": "分开衡量检索命中与上下文开销，再接真实 issue 查询和 SWE 测试。",
+      "caveats": "核心 query_vector=vectors.mean(axis=0)，没有使用 issue 文本；当前是基础设施诊断，不能称为 issue-to-code 语义定位或端到端解题率。",
+      "evidence_lines": [
+        [
+          1003,
+          1044
+        ],
+        [
+          1355,
+          1437
+        ]
+      ],
+      "readable_sha256": "245199eef60da10401ba441cbd08efdf1259f7bd3b171845877634cfba76b359",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 17,
+      "ref": "fawad07/gemma4-graph-coverage-notebook",
+      "role": "论文结果 CPU 重放入口",
+      "implementation": "从额外挂载的 repro 数据集复制脚本和重建图，重算覆盖/检索表；Agent 对比表读取已存 summary。",
+      "reuse": "将可重算的 CPU 指标与引用的 GPU 运行结果分开标注。",
+      "caveats": "关键实现和缓存来自额外数据集；此 notebook 本身不重跑 L4 Agent。重放报告不等于独立产生同样的补丁与测试结果。",
+      "evidence_lines": [
+        [
+          1,
+          10
+        ],
+        [
+          25,
+          42
+        ],
+        [
+          65,
+          81
+        ]
+      ],
+      "readable_sha256": "08cdfabc190f14c7247956a70104654ff076e5486b779d4a96475874ee6e14f0",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 18,
+      "ref": "dalezhong/repair-manifold-ablation",
+      "role": "已知位置的修复提示词消融",
+      "implementation": "比较自由生成和 operator-first，筛选少 hunk 任务，从 gold patch 取目标文件，将文件内容交给模型生成整文件替换。",
+      "reuse": "可作为给定正确文件后的局部修复实验；保存模型身份、迭代次数和测试状态。",
+      "caveats": "使用 gold 文件路径，且先应用 test_patch；不是真实无答案定位的端到端 Agent。加载失败会回退 Qwen，不能作为正式指定 Gemma 的成绩；网络安装和整文件截断还需单独处理。",
+      "evidence_lines": [
+        [
+          117,
+          196
+        ],
+        [
+          260,
+          288
+        ],
+        [
+          300,
+          381
+        ]
+      ],
+      "readable_sha256": "a6d4d2d69aa8574e4ab732530617552637c649f916d7efc7bdaad7a8e136a023",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 19,
+      "ref": "shorooghahmadi/patchpilot-gemma-4",
+      "role": "配置打包与可选 CLI 评测",
+      "implementation": "coder 调 analyzer，加 repo_navigation skill；写 YAML 和自定义检查器，再打 ZIP，另给 swegemma eval 可选入口。",
+      "reuse": "提交结构、includes 检查和正确区分 ZIP 与评分中间 parquet。",
+      "caveats": "每题 max_time_minutes=30，若120题打满预算将远超12小时，必须实测和收紧；旧路径探测仅检查 /kaggle/input 一层。包验证没有独立证明真实评分通过。",
+      "evidence_lines": [
+        [
+          1,
+          22
+        ],
+        [
+          58,
+          87
+        ]
+      ],
+      "readable_sha256": "a1a9cecdd83edd7941d9254e58585ebdc0188e0ce96f4f1962a29e60f69cd713",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 20,
+      "ref": "dariushafshar/gemma-4-a-16384-output-cap-refuses-long-prompts",
+      "role": "上下文预算与已采集 trace 分析",
+      "implementation": "以嵌入的调用计数和作者记录，分析 32768 context 下 16384 输出上限、compaction 延迟与时间余量，导出预算表。",
+      "reuse": "记录每次 prompt/output 的实际 token 与开销；把 compaction 时间也纳入预算。",
+      "caveats": "这是作者 trace 的再分析，不是在每次运行时重新执行模型。58题 public/116题总量是推断而非官方保证；标题风险须结合当前 vLLM 请求与版本验证。",
+      "evidence_lines": [
+        [
+          1,
+          43
+        ],
+        [
+          304,
+          354
+        ],
+        [
+          619,
+          649
+        ],
+        [
+          690,
+          729
+        ]
+      ],
+      "readable_sha256": "355d80f6161b75092ed822f4089587ed97856092c88b1acb3cccc163d162630a",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 21,
+      "ref": "akhilchinta1505/code-graph-audit",
+      "role": "源码图重建与覆盖审计",
+      "implementation": "AST builder 加 async/nested、导入解析及 contains 边，按 gold 编辑范围生成标签；对比已有调用记录并重放 harness graph lookup。",
+      "reuse": "将图覆盖、真实调用召回、工具输出和检索收益分开比较；保留数据与源码许可。",
+      "caveats": "recorded calls 来自额外数据集，不是 notebook 现场生成；图/检索指标不等于最终 SWE resolved。重建图的运行开销和允许接入方式另需验证。",
+      "evidence_lines": [
+        [
+          1,
+          14
+        ],
+        [
+          53,
+          88
+        ],
+        [
+          294,
+          368
+        ],
+        [
+          661,
+          679
+        ],
+        [
+          778,
+          800
+        ]
+      ],
+      "readable_sha256": "be465c7dc1c875ed1b2223845447e8068cbed85dd07aa8321a31b52645155627",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 22,
+      "ref": "giuseppecastelluccio/gemmaloc-edit-site-labels-and-a-gemma-4-rerank",
+      "role": "定位标签与缓存 LLM rerank 重放",
+      "implementation": "从 gold diff 标注节点，对八种检索方案评分；默认按精确 prompt hash 读取 Gemma 缓存，也提供 LIVE_URL 重跑入口和外部 SWE-bench 子集。",
+      "reuse": "标签对齐、缓存 miss 即失败、配对比较及跨仓库泛化检查。",
+      "caveats": "默认不是实时 Gemma 推理；需要额外挂载缓存/外部数据，且当前流程联网 clone，不能直接放进离线 L4 会话。标题 top-1 翻倍是定位指标，非修复成功率。",
+      "evidence_lines": [
+        [
+          1,
+          10
+        ],
+        [
+          542,
+          601
+        ],
+        [
+          823,
+          859
+        ],
+        [
+          1628,
+          1636
+        ]
+      ],
+      "readable_sha256": "0c89cc57bae724f0061ec2131dc931dded8a4fe13c62eed98ca1eee836415491",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 23,
+      "ref": "thurshwinc/vibranium-bench-deterministic-swe-benchmarking-fo",
+      "role": "图裁剪与评测接口演示",
+      "implementation": "提供 AST 图和预算遍历示例；context-reduction 表按固定公式生成，Agent 回答为固定 synthetic_patch 加 sleep。",
+      "reuse": "可看数据结构和接口教学；正式实验需替换为真实图、模型及验证流程。",
+      "caveats": "示例测试只验证简单算术，耗时来自 sleep，token reduction 非实测；这些输出不能用作模型速度、显存或 SWE 解题效果证据。",
+      "evidence_lines": [
+        [
+          355,
+          411
+        ],
+        [
+          458,
+          526
+        ]
+      ],
+      "readable_sha256": "2dfaa0f40708c9faacd7ca75a9f30d9d891bc57b7d6a8f3e074c5916404304bf",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 24,
+      "ref": "dhiaalhemdani/dhia-gemma4aa",
+      "role": "官方 starter 的小幅派生",
+      "implementation": "相对已归档官方 starter，改 sample 来源为作者数据集，并把 max_output_tokens 从16384改为8192；其余运行结构一致。",
+      "reuse": "直接比较固定 starter 的单项设置变更。",
+      "caveats": "真正 Agent 内容来自另一个 sample-submission 数据集，不能只看 notebook 相似度认为提交相同；仍需检查数据集 hash 与运行结果。",
+      "evidence_lines": [
+        [
+          70,
+          88
+        ]
+      ],
+      "readable_sha256": "7dedc053623162392368ca1b7b90c5174bee692d3bbaca1177ecadd9c363be31",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 25,
+      "ref": "ayushmldixit1/notebook46419a07d8",
+      "role": "模型加载排障草稿",
+      "implementation": "尝试 Transformers Gemma4 多模态 AutoModel、device_map 和 CPU offload，末尾还有 vllm serve 命令。",
+      "reuse": "参考检查类名、processor、设备映射和显存状态的排障思路。",
+      "caveats": "源码含杀死当前 kernel 的 SIGKILL 单元及重新加载片段；不适合 Run All。没有完成的 Agent ZIP/官方任务验证路径，不能当作可复现提交基线。",
+      "evidence_lines": [
+        [
+          156,
+          182
+        ],
+        [
+          323,
+          368
+        ]
+      ],
+      "readable_sha256": "57863ffd56d72548d52f07d15e0180d32a2783858afe29b6c4dcca77546b71db",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 26,
+      "ref": "yukailiu/surgigraph-paper-experiments",
+      "role": "论文图表与统计模型分析",
+      "implementation": "包含数据摘要、Dirichlet 热点后验、嵌入的定位结果和 patch simplicity 对照，产物面向 paper track。",
+      "reuse": "启发式假设可转为独立可检验消融，如最小修改与上下文定位。",
+      "caveats": "部分 token 开销由 cost model 估算；修复率/回归率表有 hazard-model derivation，并非本 notebook 的真实 Agent 测试。不能把模型推演的数值当成运行增益。",
+      "evidence_lines": [
+        [
+          1288,
+          1318
+        ],
+        [
+          1380,
+          1391
+        ],
+        [
+          1425,
+          1450
+        ],
+        [
+          1719,
+          1728
+        ]
+      ],
+      "readable_sha256": "87ec3ad8d17bd5202d331f22c4819881464200ee81f47b4a03d50f1eb601e4b7",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 27,
+      "ref": "phmtin1306/notebook703cae6987",
+      "role": "数据文件手工探查",
+      "implementation": "定位比赛目录，查看某个 snapshot、graph/embedding 文件以及 wheel 的内部目录。",
+      "reuse": "快速理解文件布局和归档类型。",
+      "caveats": "只是数据浏览，没有训练、Agent 配置或真实任务评测。任务命名示例与实际比赛不同，不能直接照示例名称定位。",
+      "evidence_lines": [
+        [
+          1,
+          25
+        ],
+        [
+          160,
+          194
+        ]
+      ],
+      "readable_sha256": "78fbcc87d913097a375a3989e36f5bf441dc739477a083728da8a569afed74a2",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 28,
+      "ref": "eeshsaxena/gemma4-candidate-v7-compile",
+      "role": "候选包官方编译检查",
+      "implementation": "解码内嵌 ZIP，安装 wheelhouse，构造模型 registry 和签名相符的 stub tools，调用官方 compile_submission。",
+      "reuse": "把正式编译验证与纯路径/扩展检查区分；记录 ZIP SHA256。",
+      "caveats": "tools 为省略号函数、模型 endpoint 为本地占位端口，没有模型推理。解码配置无 eval_config，预算走默认；include_thoughts=false。",
+      "evidence_lines": [
+        [
+          5,
+          12
+        ],
+        [
+          17,
+          44
+        ]
+      ],
+      "readable_sha256": "08f9be751458f7298078a2ea21987aa221b97fdda7ef339f7d89c1791c5ea8dc",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 29,
+      "ref": "eeshsaxena/gemma4-baseline-agent-v2-compile-fixed",
+      "role": "v2 配置的编译修复",
+      "implementation": "逐文件 base64 解码，官方 compiler 检查后打包；coder/analyzer 都有工具配置，5分钟/48tools/100turns。",
+      "reuse": "带具体 tool 签名的配置编译预检查，帮助定位 include/schema 错误。",
+      "caveats": "不是推理复现；model endpoint 与工具函数均为占位。不能把 compile OK 当成解题成功，且脚本没有固定 ZIP 时间戳。",
+      "evidence_lines": [
+        [
+          4,
+          15
+        ],
+        [
+          19,
+          40
+        ]
+      ],
+      "readable_sha256": "5b35625f5e29e872239d07f291ebdc4f315ca27cbcd75726a475c76179278294",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 30,
+      "ref": "eeshsaxena/gemma4-baseline-agent-v2-packaging",
+      "role": "v2 配置纯打包",
+      "implementation": "逐文件解码同类 coder/analyzer 配置，检查 agent.yaml 根路径并压缩；thinking_budget=0，5分钟/48tools/100turns。",
+      "reuse": "最小 CPU 打包路径，适合隔离上传格式问题。",
+      "caveats": "没有官方 compiler、模型或测试调用；不要与 compile-fixed 版本混淆。目录 exist_ok 可能保留旧文件，需干净目录与确定性包审计。",
+      "evidence_lines": [
+        [
+          1,
+          19
+        ]
+      ],
+      "readable_sha256": "3ada73a48e059c08a04adac46db0cd4f7b1abd4ce2b31393ef5ac746a8c3f569",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 31,
+      "ref": "dedquoc/google-gemma4-multi-agent-graph-rag-base",
+      "role": "多轮配置草稿，末尾为含示例 adapter 的打包",
+      "implementation": "同一 notebook 多次覆盖 submission.zip；最终块复制 sample 的 main_lora/tool_lora，写 root+analyzer、技能目录和配置后打包。",
+      "reuse": "识别最后实际写出的 payload，而不是前面版本的架构描述。",
+      "caveats": "示例 adapter 复制不等于训练；最终 timeout_seconds=900 是单命令限制，不能当成每题15分钟。部分展示/检索有 mock fallback；技能目录的可用性和最终配置仍需官方编译实测。",
+      "evidence_lines": [
+        [
+          340,
+          376
+        ],
+        [
+          705,
+          825
+        ]
+      ],
+      "readable_sha256": "3ab02015ada98058cc9f5c27acce0bd929a280626ce391c404b47acf62170c91",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 32,
+      "ref": "eeshsaxena/gemma4-baseline-agent",
+      "role": "无 GPU 的双 agent 打包",
+      "implementation": "写 coder、只读 analyzer、提示词和 eval_config；5 分钟、32 tools、80 turns，最后检查 ZIP 根目录和体积。",
+      "reuse": "小型可读的配置起点；明确任务预算和提交工具。",
+      "caveats": "未调用官方 compiler 或 Evaluator；目录/体积检查不证明工具签名和运行兼容。thinking_budget=0 且 include_thoughts=false。",
+      "evidence_lines": [
+        [
+          11,
+          46
+        ],
+        [
+          48,
+          79
+        ]
+      ],
+      "readable_sha256": "efad0c40f2a346c3866d857a6ef1b58793f5ac850796356d869ce9829d2e6921",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 33,
+      "ref": "harigov63/notebook-agent-ipynb",
+      "role": "模拟教学代码及外部数据集上传代码",
+      "implementation": "查找 test.csv，缺失时构造 dummy 行，写固定 mock_fix 到 submission.csv；另一函数通过打印和 sleep 模拟推理。",
+      "reuse": "作为反例检查实际输入 schema、输出格式及是否真正调用模型。",
+      "caveats": "本比赛要求 Agent ZIP，CSV 和固定补丁不能替代。末尾含 dataset_upload，不能直接 Run All；模型名称也不同于规定底座。",
+      "evidence_lines": [
+        [
+          30,
+          72
+        ],
+        [
+          84,
+          104
+        ],
+        [
+          116,
+          146
+        ]
+      ],
+      "readable_sha256": "01ee50904aa4bc76482399f2a50b38d802c45be5c6bb17330aaf882124fe7482",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 34,
+      "ref": "vinay0005/graphforge-digest",
+      "role": "图提取兼容实现与定位基准",
+      "implementation": "实现 GraphForge Lite，并以 issue 为查询比较 BM25、hash、BGE、RRF 和图传播；gold diff 用于定位指标。",
+      "reuse": "比较有/无图传播及 lexical/embedding 检索，记录跳过原因。",
+      "caveats": "跳过没有 gold 节点及小于30节点的图，报告仅针对可纳入子集；兼容模式不补 async。ALLOW_PIP=true，BGE 下载需预备；定位命中率不等于修复成功率。",
+      "evidence_lines": [
+        [
+          1,
+          16
+        ],
+        [
+          1103,
+          1135
+        ],
+        [
+          1400,
+          1485
+        ]
+      ],
+      "readable_sha256": "c4abcce3e0de8d9300a9ebf34cc4fef9debd98d3143ce536903f71dc77abab4c",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 35,
+      "ref": "officialabhinavsingh/gemma-4-swe-task-map-12-hour-budget",
+      "role": "任务分布与总时间预算计算",
+      "implementation": "统计任务参考补丁规模，以720分钟总上限、90分钟准备预留和多档单题上限计算场景。",
+      "reuse": "将准备开销与逐题开销一起预算；单题上限不是目标耗时。",
+      "caveats": "evaluation_tasks=len(df) 明确仅为公开集大小的情景演算，不是隐藏题数；补丁大小/issue长度不能直接预测可解性。",
+      "evidence_lines": [
+        [
+          75,
+          118
+        ]
+      ],
+      "readable_sha256": "3c3fe6a1f010501c04176202cd8328150ce0adb8add990bbf27d238f193b63b1",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 36,
+      "ref": "dariushafshar/gemma-4-lb-58-tasks-bronze-is-a-124-team-tie",
+      "role": "历史榜单量化与私榜模拟",
+      "implementation": "由两位小数分数推断公开题数，拟合经验贝叶斯先验，模拟不同相关性下的私榜和并列名次。",
+      "reuse": "理解分数量化、同分和选择最好一次提交的偏差；保留假设与敏感性。",
+      "caveats": "58题是推断，未获官方确认；使用第6天863队旧快照，不能代替当前榜单。私榜结果从未观测，任务独立性、等分规模和相关系数均为建模假设。",
+      "evidence_lines": [
+        [
+          697,
+          723
+        ],
+        [
+          862,
+          881
+        ]
+      ],
+      "readable_sha256": "67a093cea040eb141edd2b9978b22a7459efd5b1bb5eeef3d3b4c6d574796567",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 37,
+      "ref": "murtadhaabdabbas/hidden-interfaces-audit-and-execution",
+      "role": "隐藏接口与评测健全性审计",
+      "implementation": "重建历史工作树，比较空补丁、gold补丁及重命名新增接口后的变体，记录导入路径、依赖、测试及失败类型。",
+      "reuse": "控制实验区分程序修复能力与评测环境问题；确认测试导入的是工作树。",
+      "caveats": "merge时间/PR号重建需与真实快照比对；online模式会联网安装依赖。该 notebook 没有运行修复模型；gold及其变体只用于审计，不能作为正式预测。",
+      "evidence_lines": [
+        [
+          242,
+          271
+        ],
+        [
+          337,
+          358
+        ],
+        [
+          434,
+          466
+        ]
+      ],
+      "readable_sha256": "22d203857172f6cbede4fcb630a933cf7a0f51ac3f3e8984368f7f6cc55c097e",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 38,
+      "ref": "dmitriigluzdov/gemma-4-measure-before-you-tune",
+      "role": "已有实验产物复核与 LoRA 决策记录",
+      "implementation": "读取并校验外部 CSV/manifest，展示114/129 sound任务、按仓库留出、prompt渲染核对和 LoRA NO-GO；最后构建现有公开基线。",
+      "reuse": "训练前先测加载效果、渲染一致性和修复成功率；损失下降需与未解决轨迹对照。",
+      "caveats": "图表读取历史结果，没有在本 notebook 重跑训练；936次是token长度核对，仅5次核对token身份。作者报告adapter 2/32低于base 4/32，不能将NLL下降当提分。健全任务数依赖其历史环境。",
+      "evidence_lines": [
+        [
+          24,
+          66
+        ],
+        [
+          107,
+          118
+        ],
+        [
+          165,
+          171
+        ],
+        [
+          220,
+          243
+        ]
+      ],
+      "readable_sha256": "d9f8fb508630ddb0165d2459be26ecebbe9bdc396aae138fd81ed5e37964ad33",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 39,
+      "ref": "norikazuhaji/gtua-stability-augmented-graph-tool-utility-audi",
+      "role": "图工具效用的超参数稳定性审计",
+      "implementation": "以 TF-IDF 和单跳图传播比较30种参数组合，用 gold 文件定位指标区分 Help/Hurt/Neutral，再按80%一致性分类。",
+      "reuse": "检查图传播收益是否对参数和仓库敏感；单个最优设置不足以支撑一般结论。",
+      "caveats": "定位是代理指标，未跑修复Agent；80%阈值和增益阈值为方法选择，不能当比赛官方判断标准。",
+      "evidence_lines": [
+        [
+          209,
+          245
+        ],
+        [
+          265,
+          310
+        ]
+      ],
+      "readable_sha256": "8ceeaaf3d64200fdf9494ef6c796c88af4215994f2c9cd78f8560a2b3985af03",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 40,
+      "ref": "kozykappa/gemma-4-triad-lb-score-0-03",
+      "role": "coder/localizer/critic 三 agent 配置打包",
+      "implementation": "root可调用定位和补丁审阅工具agent；三个配置都关闭thinking，8分钟/100工具/140轮，附自定义静态验证及固定ZIP元数据。",
+      "reuse": "用一次定位与一次审阅限制额外调用；确定性打包便于版本比较。",
+      "caveats": "标题0.03为作者自述；自定义验证不是官方运行证明。8分钟乘约120题已达16小时，需另测全局预算；只读职责是提示词约束，run_command本身仍可写。",
+      "evidence_lines": [
+        [
+          318,
+          395
+        ],
+        [
+          396,
+          420
+        ],
+        [
+          503,
+          535
+        ]
+      ],
+      "readable_sha256": "fba1765f32180db5cec97839784d61b3aa4f8269a3a83f3c5d5606da1c400112",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 41,
+      "ref": "rifat2022/google-thegemma4developeragentcompetition",
+      "role": "历史 code graph 缺陷修复和检索审计工具",
+      "implementation": "包含文件别名/空文件修复、源码符号枚举（含async）、图重建及检索覆盖报告。",
+      "reuse": "区分文件发布缺失与图结构遗漏，先做 census 再决定是否修复。",
+      "caveats": "开头256文件/硬链接丢失描述针对旧发布；我们当前快照127组图和embedding已核验非空并映射全部129题，不能照搬旧结论或盲目改原数据。定位/覆盖测试不证明Agent修复增益。",
+      "evidence_lines": [
+        [
+          1,
+          24
+        ],
+        [
+          355,
+          400
+        ],
+        [
+          506,
+          542
+        ],
+        [
+          984,
+          1015
+        ]
+      ],
+      "readable_sha256": "de0f20860a76a1d221f9f1df7a148164ffb8a73a1c4f8f6c5fba400e3723cd00",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 42,
+      "ref": "bharat0/eval-errors-gemma-4-developer-agent",
+      "role": "用 gold 补丁隔离测试评测阶段",
+      "implementation": "注释模型服务启动，并替换 Evaluator._run_agent_sandbox，直接返回 task.patch 和空 trace，用于诊断评测第二阶段。",
+      "reuse": "检查参考答案能否在指定环境过测试，定位安装或验证器错误。",
+      "caveats": "未运行Agent；gold通过率不是模型成绩。这段 monkeypatch 只能放独立控制实验，不能进入正式预测链路。",
+      "evidence_lines": [
+        [
+          161,
+          194
+        ],
+        [
+          218,
+          240
+        ]
+      ],
+      "readable_sha256": "b60d15a41b825c6f138daba9d6c483bb9103958ef385dcd7765c72bdaea0a751",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 43,
+      "ref": "osama133/gemma-4-dev-agent-task-anatomy-survival-kit",
+      "role": "公开任务解剖和入门操作指南",
+      "implementation": "从 gold diff 估计源文件数、hunk、改动行、函数和async特征，结合issue线索作图；附路径发现和文件导出辅助。",
+      "reuse": "首次团队介绍、理解改动范围，并强调同一题集对照和重复运行。",
+      "caveats": "函数归因仅按diff hunk上下文，可能误归属或漏计；gold只作离线分析。无模型推理与比赛成绩证据，不应从补丁小推断任务容易。",
+      "evidence_lines": [
+        [
+          156,
+          203
+        ],
+        [
+          440,
+          449
+        ],
+        [
+          455,
+          489
+        ]
+      ],
+      "readable_sha256": "3030f3cee861ac1bdd064a9caf2ccd64a385ff0c2bcfc7e014149844cd2a2e0a",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 44,
+      "ref": "ahmadagbaria/gemma-4-baseline-reproduction",
+      "role": "EDA、词法定位与可选双 agent 打包",
+      "implementation": "解析数据和参考diff，做TF-IDF定位；构造单agent或analyzer+coder，定制validator、确定性ZIP及experiment_card。",
+      "reuse": "源码/配置/hash一并留档；分离定位指标与最终提交内容。",
+      "caveats": "源码与romanrozen条目逐字节相同，并不是第二次独立复现。没有官方GPU评测；提示词把search_similar_code用于自然语言查询，与当前按索引符号查邻近向量的实现不符。token数只是字符估计。",
+      "evidence_lines": [
+        [
+          1218,
+          1304
+        ],
+        [
+          1449,
+          1506
+        ],
+        [
+          1573,
+          1635
+        ],
+        [
+          1664,
+          1674
+        ]
+      ],
+      "readable_sha256": "7ec46d422e36f5f98396c1b9d97b3f128e8b39511c06eed779c57019e219e8b9",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 45,
+      "ref": "tharunkumar369/gemma-4-developer-agent-top-1-master-baseline",
+      "role": "单 agent 提示词和静态打包",
+      "implementation": "9个工具直接给coder；3.5分钟、32工具、40轮；自定义结构检查后打包。",
+      "reuse": "短任务预算、精确小块编辑、语法检查与最终submit_patch。",
+      "caveats": "Top-1/SOTA和sweet-spot没有对应实测消融；temperature=0.15不能保证确定性，include_thoughts=false实际关闭thinking。检查器不验证工具参数，提示词示例仍需按官方签名检查。",
+      "evidence_lines": [
+        [
+          139,
+          178
+        ],
+        [
+          190,
+          240
+        ],
+        [
+          263,
+          307
+        ],
+        [
+          344,
+          351
+        ]
+      ],
+      "readable_sha256": "b64525c00859bc7f2e215fb3a40b17fcea11e0b588c9b2b1efcfeb9a3b00ae86",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 46,
+      "ref": "tomaszszyrowski/gemma4-day1-baseline",
+      "role": "最小打包与可选模型问答测试",
+      "implementation": "生成两文件ZIP，可切换图工具；附本地Ollama问答和HF指定checkpoint加载/生成。",
+      "reuse": "明确ZIP结构检查不替代官方validator，模型问答不替代修复闭环。",
+      "caveats": "RUN_HF_SMOKE实际为True，旁注却说disabled，会安装依赖/下载模型并要求单卡空闲32GiB。Ollama是不同runtime；未运行官方工具Agent或仓库测试。",
+      "evidence_lines": [
+        [
+          47,
+          83
+        ],
+        [
+          91,
+          130
+        ],
+        [
+          133,
+          180
+        ],
+        [
+          181,
+          206
+        ]
+      ],
+      "readable_sha256": "1c911ba968bc05fdad48dd657c793ed430c91feeb2322379191175c9cea7193c",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 47,
+      "ref": "cocoyachi/gemma-4-dev-agent-zero-to-first-valid-submission",
+      "role": "官方验证函数辅助的首次打包指南",
+      "implementation": "安装wheelhouse、构建单agent、5分钟/40工具/100轮，调用模型声明和目录验证，计算预算后输出ZIP。",
+      "reuse": "首次参与的目录结构与官方验证函数入口，比只检查ZIP存在更强。",
+      "caveats": "未实际执行GPU Agent。预算段把Phase2验证也写进12小时，与当前官方说明不一致；submit命令/Notebook入口以我们已验证File Upload流程为准。",
+      "evidence_lines": [
+        [
+          147,
+          176
+        ],
+        [
+          214,
+          271
+        ]
+      ],
+      "readable_sha256": "5ec59d29cbfd355979e9207726f6dad1c7119d106caf7f240850ac60c89e194d",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 48,
+      "ref": "norikazuhaji/gtua-graph-tool-utility-audit",
+      "role": "图传播定位效用的基准审计",
+      "implementation": "TF-IDF定位加单跳传播，排除同文件及已经命中gold的seed后统计跨文件rescue，扫30组参数和仓库交互。",
+      "reuse": "避免把原本已命中的种子误算图收益；冻结参数网格并保留降级结论。",
+      "caveats": "任务级p值不能证明跨仓库泛化；此实现不跑Agent或排行榜。是稳定性增强条目的基础版本，不应重复计为独立实验。",
+      "evidence_lines": [
+        [
+          180,
+          243
+        ],
+        [
+          294,
+          322
+        ]
+      ],
+      "readable_sha256": "8f6e465dcbea298ce5fb8ac0d90a5724e01c979ecad9abceb85ae994351d803b",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 49,
+      "ref": "harigov63/notebookllms-io",
+      "role": "全部写在 Markdown 中的模拟片段",
+      "implementation": "正文定义mock_swegemma_inference，只打印阶段、sleep和返回固定补丁；三个单元都是Markdown。",
+      "reuse": "识别展示代码、可执行单元及真实推理调用的区别。",
+      "caveats": "没有任何执行单元、模型加载、评测或提交ZIP；标题和打印的Framework online都不是运行证据。",
+      "evidence_lines": [
+        [
+          1,
+          37
+        ]
+      ],
+      "readable_sha256": "35d5dd359086137e43725dc8687b6300fee6150c429fd6c7df6cd50db128e082",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 50,
+      "ref": "matterhorn3838/gemma-4-superagent",
+      "role": "公开配置版本对照与再打包",
+      "implementation": "默认原样输出top_bundle；custom才启用架构、issue提示、图工具和采样变更；保留每版字节hash及定制validator。",
+      "reuse": "对改动做显式文本断言；区分默认原样配置和自定义实验。",
+      "caveats": "0.12/0.15等是引用作者自述，不是此notebook独立跑分。include_thoughts=false被误解释成仅隐藏思考，当前会关闭thinking；无eval_config时用harness默认预算。",
+      "evidence_lines": [
+        [
+          40,
+          100
+        ],
+        [
+          1851,
+          1895
+        ]
+      ],
+      "readable_sha256": "ff2f7d0978cd6f0216a2f85441933ded79dd5814ac5834abf23eaddc4e8adcbb",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 51,
+      "ref": "chaitanyajamble/google-the-gemma-4-developer-5",
+      "role": "预算计算与带导航 skill 的打包脚本",
+      "implementation": "构建coder+analyzer+源码定位skill；可复制已有adapter，末尾尝试swegemma CLI评测但失败不阻止打包。",
+      "reuse": "不伪造adapter；清楚分离复制权重和实际训练，保存预算参数。",
+      "caveats": "MIN_TASK_MINUTES=5使自动预算可能超限：默认300题至少25小时；公开129题也不等于隐藏题数。CLI存在性不保证命令/模型服务就绪，check=False吞掉失败，成功打包不证明smoke通过。",
+      "evidence_lines": [
+        [
+          45,
+          66
+        ],
+        [
+          469,
+          505
+        ],
+        [
+          539,
+          566
+        ],
+        [
+          615,
+          644
+        ],
+        [
+          711,
+          766
+        ]
+      ],
+      "readable_sha256": "88c55185578d634e899f29a5052aa68aa24baa925f78df338d175b7acfc1151c",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 52,
+      "ref": "hitarthjain0/gemma-4-dev-agent-what-moves-the-leaderboard",
+      "role": "比赛机制导读与双 agent 打包",
+      "implementation": "汇总工具/预算/失败模式，用依赖少的自定义validator构建analyzer+coder、8192输出且关闭thinking的配置。",
+      "reuse": "便于团队理解提交契约和将实验日志与payload分开。",
+      "caveats": "“graph-first提升”和公开分数不是成对消融结论；LoRA尚不能工作等描述为旧状态，需当前wheel/官方回复核实。自定义结构检查不等于官方编译，更不等于得分。",
+      "evidence_lines": [
+        [
+          106,
+          123
+        ],
+        [
+          150,
+          184
+        ],
+        [
+          233,
+          286
+        ],
+        [
+          316,
+          332
+        ]
+      ],
+      "readable_sha256": "c1788a85a4a4ccf7ab3029c14c16036bd758180701ac8cf0fecc46ceeb89b3b7",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 53,
+      "ref": "avikdas567/gemma-4-ast-graph-augmented-swe-multi-agent-system",
+      "role": "EDA、双 agent 配置与可选真实评测混合",
+      "implementation": "复制示例main/tool adapters，配置20分钟单题；服务成功时用Evaluator跑前两题，否则写空预测。",
+      "reuse": "可参考真实Evaluator调用及结果字段，同时检查服务失败分支。",
+      "caveats": "adapter缺失时写512字节全零假safetensors，不是合法训练权重；必须移除该fallback。上下文曲线和转移矩阵是公式/常量模拟；T4×2叙述不代表官方L4×4资源，20分钟预算也不适合全量上限。",
+      "evidence_lines": [
+        [
+          783,
+          803
+        ],
+        [
+          868,
+          888
+        ],
+        [
+          945,
+          987
+        ],
+        [
+          1011,
+          1052
+        ],
+        [
+          1113,
+          1188
+        ]
+      ],
+      "readable_sha256": "a81f45955d19f570f7387f0d65bc5049b7e3b4fa099b268702e798119b887f06",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 54,
+      "ref": "zzgtylors/graphloc-end-to-end-failure-analysis-resource",
+      "role": "GraphLoc 已有运行的失败归因与方差分析",
+      "implementation": "读取多次base/skill运行产物，定位patch到gold文件/函数，解析测试失败，做任务配对bootstrap并输出汇总资源。",
+      "reuse": "保存trace、错误、真实patch和同题配对结果，区分定位错与修复错。",
+      "caveats": "当前notebook不重新推理；依赖挂载的完整运行输出。失败分类使用日志正则/耗时阈值，是启发式；任务bootstrap不自动处理仓库间泛化，不能把gold位置命中当resolved。",
+      "evidence_lines": [
+        [
+          1,
+          9
+        ],
+        [
+          92,
+          137
+        ],
+        [
+          167,
+          245
+        ],
+        [
+          318,
+          349
+        ]
+      ],
+      "readable_sha256": "4923f6c8ed139d11e5efacd099ed9eb26e1ac2cb6885355bd431a0d7c0448cd4",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 55,
+      "ref": "zzgtylors/graphloc-end-to-end-repeat-run-3",
+      "role": "GraphLoc skill 的官方两阶段成对实验",
+      "implementation": "实现离线BM25+重建图PageRank定位skill，与无skill配置共用采样预算；官方验证先筛gold通过任务，再让12个worker共享TP4模型执行两组Agent。",
+      "reuse": "真实端到端对照、同题配对统计、重复运行及全trace记录，比单纯检索指标更接近目标。",
+      "caveats": "只按gold通过筛选，未证明empty必须失败；本地补依赖/修改Pygments入口有环境差异。12并发并非正式顺序评测耗时；三个公开条目源码相同，不代表三次结果已独立验证。",
+      "evidence_lines": [
+        [
+          294,
+          344
+        ],
+        [
+          968,
+          1021
+        ],
+        [
+          1088,
+          1158
+        ],
+        [
+          1194,
+          1209
+        ],
+        [
+          1399,
+          1452
+        ]
+      ],
+      "readable_sha256": "39f1f486b33d3031a8a9cce88f7f5de75a3e095711eec161283376972f6342ef",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 56,
+      "ref": "zzgtylors/graphloc-end-to-end-repeat-run-2",
+      "role": "GraphLoc skill 的官方两阶段成对实验",
+      "implementation": "与条目 56（zzgtylors/graphloc-end-to-end-repeat-run-3）readable.txt 完全相同，已核对SHA256。实现离线BM25+重建图PageRank定位skill，与无skill配置共用采样预算；官方验证先筛gold通过任务，再让12个worker共享TP4模型执行两组Agent。",
+      "reuse": "真实端到端对照、同题配对统计、重复运行及全trace记录，比单纯检索指标更接近目标。",
+      "caveats": "重复源码不构成独立的运行或得分证据。只按gold通过筛选，未证明empty必须失败；本地补依赖/修改Pygments入口有环境差异。12并发并非正式顺序评测耗时；三个公开条目源码相同，不代表三次结果已独立验证。",
+      "evidence_lines": [
+        [
+          294,
+          344
+        ],
+        [
+          968,
+          1021
+        ],
+        [
+          1088,
+          1158
+        ],
+        [
+          1194,
+          1209
+        ],
+        [
+          1399,
+          1452
+        ]
+      ],
+      "readable_sha256": "39f1f486b33d3031a8a9cce88f7f5de75a3e095711eec161283376972f6342ef",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 57,
+      "ref": "flexonafft/gemma-4-budget-aware-coding-agent",
+      "role": "显式预算的双 agent 基线变体",
+      "implementation": "保留原公开提示词采样，给coder增导航工具，设置4.5分钟/40工具/80轮；本地include路径、Apache许可及ZIP校验齐备。",
+      "reuse": "保留上游来源许可，显式预算；有包时额外调用官方ADK schema。",
+      "caveats": "作者明确本candidate没有实测分数；可选schema会在无包时跳过，不能据打包完成声称官方验证通过。思考配置实际关闭，预算仍需L4吞吐测量。",
+      "evidence_lines": [
+        [
+          1,
+          44
+        ],
+        [
+          397,
+          447
+        ]
+      ],
+      "readable_sha256": "bddb7ee019df02a2ec57b5fdc43ee8042223880274c584f64381e683ca712df5",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 58,
+      "ref": "nitish5236goel/gemma-4-developer-agent-cpu-audit-tables",
+      "role": "历史发布审计与统计功效表重生成",
+      "implementation": "嵌入原始记录与审计代码，重算gold符号/图结构/功效表，对比旧发布与9月25日重发，并核对来源commit的SHA。",
+      "reuse": "明确哪些是本次重算、哪些是历史verifier/tool probe记录；检查测试不是空跑及所需case均通过。",
+      "caveats": "1210次+32次验证记录不会在此重新执行；历史空图结论不能套用当前数据。功效表依赖独立任务等模型假设，不是Agent得分或未来提分保证。",
+      "evidence_lines": [
+        [
+          1,
+          34
+        ],
+        [
+          869,
+          924
+        ],
+        [
+          1093,
+          1171
+        ],
+        [
+          3495,
+          3510
+        ],
+        [
+          3561,
+          3591
+        ],
+        [
+          3657,
+          3668
+        ]
+      ],
+      "readable_sha256": "c1bd21320d529f37279931365a059dafd5a3f1d3f970b03abfe31b80b303e104",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 59,
+      "ref": "ckskaggle/g4ca-basv1-0",
+      "role": "受限双 agent 基线与自定义规则检查器",
+      "implementation": "coder保留导航并按需调用一次analyzer，提示词要求早改/短验证；构建ZIP前自定义检查，存在官方包时动态寻找验证函数。",
+      "reuse": "把schema存在、结构检查和运行评测分开，记录提示词与工具权限。",
+      "caveats": "官方验证异常仅打印并继续，不能视作通过门槛；没有真实GPU评测或eval_config预算。提示词中的测试必被丢弃等假设需当前harness核实。",
+      "evidence_lines": [
+        [
+          37,
+          128
+        ],
+        [
+          249,
+          327
+        ]
+      ],
+      "readable_sha256": "f756c2c352d0e6ebf0db27e143072eb6ecd1f47f584b0814d64e979aaac8ff5f",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 60,
+      "ref": "rajrajak99/tfd-agent-autonomous-swe-bench-resolution-with-ge",
+      "role": "论文式架构说明及模拟对象",
+      "implementation": "CodebaseEnvironment只在dict里读写字符串；展示四组硬编码分数和双agent流程图，没有Gemma调用和官方评测。",
+      "reuse": "复现前检查图表的数值来源，分清宣称历史成绩与预测。",
+      "caveats": "0.13/排名为作者自述，M4明确projected，画图却填0.18；该值不是实验结果。没有可运行完整Agent或提交ZIP。",
+      "evidence_lines": [
+        [
+          1,
+          16
+        ],
+        [
+          59,
+          112
+        ]
+      ],
+      "readable_sha256": "965a6e8ecce5f79ac5e6929ef62e6ffc8c6e963d711d10f7439471c0241158af",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 61,
+      "ref": "koushikkumardinda/gemma-4-developer-agent-end-to-end-adk-starter",
+      "role": "不完整的 ADK 教学与打包草稿",
+      "implementation": "检测空图后只累加restored_count，真实复制被注释；vLLM创建/启动也被注释；生成内联sub_agents/as_tool配置和ZIP。",
+      "reuse": "可作为检查“有说明但无实际实现”的反例。",
+      "caveats": "“Restored”打印不代表修复发生；eval_config写在configs/而非根目录，harness未必读取。未用官方schema验证该sub_agent写法，不能称端到端运行成功。",
+      "evidence_lines": [
+        [
+          62,
+          85
+        ],
+        [
+          95,
+          115
+        ],
+        [
+          126,
+          172
+        ]
+      ],
+      "readable_sha256": "56bdb7bad193e20301868bcf4d62f150c32b920d4515fee32be09808e085cdb4",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 62,
+      "ref": "denpugovkin/can-gemma-4-fix-an-unseen-repo-31b-qlora-study",
+      "role": "真实训练代码与 oracle 定位的 QLoRA 研究",
+      "implementation": "Unsloth 31B bnb4bit、rank8、1024tokens单epoch SFT；按仓库留出Rich并mask提示词，保存PEFT权重，再成对生成base/adapter diff。",
+      "reuse": "固定模型revision/依赖/切分；训练损失、草稿指标、artifact验证及正式Agent成功率分层记录。",
+      "caveats": "训练base不同于官方QAT；输入片段由gold diff定位，草稿验证是oracle条件，不测导航。git apply --numstat仅解析；未验证官方服务加载或resolved。代码有实际trainer.train，但我们未执行第三方训练。",
+      "evidence_lines": [
+        [
+          149,
+          170
+        ],
+        [
+          283,
+          299
+        ],
+        [
+          308,
+          388
+        ],
+        [
+          392,
+          415
+        ],
+        [
+          451,
+          518
+        ],
+        [
+          638,
+          708
+        ],
+        [
+          751,
+          769
+        ]
+      ],
+      "readable_sha256": "8eaa671dccb796833833796261a5a2b85c30a6fd70797981cb5e7c724d62daa1",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 63,
+      "ref": "mizeroluckygall/pathfinder-gemma-4-agent-eda-baseline",
+      "role": "Pathfinder 任务/检索分析与双 agent 打包",
+      "implementation": "用issue符号比较name lookup、embedding邻近与词法搜索；v2生成coder+analyzer，默认不写eval_config，记录ZIP/hash。",
+      "reuse": "根据具体符号研究检索效用；局部提示词、公开成绩和待测新版本分别列出。",
+      "caveats": "图研究只纳入可映射gold的任务且限60commit/300秒；v1的0.08为自述，v2 pending。include_thoughts=false会关闭thinking，不能按注释当仅隐藏。",
+      "evidence_lines": [
+        [
+          57,
+          71
+        ],
+        [
+          416,
+          472
+        ],
+        [
+          641,
+          697
+        ],
+        [
+          837,
+          849
+        ]
+      ],
+      "readable_sha256": "e4fc70ebce8a2561c54f0c5e2ba4a7be36f6c6613673d23f510f3f1b7d3a3584",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 64,
+      "ref": "alfira17/the-gemma-4-developer-agent-competition",
+      "role": "多版本草稿，最终 V12 双 agent 提交构建",
+      "implementation": "前段构造单agent，后续单元多次覆盖submission.zip；最终从官方sample复制并移除adapters/eval_config，替换coder/analyzer提示词和8192采样。",
+      "reuse": "阅读最终写出的ZIP；固定时间戳和5文件检查便于识别实际提交内容。",
+      "caveats": "前面四文件包不是最终payload；V12无自定义预算、无官方编译或GPU评测。YAML compose和字符串断言只能证明局部结构。",
+      "evidence_lines": [
+        [
+          207,
+          244
+        ],
+        [
+          303,
+          392
+        ]
+      ],
+      "readable_sha256": "3e8a39f7e24ab5189403b5fc4c9052de7d4bf9176f0635a832fafd039270f919",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 65,
+      "ref": "zzgtylors/graphloc-end-to-end-gemma-4-agent-skill",
+      "role": "GraphLoc skill 的官方两阶段成对实验",
+      "implementation": "与条目 56（zzgtylors/graphloc-end-to-end-repeat-run-3）readable.txt 完全相同，已核对SHA256。实现离线BM25+重建图PageRank定位skill，与无skill配置共用采样预算；官方验证先筛gold通过任务，再让12个worker共享TP4模型执行两组Agent。",
+      "reuse": "真实端到端对照、同题配对统计、重复运行及全trace记录，比单纯检索指标更接近目标。",
+      "caveats": "重复源码不构成独立的运行或得分证据。只按gold通过筛选，未证明empty必须失败；本地补依赖/修改Pygments入口有环境差异。12并发并非正式顺序评测耗时；三个公开条目源码相同，不代表三次结果已独立验证。",
+      "evidence_lines": [
+        [
+          294,
+          344
+        ],
+        [
+          968,
+          1021
+        ],
+        [
+          1088,
+          1158
+        ],
+        [
+          1194,
+          1209
+        ],
+        [
+          1399,
+          1452
+        ]
+      ],
+      "readable_sha256": "39f1f486b33d3031a8a9cce88f7f5de75a3e095711eec161283376972f6342ef",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 66,
+      "ref": "ahmadalalony/gemma-4-starter-inside-the-harness-e-63dd0e",
+      "role": "通用starter的提示词迭代",
+      "implementation": "与基线源码对比，仅降低max_output_tokens到4096并覆盖coder/analyzer提示词：强调工具调用、symbol查询、早编辑与失败搜索不重试。",
+      "reuse": "用源码差异确认改动，修正自然语言图查询和/tmp文件工具假设。",
+      "caveats": "提示词固定pytest -p no:anyio可能改变异步测试行为，需按任务验证；环境工具存在性不能作为跨runtime事实。依旧只有静态打包，没有新得分证据。",
+      "evidence_lines": [
+        [
+          54,
+          60
+        ],
+        [
+          1306,
+          1371
+        ]
+      ],
+      "readable_sha256": "5ae21a12f94d28d3bbcf811f5fdc955e3c50ed81b78cf7f245df35aaa45bf82d",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 67,
+      "ref": "nihilisticneuralnet/gemma-4-developer-agent-direct-code-verifier",
+      "role": "真实官方评测下的编辑工具候选对照",
+      "implementation": "rapid与guard用同一QAT服务，分两批各8题成对Evaluator；guard只留shell/read，不给edit_file，以总16题至少多解2题、零测试修改/基础设施错误选择提交。",
+      "reuse": "逐题保留错误阶段与进度；提交仅含选中agent，外围评测记录不进入ZIP。",
+      "caveats": "候选同时改变工具、提示词、输出/思考预算，不能将差异归因单变量。第二批也参与选择，不是独立最终测试；没有empty/gold控制筛选。源码中启动真实评测不等于我们独立复现了结果。",
+      "evidence_lines": [
+        [
+          269,
+          310
+        ],
+        [
+          317,
+          357
+        ],
+        [
+          433,
+          455
+        ],
+        [
+          497,
+          578
+        ],
+        [
+          622,
+          640
+        ],
+        [
+          677,
+          718
+        ]
+      ],
+      "readable_sha256": "bb1d96d1dc61b1352d807c7cd9668d1a7ed91ae63652244afa29e48b95a83b0d",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 68,
+      "ref": "nursrijan/gemma-4-devagent-kerashub-lora-training-on-tpu",
+      "role": "KerasHub TPU 教学，但模型/adapter 与比赛不匹配",
+      "implementation": "实际加载gemma2_instruct_2b_en并启用rank16 LoRA，随后把导出配置写成Gemma4 31B；加载失败则用64维随机矩阵构造safetensors。",
+      "reuse": "可以了解TPU/Keras的一般训练接口；采用前必须核对底座架构和权重转换。",
+      "caveats": "Gemma2 2B不是规定的Gemma4 31B；改base_model_name不能转换架构，简单替换权重名也未处理PEFT名称/布局。随机fallback不是训练结果，不能作为比赛有效adapter方案。",
+      "evidence_lines": [
+        [
+          168,
+          203
+        ],
+        [
+          212,
+          245
+        ],
+        [
+          249,
+          301
+        ],
+        [
+          355,
+          369
+        ]
+      ],
+      "readable_sha256": "45284b3b61159683d813c17130712f6b04095410688f8933cb2103be65995e71",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 69,
+      "ref": "harishyadav0506/black-cat-swe-agent",
+      "role": "Black Cat 单 agent 主包与备用包",
+      "implementation": "静态字符串构建主包9工具和较简备用包，递归路径/扩展检查后输出两个ZIP。",
+      "reuse": "主备包明确命名，符号查询和最小修复提示可作为对照。",
+      "caveats": "仅自定义结构验证；同时填写thinking_level/budget并设置include_thoughts=false，不能从MEDIUM标签认定思考开启。分数在源码明确pending。",
+      "evidence_lines": [
+        [
+          126,
+          128
+        ],
+        [
+          138,
+          198
+        ],
+        [
+          203,
+          214
+        ]
+      ],
+      "readable_sha256": "003273782ee0ed936f1fe375f612e6fc14354287c52a131af83fc939e1e2b803",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 70,
+      "ref": "azouzibillel/black-cat-swe-agent-second-strike",
+      "role": "极简配置包与无关的模型变量",
+      "implementation": "写单文件agent.yaml并打包；后续MODEL_ID另指旧Gemma2B但没有被载入或使用。",
+      "reuse": "区分实际YAML模型声明和无效的notebook变量。",
+      "caveats": "没有编译/评测/训练；最后检查的是未生成的submission.json，与实际submission.zip不一致。不要把打印“就绪”当正式链路通过。",
+      "evidence_lines": [
+        [
+          1,
+          46
+        ]
+      ],
+      "readable_sha256": "d2337397b12b47faac5ad1de90b2dfcd78d9c6399bc23831aacbd1aba53a4248",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 71,
+      "ref": "leoprovorov/gemma-4-the-complete-guide-expanded",
+      "role": "官方 sample 原样打包控制",
+      "implementation": "复制sample_submission所有文件并校验逐文件hash，make_archive后再逐文件读回比对。",
+      "reuse": "作为打包阶段的严格内容一致性对照，记录原始sample版本。",
+      "caveats": "不加载GPU、不运行官方compiler/评测；sample含哪些adapter取决于挂载版本。文件内容相同不表示ZIP字节确定性或其模型已成功运行。",
+      "evidence_lines": [
+        [
+          1,
+          4
+        ],
+        [
+          24,
+          71
+        ]
+      ],
+      "readable_sha256": "b93078a2f18eb391454c864b450a2247c8f0dd40c7ae45c11a156d942e71151a",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 72,
+      "ref": "bang1850/notebook67dada2eb5",
+      "role": "仅安装依赖的占位条目",
+      "implementation": "只有一行pip安装TRL/PEFT/bitsandbytes等。",
+      "reuse": "识别尚未实现的占位notebook。",
+      "caveats": "无固定版本、训练、模型、评测或提交构建；不能当RL/SFT教程已实现。",
+      "evidence_lines": [
+        [
+          1,
+          2
+        ]
+      ],
+      "readable_sha256": "ffa13f0bd2b3637241e750894b178132df9353cb51e36150a897a5581ebcdbee",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 73,
+      "ref": "salvapiol/gemmaforge-agent",
+      "role": "大型 Agent 原型、轨迹模板和最终配置包",
+      "implementation": "构建本地环境/trace记录类，把SWE-bench Lite转为模板步骤；ModelPolicy.generate仍未实现。最后拷贝官方示例adapters，写coder/analyzer/导航skill并打包。",
+      "reuse": "区分工具环境实现、人工/模板轨迹、模型策略和最终ADK payload；可借鉴trace记录字段。",
+      "caveats": "生成模板步骤没有真实工具观测，不是成功Agent轨迹；LoRA结尾只建LoraConfig，没有训练。提交仍为复制示例权重，文件缺失只打印；中途项目ZIP也不是最终submission.zip。",
+      "evidence_lines": [
+        [
+          477,
+          554
+        ],
+        [
+          4799,
+          4836
+        ],
+        [
+          5161,
+          5173
+        ],
+        [
+          5196,
+          5218
+        ],
+        [
+          5861,
+          5888
+        ],
+        [
+          6030,
+          6104
+        ]
+      ],
+      "readable_sha256": "c429428eae115f09176731509975938c5944b1b08cd216ec5d37230d6304e04e",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 74,
+      "ref": "chaitanyajamble/google-the-gemma-4-developer-11",
+      "role": "明确资源上限的单 agent 打包",
+      "implementation": "单agent9工具，8192输出，8分钟/30工具/40轮；自定义验证后写ZIP，并检查输出目录是否有其他文件。",
+      "reuse": "短配置、include读回及打包错误显式化。",
+      "caveats": "8分钟乘约120题为16小时上界，未证明12小时总预算安全；“工作目录只能有ZIP”是作者约定，不是我们应额外删除日志的依据。无实际推理/得分。",
+      "evidence_lines": [
+        [
+          124,
+          154
+        ],
+        [
+          212,
+          233
+        ],
+        [
+          348,
+          359
+        ]
+      ],
+      "readable_sha256": "00ad38f5cdf6c32f1216c7ecbf694b90466730cb42bddb2b56e0ce1d489ea4c7",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 75,
+      "ref": "msama01/gemma-4-developer-agent-eda",
+      "role": "通用 EDA starter 的配置适配版本",
+      "implementation": "解析gold diff/词法定位，读取sample的根配置名与model，生成单agent或coder+analyzer并打包。",
+      "reuse": "跟踪变量最终值：早期swe_coder.yaml会被后面的sample发现逻辑覆盖，不应仅凭首个赋值误判最终包。",
+      "caveats": "仍为EDA+自定义validator，没有官方GPU评测。示例数据fallback/字符token估计不应误写成真实测量，thinking配置实际关闭。",
+      "evidence_lines": [
+        [
+          7,
+          40
+        ],
+        [
+          387,
+          421
+        ],
+        [
+          1366,
+          1394
+        ],
+        [
+          1408,
+          1489
+        ]
+      ],
+      "readable_sha256": "f5ce58c3c0c136ff0bba0c1930e502ecea3c3eea48c7ed1c943aa1c2a8545c1e",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 76,
+      "ref": "harishyadav0506/gemma-4-developer-agent",
+      "role": "早期比赛机制说明与最小单 agent 包",
+      "implementation": "构建6核心工具的单agent，temperature0/top_k1且thinking开启，提示词按约10工具/短任务预算规划；结构检查后输出ZIP。",
+      "reuse": "可读的单agent基线，明确最终产物应是可执行配置。",
+      "caveats": "原文256组图及默认极短预算属于旧材料；当前图已核验127组。不能把pytest退出0单独当完备成功判据，仍需测试存在/目标覆盖等官方verifier条件；无实际得分。",
+      "evidence_lines": [
+        [
+          26,
+          44
+        ],
+        [
+          229,
+          280
+        ],
+        [
+          350,
+          428
+        ],
+        [
+          484,
+          508
+        ]
+      ],
+      "readable_sha256": "b37d5fd7f0436f01c5c5d87c03bdb4647b63bd95bec7fa63f11a1a45b96ac6e4",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 77,
+      "ref": "nilanjansaha123/gemma-4-agent-eda-adk-starter",
+      "role": "简化EDA和双 agent 配置打包",
+      "implementation": "解析diff，尝试按instance_id读取图，创建coder+analyzer并写ZIP。",
+      "reuse": "配置较短，方便理解agent_tool结构和独立提示词。",
+      "caveats": "图路径只找任务名，不覆盖当前commit命名，可能静默不画图。所谓ADK schema验证实际仅检查扩展/路径；没有官方编译，include_thoughts=false与HIGH标签不能证明开启thinking。",
+      "evidence_lines": [
+        [
+          89,
+          111
+        ],
+        [
+          117,
+          171
+        ],
+        [
+          177,
+          190
+        ]
+      ],
+      "readable_sha256": "421e065aeb724a73aba6b47069d4ca6e3a3fd6e658e7a2486d6c15d8c5bf2a71",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 78,
+      "ref": "zzgtylors/graphloc-auditing-gemma-4-agent-code-graphs",
+      "role": "GraphLoc 图/embedding/定位 CPU 研究",
+      "implementation": "从snapshot AST与参考diff生成函数标签，比较G0/G+、BM25、图传播、embedding及外部SWE-bench迁移，导出stdlib定位skill。",
+      "reuse": "同等候选查看预算、明确gold标签来源、将图结构覆盖与定位效果分开。",
+      "caveats": "不跑修复Agent；标签和排名不是resolved。末尾并发启动多项批处理，明显不适合登录节点Run All；外部迁移准备需要网络/仓库预备。",
+      "evidence_lines": [
+        [
+          1,
+          12
+        ],
+        [
+          1130,
+          1187
+        ],
+        [
+          1760,
+          1778
+        ],
+        [
+          1781,
+          1809
+        ],
+        [
+          1998,
+          2019
+        ],
+        [
+          2104,
+          2133
+        ]
+      ],
+      "readable_sha256": "31f270fa85af8ed625ced695498c053470061943569ee951af7ee7f3c565739e",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 79,
+      "ref": "chaitanyajamble/google-the-gemma-4-developer",
+      "role": "可选SFT与三层fallback的提交构建",
+      "implementation": "默认RUN_LORA_TRAINING=false；若打开则训练issue→diff LoRA。打包优先sample，失败转内建agent，再失败输出emergency单文件。",
+      "reuse": "默认无adapter的行为清晰；检查最终产物标签和hash以知道实际采用了哪个分支。",
+      "caveats": "训练失败会被吞掉继续无adapter，emergency返回未承接完整验证；“总能有ZIP”不证明预定训练/配置成功。随机题切分也不代表新仓库泛化；需独立官方运行。",
+      "evidence_lines": [
+        [
+          383,
+          435
+        ],
+        [
+          518,
+          550
+        ],
+        [
+          1055,
+          1085
+        ],
+        [
+          1187,
+          1202
+        ]
+      ],
+      "readable_sha256": "5a414fb49b3172fe2106a3a8b3e349db0ff3f00b57278a2d4437ff5ea375f9a2",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 80,
+      "ref": "manuelgagofernandez/notebook13918923cc",
+      "role": "Kaggle 默认脚本模板",
+      "implementation": "仅导入numpy/pandas/kagglehub并打印挂载文件路径。",
+      "reuse": "保留空白开发起点的覆盖记录。",
+      "caveats": "没有本比赛实现、模型、评测或产物；与同作者另一模板内容近同。",
+      "evidence_lines": [
+        [
+          1,
+          24
+        ]
+      ],
+      "readable_sha256": "10c0c35ab7c428e785045cf1e8066a5335468c24e30ada998de0d3088c7675be",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 81,
+      "ref": "proamari/anatomy-of-a-fix",
+      "role": "问题—参考修复—测试的 EDA 与提示词包",
+      "implementation": "围绕129题讲解issue、gold patch和test_patch，统计线索/改动并生成coder+analyzer配置与hash。",
+      "reuse": "团队介绍素材和按证据组织设计假设；正确检查实际导入工作树。",
+      "caveats": "没有运行Agent或证明数据驱动提示词提分。固定禁用anyio和“永不重复命令”可能妨碍必要复测，不能照搬；temperature等“所有有效提交都相同”也不是可验证普遍事实。",
+      "evidence_lines": [
+        [
+          14,
+          25
+        ],
+        [
+          169,
+          183
+        ],
+        [
+          302,
+          323
+        ],
+        [
+          329,
+          342
+        ],
+        [
+          376,
+          421
+        ]
+      ],
+      "readable_sha256": "7793441e6037a91b871356ab0aeea266eef2d03df0852f988d8207772a4c6b98",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 82,
+      "ref": "leoprovorov/gemma-4-agent-working-baseline",
+      "role": "通用starter的另一提示词变体",
+      "implementation": "与inside-the-harness条目逐行比对：输出上限8192，增加导入路径确认，改变复现/验证指令及重复命令约束。",
+      "reuse": "只依据实际源码差异列出实验变量；导入路径验证有助排查假修复。",
+      "caveats": "没有新GPU结果；“永不重复同一命令”与修复后重跑验证存在张力，pytest -p no:anyio需按任务判断。它不是完全相同源码的独立运行复现。",
+      "evidence_lines": [
+        [
+          54,
+          60
+        ],
+        [
+          1308,
+          1371
+        ]
+      ],
+      "readable_sha256": "1c2eeaa9a8552f9bb0c2bb06d2f682ab053c98b376743d690015b8037b78bdb3",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 83,
+      "ref": "manuelgagofernandez/google-the-gemma-4-developer-agent-competition",
+      "role": "Kaggle 默认 Python 模板",
+      "implementation": "仅导入包并列出输入文件，无比赛业务逻辑。",
+      "reuse": "完整覆盖公开条目，标识未实现内容。",
+      "caveats": "没有Agent/训练/模型服务/ZIP，不能从比赛标题推断完成度。",
+      "evidence_lines": [
+        [
+          1,
+          23
+        ]
+      ],
+      "readable_sha256": "442f6f2f7ab29ffc1ae3f08d202b4d77e77f14ca4fcbf166047b72cc7e7d003f",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 84,
+      "ref": "zzgtylors/graphloc-can-gemma-4-pick-the-code-to-change",
+      "role": "官方底座的候选代码重排实验",
+      "implementation": "从BM25和一跳图构造top10/hop1/同长度same候选池，Gemma TP4选top3，比较pool覆盖、选择准确率、thinking与配对bootstrap。",
+      "reuse": "控制候选数量与顺序，区分候选池遗漏和模型选错；保存prompt/output token数。",
+      "caveats": "只包含有可映射gold函数的题；代码定位不是补丁修复。chat参数TypeError会fallback不显式传thinking开关，需记录实际render状态；未由我们独立跑GPU。",
+      "evidence_lines": [
+        [
+          1,
+          12
+        ],
+        [
+          80,
+          127
+        ],
+        [
+          148,
+          191
+        ],
+        [
+          213,
+          240
+        ]
+      ],
+      "readable_sha256": "2a4798e3c181e5a8e13a5bf17c0a7d1a4f52df0553cfad10e67a4414063f4c88",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 85,
+      "ref": "sayandeepghosh/gemma-4-paper-track-async-codegraph-resource",
+      "role": "AsyncPolyGraph 原型与有标签偏差的定位审计",
+      "implementation": "定义async/调用/装饰/依赖边builder，但评测主函数只读已有图和按路径词法打分；候选文件catalog取自所有任务gold patch。",
+      "reuse": "可研究异步函数、依赖注入边的表示，但要另写不依赖答案的候选生成。",
+      "caveats": "builder未用于所报告对比；gold文件进入候选全集造成oracle信息，不能作为无泄漏定位性能。按instance_id查图也未覆盖当前commit文件；报告提升不证明async图有效。",
+      "evidence_lines": [
+        [
+          41,
+          58
+        ],
+        [
+          102,
+          126
+        ],
+        [
+          151,
+          189
+        ],
+        [
+          197,
+          258
+        ],
+        [
+          286,
+          311
+        ]
+      ],
+      "readable_sha256": "fa8ae63866a461579414c8a985f23657d9951a9e24150bdb251754b7cfb71add",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 86,
+      "ref": "woldywei/gemma4-rq4-query-encoding",
+      "role": "查询文本编码与已发布embedding通道的定位对照",
+      "implementation": "Jina-code失败则BGE-small，编码issue/节点文本，比较TF-IDF、索引embedding和RRF，报告文件/函数Recall与MRR。",
+      "reuse": "识别当前search_similar_code无查询文本编码器；分别量化query通道和候选覆盖。",
+      "caveats": "其emb_rank按token交集平均多seed，并非严格复刻官方exact/suffix查询。gold使用新diff行号映射原始AST可能错位；模型fallback改变实验，需分开标记。未跑修复Agent，第三方encoder不能直接假定正式提交允许。",
+      "evidence_lines": [
+        [
+          1,
+          13
+        ],
+        [
+          183,
+          211
+        ],
+        [
+          267,
+          290
+        ],
+        [
+          399,
+          454
+        ]
+      ],
+      "readable_sha256": "1792b0b79b7dbd231b7e25f045de8defc61d13ae2d8f8d71555da91f2bb5ea63",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 87,
+      "ref": "twangygarlic449/gemma-super-basic",
+      "role": "最小五工具单 agent scaffold",
+      "implementation": "写root、sampling和prompt三文件，5个工具、8192输出、thinking关闭，检查必需文件后打包。",
+      "reuse": "便于隔离最基本的提示词变化与包结构。",
+      "caveats": "无官方编译或推理；没有eval_config，取当前harness默认预算。仅检查文件存在/根配置，不证明工具调用能成功。",
+      "evidence_lines": [
+        [
+          17,
+          31
+        ],
+        [
+          66,
+          85
+        ],
+        [
+          102,
+          157
+        ]
+      ],
+      "readable_sha256": "99582cd6fc71f967b6fc2070cb8bab12a3df974f8c4a84a361c7db0aea293145",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 88,
+      "ref": "ryanholbrook/getting-started-gemma-4-developer-agent",
+      "role": "官方端到端入门",
+      "implementation": "离线安装定制 wheels，复制 sample 并启用 thinking，启动 vLLM v2/32768 context；官方 Evaluator 顺序执行前两题的生成和验证，最后打包 agent。",
+      "reuse": "作为模型注册、adapter discovery、两阶段评测与 ZIP 根目录的权威实现参照。",
+      "caveats": "两题示例不是全量成绩；复制 sample adapter 不代表训练完成。强制重装和删除 cutlass .pth 只适合隔离运行环境；必须另加 empty/gold 控制和实际资源核验。",
+      "evidence_lines": [
+        [
+          26,
+          98
+        ],
+        [
+          167,
+          203
+        ],
+        [
+          239,
+          320
+        ]
+      ],
+      "readable_sha256": "5ff4dc7b2628ed9252b673a85ec9dfae06300495ecfa90c1ce0bfa6d5b1dd861",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 89,
+      "ref": "woldywei/gemma4-localization-repaired",
+      "role": "重建图后的定位实验",
+      "implementation": "从 snapshot AST 重建含 async 定义的 calls 图，以 TF-IDF、已有 embedding 的符号种子均值、PPR 和 RRF 比较文件/函数召回。",
+      "reuse": "将图覆盖与排序能力分开，检查 async 定义、名称解析和图/embedding 对齐。",
+      "caveats": "重建图未同步重建 embeddings；新文件 hunk 行号与旧 snapshot AST 对齐可能错标。种子均值不是官方 search_similar_code 的完全复现，定位分数不是修复成功率；tar 批量展开不适合登录节点。",
+      "evidence_lines": [
+        [
+          149,
+          170
+        ],
+        [
+          195,
+          264
+        ],
+        [
+          322,
+          362
+        ],
+        [
+          477,
+          575
+        ]
+      ],
+      "readable_sha256": "7dcc46893747f366bb9a304bd2bbd240984b8b526b7b481a90c7a8279fe68dde",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 90,
+      "ref": "woldywei/gemma4-repaired-graphs-regen",
+      "role": "async 图生成工具",
+      "implementation": "逐题解开 snapshot，AST 收集同步/异步函数及类，以名称与模块启发式连 calls 边，输出 instance_id.json 和 regen_summary。",
+      "reuse": "可作为基于源码重建 async 覆盖的原型与图统计参考。",
+      "caveats": "没有训练、推理、修补或 embedding 更新。连边依赖名称启发式，不能视为精确动态调用图；输出任务名与当前官方 commit 名需要映射，解包必须隔离且检查路径。",
+      "evidence_lines": [
+        [
+          69,
+          90
+        ],
+        [
+          138,
+          184
+        ],
+        [
+          193,
+          222
+        ]
+      ],
+      "readable_sha256": "f59a347a34e553b740e3502488ebbf1230405b00c985fb308b41fc5bf995bb5a",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 91,
+      "ref": "woldywei/gemma4-graph-localization-bench",
+      "role": "原始图定位基准",
+      "implementation": "TF-IDF 文件/函数检索、符号种子 embedding、PPR、RRF 在公开任务比较 recall/MRR，并报告 gold 在图节点中不可达的比例。",
+      "reuse": "先测覆盖上限，再做相同候选空间的排序比较，并按仓库和 async 类型分层。",
+      "caveats": "函数表只汇总可达 gold，不能忽略未覆盖任务；使用新 hunk 行号对应旧代码存在标签偏差。embedding 查询为多符号种子近似，不是自然语言编码或官方精确复现；无 repair 推理。",
+      "evidence_lines": [
+        [
+          92,
+          128
+        ],
+        [
+          229,
+          275
+        ],
+        [
+          389,
+          445
+        ],
+        [
+          480,
+          504
+        ]
+      ],
+      "readable_sha256": "0849ccac3266b129e9a4ab20022bee7e7ff9a5e6fd05fc4aca8b91b22a731369",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 92,
+      "ref": "woldywei/gemma4-graph-coverage-audit",
+      "role": "图覆盖静态审计",
+      "implementation": "按任务名、commit 名及共享 commit 查可读图，扫描参考 patch 触及文件内的定义，比较 graph 节点覆盖和 async 类别。",
+      "reuse": "提供数据映射、空文件排查和 AST 覆盖诊断思路。",
+      "caveats": "计数对象是 gold 触及文件内所有定义，而非准确被改函数；末段同名匹配可能误判覆盖。旧 hardlink 描述不代表当前包仍损坏，snapshot 前缀处理需在当前文件布局复核。",
+      "evidence_lines": [
+        [
+          111,
+          138
+        ],
+        [
+          143,
+          182
+        ],
+        [
+          185,
+          227
+        ]
+      ],
+      "readable_sha256": "7f0f394b044af4136057918ec089597b68bc5d5cf8e01d0e9862abd495a267f2",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 93,
+      "ref": "prvsiyan/gemma-and-the-shape-of-doubt",
+      "role": "有完整证据组织的 agent 与开发实验",
+      "implementation": "保留作者已提交 V10 ZIP，官方 compiler 编译，另建有界源码搜索候选；包括固定补丁 CPU 重放和真实 vLLM/官方 verifier 的16题开发筛选。当前 RUN_COMMAND_SCREEN=True 会启用 GPU 路径。",
+      "reuse": "借鉴 hash 固定提交、候选单独保存、端点健康检查、严格 JUnit、环境修复与 agent 收益分开归因。",
+      "caveats": "0.08、2/4、3/12 等为作者保留的历史记录，非我们复现或当前榜首。多组数据反复用于开发；V14 多出的通过与环境修复重合，不能归因于策略。默认不是纯 CPU 重打包；额外 wheels 和测试清单也必须附加。",
+      "evidence_lines": [
+        [
+          9,
+          33
+        ],
+        [
+          845,
+          904
+        ],
+        [
+          955,
+          985
+        ],
+        [
+          2700,
+          2745
+        ],
+        [
+          2849,
+          2875
+        ],
+        [
+          3773,
+          3791
+        ]
+      ],
+      "readable_sha256": "0d015a963f5d8691dc105c0963cc1724ed52c9528296c2089b1d6ce5a0730f19",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 94,
+      "ref": "tuyennguyen21pt/mainmainmain",
+      "role": "与修复赛题无直接关系的情感分析训练",
+      "implementation": "配置越南语 APC 数据、mBERT/mT5，调用外部 KLTN-Token-Merging 项目的 ATE/APC 多方法训练，并分析 span 错误。",
+      "reuse": "仅可参考一般实验目录、错误分析与多种子组织。",
+      "caveats": "被 competition Code 页面收录不代表其任务或模型获准用于本赛；不是 Gemma agent、ADK bundle 或本赛评测。",
+      "evidence_lines": [
+        [
+          56,
+          84
+        ],
+        [
+          449,
+          480
+        ],
+        [
+          525,
+          550
+        ]
+      ],
+      "readable_sha256": "06a3e57a9cf5f1bed8de1bd9edd0d5d70e1964d20ee125605d46f1ff469781b8",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 95,
+      "ref": "chaitanyajamble/the-gemma-4-developer-agent-google",
+      "role": "可选 SFT 与三层回退打包",
+      "implementation": "默认 RUN_LORA_TRAINING=False；sample 改写失败后退到内置 agent，再退到 emergency 单文件。训练开关开启后可生成 adapter 文件。",
+      "reuse": "保留最终实际使用的 package_label、ZIP 回读和未引用 adapter 的警告。",
+      "caveats": "自身 YAML/文件检查不是官方 compiler；训练后 adapter 仅加入文件，代码明确未接入 agent 配置。成功写出 ZIP 可能是 emergency 行为，不能视为预期 agent 已运行。",
+      "evidence_lines": [
+        [
+          377,
+          387
+        ],
+        [
+          504,
+          531
+        ],
+        [
+          793,
+          814
+        ],
+        [
+          842,
+          866
+        ]
+      ],
+      "readable_sha256": "56f7e7e7ee1d5669b437723654eb8df43f7ed0ee28c475b09b347448da90dce2",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 96,
+      "ref": "tuynnguynee/notebook057a67b5a8",
+      "role": "情感分析训练/错误分析副本变体",
+      "implementation": "使用与 mainmainmain 相同的 APC 数据和 mBERT/mT5 配置，含 ATE 训练产物及 span 错误统计。",
+      "reuse": "作为页面存在无关关联 notebook 的证据，不纳入比赛策略比较。",
+      "caveats": "无关模型的出现不能解释为本赛允许替代正式 Gemma 底座；与 index94 不是完整源码相同的重复项。",
+      "evidence_lines": [
+        [
+          56,
+          84
+        ],
+        [
+          449,
+          480
+        ]
+      ],
+      "readable_sha256": "e35f5373f3dd75e269f4344aad4c93613f72894c719745549ba52c1b73ea86ba",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 97,
+      "ref": "nursrijan/gemma-4-devagent-graph-reasoning-and-swe-engine",
+      "role": "EDA、模拟图与 graph navigator 打包",
+      "implementation": "分析 patch、演示弹性编辑；读取任务名图失败时合成 FastAPI 图，输出 navigator+coder YAML 并做文件级自检。",
+      "reuse": "可以参考修改前后检查、符号查询、局部测试和职责拆分的提示词。",
+      "caveats": "当前官方图按 commit 命名，此任务名查询可能直接落入 mock；标注 Formal adk-submission 的函数实际只检查 root/模型数量/扩展/大小。没有真实 evaluator，include_thoughts=False 会关闭 thinking。",
+      "evidence_lines": [
+        [
+          250,
+          286
+        ],
+        [
+          438,
+          510
+        ],
+        [
+          544,
+          584
+        ]
+      ],
+      "readable_sha256": "cf9ccb043afff00e0b7d47ed53c6a15746164d1e2c1286cddf7cc138a840da19",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 98,
+      "ref": "busyaprime/119-of-129-sound-the-gemma-4-grader-rebuilt",
+      "role": "数据/验证器审计与词法定位研究",
+      "implementation": "现场清点数据与 task 字段、按仓库时间分 dev/heldout，批量扫描 snapshots 测 BM25 等定位；验证 sound 数从历史审计表或附加 CSV 读取，现场重算统计。",
+      "reuse": "借鉴 live 与 cited 的来源区分、基线失败/参考通过、required-node/JUnit 条件、固定切分与定位指标。",
+      "caveats": "标题119不是本 notebook 重跑129题验证所得；raw required-node surrogate 是117，119含对 skip 规则的作者解释。历史“无 harness”仅检查比赛数据目录，不能否定后来单独发布的官方 wheelhouse；不能据此断言当前评测绝对无法离线运行。",
+      "evidence_lines": [
+        [
+          1,
+          21
+        ],
+        [
+          677,
+          710
+        ],
+        [
+          767,
+          807
+        ],
+        [
+          835,
+          877
+        ],
+        [
+          1018,
+          1032
+        ],
+        [
+          1765,
+          1799
+        ]
+      ],
+      "readable_sha256": "c552b468c41a828fc1b1e5f3d96ec7f7aae50d3b4624fe5901b0f0a76a80eb78",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 99,
+      "ref": "chaitanyajamble/google-the-gemma-4-developer-agent-2",
+      "role": "EDA/仓库先验及可选 LoRA 打包器",
+      "implementation": "默认汇总公开 patch 的仓库级常见修改文件并注入提示词；可选 issue→diff SFT，mask prompt、超长样本丢弃、梯度累积；adapter 需显式参数，训练失败则退到无 adapter。",
+      "reuse": "参考模块化 CLI、真正标签掩码和对最终 bundle 回读验证。",
+      "caveats": "公开 gold 文件频率已进入提示词，不能拿同一公开集当无泄漏验证；隐藏仓库不同，先验泛化未知。SFT 无仓库上下文/独立切分，最后不足 grad_accum 的梯度没有显式 flush，量化底座和官方服务兼容性未证实。",
+      "evidence_lines": [
+        [
+          358,
+          388
+        ],
+        [
+          797,
+          857
+        ],
+        [
+          865,
+          883
+        ],
+        [
+          935,
+          967
+        ]
+      ],
+      "readable_sha256": "c9089e5ad2b96f10b6d18d63c560f196f3c579c17b3a605ed5f6d34e427b0720",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 100,
+      "ref": "rishavae/gemma4",
+      "role": "三 agent YAML 打包草稿",
+      "implementation": "仅写 coder、analyzer、repro_verifier 的 YAML、提示词和 sampling，压缩成 submission.zip。",
+      "reuse": "展示定位、修改、验证职责拆分的概念。",
+      "caveats": "标题宣称运行 GENSL/EC-PPR 和官方验证，但全部78行中没有数据读取、求解器或 compiler/evaluator 调用；嵌套 AgentTool schema、顶层 thinking_budget 字段未验证，自然语言 search_similar_code 查询也需改正。",
+      "evidence_lines": [
+        [
+          1,
+          78
+        ]
+      ],
+      "readable_sha256": "f54dfbbd1aa26deaefffb1269ba822c4e784f3ae7787c31213a14b143d62176d",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 101,
+      "ref": "avikdas567/dual-space-spectral-graph-swe-agent-for-gemma-4",
+      "role": "双空间检索演示与占位 adapter",
+      "implementation": "比较余弦与图距离加权检索，query 为目标 embedding 加噪，hybrid 直接使用目标符号作为 seed；打包时随机 LoRA A、全零 B。",
+      "reuse": "仅可参考图/向量组合的教学结构和文件审计思路。",
+      "caveats": "检索实验提前知道目标，并非 issue 定位的可信效果；不同模式也不保证同一噪声 query。adapter 无训练、维度/层名手写，safetensors 格式成立不等于模型兼容或有收益；没有官方修复评测。",
+      "evidence_lines": [
+        [
+          1153,
+          1223
+        ],
+        [
+          1736,
+          1767
+        ],
+        [
+          1772,
+          1800
+        ]
+      ],
+      "readable_sha256": "ce28beeb3bf0936133002cb1bb358733e71abc1d48ad59acbeb02cbed4318411",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 102,
+      "ref": "zhukovoleksiy/gemma-4-walkthrough-first-submission",
+      "role": "版本对照导读与基线构建",
+      "implementation": "与条目 8（liujiahua2358/gemma-4-v0-walkthrough-first-submission）readable.txt 完全相同，已核对SHA256。解析 sample、示例 LoRA、graph/embedding，并构建 analyzer+coder 的迭代版本；末尾打包提交。",
+      "reuse": "读取每次版本变更及其来源；检查 graph 输出大小、正确读取测试尾部和固定 wheel hash。",
+      "caveats": "重复源码不构成独立的运行或得分证据。同一文档含旧版与后续修订说法，thinking/seed 转发须以当前 wheel 源码为准；引用的榜单分数不是其独立消融证明。",
+      "evidence_lines": [
+        [
+          1,
+          15
+        ],
+        [
+          275,
+          318
+        ],
+        [
+          380,
+          410
+        ],
+        [
+          630,
+          653
+        ]
+      ],
+      "readable_sha256": "f42412524f0bf673d500cb02911d91ce60804558af719985f68d79ad0d3b8f57",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 103,
+      "ref": "yuki16/gemma4-devagent-graphtools-submission-v2",
+      "role": "本地图工具实现、短导航循环与自检打包",
+      "implementation": "实现图工具及 budget/错误 schema；缺 embedding 可用 hashing fallback。可用时加载 vLLM/Transformers 跑最多2轮导航，失败跳过；构建并自检 ZIP，缺 adapter 则去掉引用。",
+      "reuse": "借鉴清晰记录 skipped/failed 状态、ZIP 临时文件校验后发布、非训练权重不引用。",
+      "caveats": "两轮只定位，不生成补丁或跑官方 verifier；工具返回作为 user 文本且用启发式解析，不等于官方 ADK 执行。hashing fallback 不等同官方 embedding，Notebook finished normally 也允许模型跳过。",
+      "evidence_lines": [
+        [
+          300,
+          323
+        ],
+        [
+          1014,
+          1047
+        ],
+        [
+          1072,
+          1118
+        ],
+        [
+          1723,
+          1737
+        ],
+        [
+          1740,
+          1790
+        ]
+      ],
+      "readable_sha256": "4884d308ea81587935bc43a268cf87a7dee520e8c73396c0c49d290c841a01a0",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 104,
+      "ref": "mizeroluckygall/gemma-4-agent-eda-agent-validator",
+      "role": "Pathfinder 的 EDA/定位与 analyzer+coder",
+      "implementation": "默认 analyzer+coder，图实验最多60 commits/300秒；coder 提示4分钟软停，analyzer提示最多8次调用，打包后自写 validator。",
+      "reuse": "明确从 exact symbol/grep 开始，复用同一复现命令验证，保留文件和源码行定位。",
+      "caveats": "soft_limit_seconds 仅进入提示词，默认 ship_eval_config=False，不是4分钟硬限制；8次子agent调用同样不是独立硬预算。include_thoughts=False 的“只隐藏推理”注释不符合当前 harness 行为；没有端到端 GPU 修复证据。",
+      "evidence_lines": [
+        [
+          56,
+          71
+        ],
+        [
+          575,
+          627
+        ],
+        [
+          717,
+          770
+        ]
+      ],
+      "readable_sha256": "d98d7ba358328acead6f042bb2870dd5bb051ea3b9a71fa6a3dcb03ea5488645",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 105,
+      "ref": "romanrozen/gemma-eda-baseline-for-a-start-lb-top-1",
+      "role": "EDA、词法定位与可选双 agent 打包",
+      "implementation": "与条目 45（ahmadagbaria/gemma-4-baseline-reproduction）readable.txt 完全相同，已核对SHA256。解析数据和参考diff，做TF-IDF定位；构造单agent或analyzer+coder，定制validator、确定性ZIP及experiment_card。",
+      "reuse": "源码/配置/hash一并留档；分离定位指标与最终提交内容。",
+      "caveats": "重复源码不构成独立的运行或得分证据。源码与romanrozen条目逐字节相同，并不是第二次独立复现。没有官方GPU评测；提示词把search_similar_code用于自然语言查询，与当前按索引符号查邻近向量的实现不符。token数只是字符估计。",
+      "evidence_lines": [
+        [
+          1218,
+          1304
+        ],
+        [
+          1449,
+          1506
+        ],
+        [
+          1573,
+          1635
+        ],
+        [
+          1664,
+          1674
+        ]
+      ],
+      "readable_sha256": "7ec46d422e36f5f98396c1b9d97b3f128e8b39511c06eed779c57019e219e8b9",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 106,
+      "ref": "nihilisticneuralnet/0-10-gemma-4-developer-agent-submission",
+      "role": "lean/reviewer/full prompt 消融骨架",
+      "implementation": "默认 lean 去掉两个子agent，4.5分钟/40工具/100turn，创建三种 ZIP；外部候选搜索、消融和 local eval 均默认关闭。",
+      "reuse": "参考按相同任务比较精简 agent 与可选 reviewer，以及重复调用轨迹统计。",
+      "caveats": "标题0.10是作者宣称；默认未运行 evaluator。固定 pytest -p no:anyio -o timeout=0 会改变测试环境，应逐仓库核验，不能照搬；include_thoughts=False 实际禁用 thinking。",
+      "evidence_lines": [
+        [
+          294,
+          300
+        ],
+        [
+          353,
+          390
+        ],
+        [
+          454,
+          500
+        ],
+        [
+          595,
+          614
+        ],
+        [
+          672,
+          687
+        ]
+      ],
+      "readable_sha256": "8124c32b416080c66fc99250b79f30eef232a12a2bac211278234a2e252ed9f8",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 107,
+      "ref": "evgendvorkin/google-the-gemma-4",
+      "role": "带俄语说明的 EDA 与 agent starter",
+      "implementation": "默认 analyzer+coder、8192 output，分析 tasks/graphs/embedding/词法定位；按 sample 的 schema 构建，ZIP 回读并生成 experiment_card。",
+      "reuse": "借鉴配置/hash/归档回读的实验记录和可视化解释。",
+      "caveats": "time_budget_s=240 是分析循环软限，不是 agent 硬预算；validator 自写，无官方推理成绩。include_thoughts=False 禁用 thinking；文件/字符估算不能证明实际上下文占用。",
+      "evidence_lines": [
+        [
+          285,
+          308
+        ],
+        [
+          1721,
+          1759
+        ],
+        [
+          1884,
+          1900
+        ],
+        [
+          1976,
+          1998
+        ]
+      ],
+      "readable_sha256": "3f0a37db2b1a35c2cf9e4fdde2b4a54bd3f12de2c6ad749420e24d5c21271574",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 108,
+      "ref": "lucifer19/black-cat-swe-agent-pack-instinct",
+      "role": "保留已评分 anchor 的词法检索候选",
+      "implementation": "默认选择 v13 challenger，静态解码三个历史 ZIP并验 hash；新 skill 对源码按标识符/错误文本/行为/full issue 多视图 BM25+RRF 排名，最多6000文件/12000chunks/32MiB，失败退到原 anchor。",
+      "reuse": "保留已评分 ZIP、不覆盖恢复包、候选独立命名；bounded 源码搜索可作为后续消融对象。",
+      "caveats": "0.12属于历史 v10，非默认v13。内嵌 pilot 记录为服务器600秒启动超时、0 completed pairs；本 notebook 不重跑官方 compiler/GPU。analyzer 对 search_similar_code 的自然语言说明仍不合实际符号查询行为。",
+      "evidence_lines": [
+        [
+          1,
+          25
+        ],
+        [
+          128,
+          160
+        ],
+        [
+          176,
+          219
+        ],
+        [
+          225,
+          239
+        ]
+      ],
+      "readable_sha256": "837839329977d7af8f600e5e7f0bbd49a97758c4a4cf57ae22cd66fdc5627eaa",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 109,
+      "ref": "foysalemonshanto/gemma4-agent-advanced-eda",
+      "role": "较完整的数据/上下文成本 EDA",
+      "implementation": "检查 task/patch/test_patch、图和 embedding 两套命名、向量结构；批量扫描 snapshot，以 gold 触及文件及行区间估计全文读取与定点读取成本。",
+      "reuse": "参考当前 commit 名映射、allow_pickle=False、按仓库切分和工具返回长度影响分析。",
+      "caveats": "使用 gold 定位的读取次数是已知答案条件下的成本参照，不是 agent 性能；没有训练或修复评测。ProcessPoolExecutor(max_workers=os.cpu_count()) 会大量并行扫描，不可直接在登录节点 Run All。",
+      "evidence_lines": [
+        [
+          414,
+          440
+        ],
+        [
+          556,
+          581
+        ],
+        [
+          659,
+          704
+        ],
+        [
+          711,
+          741
+        ]
+      ],
+      "readable_sha256": "f00f2fb169b5f1560d86d7cab3b5b9bdebf62b8ff65519044cbd07c6e8a82ba6",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 110,
+      "ref": "nursrijan/gemma-4-swe-agent-complete-eda-adk-starter-kit",
+      "role": "EDA 与双 agent 打包教学",
+      "implementation": "读 tasks，缺数据时合成两条演示；模拟 edit_file，写 analyzer+coder YAML，自检文件大小/模型/扩展并输出 ZIP。",
+      "reuse": "仅参考基本目录和精简局部修改/验证提示词。",
+      "caveats": "最后名为 placeholder 的 submission.parquet 实际直接填 row.patch，即 gold 答案，不是模型预测。无真实 evaluator，mock 数据和图不能当真实统计，include_thoughts=False 禁用 thinking。",
+      "evidence_lines": [
+        [
+          96,
+          135
+        ],
+        [
+          382,
+          413
+        ],
+        [
+          446,
+          478
+        ],
+        [
+          502,
+          539
+        ],
+        [
+          556,
+          598
+        ]
+      ],
+      "readable_sha256": "1a7eda0aca6a0dffc21c60a3bc05bc0d281c00bfee105022dea7b056024b66d1",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    },
+    {
+      "index": 111,
+      "ref": "haideptry/gemma-develop-first-try",
+      "role": "官方 sample adapter 与5分钟双 agent 打包",
+      "implementation": "将 sample adapters 或内嵌 base64 权重打包到 coder/analyzer；明确5分钟/15工具/25turn/60秒命令限，固定ZIP时间戳并回读。已静态解码内嵌权重检查 header和数据。",
+      "reuse": "参考可复现 ZIP、当前 language_model 层路径与真正非方形 q/o tensor 形状。",
+      "caveats": "两个内嵌权重完全相同，LoRA B 全零；未训练，不能宣称获得训练收益或100%运行兼容。5×120=10小时只约束任务生成，不覆盖 setup，不能数学保证全赛时限；禁止 skills 是作者选择非官方规则。",
+      "evidence_lines": [
+        [
+          5,
+          11
+        ],
+        [
+          35,
+          65
+        ],
+        [
+          98,
+          124
+        ],
+        [
+          163,
+          189
+        ]
+      ],
+      "readable_sha256": "1dd99a7e84f34146c5c502acf3285f0f724ae737ec9d738ad10826dadc0dc1f3",
+      "review_scope": "manual reading of relevant execution paths and literal configurations; no third-party execution"
+    }
+  ]
+}

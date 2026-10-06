@@ -1,0 +1,41 @@
+Metadata-Version: 2.4
+Name: adk-eval-core
+Version: 0.1.0
+Summary: Core evaluation, sandboxing, budget tracking, tracing, and UI primitives for ADK agent benchmarks
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: pydantic~=2.0
+Requires-Dist: google-adk>=1.34.0
+Requires-Dist: docker>=7.0.0
+Requires-Dist: pyyaml>=6.0
+Requires-Dist: rich>=13.0
+Requires-Dist: numpy>=2.0.0
+Provides-Extra: scoring
+Requires-Dist: scikit-learn>=1.3.0; extra == "scoring"
+Provides-Extra: dev
+Requires-Dist: pytest>=9.0.0; extra == "dev"
+Requires-Dist: pytest-asyncio>=0.23.0; extra == "dev"
+Requires-Dist: pytest-cov>=7.0.0; extra == "dev"
+Requires-Dist: ruff>=0.15.0; extra == "dev"
+
+# adk-eval-core
+
+Standalone evaluation core library providing shared sandboxing, budget management, file editing, event tracing, trace viewing, UI/HUD plugins, and evaluation runner primitives for Google ADK agent benchmarks.
+
+## Installation
+
+```bash
+pip install adk-eval-core
+# Optional scikit-learn metric scoring support:
+pip install "adk-eval-core[scoring]"
+```
+
+## Key Modules
+
+- **`adk_eval_core.sandbox`**: `BaseSandbox`, `DockerSandbox`, `SubprocessSandbox`, `DockerContainer`, and `AdkSandboxCodeExecutor` for isolated command and code execution.
+- **`adk_eval_core.budget`**: `TokenBudget`, `PricingTable`, and `ModelPricing` for tracking token usage, costs, and budget limits.
+- **`adk_eval_core.editing`**: Multi-strategy code replacement (`apply_replacement`, `apply_indentation`, `make_diff`).
+- **`adk_eval_core.tracing`**: `SessionTrace`, `TraceEntry`, ATIF v1.7 trajectory export (`convert_trace_to_atif`), and Markdown export (`render_trace_markdown`).
+- **`adk_eval_core.viewer`**: `TraceViewer` self-contained interactive HTML trace viewer for Jupyter and web environments.
+- **`adk_eval_core.ui` & `adk_eval_core.plugins`**: Rich live terminal `EventDisplay`, `StatusPanel`, `EvaluationDashboard`, `EventDisplayPlugin`, and `ModelRetryPlugin`.
+- **`adk_eval_core.runner`**: `BaseEvaluator`, `EvaluationResult`, and `TaskResult`.

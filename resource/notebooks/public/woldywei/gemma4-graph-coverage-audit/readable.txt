@@ -1,0 +1,270 @@
+# CELL 0 markdown
+# Code-Graph Coverage Audit for the Gemma 4 Developer Agent Competition
+
+**Question.** The competition equips agents with precomputed AST call graphs (nodes carry full
+source text) and 256-d symbol embeddings, exposed via `get_code_neighbors`, `search_similar_code`
+and `get_code_subgraph`. How much of the *fix-relevant* code — the symbols touched by the 129
+published gold patches — can these indexes actually reach?
+
+This notebook audits, per task:
+
+1. **Gold-symbol presence** — extract each task's repo snapshot at `base_commit`, parse every
+   non-test `.py` file the gold patch touches, collect top-level functions/methods/classes, and
+   check whether each appears as a graph node (sync vs async vs class split).
+2. **Index artifacts** — the task-named and commit-named graph/embedding files are hard-linked;
+   in the published zip one side of each group arrives as 0 bytes. We locate a readable copy for
+   every task (same name, else the commit-named sibling) and report which tasks would silently
+   lose their code-intelligence tools (>100-byte activation rule) without this repair.
+
+Method note: graph node ids are fully-qualified (`module.path.symbol`); presence is matched by
+exact id, suffix, or last-segment equality, which over-approximates presence (favourable to the
+index) — the reported coverage is therefore an *upper bound* on what the graph tools can reach.
+
+Companion writeup: *Coverage is the Bottleneck: Auditing and Repairing Code-Graph Context for
+Consumer-GPU SWE Agents* (Gemma 4 Developer Agent Paper Track).
+
+
+# CELL 1 code
+import ast
+import collections
+import json
+import pathlib
+import re
+import statistics
+import tarfile
+import tempfile
+
+# Locate the competition data mount by searching for tasks.jsonl (Kaggle mounts may nest it)
+DATA = None
+ROOTS = [pathlib.Path("/kaggle/input"), pathlib.Path("data"), pathlib.Path("../data")]
+for root in ROOTS:
+    if not root.exists():
+        continue
+    hits = [p for p in [root / "tasks.jsonl", *root.rglob("tasks.jsonl")] if p.exists()]
+    if hits:
+        DATA = hits[0].parent
+        break
+if DATA is None:
+    # 诊断:打印 input 树前两层,便于定位真实挂载结构
+    root = pathlib.Path("/kaggle/input")
+    if root.exists():
+        for p in sorted(root.glob("*/*"))[:40]:
+            print("INPUT:", p)
+    raise AssertionError("tasks.jsonl not found under /kaggle/input or ./data")
+print("DATA =", DATA)
+tasks = [json.loads(l) for l in open(DATA / "tasks.jsonl")]
+print(f"{len(tasks)} tasks")
+TASKS_BY_ID = {t["instance_id"]: t for t in tasks}
+
+
+def find_dir(name):
+    """graphs/embeddings/snapshots 可能在 DATA、其祖先或其子树。"""
+    cands = [d for d in (DATA, *DATA.parents) if (d / name).exists() and any((d / name).iterdir())]
+    if cands:
+        return cands[0] / name
+    hits = sorted(DATA.rglob(name))
+    return hits[0] if hits else None
+
+
+for d in ("graphs", "embeddings", "snapshots"):
+    print(d, "->", find_dir(d))
+
+
+# CELL 2 code
+# ---- Benchmark profile (independent of the graphs) ----
+
+
+def files_of(diff):
+    return re.findall(r"^--- a/(\S+)", diff, flags=re.M)
+
+
+def churn(diff):
+    return len(re.findall(r"^\+(?!\+)", diff, flags=re.M)) + len(re.findall(r"^-(?!-)", diff, flags=re.M))
+
+
+years = collections.Counter(t["created_at"][:4] for t in tasks)
+repos = collections.Counter(t["repo"] for t in tasks)
+libf = [sum(1 for f in files_of(t["patch"]) if not re.search(r"test|docs?/|\.md$|\.txt$", f)) for t in tasks]
+churns = [churn(t["patch"]) for t in tasks]
+print("years:", dict(sorted(years.items())))
+print("repos:", dict(repos))
+print(f"lib files/task: median={statistics.median(libf):.0f} mean={statistics.mean(libf):.2f}")
+print(f"patch churn: median={statistics.median(churns):.0f} mean={statistics.mean(churns):.1f}")
+
+
+# CELL 3 code
+# ---- Graphs & embeddings: hard-link artifact repair ----
+GRAPHS = find_dir("graphs")
+EMB = find_dir("embeddings")
+SNAP = find_dir("snapshots")
+
+
+def ls(p):
+    return {f.name: f.stat().st_size for f in p.glob("*")} if p.exists() else {}
+
+
+gsz, esz = ls(GRAPHS), ls(EMB)
+print(f"graphs: {len(gsz)} files, {sum(1 for v in gsz.values() if v == 0)} empty")
+print(f"embeddings: {len(esz)} files, {sum(1 for v in esz.values() if v == 0)} empty")
+
+
+def readable_copy(task, ext, sizes):
+    """Find a >100-byte copy: same name → commit-named sibling → sibling task sharing the commit."""
+    d = GRAPHS if ext == ".json" else EMB
+    want = task["instance_id"] + ext
+    if sizes.get(want, 0) > 100:
+        return d / want
+    short = task["repo"].split("/")[-1]
+    commit_name = f"{short}_{task['base_commit']}{ext}"
+    if sizes.get(commit_name, 0) > 100:
+        return d / commit_name
+    for other in TASKS_BY_ID:
+        if other != task["instance_id"] and TASKS_BY_ID[other]["base_commit"] == task["base_commit"]:
+            if sizes.get(other + ext, 0) > 100:
+                return d / (other + ext)
+    return None
+
+
+def load_graph_nodes(task):
+    p = readable_copy(task, ".json", gsz)
+    if p is None:
+        return None
+    g = json.load(open(p))
+    return {n["id"] for n in g["nodes"]}
+
+
+n_graph = sum(1 for t in tasks if readable_copy(t, ".json", gsz) is not None)
+n_emb = sum(1 for t in tasks if readable_copy(t, ".npz", esz) is not None)
+print(f"after repair: readable graph for {n_graph}/{len(tasks)} tasks, embeddings for {n_emb}/{len(tasks)}")
+
+
+# CELL 4 code
+# ---- Per task: top-level defs in gold-touched files vs graph nodes ----
+TESTPATH = re.compile(r"test|docs?/|\.md$|\.txt$")
+
+
+def touched_lib_files(t):
+    return [f for f in files_of(t["patch"]) if not TESTPATH.search(f) and f.endswith(".py")]
+
+
+def toplevel_defs(py_text):
+    """Return list of (qualname, kind); kind in {func, asyncfunc, class}."""
+    out = []
+
+    def walk(node, prefix):
+        for ch in ast.iter_child_nodes(node):
+            if isinstance(ch, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                q = prefix + ch.name
+                if isinstance(ch, ast.AsyncFunctionDef):
+                    kind = "asyncfunc"
+                elif isinstance(ch, ast.FunctionDef):
+                    kind = "func"
+                else:
+                    kind = "class"
+                out.append((q, kind))
+                if isinstance(ch, ast.ClassDef):
+                    walk(ch, q + ".")
+
+    try:
+        tree = ast.parse(py_text)
+    except SyntaxError:
+        return out
+    walk(tree, "")
+    return out
+
+
+def name_in_nodes(q, gnodes):
+    """Graph node ids are fully-qualified paths; match by exact, suffix, or last-segment."""
+    last = q.split(".")[-1]
+    for nid in gnodes:
+        if nid == q or nid.endswith("." + q) or nid.split(".")[-1] == last:
+            return True
+    return False
+
+
+results = []
+for i, t in enumerate(tasks):
+    row = {"instance_id": t["instance_id"], "repo": t["repo"]}
+    gnodes = load_graph_nodes(t)
+    row["graph_available"] = gnodes is not None
+    defs, present = [], []
+    snap = SNAP / f"{t['instance_id']}.tgz"
+    files = touched_lib_files(t)
+    row["n_touched_files"] = len(files)
+    if snap.exists() and files:
+        with tempfile.TemporaryDirectory() as td:
+            try:
+                with tarfile.open(snap) as tf:
+                    names = {m.name.split("/", 1)[-1]: m for m in tf.getmembers()}
+                    for f in files:
+                        m = names.get(f)
+                        if m is not None:
+                            tf.extract(m, td)
+                # 解压根目录可能带前缀,定位基准
+                base = pathlib.Path(td)
+                for f in files:
+                    if (base / f).exists():
+                        break
+                    hits = list(base.glob("*/" + f))
+                    if hits:
+                        base = hits[0].parent
+                        break
+                for f in files:
+                    p = base / f
+                    if p.exists():
+                        for q, kind in toplevel_defs(p.read_text(errors="replace")):
+                            defs.append((f, q, kind))
+                            present.append(gnodes is not None and name_in_nodes(q, gnodes))
+            except Exception as e:  # noqa: BLE001
+                row["error"] = str(e)[:120]
+    row["n_defs"] = len(defs)
+    row["n_present"] = sum(present) if gnodes is not None else None
+    row["defs_by_kind"] = dict(collections.Counter(k for _, _, k in defs))
+    row["present_by_kind"] = (
+        dict(collections.Counter(k for (_, _, k), h in zip(defs, present) if h))
+        if gnodes is not None else {}
+    )
+    results.append(row)
+    if (i + 1) % 25 == 0:
+        print(f"{i + 1}/{len(tasks)} done")
+
+OUT = pathlib.Path("/kaggle/working") if pathlib.Path("/kaggle").exists() else pathlib.Path(".")
+OUT.mkdir(exist_ok=True)
+json.dump(results, open(OUT / "audit_results.json", "w"))
+print("saved audit_results.json with", len(results), "rows")
+
+
+# CELL 5 code
+# ---- Aggregate: async blind spot + artifact impact ----
+agg = collections.defaultdict(collections.Counter)
+tasks_missing_gold = 0
+tasks_with_defs = 0
+for r in results:
+    if not r["graph_available"]:
+        continue
+    for kind in ("func", "asyncfunc", "class"):
+        agg[kind]["total"] += r["defs_by_kind"].get(kind, 0)
+        agg[kind]["present"] += r["present_by_kind"].get(kind, 0)
+    if r["n_defs"] > 0:
+        tasks_with_defs += 1
+        miss = sum(r["defs_by_kind"].values()) - sum(r["present_by_kind"].values())
+        if miss > 0:
+            tasks_missing_gold += 1
+
+print("=== Gold-symbol coverage by kind (top-level defs in gold-touched files) ===")
+for kind in ("func", "asyncfunc", "class"):
+    t_, p_ = agg[kind]["total"], agg[kind]["present"]
+    pct = (p_ / t_ * 100) if t_ else 0.0
+    print(f"{kind:10s}: {p_}/{t_} present ({pct:.1f}%)")
+no_graph = sum(1 for r in results if not r["graph_available"])
+print(f"\ntasks without readable graph even after repair: {no_graph}/{len(results)}")
+print(f"tasks where >=1 gold symbol missing from graph: {tasks_missing_gold}/{tasks_with_defs}")
+
+per_repo = collections.defaultdict(lambda: [0, 0])
+for r in results:
+    if r["graph_available"]:
+        per_repo[r["repo"]][0] += r["present_by_kind"].get("asyncfunc", 0)
+        per_repo[r["repo"]][1] += r["defs_by_kind"].get("asyncfunc", 0)
+print("\nasync coverage by repo (present/total):")
+for repo, (p_, t_) in sorted(per_repo.items()):
+    print(f"  {repo}: {p_}/{t_}")

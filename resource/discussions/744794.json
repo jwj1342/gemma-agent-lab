@@ -1,0 +1,26 @@
+{
+  "messages": [
+    {
+      "id": 3531245,
+      "postDate": "2026-10-01T14:51:52.190Z",
+      "content": "<ul>\n<li>I'll look into the compaction issue.</li>\n<li>The KV-cache drop with LoRA should be addressed. Now vLLM will set its LoRA params dynamically based on what you actually submit. Submitting fewer adapters with lower rank (or no adapters) leaves more memory for KV-cache.</li>\n<li>KV-cache, double-encoded tool output, thoughts dropped, and thinking_budget / seed not sent are all fixed in the latest wheelhouse.</li>\n<li>Hard to estimate as it depends on the tool and how the model responds. You could experiment in a notebook on the training set to try to get estimates.</li>\n</ul>",
+      "rawMarkdown": "- I'll look into the compaction issue.\n- The KV-cache drop with LoRA should be addressed. Now vLLM will set its LoRA params dynamically based on what you actually submit. Submitting fewer adapters with lower rank (or no adapters) leaves more memory for KV-cache.\n- KV-cache, double-encoded tool output, thoughts dropped, and thinking_budget / seed not sent are all fixed in the latest wheelhouse.\n- Hard to estimate as it depends on the tool and how the model responds. You could experiment in a notebook on the training set to try to get estimates.",
+      "votes": 1,
+      "replies": [
+        {
+          "id": 3531692,
+          "postDate": "2026-10-02T12:38:05.897Z",
+          "content": "<p>Hi Ryan, \nIs there a way to higher the compaction threshold ? like reduce max output. For now it's 14k on starter submission, I guess same setup on eval. \nThank you</p>",
+          "rawMarkdown": "Hi Ryan, \nIs there a way to higher the compaction threshold ? like reduce max output. For now it's 14k on starter submission, I guess same setup on eval. \nThank you"
+        }
+      ]
+    },
+    {
+      "id": 3530888,
+      "postDate": "2026-10-01T00:38:13.463Z",
+      "content": "<p>Several harness issues make results hard to trust: request for fixes and a status update</p>\n<p>While testing locally with the official wheels, we ran into several problems that come from the scoring environment, not from the agent:</p>\n<ol>\n<li>Compaction loses tool results. The ADK summary keeps only text parts, and Gemma-4 rarely writes text next to its tool calls. So after compaction the model loses its context, and it often repeats its last call until it times out.</li>\n<li>LoRA on 4×L4. Enabling LoRA reduces the KV cache a lot, and long requests hang (#744331). This makes any adapter risky to submit.</li>\n<li>Double-encoded tool output (#744272). This makes many edit_file calls fail with \"old_string not found\".</li>\n<li>Thoughts dropped between tool calls (#744354), and thinking_budget / seed not sent (#744566).</li>\n<li>No way to measure speed. We cannot measure the scorer's real speed, so choosing max_time_minutes is a guess. A wrong guess either cuts solvable tasks or risks the 12-hour limit.</li>\n</ol>\n<p>What we are asking for:</p>\n<ul>\n<li>Include tool calls and short tool results in the compaction summary, or keep the last few tool results as they are.</li>\n<li>Fix the KV-cache drop with LoRA, or tell us it will stay as it is.</li>\n<li>Confirm which of the fixes above are live in the scorer now, and whether earlier submissions will be re-scored.</li>\n<li>Share the approximate time per model call on 4×L4, so we can set time limits safely.</li>\n</ul>\n<p>Thanks for the work on the competition.</p>",
+      "rawMarkdown": "Several harness issues make results hard to trust: request for fixes and a status update\n\nWhile testing locally with the official wheels, we ran into several problems that come from the scoring environment, not from the agent:\n\n1. Compaction loses tool results. The ADK summary keeps only text parts, and Gemma-4 rarely writes text next to its tool calls. So after compaction the model loses its context, and it often repeats its last call until it times out.\n2. LoRA on 4×L4. Enabling LoRA reduces the KV cache a lot, and long requests hang (#744331). This makes any adapter risky to submit.\n3. Double-encoded tool output (#744272). This makes many edit_file calls fail with \"old_string not found\".\n4. Thoughts dropped between tool calls (#744354), and thinking_budget / seed not sent (#744566).\n5. No way to measure speed. We cannot measure the scorer's real speed, so choosing max_time_minutes is a guess. A wrong guess either cuts solvable tasks or risks the 12-hour limit.\n\nWhat we are asking for:\n- Include tool calls and short tool results in the compaction summary, or keep the last few tool results as they are.\n- Fix the KV-cache drop with LoRA, or tell us it will stay as it is.\n- Confirm which of the fixes above are live in the scorer now, and whether earlier submissions will be re-scored.\n- Share the approximate time per model call on 4×L4, so we can set time limits safely.\n\nThanks for the work on the competition.",
+      "votes": 3
+    }
+  ]
+}

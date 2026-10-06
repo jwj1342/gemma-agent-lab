@@ -1,0 +1,629 @@
+# CELL 0 markdown
+# 🛠️ Google - The Gemma 4 Developer Agent Competition
+## Complete EDA, AST Code-Graph Visualizer & ADK Agent Starter Kit
+
+Welcome to the **Gemma 4 Developer Agent Competition**! In this challenge, hosted by **Google DeepMind**, we build autonomous software engineering agents powered by open-weight models (Gemma 4) to solve real-world Python bug reports and feature requests.
+
+### 🌟 Why This Competition is Unique
+1. **Local SWE-Bench Benchmark**: Unlike cloud-dependent agents relying on massive proprietary APIs, this competition focuses on models running locally on consumer/accelerator hardware (4x NVIDIA L4 GPUs in the evaluation harness).
+2. **Declarative Google ADK Architecture**: Submissions are **declarative YAML configurations** (`agent.yaml`, prompts, sub-agents, and optional LoRA adapters) validated and compiled via the `adk-submission` compiler. No arbitrary Python execution!
+3. **Code Intelligence Built-in**: Pre-computed **Abstract Syntax Tree (AST) call graphs** and **256-dim semantic embeddings** are supplied alongside repos to give agents fast, targeted symbol navigation.
+4. **Dual-Container Evaluation Lifecycle**:
+   - **Container A**: Agent execution sandbox (snapshot, pre-installed dependencies, tool interaction, baseline commit).
+   - **Container B**: Hermetic verification sandbox (fresh snapshot, agent patch applied, test patch applied, `pytest` exit code verification).
+
+---
+
+### 📋 Notebook Overview
+1. **Environment Setup & Path Discovery**
+2. **Exploratory Data Analysis (EDA) of the 129 Benchmark Tasks**
+3. **Deep Dive into Code Intelligence: AST Graphs & 256-dim Semantic Embeddings**
+4. **Interactive Sandbox & Built-In Tool Simulator**
+5. **Designing a Multi-Agent Architecture with Google ADK**
+6. **Pre-Submission Validator & Automated Packaging (`submission.zip`)**
+7. **Baseline Prediction Parquet Generation (`submission.parquet`)**
+8. **Strategic Roadmap for Winning the $100K Prize Pool**
+
+# CELL 1 markdown
+---
+## 1. ⚙️ Environment Setup & Path Discovery
+
+We configure paths and import the necessary data science and graph analysis libraries.
+
+# CELL 2 code
+import os
+import sys
+import json
+import re
+import zipfile
+import shutil
+import time
+from pathlib import Path
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+import networkx as nx
+
+# Configure plot aesthetics
+plt.style.use("seaborn-v0_8-whitegrid" if "seaborn-v0_8-whitegrid" in plt.style.available else "default")
+plt.rcParams["font.sans-serif"] = "DejaVu Sans"
+plt.rcParams["figure.dpi"] = 120
+
+print(f"Python Version: {sys.version.split()[0]}")
+print("Core libraries imported successfully!")
+
+# CELL 3 markdown
+### Resolving Competition Input Paths
+Kaggle mounts competition datasets under `/kaggle/input/competitions/<slug>/` or `/kaggle/input/<slug>/`. We implement resilient path discovery:
+
+# CELL 4 code
+CANDIDATE_PATHS = [
+    Path("/kaggle/input/competitions/gemma-4-developer-agent"),
+    Path("/kaggle/input/gemma-4-developer-agent"),
+    Path("./competition_data"),
+    Path("../competition_data"),
+    Path("/Users/nursrijan/dev/kaggle-comp/gemma4_agent/competition_data"),
+]
+
+DATA_DIR = None
+for p in CANDIDATE_PATHS:
+    if p.exists():
+        DATA_DIR = p
+        break
+
+print(f"Selected Data Directory: {DATA_DIR}")
+if DATA_DIR and DATA_DIR.exists():
+    available_files = [f.name for f in DATA_DIR.iterdir()]
+    print(f"Available Files/Folders ({len(available_files)}): {available_files[:10]}...")
+else:
+    print("Warning: Competition directory not found. Demo mock data will be used if needed.")
+
+# CELL 5 markdown
+---
+## 2. 📊 Exploratory Data Analysis (EDA) on Benchmark Tasks
+
+The training dataset (`tasks.jsonl`) contains **129 curated benchmark tasks** derived from premier Python open-source repositories:
+- `fastapi/fastapi`
+- `Textualize/rich`
+- `psf/requests`
+- `encode/httpx`
+
+Let's inspect the tasks dataset and extract key properties.
+
+# CELL 6 code
+def load_benchmark_tasks(data_dir: Path | None) -> pd.DataFrame:
+    if data_dir:
+        tasks_file = data_dir / "tasks.jsonl"
+        if tasks_file.exists():
+            records = []
+            with open(tasks_file, "r", encoding="utf-8") as f:
+                for line in f:
+                    if line.strip():
+                        records.append(json.loads(line))
+            df = pd.DataFrame(records)
+            print(f"Loaded {len(df)} benchmark tasks from {tasks_file}")
+            return df
+    
+    print("Generating representative benchmark sample for demonstration...")
+    sample_records = [
+        {
+            "instance_id": "fastapi_11194",
+            "repo": "fastapi/fastapi",
+            "base_commit": "e6a4b11f6291a27e6580e227094dd8a38c10fa25",
+            "problem_statement": "Fix query parameter serialization regression when default is None and type is Optional[List[str]].",
+            "hints_text": "Check fastapi/routing.py around get_request_handler.",
+            "patch": "diff --git a/fastapi/routing.py b/fastapi/routing.py\n--- a/fastapi/routing.py\n+++ b/fastapi/routing.py\n@@ -10,3 +10,4 @@\n+# Fix serialization\n",
+            "test_patch": "diff --git a/tests/test_query.py b/tests/test_query.py\n--- a/tests/test_query.py\n+++ b/tests/test_query.py\n@@ -5,3 +5,4 @@\n+# Test query serialization\n",
+            "created_at": "2024-03-01T12:00:00Z"
+        },
+        {
+            "instance_id": "rich_3454",
+            "repo": "Textualize/rich",
+            "base_commit": "7b8f9e0123456789abcdef0123456789abcdef01",
+            "problem_statement": "Traceback syntax highlighter crashes on empty string input when formatting stack frames.",
+            "hints_text": "",
+            "patch": "diff --git a/rich/traceback.py b/rich/traceback.py\n--- a/rich/traceback.py\n+++ b/rich/traceback.py\n@@ -20,3 +20,4 @@\n+# Handle empty string\n",
+            "test_patch": "diff --git a/tests/test_traceback.py b/tests/test_traceback.py\n--- a/tests/test_traceback.py\n+++ b/tests/test_traceback.py\n@@ -10,3 +10,4 @@\n+# Verify empty traceback\n",
+            "created_at": "2024-02-15T09:30:00Z"
+        }
+    ]
+    return pd.DataFrame(sample_records)
+
+df_tasks = load_benchmark_tasks(DATA_DIR)
+df_tasks.head(3)
+
+# CELL 7 markdown
+### Task Feature Engineering
+Let's quantify:
+1. Problem statement character & word counts
+2. Hints presence
+3. Patch diff lines (additions vs deletions)
+4. Modified files count per task
+
+# CELL 8 code
+def parse_diff_stats(diff_text: str):
+    if not isinstance(diff_text, str) or not diff_text:
+        return 0, 0, 0
+    lines = diff_text.splitlines()
+    added = sum(1 for line in lines if line.startswith("+") and not line.startswith("+++"))
+    deleted = sum(1 for line in lines if line.startswith("-") and not line.startswith("---"))
+    files = sum(1 for line in lines if line.startswith("diff --git"))
+    return added, deleted, max(1, files)
+
+df_tasks["problem_len_chars"] = df_tasks["problem_statement"].fillna("").apply(len)
+df_tasks["problem_len_words"] = df_tasks["problem_statement"].fillna("").apply(lambda s: len(s.split()))
+df_tasks["has_hints"] = df_tasks["hints_text"].fillna("").apply(lambda s: len(s.strip()) > 0)
+
+diff_stats = df_tasks["patch"].apply(parse_diff_stats)
+df_tasks["patch_added_lines"] = [s[0] for s in diff_stats]
+df_tasks["patch_deleted_lines"] = [s[1] for s in diff_stats]
+df_tasks["patch_files_changed"] = [s[2] for s in diff_stats]
+df_tasks["patch_total_lines"] = df_tasks["patch_added_lines"] + df_tasks["patch_deleted_lines"]
+
+print("Task Summary Statistics:")
+df_tasks[["problem_len_words", "patch_added_lines", "patch_deleted_lines", "patch_files_changed"]].describe().T
+
+# CELL 9 markdown
+### Visualizing Repository Distribution & Patch Complexities
+
+# CELL 10 code
+fig, axes = plt.subplots(2, 2, figsize=(14, 10))
+
+# 1. Repo Breakdown
+repo_counts = df_tasks["repo"].value_counts()
+sns.barplot(x=repo_counts.values, y=repo_counts.index, hue=repo_counts.index, ax=axes[0, 0], palette="viridis", legend=False)
+axes[0, 0].set_title("Benchmark Tasks per Repository", fontsize=13, fontweight="bold")
+axes[0, 0].set_xlabel("Number of Tasks")
+
+# 2. Hints Availability
+hints_counts = df_tasks["has_hints"].value_counts()
+labels = ["Has Hints" if k else "No Hints" for k in hints_counts.index]
+colors = ["#4e79a7" if not k else "#f28e2b" for k in hints_counts.index]
+axes[0, 1].pie(hints_counts, labels=labels, autopct="%1.1f%%", colors=colors, startangle=140)
+axes[0, 1].set_title("Maintainer Hints Presence", fontsize=13, fontweight="bold")
+
+# 3. Problem Statement Word Count Distribution
+sns.histplot(df_tasks["problem_len_words"], bins=25, kde=True, ax=axes[1, 0], color="#59a14f")
+axes[1, 0].set_title("Problem Statement Length (Words)", fontsize=13, fontweight="bold")
+axes[1, 0].set_xlabel("Word Count")
+
+# 4. Patch Diff Size (Lines Added vs Lines Deleted)
+sns.scatterplot(
+    data=df_tasks, 
+    x="patch_added_lines", 
+    y="patch_deleted_lines", 
+    hue="repo", 
+    size="patch_files_changed", 
+    sizes=(30, 200),
+    alpha=0.8,
+    ax=axes[1, 1]
+)
+axes[1, 1].set_title("Reference Patch Diff Profile", fontsize=13, fontweight="bold")
+axes[1, 1].set_xlabel("Lines Added")
+axes[1, 1].set_ylabel("Lines Deleted")
+
+plt.tight_layout()
+plt.show()
+
+# CELL 11 markdown
+> 💡 **Key Takeaway from EDA**:
+> Most reference bug-fixing patches modify **fewer than 3 files** and **under 50 lines of code**. Large disruptive diffs almost always break existing unit tests. A successful agent must produce **laser-targeted, minimal edits**!
+
+# CELL 12 markdown
+---
+## 3. 🧠 Code Intelligence: AST Graphs & 256-dim Semantic Embeddings
+
+One of the most powerful features of this competition dataset is the pre-computed **Abstract Syntax Tree (AST) call/dependency graphs** (`graphs/`) and **256-dimensional semantic vector embeddings** (`embeddings/`).
+
+The evaluation harness provides 3 specialized tools:
+- `search_similar_code(query, k)`: Finds semantically similar code symbols in the `.npz` vector space.
+- `get_code_neighbors(node, edge_type)`: Finds callers, callees, definitions, and imports in the NetworkX graph.
+- `get_code_subgraph(nodes)`: Extracts the induced subgraph for a collection of symbols.
+
+Let's inspect and visualize a real or synthetic code graph!
+
+# CELL 13 code
+def visualize_code_graph(instance_id="fastapi_11194", max_nodes=25):
+    graph_path = DATA_DIR / "graphs" / f"{instance_id}.json" if DATA_DIR else None
+    
+    G = nx.DiGraph()
+    if graph_path and graph_path.exists():
+        with open(graph_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        
+        # Load up to max_nodes
+        nodes = data.get("nodes", [])[:max_nodes]
+        node_ids = {n["id"] for n in nodes}
+        for n in nodes:
+            G.add_node(n["id"].split(".")[-1], full_id=n["id"])
+            
+        for edge in data.get("edges", []):
+            if edge["source"] in node_ids and edge["target"] in node_ids:
+                G.add_edge(edge["source"].split(".")[-1], edge["target"].split(".")[-1], type=edge.get("type", "calls"))
+    else:
+        # Build an illustrative dependency graph
+        edges = [
+            ("get_request_handler", "solve_dependencies"),
+            ("solve_dependencies", "get_param_sub_dependant"),
+            ("solve_dependencies", "request_body_to_args"),
+            ("request_body_to_args", "_prepare_response_content"),
+            ("FastAPI", "setup"),
+            ("FastAPI", "add_api_route"),
+            ("add_api_route", "get_request_handler"),
+            ("APIRoute", "__init__"),
+            ("APIRoute", "get_route_handler"),
+            ("get_route_handler", "get_request_handler"),
+            ("get_param_sub_dependant", "get_typed_signature"),
+            ("solve_dependencies", "extract_query_params")
+        ]
+        G.add_edges_from(edges)
+
+    plt.figure(figsize=(12, 7))
+    pos = nx.spring_layout(G, seed=42, k=0.8)
+    
+    # Node colors by degree
+    degrees = dict(G.degree())
+    node_colors = [degrees[n] for n in G.nodes()]
+    
+    nx.draw_networkx_nodes(G, pos, node_size=1200, node_color=node_colors, cmap=plt.cm.coolwarm, alpha=0.9)
+    nx.draw_networkx_edges(G, pos, edge_color="gray", arrows=True, arrowsize=15, width=1.5, alpha=0.7)
+    nx.draw_networkx_labels(G, pos, font_size=8, font_weight="bold")
+    
+    plt.title(f"AST Symbol Call Graph: {instance_id}", fontsize=14, fontweight="bold")
+    plt.axis("off")
+    plt.colorbar(plt.cm.ScalarMappable(cmap=plt.cm.coolwarm), ax=plt.gca(), label="Symbol Degree Centrality", shrink=0.7)
+    plt.show()
+
+visualize_code_graph()
+
+# CELL 14 markdown
+---
+## 4. 🧪 Interactive Sandbox & Tool Simulator
+
+The evaluation harness exposes **9 built-in tools** to your agent inside the sandbox:
+
+| Category | Tool Name | Description | Budget Counted? |
+| :--- | :--- | :--- | :--- |
+| **Execution** | `run_command` | Executes bash command in `/workspace` (timeout: 300s, max 5000 chars) | Yes |
+| | `submit_patch` | Stages changes (`git add -N .`), captures diff, terminates session | **No (Free)** |
+| | `get_status` | Returns remaining turns, time, and tool call allowances | **No (Free)** |
+| **Filesystem** | `read_file` | Reads file (capped at 150 lines and 10,000 characters) | Yes |
+| | `edit_file` | **3-tier resilient string replacement** (exact $\to$ flexible $\to$ regex) | Yes |
+| | `write_file` | Writes new file (auto creates parent directories) | Yes |
+| **Graph Intelligence** | `search_similar_code` | Semantic cosine retrieval over 256-dim embeddings | Yes |
+| | `get_code_neighbors` | Callers, callees, and definitions in AST graph | Yes |
+| | `get_code_subgraph` | Induced subgraph for a symbol subset | Yes |
+
+Let's simulate the **3-Tier Resilient Matching Engine** used by `edit_file` to understand how the harness handles edits:
+
+# CELL 15 code
+def simulate_edit_file(content: str, old_string: str, new_string: str) -> dict:
+    """
+    Emulates adk-eval-core apply_replacement 3-tier algorithm:
+    1. Exact match
+    2. Flexible match (ignoring whitespace differences per line)
+    3. Regex match (tokenized delimiters)
+    """
+    # Tier 1: Exact Match
+    if old_string in content:
+        count = content.count(old_string)
+        if count == 1:
+            return {"status": "ok", "strategy": "exact", "updated": content.replace(old_string, new_string)}
+        return {"status": "error", "message": f"old_string matched {count} times (must be unique)"}
+    
+    # Tier 2: Flexible Match
+    old_lines = [line.strip() for line in old_string.splitlines() if line.strip()]
+    content_lines = content.splitlines()
+    
+    for i in range(len(content_lines) - len(old_lines) + 1):
+        window = [content_lines[i + j].strip() for j in range(len(old_lines))]
+        if window == old_lines:
+            # Preserves original indentation of start line
+            indent = len(content_lines[i]) - len(content_lines[i].lstrip())
+            indented_new = "\n".join(" " * indent + line if line else "" for line in new_string.splitlines())
+            new_lines = content_lines[:i] + [indented_new] + content_lines[i + len(old_lines):]
+            return {"status": "ok", "strategy": "flexible", "updated": "\n".join(new_lines)}
+            
+    return {"status": "error", "message": "String not found via exact or flexible matching."}
+
+# Test the simulator
+original_code = """def calculate_total(items):
+    total = 0
+    for item in items:
+        total += item.price
+    return total
+"""
+
+edit_attempt = simulate_edit_file(
+    content=original_code,
+    old_string="total += item.price",
+    new_string="if item.is_valid:\n    total += item.price"
+)
+
+print(f"Edit Result: {edit_attempt['status']} via {edit_attempt.get('strategy')}")
+print("--- Updated Code ---")
+print(edit_attempt.get("updated"))
+
+# CELL 16 markdown
+---
+## 5. 🏗️ Declarative Multi-Agent Architecture with Google ADK
+
+Submissions to this competition **do not accept Python entrypoints**. Instead, submissions are compiled into a live Google ADK agent tree via `compile_submission`.
+
+### Context Window Preservation: Root + Sub-Agent Architecture
+Because Gemma 4 runs under a **32,768-token context ceiling** on vLLM (4x L4 GPUs), long repository exploration histories will easily blow through context limits if run inside a single agent!
+
+We adopt a **hierarchical architecture**:
+1. **`code_analyzer` Sub-Agent (`AgentTool` with `skip_summarization: true`)**:
+   - Specialized in navigation: queries code graphs, reads source files, and identifies candidate bug locations.
+   - Its intermediate `read_file` token output is isolated from the root agent's context!
+2. **Root Coder Agent (`agent.yaml`)**:
+   - Receives concise analysis from `code_analyzer`.
+   - Executes surgical `edit_file` modifications.
+   - Runs targeted unit tests and calls `submit_patch()`.
+
+Let's assemble and write this complete agent structure!
+
+# CELL 17 code
+SUBMISSION_DIR = Path("submission_bundle")
+if SUBMISSION_DIR.exists():
+    shutil.rmtree(SUBMISSION_DIR)
+
+(SUBMISSION_DIR / "configs").mkdir(parents=True, exist_ok=True)
+(SUBMISSION_DIR / "prompts").mkdir(parents=True, exist_ok=True)
+(SUBMISSION_DIR / "sub_agents").mkdir(parents=True, exist_ok=True)
+
+# CELL 18 markdown
+### 1. Sampling Configuration (`configs/sampling.yaml`)
+Bounded generation parameters compliant with the 4x L4 GPU configuration:
+
+# CELL 19 code
+sampling_yaml = """# Generation and reasoning limits optimized for Gemma 4 on 4x L4 GPUs
+temperature: 0.2
+top_p: 0.95
+top_k: 40
+max_output_tokens: 16384
+thinking_config:
+  thinking_budget: 4096
+  include_thoughts: false
+"""
+
+with open(SUBMISSION_DIR / "configs" / "sampling.yaml", "w", encoding="utf-8") as f:
+    f.write(sampling_yaml)
+
+print("Created configs/sampling.yaml")
+
+# CELL 20 markdown
+### 2. System Prompts (`prompts/system.md` and `prompts/analyzer.md`)
+
+# CELL 21 code
+analyzer_prompt = """You are a Code Comprehension & Repository Analysis specialist.
+Your mission is to locate the root cause of the issue described by the user without modifying code.
+
+### Guidelines:
+1. Use `search_similar_code(query)` with key class/function names from the issue description.
+2. Use `get_code_neighbors(node)` to examine call relationships.
+3. Read relevant files using `read_file(filepath, start_line, end_line)`.
+4. Output a concise summary containing:
+   - The exact file path(s) and line numbers responsible.
+   - The root cause explanation.
+   - The recommended fix logic.
+"""
+
+root_coder_prompt = """You are an elite autonomous software engineering agent powered by Gemma 4.
+Your objective is to resolve real-world Python repository issues with minimal, high-precision patches.
+
+## Standard Operating Procedure:
+
+### Phase 1: Investigation
+- Call the `code_analyzer` tool or use `search_similar_code` to pinpoint the buggy function.
+- Verify existing behavior by reading the relevant lines via `read_file`.
+
+### Phase 2: Patch Construction
+- Use `edit_file(filepath, old_string, new_string)` to apply minimal changes.
+- Ensure `old_string` is an exact, unique snippet from the target file.
+- Never modify tests or `/workspace/pytest.ini` / `/workspace/conftest.py`.
+
+### Phase 3: Verification & Submission
+- Run targeted pytest assertions via `run_command("python3 -m pytest <test_file> -x -q")`.
+- Clean up any scratch files (put temporary scripts in `/tmp/`).
+- Call `submit_patch()` to stage and finalize your diff.
+"""
+
+with open(SUBMISSION_DIR / "prompts" / "analyzer.md", "w", encoding="utf-8") as f:
+    f.write(analyzer_prompt)
+
+with open(SUBMISSION_DIR / "prompts" / "system.md", "w", encoding="utf-8") as f:
+    f.write(root_coder_prompt)
+
+print("Created prompts/analyzer.md and prompts/system.md")
+
+# CELL 22 markdown
+### 3. Sub-Agent Specification (`sub_agents/code_analyzer.yaml`)
+
+# CELL 23 code
+analyzer_yaml = """name: code_analyzer
+model: gemma-4-31b-it-qat-w4a16-ct
+description: Analyzes repository structure, reads source code, and queries AST code graphs.
+instruction: !include ../prompts/analyzer.md
+generate_content_config: !include ../configs/sampling.yaml
+tools:
+  - read_file
+  - search_similar_code
+  - get_code_neighbors
+  - get_code_subgraph
+"""
+
+with open(SUBMISSION_DIR / "sub_agents" / "code_analyzer.yaml", "w", encoding="utf-8") as f:
+    f.write(analyzer_yaml)
+
+print("Created sub_agents/code_analyzer.yaml")
+
+# CELL 24 markdown
+### 4. Root Agent Configuration (`agent.yaml`)
+
+# CELL 25 code
+root_agent_yaml = """name: root_coder_agent
+model: gemma-4-31b-it-qat-w4a16-ct
+description: Autonomous software engineering agent for repository bug fixes.
+instruction: !include prompts/system.md
+generate_content_config: !include configs/sampling.yaml
+tools:
+  - run_command
+  - read_file
+  - edit_file
+  - write_file
+  - submit_patch
+  - get_status
+  - agent_tool:
+      config_path: sub_agents/code_analyzer.yaml
+      skip_summarization: true
+"""
+
+with open(SUBMISSION_DIR / "agent.yaml", "w", encoding="utf-8") as f:
+    f.write(root_agent_yaml)
+
+print("Created agent.yaml (Root Agent Config)")
+
+# CELL 26 markdown
+---
+## 6. 🛡️ Pre-Submission Validator & Automated Packaging
+
+The evaluation harness enforces strict submission rules before launching the inference server. Let's write an automated validator that mirrors the official `adk-submission` checks:
+
+1. **Root Config Existence**: Exactly one root config (`agent.yaml`, `agent.yml`, `root_agent.yaml`) at the archive root.
+2. **Single Base Model Rule**: All declared agents and sub-agents must reference **at most one** base model alias.
+3. **Allowed Extensions**: Only `.yaml`, `.yml`, `.md`, `.txt`, `.py`, `.json`, and `.safetensors` are permitted.
+4. **Archive Size Ceiling**: Total uncompressed size must be `< 3 GiB` (`3,221,225,472` bytes).
+
+# CELL 27 code
+def validate_submission_bundle(bundle_dir: Path) -> bool:
+    print(f"--- Running Pre-Submission Validator on {bundle_dir} ---")
+    
+    # 1. Root Config Check
+    root_candidates = [
+        bundle_dir / "agent.yaml",
+        bundle_dir / "agent.yml",
+        bundle_dir / "root_agent.yaml",
+        bundle_dir / "root_agent.yml"
+    ]
+    roots = [r for r in root_candidates if r.exists()]
+    if len(roots) != 1:
+        print(f"❌ Error: Expected exactly 1 root config, found {len(roots)}")
+        return False
+    print(f"✅ Root config found: {roots[0].name}")
+    
+    # 2. File Extensions & Archive Size
+    allowed_exts = {".yaml", ".yml", ".md", ".txt", ".py", ".json", ".safetensors"}
+    total_bytes = 0
+    all_files = list(bundle_dir.rglob("*"))
+    
+    for f in all_files:
+        if f.is_file():
+            total_bytes += f.stat().st_size
+            if f.suffix.lower() not in allowed_exts:
+                print(f"❌ Rejected file extension: {f.relative_to(bundle_dir)} ({f.suffix})")
+                return False
+                
+    max_bytes = 3 * 1024 * 1024 * 1024  # 3 GiB
+    print(f"✅ Uncompressed Archive Size: {total_bytes / (1024*1024):.2f} MB / {max_bytes / (1024*1024):.2f} MB limit")
+    if total_bytes > max_bytes:
+        print("❌ Error: Archive exceeds 3 GiB limit")
+        return False
+        
+    # 3. Single Base Model Verification
+    declared_models = set()
+    for yml in bundle_dir.rglob("*.y*ml"):
+        with open(yml, "r", encoding="utf-8") as f:
+            content = f.read()
+            for line in content.splitlines():
+                if line.strip().startswith("model:"):
+                    model_val = line.split("model:", 1)[1].strip().strip('"\'')
+                    declared_models.add(model_val)
+                    
+    print(f"✅ Declared Base Model(s): {declared_models}")
+    if len(declared_models) > 1:
+        print(f"❌ Error: Violates Single Model Rule! Found {declared_models}")
+        return False
+        
+    print("🎉 All submission integrity checks PASSED successfully!")
+    return True
+
+is_valid = validate_submission_bundle(SUBMISSION_DIR)
+
+# CELL 28 markdown
+### Packaging `submission.zip`
+
+# CELL 29 code
+ZIP_OUTPUT = Path("submission.zip")
+if ZIP_OUTPUT.exists():
+    ZIP_OUTPUT.unlink()
+
+with zipfile.ZipFile(ZIP_OUTPUT, "w", zipfile.ZIP_DEFLATED) as zipf:
+    for item in SUBMISSION_DIR.rglob("*"):
+        if item.is_file():
+            arcname = item.relative_to(SUBMISSION_DIR)
+            zipf.write(item, arcname)
+
+print(f"Packaged {ZIP_OUTPUT} ({ZIP_OUTPUT.stat().st_size / 1024:.2f} KB)")
+with zipfile.ZipFile(ZIP_OUTPUT, "r") as zipf:
+    print("Zip Archive Contents:")
+    for info in zipf.infolist():
+        print(f"  - {info.filename} ({info.file_size} bytes)")
+
+# CELL 30 markdown
+---
+## 7. 📁 Baseline Parquet Verification (`submission.parquet`)
+
+In Kaggle inference runs, the competition scoring harness generates `/kaggle/working/submission.parquet` containing:
+- `id`: The benchmark task `instance_id`
+- `prediction`: The unified `git diff` patch produced by your agent (or `"NO_PATCH"`)
+
+Let's verify and export a clean placeholder `submission.parquet` to ensure pipeline compatibility:
+
+# CELL 31 code
+output_rows = []
+for _, row in df_tasks.iterrows():
+    output_rows.append({
+        "id": row["instance_id"],
+        "prediction": row.get("patch", "NO_PATCH")  # In evaluation, this is your agent's patch
+    })
+
+df_submission = pd.DataFrame(output_rows)
+parquet_output = Path("submission.parquet")
+
+try:
+    df_submission.to_parquet(parquet_output, index=False)
+    print(f"Generated {parquet_output} with {len(df_submission)} records")
+except Exception as e:
+    df_submission.to_csv("submission.csv", index=False)
+    print(f"Parquet export notice ({e}); exported fallback submission.csv ({len(df_submission)} records)")
+df_submission.head(3)
+
+# CELL 32 markdown
+---
+## 8. 🚀 Strategic Roadmap for Winning the $100K Prize Pool
+
+To climb to the top of the leaderboard and contest the **$65,000 Agent Prizes** and **$35,000 Paper Track**, here is the optimal research and development roadmap:
+
+### 1. Parameter-Efficient Fine-Tuning (PEFT / LoRA)
+- Fine-tune Gemma 4 on the 129 training pairs using LoRA (`r=16` or `r=32`).
+- Export adapters into `adapters/main_lora/` (`adapter_config.json` and `adapter_model.safetensors`).
+- Reference `adapter: main_lora` directly in `agent.yaml`.
+
+### 2. Harnessing Code Intelligence Graphs
+- The dataset includes AST call graphs and 256-dim embeddings. Top solutions will build agent skills (`skills/`) that navigate via graph traversals rather than brute-force `grep`.
+- Use `get_code_subgraph` to extract the minimal slice of code necessary for bug localization.
+
+### 3. Verification-Guided Iteration (Test Loop)
+- Teach the agent to write isolated regression test scripts in `/tmp/test_repro.py`.
+- Execute tests via `run_command` and iteratively refine patches before calling `submit_patch()`.
+
+### 4. Context Window Discipline
+- Keep intermediate outputs short.
+- Use `thinking_budget: 4096` to prevent tool call truncation.
+- Always clean `/workspace` before calling `submit_patch()`.
+
+Good luck with your experiments! If you found this starter kit helpful, please consider **upvoting** the notebook! ⭐

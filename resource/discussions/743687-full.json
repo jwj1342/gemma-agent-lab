@@ -1,0 +1,68 @@
+{
+  "forumTopic": {
+    "authorId": 36940099,
+    "authorThumbnailName": "default-thumb.png",
+    "authorUserDisplayName": "Magnon Rodrigues Sabará",
+    "authorUserName": "magnonrodriguessabar",
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3528758,
+      "postDate": "2026-09-26T12:22:17.537Z",
+      "rawMarkdown": "O Clima\n\nO clima está presente em nosso dia a dia e influencia diretamente a vida das pessoas, dos animais e das plantas. Ele é determinado pelas condições atmosféricas de uma região ao longo de muitos anos, como temperatura, umidade, chuvas e ventos.\n\nAtualmente, as mudanças climáticas são uma preocupação em todo o mundo. O aumento das temperaturas, as secas prolongadas, as fortes chuvas e outros eventos extremos podem causar impactos no meio ambiente e na sociedade.\n\nPor isso, é importante preservar a natureza e utilizar os recursos naturais de maneira consciente. Pequenas atitudes, como economizar água, reduzir o desperdício, reciclar e preservar as árvores, podem contribuir para um planeta mais equilibrado.\n\nCuidar do clima é cuidar da vida e garantir melhores condições para as futuras gerações.",
+      "content": "<p>O Clima</p>\n<p>O clima está presente em nosso dia a dia e influencia diretamente a vida das pessoas, dos animais e das plantas. Ele é determinado pelas condições atmosféricas de uma região ao longo de muitos anos, como temperatura, umidade, chuvas e ventos.</p>\n<p>Atualmente, as mudanças climáticas são uma preocupação em todo o mundo. O aumento das temperaturas, as secas prolongadas, as fortes chuvas e outros eventos extremos podem causar impactos no meio ambiente e na sociedade.</p>\n<p>Por isso, é importante preservar a natureza e utilizar os recursos naturais de maneira consciente. Pequenas atitudes, como economizar água, reduzir o desperdício, reciclar e preservar as árvores, podem contribuir para um planeta mais equilibrado.</p>\n<p>Cuidar do clima é cuidar da vida e garantir melhores condições para as futuras gerações.</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Magnon Rodrigues Sabará",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+        "url": "/magnonrodriguessabar",
+        "tier": "CONTRIBUTOR",
+        "id": 36940099,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": -4,
+        "canUpvote": true
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Magnon Rodrigues Sabará",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/magnonrodriguessabar",
+          "userName": "magnonrodriguessabar",
+          "tier": "CONTRIBUTOR",
+          "id": 36940099,
+          "profileUrl": "/magnonrodriguessabar",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 36940099,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3528758,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 743687,
+    "name": "Clima e vida cotidiana",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-26T12:22:17.536153900Z",
+    "tags": [
+      {
+        "id": 13102,
+        "name": "beginner",
+        "listingUrl": "/search?q=beginner+tag%3A%22beginner%22",
+        "tagUrl": "/tags/beginner",
+        "displayName": "Beginner"
+      }
+    ],
+    "totalVotes": -4,
+    "url": "/competitions/gemma-4-developer-agent/discussion/743687",
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

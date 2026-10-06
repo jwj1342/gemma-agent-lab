@@ -1,0 +1,281 @@
+{
+  "pages": 32,
+  "language": "English",
+  "layout": "16:9",
+  "compiler": "XeLaTeX",
+  "fallback_compiler": "pdfLaTeX",
+  "both_compilers_verified": true,
+  "visual_review": "All pages visually reviewed; original five black section dividers, smaller authors, blue/orange emphasis, conversation and repair visuals, official model/GPU images. Independent fresh-reader review completed twice; five comprehension gaps and final layout comments addressed.",
+  "cluster_content": false,
+  "role_assignments": false,
+  "author_job_titles": false,
+  "latex_overfull_boxes": 0,
+  "authors": [
+    {
+      "name": "Wenjia Jiang",
+      "affiliations": [
+        "University of Alberta"
+      ],
+      "origin": "Original author retained; Singapore Management University and role descriptions removed at user request."
+    },
+    {
+      "name": "Di Liao",
+      "affiliations": [
+        "Hangzhou Dianzi University"
+      ]
+    },
+    {
+      "name": "Sholpan Amankeldi",
+      "affiliations": [
+        "Westlake University"
+      ]
+    },
+    {
+      "name": "Junzhe Jiao",
+      "affiliations": [
+        "Tongji University"
+      ]
+    },
+    {
+      "name": "Xuanlin Guo",
+      "affiliations": [
+        "Fudan University"
+      ]
+    }
+  ],
+  "logo_provenance": "slides/gemma4-kickoff/assets/logos/README.md",
+  "pdf_sha256": "c086bdb1595d7c9ffa9e3eb365aa90d9a861a42172811de908a19921275a0723",
+  "source_zip_sha256": "2293b7606c6783d38060e4ea82e2c0a0becb447dedfee56b4032d4cc3591a782",
+  "overleaf_sync": "complete",
+  "overleaf_project": "https://www.overleaf.com/project/6ac31a4a617496d875323ad8",
+  "overleaf_branch": "main",
+  "overleaf_commit": "e29cdd6c922d34c53356cc6b02a1257c57682407",
+  "remote_head_verified": true,
+  "all_required_assets_committed": true,
+  "secret_scan": "passed",
+  "sources": [
+    {
+      "path": "slides/gemma4-kickoff/.gitignore",
+      "sha256": "f1864fcaa8323f610db68fc553eba45ce2116824915ab438a3bb5b75b7bb392e"
+    },
+    {
+      "path": "slides/gemma4-kickoff/README.md",
+      "sha256": "759315c6670ae0e7ff74b102dd237d88a8a0b501204d394149d57e6a17e598c2"
+    },
+    {
+      "path": "slides/gemma4-kickoff/assets/README.md",
+      "sha256": "3831ff51a854dd8ffb481a345c01d2229363016cba1574f0d90b79b9c8d13fcb"
+    },
+    {
+      "path": "slides/gemma4-kickoff/assets/emoji/LICENSE-GRAPHICS",
+      "sha256": "55bfbc1759943f7d19acfc68e35644b7fbe10cd8d39ab3551ce5ecff5dda9979"
+    },
+    {
+      "path": "slides/gemma4-kickoff/assets/emoji/experiment.png",
+      "sha256": "ca406e03d55d2576fff51d9b45e0738a373e63407f80e7841b97e390ee0457a0"
+    },
+    {
+      "path": "slides/gemma4-kickoff/assets/emoji/robot.png",
+      "sha256": "3ee07ef63a271f85d7ae80d9f1a70b021cd1d31df387c603fa24c8f0ee7f8b2f"
+    },
+    {
+      "path": "slides/gemma4-kickoff/assets/emoji/rocket.png",
+      "sha256": "a4d8b439357e38510505048dfc85c54c9cbb08c04ef4d9d4bacd03572a17c9a5"
+    },
+    {
+      "path": "slides/gemma4-kickoff/assets/emoji/tools.png",
+      "sha256": "b497331283e0b67bf97838ae92489e2c28c6b00920ce621b080e16208bdec0a5"
+    },
+    {
+      "path": "slides/gemma4-kickoff/assets/illustrations/gemma-4.png",
+      "sha256": "6984b86365d7974f6b80beccc071733cd331792865a9b337f4d4c974abc6976c"
+    },
+    {
+      "path": "slides/gemma4-kickoff/assets/illustrations/nvidia-l4.jpg",
+      "sha256": "560ca2b364855ec5f1ef3c88926adf9613ff40cad42ec3b726406a315bb039bd"
+    },
+    {
+      "path": "slides/gemma4-kickoff/assets/logos/README.md",
+      "sha256": "3ba0b10defc7bf4009e5518d1d67454f49e349c227806d76f41302d4e02144dc"
+    },
+    {
+      "path": "slides/gemma4-kickoff/assets/logos/alberta.png",
+      "sha256": "34918a4216365a24f69f86ded2a11cb889207ae82d5e036d5ee4bd8b18ba80f1"
+    },
+    {
+      "path": "slides/gemma4-kickoff/assets/logos/fudan.png",
+      "sha256": "40ab9481e3aa7a39da83430849ee2b7e1d8c6e59f2f1f7c37a942a36cfaa3d5d"
+    },
+    {
+      "path": "slides/gemma4-kickoff/assets/logos/hdu-source.svg",
+      "sha256": "34057564501230681b9c8604b2538a49b7f11fb3a1d5f9addd96cdb16172a7f4"
+    },
+    {
+      "path": "slides/gemma4-kickoff/assets/logos/hdu.pdf",
+      "sha256": "38189eb0e90b135deee39fd3100a6e2c687cf7616d0982a21197a348d0047709"
+    },
+    {
+      "path": "slides/gemma4-kickoff/assets/logos/hdu.svg",
+      "sha256": "07f6f433b895dd2c02a5231903653a5acd509dbe1a3cf20e1509314aa760ac02"
+    },
+    {
+      "path": "slides/gemma4-kickoff/assets/logos/tongji.png",
+      "sha256": "960a958b3207547c86b2be37ec2d81377d0df7d1debd9407378f717b683b3497"
+    },
+    {
+      "path": "slides/gemma4-kickoff/assets/logos/westlake.png",
+      "sha256": "cb21835aee157825e43cbd824d595f28e5fa5c47eec0eb453f45106f04735168"
+    },
+    {
+      "path": "slides/gemma4-kickoff/assets/sources.json",
+      "sha256": "67c0ee30eef844cdee023825a814c23fcff64fe3ed2811434073dcaa8748db48"
+    },
+    {
+      "path": "slides/gemma4-kickoff/figures/agent-loop.tex",
+      "sha256": "d2b3ba8c5fca7a1792a154ced2ca0cc74bbf75d3336e7b8e0bfd3a1d30a8511c"
+    },
+    {
+      "path": "slides/gemma4-kickoff/figures/collaboration-flow.tex",
+      "sha256": "2a0cab36e704a718ed9887b4e619bb618d00b8e66ebeed409e70b27e13ad6393"
+    },
+    {
+      "path": "slides/gemma4-kickoff/figures/experiment-map.tex",
+      "sha256": "b91694e904d5d755275a444ccbdc011da35ac0c153629f8c95810eb9dfb3c475"
+    },
+    {
+      "path": "slides/gemma4-kickoff/figures/kaggle-training-flow.tex",
+      "sha256": "06831824d9f09568575f9943dcdf65cd628373fdae3de83c924af5b17d83c43f"
+    },
+    {
+      "path": "slides/gemma4-kickoff/figures/task-flow.tex",
+      "sha256": "7dfa6dbbe41e0767fed40f8ea3f7125c3bd2b55afae6d0af15f2d38c3d1adc03"
+    },
+    {
+      "path": "slides/gemma4-kickoff/figures/training-flow.tex",
+      "sha256": "25dd10a61318598b71f3487652883187e66988475ff2757118b936ce2db95c0f"
+    },
+    {
+      "path": "slides/gemma4-kickoff/latexmkrc",
+      "sha256": "71fb3775d5ff406d11679f257d97fd30c4772d248acae7d3050871973921bfac"
+    },
+    {
+      "path": "slides/gemma4-kickoff/main.tex",
+      "sha256": "76d33fc8fd7015568e0d2479350c7e235284aec224eac3e1e84e2b9bf2a7d307"
+    },
+    {
+      "path": "slides/gemma4-kickoff/metadata.tex",
+      "sha256": "273af74f03a9b29b5c27bc6ad23adc5c7164c45350ad1161e08e87c32c08ac4b"
+    },
+    {
+      "path": "slides/gemma4-kickoff/preamble.tex",
+      "sha256": "faca9b5a990e57376aa7fd436e19d3684255ed449a356f12cea6bc024464e3c8"
+    },
+    {
+      "path": "slides/gemma4-kickoff/sections/00_opening.tex",
+      "sha256": "af31d63764816bb1e457fa85e14c2457a18c784a86ce60cfd49bb6904c0fd735"
+    },
+    {
+      "path": "slides/gemma4-kickoff/sections/01_agent_basics.tex",
+      "sha256": "04fc77bda7159d4bf8684fb43936585aeeee54dc8be2b68a2c16bf6037f8141d"
+    },
+    {
+      "path": "slides/gemma4-kickoff/sections/02_competition.tex",
+      "sha256": "5a4d0f8ece8978f97f001f44fa1c927a365eb7f8cadb37b13fd6d8b8db19adfc"
+    },
+    {
+      "path": "slides/gemma4-kickoff/sections/03_research.tex",
+      "sha256": "d7fbe7a24771b95458270185de6e5a77ff056c13c864e621b306d717cc6413de"
+    },
+    {
+      "path": "slides/gemma4-kickoff/sections/04_kaggle_training.tex",
+      "sha256": "4433e102600336c0fdb9257ae51316a2e4951f0628484dd8b58f8de45ba2092a"
+    },
+    {
+      "path": "slides/gemma4-kickoff/sections/05_collaboration.tex",
+      "sha256": "cb24b812427c77ee0d15860861590b31de4e237bd15e90b10bb8523a31d41a68"
+    },
+    {
+      "path": "slides/gemma4-kickoff/sections/06_next_steps.tex",
+      "sha256": "59c7240ffd4e3a789ce1ad380887bf8e2ed37078811bad90da5a23b28992614d"
+    },
+    {
+      "path": "slides/gemma4-kickoff/sections/07_references.tex",
+      "sha256": "ee4208530c9a3f579481736abf83bddd7583547e085f94ec1abf66c354754456"
+    },
+    {
+      "path": "slides/gemma4-kickoff/sty/beamercolorthemeJacquenetta.sty",
+      "sha256": "78af0692d1b7fc66393b87ed2afb16e9e376e50597d9b998dd3851a503525929"
+    },
+    {
+      "path": "slides/gemma4-kickoff/sty/beamerfontthemeJacquenetta.sty",
+      "sha256": "e7cd7e7a3023142b66ac0860e3470b7694ba0fb584684746c53222a9c8779cf9"
+    },
+    {
+      "path": "slides/gemma4-kickoff/sty/beamerinnerthemeJacquenetta.sty",
+      "sha256": "72d32d95538a1e307660b540bf9bca8fab6bf5d4122c754503de5ac7acd6f19c"
+    },
+    {
+      "path": "slides/gemma4-kickoff/sty/beamerouterthemeJacquenetta.sty",
+      "sha256": "8651d5419b752387eb26e1c07eb7f35826ac1433dfc9e229bcfadea161628d69"
+    },
+    {
+      "path": "slides/gemma4-kickoff/sty/beamerthemeJacquenetta.sty",
+      "sha256": "57850f1fd6edcdfe5ea28bfee9586c95fe4eac9853b65e3de595266e79390908"
+    }
+  ],
+  "updated_at": "2026-10-05T20:09:57.549555+00:00",
+  "template": "Original user-supplied Jacquenetta",
+  "template_files_unchanged": true,
+  "template_original_commit": "ac488738b9f7cee10e33b4eedfd8f5145f0d7288",
+  "native_title_page": true,
+  "logo_max_height_mm": 6,
+  "alberta_logo_max_width_mm": 6,
+  "alberta_logo_display": "Full shield only, cropped in LaTeX from the unmodified original image; 6 mm high, centered in a 6 mm-wide slot.",
+  "visible_source_footers": false,
+  "section_files": 8,
+  "diagram_files": 6,
+  "cover_title": "Gemma 4 Developer Agent Competition",
+  "cover_subtitle": "Methodology TBD",
+  "cover_author_layout": "Five lines: Name (University); author and affiliation sizes reduced together by about 15 percent.",
+  "audience": "Undergraduates familiar with Python and Git; no prior LLM-agent knowledge assumed.",
+  "presenter_notes": "English notes in section sources; hidden in normal PDF.",
+  "kaggle_training_pages": [
+    23,
+    24,
+    25
+  ],
+  "kaggle_training_scope": "Proposed offline Kaggle workflow, data preparation, small LoRA pilot, save/reload and official evaluation; training compatibility has not yet been verified.",
+  "verified_progress_page": 16,
+  "remote_status_checked_at": "2026-10-05T18:30:44.022909+00:00",
+  "readability": {
+    "pages": 32,
+    "total_words": 1840,
+    "average_words": 57.5,
+    "max_page_words": 92,
+    "no_visible_source_footers": true,
+    "both_compilers_no_overflow": true,
+    "cover_verified": true,
+    "status_page_verified": true,
+    "black_section_dividers": 5
+  },
+  "content_pages": 26,
+  "black_section_pages": 5,
+  "cover_author_font_pt": 9.3,
+  "original_author_font_pt": 11,
+  "black_section_page_numbers": [
+    3,
+    7,
+    18,
+    22,
+    26
+  ],
+  "kaggle_first_exercise_page": 14,
+  "illustration_files": 2,
+  "emoji_files": 4,
+  "asset_provenance": "slides/gemma4-kickoff/assets/sources.json",
+  "independent_review": "runs/slides-visual-refresh/independent-review.json",
+  "independent_review_rounds": 3,
+  "reviewer_inherited_conversation": false,
+  "independent_reviewers": 2,
+  "final_adversarial_review": "runs/slides-visual-refresh/final-adversarial-review.json"
+}

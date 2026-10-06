@@ -1,0 +1,181 @@
+{
+  "forumTopic": {
+    "authorId": 11228484,
+    "authorThumbnailName": "11228484-kg.jpg?t=2024-06-28-18-22-55",
+    "authorUserDisplayName": "Tarun Singhal",
+    "authorUserName": "singhaltarun",
+    "comments": [
+      {
+        "id": 3529469,
+        "postDate": "2026-09-28T10:32:57.800Z",
+        "rawMarkdown": "- 12h overrun: Not yet. Budget per task using `eval_config.yaml`.\n- Parallel: I we don't support parallel calls.\n- LoRA: I applied a fix for LoRA loading yesterday. You can see the limits on rank and size in the getting started notebook and also in the `HARNESS_README.md`. There's also a total submission limit of 3GB.\n- Training data: Training on gemma-4-31b itself is fine. We'll try to have an answer for outputs from other models soon.",
+        "content": "<ul>\n<li>12h overrun: Not yet. Budget per task using <code>eval_config.yaml</code>.</li>\n<li>Parallel: I we don't support parallel calls.</li>\n<li>LoRA: I applied a fix for LoRA loading yesterday. You can see the limits on rank and size in the getting started notebook and also in the <code>HARNESS_README.md</code>. There's also a total submission limit of 3GB.</li>\n<li>Training data: Training on gemma-4-31b itself is fine. We'll try to have an answer for outputs from other models soon.</li>\n</ul>",
+        "replies": [
+          {
+            "id": 3529772,
+            "postDate": "2026-09-28T23:39:55.577Z",
+            "rawMarkdown": "Hi @ryanholbrook , thanks for the earlier answers. Two follow-up questions about the agent schema:\n\nCallbacks: SandboxedLlmAgentConfig accepts before_model_callbacks, after_model_callbacks, before_tool_callbacks and after_tool_callbacks (resolved by name from CallbackRegistry), but the registry seems to be empty in adk-submission 0.2.11. Are any callbacks registered in the scoring environment, or planned? For example, a pre-approved callback that stops an agent after N identical consecutive tool calls, or one that restarts the agent with a fresh context. In our traces, the most common failure of gemma-4-31b is repeating the same tool call many times until the time budget runs out.\nForcing tool calls: a model reply without a function call ends an LlmAgent. Is there a supported way to require a tool call on every turn (like tool_config / function-calling mode ANY in ADK), or is that intentionally not exposed?",
+            "content": "<p>Hi <a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a> , thanks for the earlier answers. Two follow-up questions about the agent schema:</p>\n<p>Callbacks: SandboxedLlmAgentConfig accepts before_model_callbacks, after_model_callbacks, before_tool_callbacks and after_tool_callbacks (resolved by name from CallbackRegistry), but the registry seems to be empty in adk-submission 0.2.11. Are any callbacks registered in the scoring environment, or planned? For example, a pre-approved callback that stops an agent after N identical consecutive tool calls, or one that restarts the agent with a fresh context. In our traces, the most common failure of gemma-4-31b is repeating the same tool call many times until the time budget runs out.\nForcing tool calls: a model reply without a function call ends an LlmAgent. Is there a supported way to require a tool call on every turn (like tool_config / function-calling mode ANY in ADK), or is that intentionally not exposed?</p>",
+            "parent": {},
+            "author": {
+              "displayName": "Tarun Singhal",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/11228484-kg.jpg?t=2024-06-28-18-22-55",
+              "url": "/singhaltarun",
+              "tier": "CONTRIBUTOR",
+              "id": 11228484,
+              "progressionOptOut": false
+            },
+            "authorType": "TOPIC",
+            "votes": {
+              "canUpvote": true
+            },
+            "kernelVersion": 0,
+            "competitionRanking": 61,
+            "feedbackTrackingData": {},
+            "isThankYou": false,
+            "teamUpInfo": {
+              "teamLeader": {
+                "displayName": "Tarun Singhal",
+                "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/11228484-kg.jpg?t=2024-06-28-18-22-55",
+                "url": "/singhaltarun",
+                "userName": "singhaltarun",
+                "tier": "CONTRIBUTOR",
+                "id": 11228484,
+                "profileUrl": "/singhaltarun",
+                "performanceTier": "CONTRIBUTOR",
+                "userId": 11228484,
+                "progressionOptOut": false
+              },
+              "intro": ""
+            }
+          }
+        ],
+        "parent": {},
+        "author": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "progressionOptOut": false
+        },
+        "authorType": "ADMIN",
+        "votes": {
+          "totalVotes": 1,
+          "canUpvote": true,
+          "totalUpvotes": 1
+        },
+        "kernelVersion": 0,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Ryan Holbrook",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+            "url": "/ryanholbrook",
+            "userName": "ryanholbrook",
+            "tier": "STAFF",
+            "id": 2003505,
+            "profileUrl": "/ryanholbrook",
+            "performanceTier": "STAFF",
+            "userId": 2003505,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3529821,
+        "postDate": "2026-09-29T02:46:46.763Z",
+        "rawMarkdown": "I'm very curious whether the Notebook Timeout is caused by exceeding the upper limit of the inference budget. In other words, could this potentially be resolved by reducing the inference budget for each individual task?",
+        "content": "<p>I'm very curious whether the Notebook Timeout is caused by exceeding the upper limit of the inference budget. In other words, could this potentially be resolved by reducing the inference budget for each individual task?</p>",
+        "parent": {},
+        "author": {
+          "displayName": "Aker",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/4202185-kg.jpg?t=2023-12-06-08-30-34",
+          "url": "/johnsonaker",
+          "tier": "CONTRIBUTOR",
+          "id": 4202185,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 691,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Aker",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/4202185-kg.jpg?t=2023-12-06-08-30-34",
+            "url": "/johnsonaker",
+            "userName": "johnsonaker",
+            "tier": "CONTRIBUTOR",
+            "id": 4202185,
+            "profileUrl": "/johnsonaker",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 4202185,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3529350,
+      "postDate": "2026-09-28T01:37:16.643Z",
+      "rawMarkdown": "Hi @ryanholbrook , a few clarifications that affect how we budget submissions:\n\n12h overrun: Has the fix landed? If a run hits 12h, will the already-finished tasks be scored (the rest counted as failed), or does the whole submission still error?\nParallel sub-agents: If a submission uses a ParallelAgent (e.g., 3 attempts per task), are those LLM calls actually served concurrently by vLLM on the 4×L4 scoring machine? Is there any limit on concurrent requests that could trigger \"Notebook Exceeded Allowed Compute\"?\nLoRA: Is there an ETA for adapter loading on the scorer, and any limits on rank, target modules or adapter size?\nTraining data: Is it allowed to fine-tune a LoRA on trajectories generated by gemma-4-31b itself (self-generated and filtered by our own tests)? Is there any update on using outputs from other open-weight models?",
+      "content": "<p>Hi <a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a> , a few clarifications that affect how we budget submissions:</p>\n<p>12h overrun: Has the fix landed? If a run hits 12h, will the already-finished tasks be scored (the rest counted as failed), or does the whole submission still error?\nParallel sub-agents: If a submission uses a ParallelAgent (e.g., 3 attempts per task), are those LLM calls actually served concurrently by vLLM on the 4×L4 scoring machine? Is there any limit on concurrent requests that could trigger \"Notebook Exceeded Allowed Compute\"?\nLoRA: Is there an ETA for adapter loading on the scorer, and any limits on rank, target modules or adapter size?\nTraining data: Is it allowed to fine-tune a LoRA on trajectories generated by gemma-4-31b itself (self-generated and filtered by our own tests)? Is there any update on using outputs from other open-weight models?</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Tarun Singhal",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/11228484-kg.jpg?t=2024-06-28-18-22-55",
+        "url": "/singhaltarun",
+        "tier": "CONTRIBUTOR",
+        "id": 11228484,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 1,
+        "canUpvote": true,
+        "totalUpvotes": 1
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 61,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Tarun Singhal",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/11228484-kg.jpg?t=2024-06-28-18-22-55",
+          "url": "/singhaltarun",
+          "userName": "singhaltarun",
+          "tier": "CONTRIBUTOR",
+          "id": 11228484,
+          "profileUrl": "/singhaltarun",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 11228484,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3529350,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 743964,
+    "name": "Clarifications on 12h overrun, ParallelAgent concurrency, LoRA loading, and self-generated training data",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-28T01:37:16.643114600Z",
+    "totalVotes": 1,
+    "url": "/competitions/gemma-4-developer-agent/discussion/743964",
+    "totalMessages": 3,
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

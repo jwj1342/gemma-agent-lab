@@ -1,0 +1,61 @@
+{
+  "forumTopic": {
+    "authorId": 21381804,
+    "authorThumbnailName": "21381804-kg.png?t=2026-06-21-04-29-47",
+    "authorUserDisplayName": "msd0110",
+    "authorUserName": "msd0110",
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3532706,
+      "postDate": "2026-10-04T13:22:23.423Z",
+      "rawMarkdown": "Hi organizers,\n\nCould you clarify how representative the four provided repositories—FastAPI, HTTPX, Rich, and Requests—are of the hidden evaluation distribution? In particular, I’m interested in the potential for domain shift along two dimensions:\n\n1. **Programming languages:** According to GitHub’s language breakdown, all four provided repositories are over 99% Python. Should we expect the hidden evaluation repositories to be similarly Python-dominated, or could they contain substantial code in other languages?\n\n2. **Application domains:** The provided repositories cover web frameworks, HTTP clients, and terminal formatting. Will the hidden evaluation draw from broadly similar domains, or could it include substantially different types of projects, such as machine learning or scientific computing libraries like PyTorch?\n\nMore generally, is the evaluation intended to measure generalization within a similar set of software domains, or across a broader range of repositories and ecosystems?\n\nAny high-level guidance on the intended scope would help participants understand which assumptions about the provided data are reasonable when developing their agents.\n\nThank you!",
+      "content": "<p>Hi organizers,</p>\n<p>Could you clarify how representative the four provided repositories—FastAPI, HTTPX, Rich, and Requests—are of the hidden evaluation distribution? In particular, I’m interested in the potential for domain shift along two dimensions:</p>\n<ol>\n<li><p><strong>Programming languages:</strong> According to GitHub’s language breakdown, all four provided repositories are over 99% Python. Should we expect the hidden evaluation repositories to be similarly Python-dominated, or could they contain substantial code in other languages?</p></li>\n<li><p><strong>Application domains:</strong> The provided repositories cover web frameworks, HTTP clients, and terminal formatting. Will the hidden evaluation draw from broadly similar domains, or could it include substantially different types of projects, such as machine learning or scientific computing libraries like PyTorch?</p></li>\n</ol>\n<p>More generally, is the evaluation intended to measure generalization within a similar set of software domains, or across a broader range of repositories and ecosystems?</p>\n<p>Any high-level guidance on the intended scope would help participants understand which assumptions about the provided data are reasonable when developing their agents.</p>\n<p>Thank you!</p>",
+      "parent": {},
+      "author": {
+        "displayName": "msd0110",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/21381804-kg.png?t=2026-06-21-04-29-47",
+        "url": "/msd0110",
+        "tier": "MASTER",
+        "id": 21381804,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 4,
+        "canUpvote": true,
+        "totalUpvotes": 4
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 358,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "213tubo",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/6958652-kg.jpg?t=2025-05-30-09-45-16",
+          "url": "/tubotubo",
+          "userName": "tubotubo",
+          "tier": "MASTER",
+          "id": 6958652,
+          "profileUrl": "/tubotubo",
+          "performanceTier": "MASTER",
+          "userId": 6958652,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3532706,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 745796,
+    "name": "Expected domain shift between the provided repositories and hidden evaluation",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-10-04T13:22:23.422238200Z",
+    "totalVotes": 4,
+    "url": "/competitions/gemma-4-developer-agent/discussion/745796",
+    "authorPerformanceTier": "MASTER",
+    "authorProgressionOptOut": false
+  }
+}

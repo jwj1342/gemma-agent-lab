@@ -1,0 +1,208 @@
+{
+  "forumTopic": {
+    "authorId": 6082025,
+    "authorThumbnailName": "6082025-kg.png?t=2026-08-01-19-49-46",
+    "authorUserDisplayName": "Oleksii Zhukov",
+    "authorUserName": "zhukovoleksiy",
+    "comments": [
+      {
+        "id": 3531436,
+        "postDate": "2026-10-01T20:52:57.740Z",
+        "rawMarkdown": "Yes, let me look into it and I'll implement something.",
+        "content": "<p>Yes, let me look into it and I'll implement something.</p>",
+        "replies": [
+          {
+            "id": 3531444,
+            "postDate": "2026-10-01T21:28:15.373Z",
+            "rawMarkdown": "",
+            "parent": {},
+            "author": {
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+              "url": "/"
+            },
+            "authorType": "COMMENT",
+            "votes": {},
+            "canDelete": true,
+            "isUserAuthor": true,
+            "isDeleted": true,
+            "kernelVersion": 0,
+            "feedbackTrackingData": {},
+            "isThankYou": false
+          }
+        ],
+        "parent": {},
+        "author": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "progressionOptOut": false
+        },
+        "authorType": "ADMIN",
+        "votes": {
+          "totalVotes": 1,
+          "canUpvote": true,
+          "totalUpvotes": 1
+        },
+        "kernelVersion": 0,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "reactions": [
+          {
+            "emoji": "THANK_YOU",
+            "featuredUserNames": [
+              "zhukovoleksiy"
+            ],
+            "userCount": 1
+          }
+        ],
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Ryan Holbrook",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+            "url": "/ryanholbrook",
+            "userName": "ryanholbrook",
+            "tier": "STAFF",
+            "id": 2003505,
+            "profileUrl": "/ryanholbrook",
+            "performanceTier": "STAFF",
+            "userId": 2003505,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3532000,
+        "postDate": "2026-10-03T01:43:10.610Z",
+        "rawMarkdown": "Hi @ryanholbrook, a quick follow-up: is a fix for this live on the scorer yet? The public wheelhouse is still the 09-30 build (adk_submission 0.2.12), so we can't tell from it. A data point in case it helps: on all 129 public tasks with the graph tools declared and the default task message, Gemma called `search_similar_code` 142 times in 91 tasks and 140 of those calls returned nothing (see also #745220), so the advertised section matters even for submissions that do declare the tools. Building the tool sections from the tools a submission declares, and returning an unknown-tool call to the model as a tool error instead of ending the task, would fix both. Thanks!",
+        "content": "<p>Hi <a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a>, a quick follow-up: is a fix for this live on the scorer yet? The public wheelhouse is still the 09-30 build (adk_submission 0.2.12), so we can't tell from it. A data point in case it helps: on all 129 public tasks with the graph tools declared and the default task message, Gemma called <code>search_similar_code</code> 142 times in 91 tasks and 140 of those calls returned nothing (see also #745220), so the advertised section matters even for submissions that do declare the tools. Building the tool sections from the tools a submission declares, and returning an unknown-tool call to the model as a tool error instead of ending the task, would fix both. Thanks!</p>",
+        "parent": {},
+        "author": {
+          "displayName": "Whisper Last",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/19641724-kg.png?t=2026-09-29-07-48-18",
+          "url": "/whisperlast",
+          "tier": "CONTRIBUTOR",
+          "id": 19641724,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 186,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Whisper Last",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/19641724-kg.png?t=2026-09-29-07-48-18",
+            "url": "/whisperlast",
+            "userName": "whisperlast",
+            "tier": "CONTRIBUTOR",
+            "id": 19641724,
+            "profileUrl": "/whisperlast",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 19641724,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3531529,
+        "postDate": "2026-10-02T01:59:25.510Z",
+        "rawMarkdown": "A second trigger for the same failure class, seen in local runs of a skills-based submission with the official wheels (google-adk 1.36.1; swegemma 0.2.7 and adk-submission 0.2.12 from wheelhouse v28; same code in v25):\n\n1. Gemma sometimes calls run_skill_script with file_path as a JSON list, e.g. {\"skill_name\": \"...\", \"file_path\": [\"scripts/x.py\"], \"args\": [...]}.\n2. google/adk/tools/skill_toolset.py L838 (run_async) then calls file_path.startswith(\"scripts/\") on the list and raises AttributeError: 'list' object has no attribute 'startswith'.\n3. The exception is not turned into a tool error for the model. It escapes to swegemma/harness/agent_runner.py L799-801 (except Exception -> \"Sandbox execution error: 'list' object has no attribute 'startswith'\"), which ends the task.\n4. agent_patch keeps its initial '' (L209). The submitted-patch and working-tree fallback at L758-776 only runs on a normal end, a time-out or the call limit (L741), so the task is scored with an empty patch, even if submit_patch already succeeded.\n\nIn our local runs this ended about 3% of task-runs (33 of 960), most at the first skill call, and more often at higher sampling temperature. All 33 occurrences happened on the first skill call of a run, or on the first call after a context compaction; with the model's own earlier correct call in context it never happened (0 of 214). A one-line coercion (a single-element list to its string), or returning a validation error to the model as for other bad arguments, would keep the task alive. Thanks!",
+        "content": "<p>A second trigger for the same failure class, seen in local runs of a skills-based submission with the official wheels (google-adk 1.36.1; swegemma 0.2.7 and adk-submission 0.2.12 from wheelhouse v28; same code in v25):</p>\n<ol>\n<li>Gemma sometimes calls run_skill_script with file_path as a JSON list, e.g. {\"skill_name\": \"…\", \"file_path\": [\"scripts/x.py\"], \"args\": […]}.</li>\n<li>google/adk/tools/skill_toolset.py L838 (run_async) then calls file_path.startswith(\"scripts/\") on the list and raises AttributeError: 'list' object has no attribute 'startswith'.</li>\n<li>The exception is not turned into a tool error for the model. It escapes to swegemma/harness/agent_runner.py L799-801 (except Exception -&gt; \"Sandbox execution error: 'list' object has no attribute 'startswith'\"), which ends the task.</li>\n<li>agent_patch keeps its initial '' (L209). The submitted-patch and working-tree fallback at L758-776 only runs on a normal end, a time-out or the call limit (L741), so the task is scored with an empty patch, even if submit_patch already succeeded.</li>\n</ol>\n<p>In our local runs this ended about 3% of task-runs (33 of 960), most at the first skill call, and more often at higher sampling temperature. All 33 occurrences happened on the first skill call of a run, or on the first call after a context compaction; with the model's own earlier correct call in context it never happened (0 of 214). A one-line coercion (a single-element list to its string), or returning a validation error to the model as for other bad arguments, would keep the task alive. Thanks!</p>",
+        "parent": {},
+        "author": {
+          "displayName": "Joseph Arthur Koo",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/kuasthermalguardian",
+          "tier": "CONTRIBUTOR",
+          "id": 36078406,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 1208,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Joseph Arthur Koo",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+            "url": "/kuasthermalguardian",
+            "userName": "kuasthermalguardian",
+            "tier": "CONTRIBUTOR",
+            "id": 36078406,
+            "profileUrl": "/kuasthermalguardian",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 36078406,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3531430,
+      "postDate": "2026-10-01T20:37:47.670Z",
+      "rawMarkdown": "Hi @ryanholbrook \n\nCurrently when the model calls a tool that the submission does not declare, ADK's `_get_tool` raises `ValueError(\"Tool '...' not found ...\")` (`google/adk/flows/llm_flows/functions.py`, google-adk 1.36.1). So the error propagates, the session ends through the `except Exception` path and the task scores 0 even if the agent had already made a correct edit.\n\nThe task message advertises tools regardless of what the submission declares: it always lists the `read_file` limits, and on tasks with graph data it recommends `search_similar_code`, `get_code_neighbors` and `get_code_subgraph` \"for fast, targeted navigation\". A submission that leaves those out, for example to save context, will still face the same issue since harness advertises tools to model and tested negative prompts won't stop it completely.\n\nAlso hallucinated tool name hits the same error, and quantized models invent tool names more often: one study I found measured AWQ 4-bit Gemma 4 31B inventing tool names about 2.5 times as often as full precision [arXiv 2607.27275](https://arxiv.org/abs/2607.27275). \n\nOne possible fix I propose is to return the error to the model as a tool result, which ADK supports through an `on_tool_error_callback` in the harness's plugin list, so the agent can correct itself. \n\nAlso possible to build the task message's tool sections from the tools the submission actually declares in agent.yaml.\n\nWould you consider either for the scorer? ",
+      "content": "<p>Hi <a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a> </p>\n<p>Currently when the model calls a tool that the submission does not declare, ADK's <code>_get_tool</code> raises <code>ValueError(\"Tool '...' not found ...\")</code> (<code>google/adk/flows/llm_flows/functions.py</code>, google-adk 1.36.1). So the error propagates, the session ends through the <code>except Exception</code> path and the task scores 0 even if the agent had already made a correct edit.</p>\n<p>The task message advertises tools regardless of what the submission declares: it always lists the <code>read_file</code> limits, and on tasks with graph data it recommends <code>search_similar_code</code>, <code>get_code_neighbors</code> and <code>get_code_subgraph</code> \"for fast, targeted navigation\". A submission that leaves those out, for example to save context, will still face the same issue since harness advertises tools to model and tested negative prompts won't stop it completely.</p>\n<p>Also hallucinated tool name hits the same error, and quantized models invent tool names more often: one study I found measured AWQ 4-bit Gemma 4 31B inventing tool names about 2.5 times as often as full precision <a href=\"https://arxiv.org/abs/2607.27275\" target=\"_blank\">arXiv 2607.27275</a>. </p>\n<p>One possible fix I propose is to return the error to the model as a tool result, which ADK supports through an <code>on_tool_error_callback</code> in the harness's plugin list, so the agent can correct itself. </p>\n<p>Also possible to build the task message's tool sections from the tools the submission actually declares in agent.yaml.</p>\n<p>Would you consider either for the scorer? </p>",
+      "parent": {},
+      "author": {
+        "displayName": "Oleksii Zhukov",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/6082025-kg.png?t=2026-08-01-19-49-46",
+        "url": "/zhukovoleksiy",
+        "tier": "MASTER",
+        "id": 6082025,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 3,
+        "canUpvote": true,
+        "totalUpvotes": 3
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 273,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Oleksii Zhukov",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/6082025-kg.png?t=2026-08-01-19-49-46",
+          "url": "/zhukovoleksiy",
+          "userName": "zhukovoleksiy",
+          "tier": "MASTER",
+          "id": 6082025,
+          "profileUrl": "/zhukovoleksiy",
+          "performanceTier": "MASTER",
+          "userId": 6082025,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3531430,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 745028,
+    "name": " undeclared tool ends the task and discards the patch",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-10-01T20:37:47.668521900Z",
+    "totalVotes": 3,
+    "url": "/competitions/gemma-4-developer-agent/discussion/745028",
+    "totalMessages": 4,
+    "authorPerformanceTier": "MASTER",
+    "authorProgressionOptOut": false
+  }
+}

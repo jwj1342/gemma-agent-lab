@@ -1,0 +1,930 @@
+[
+  {
+    "id": 742815,
+    "title": "How to get started + Competition's Official Discord",
+    "first_message": true,
+    "messages": 3,
+    "reported_replies": 2,
+    "chars": 3611
+  },
+  {
+    "id": 743007,
+    "title": "Welcome to the Gemma 4 Developer Agent Competition",
+    "first_message": true,
+    "messages": 7,
+    "reported_replies": 6,
+    "chars": 1909
+  },
+  {
+    "id": 745855,
+    "title": "The first task in the list (fastapi_15661) seems unsolvable from the prompt alone: hidden tests import names that appear nowhere in the task",
+    "first_message": true,
+    "messages": 1,
+    "reported_replies": null,
+    "chars": 2097
+  },
+  {
+    "id": 743683,
+    "title": "Rerunning Failed Submissions",
+    "first_message": true,
+    "messages": 18,
+    "reported_replies": 17,
+    "chars": 3990
+  },
+  {
+    "id": 745850,
+    "title": "inline_snapshot wheel missing for notebook environment but required by tasks",
+    "first_message": true,
+    "messages": 1,
+    "reported_replies": null,
+    "chars": 508
+  },
+  {
+    "id": 745320,
+    "title": "Why official starter notebook fails in second with no specific error msg",
+    "first_message": true,
+    "messages": 4,
+    "reported_replies": 3,
+    "chars": 2217
+  },
+  {
+    "id": 745818,
+    "title": "CuriosIT: Autonomous Bare-Metal Diagnostics with Gemma 4 on Android (100% Offline & Air-Gapped)",
+    "first_message": true,
+    "messages": 1,
+    "reported_replies": null,
+    "chars": 3225
+  },
+  {
+    "id": 743063,
+    "title": "Scoring-run questions: task concurrency, eval_config keys, and the 12 h limit ",
+    "first_message": true,
+    "messages": 8,
+    "reported_replies": 7,
+    "chars": 4646
+  },
+  {
+    "id": 745805,
+    "title": "Aggregated questions from what has generally been asked on the forum : HOSTS ANSWER PLEASE",
+    "first_message": true,
+    "messages": 1,
+    "reported_replies": null,
+    "chars": 1930
+  },
+  {
+    "id": 745775,
+    "title": "Missing FastAPI test dependencies in the evaluation sandbox",
+    "first_message": true,
+    "messages": 2,
+    "reported_replies": 1,
+    "chars": 3951
+  },
+  {
+    "id": 745800,
+    "title": "Validating locally: how representative are the public tasks, and can we see per-task outcomes?",
+    "first_message": true,
+    "messages": 1,
+    "reported_replies": null,
+    "chars": 1308
+  },
+  {
+    "id": 745796,
+    "title": "Expected domain shift between the provided repositories and hidden evaluation",
+    "first_message": true,
+    "messages": 1,
+    "reported_replies": null,
+    "chars": 1368
+  },
+  {
+    "id": 745792,
+    "title": "Expose ADK `exit_loop` as an allowed tool for LoopAgent submissions",
+    "first_message": true,
+    "messages": 1,
+    "reported_replies": null,
+    "chars": 1049
+  },
+  {
+    "id": 745625,
+    "title": "One of my test notebooks with GPU queued for 3+ hours.... is there really so much demand?",
+    "first_message": true,
+    "messages": 5,
+    "reported_replies": 4,
+    "chars": 976
+  },
+  {
+    "id": 744331,
+    "title": "With LoRA enabled, the 4xL4 KV cache shrinks to ~7.6k tokens; requests longer than that hang",
+    "first_message": true,
+    "messages": 5,
+    "reported_replies": 4,
+    "chars": 6134
+  },
+  {
+    "id": 745780,
+    "title": "Repeated “Kaggle Error” on agent submissions — where can I find evaluation diagnostics?",
+    "first_message": true,
+    "messages": 1,
+    "reported_replies": null,
+    "chars": 2166
+  },
+  {
+    "id": 745774,
+    "title": "The baseline agent repeats the same command up to 69 times (local eval, 10 tasks)",
+    "first_message": true,
+    "messages": 1,
+    "reported_replies": null,
+    "chars": 1066
+  },
+  {
+    "id": 745691,
+    "title": "[Multi-Agent SWE Architecture] Separating Bug Investigation from Surgical Patching with Gemma 4",
+    "first_message": true,
+    "messages": 2,
+    "reported_replies": 1,
+    "chars": 1974
+  },
+  {
+    "id": 745766,
+    "title": "Six immediate \"Kaggle Error\" submissions in Gemma 4 Developer Agent",
+    "first_message": true,
+    "messages": 1,
+    "reported_replies": null,
+    "chars": 1310
+  },
+  {
+    "id": 744951,
+    "title": "Hidden test set",
+    "first_message": true,
+    "messages": 3,
+    "reported_replies": 2,
+    "chars": 688
+  },
+  {
+    "id": 745748,
+    "title": "[Resource & Benchmark] 50 Multi-Turn Gemma 4 SWE-bench Trajectories + Closed-Loop TFD-Agent Framework",
+    "first_message": true,
+    "messages": 1,
+    "reported_replies": null,
+    "chars": 2087
+  },
+  {
+    "id": 745731,
+    "title": "Notes on the graph tools from auditing all 127 graphs",
+    "first_message": true,
+    "messages": 1,
+    "reported_replies": null,
+    "chars": 3952
+  },
+  {
+    "id": 745699,
+    "title": "vLLM Startup Fails with Python 3.13 Binary Incompatibility",
+    "first_message": true,
+    "messages": 1,
+    "reported_replies": null,
+    "chars": 831
+  },
+  {
+    "id": 743140,
+    "title": "What Results Did You Get with Representative Submissions?",
+    "first_message": true,
+    "messages": 7,
+    "reported_replies": 6,
+    "chars": 4361
+  },
+  {
+    "id": 745695,
+    "title": "Hidden filename requirement in `fastapi_15661` (“Automate release preparation”)",
+    "first_message": true,
+    "messages": 1,
+    "reported_replies": null,
+    "chars": 1764
+  },
+  {
+    "id": 742882,
+    "title": "Is the swegemma harness available for local evaluation?",
+    "first_message": true,
+    "messages": 13,
+    "reported_replies": 12,
+    "chars": 6733
+  },
+  {
+    "id": 745601,
+    "title": " fastapi_15661 validation stops at ImportError during test collection",
+    "first_message": true,
+    "messages": 1,
+    "reported_replies": null,
+    "chars": 1069
+  },
+  {
+    "id": 745575,
+    "title": "Can TPU be used?",
+    "first_message": true,
+    "messages": 1,
+    "reported_replies": null,
+    "chars": 208
+  },
+  {
+    "id": 745059,
+    "title": "include_thoughts currently disables reasoning instead of only hiding it [adk_submission 0.2.12]",
+    "first_message": true,
+    "messages": 2,
+    "reported_replies": 1,
+    "chars": 3660
+  },
+  {
+    "id": 745543,
+    "title": "Googel Gemma and ARC AGI 2 have same problem of queue",
+    "first_message": true,
+    "messages": 2,
+    "reported_replies": 1,
+    "chars": 339
+  },
+  {
+    "id": 744844,
+    "title": "Updating the Gemma 4 template to have July 15th fixes",
+    "first_message": true,
+    "messages": 3,
+    "reported_replies": 2,
+    "chars": 3517
+  },
+  {
+    "id": 745364,
+    "title": "Has anyone confirmed a LoRA adapter actually taking effect in a scored run?",
+    "first_message": true,
+    "messages": 1,
+    "reported_replies": null,
+    "chars": 1023
+  },
+  {
+    "id": 744807,
+    "title": "Submission errors after the Sep 30 wheelhouse update",
+    "first_message": true,
+    "messages": 22,
+    "reported_replies": 21,
+    "chars": 8585
+  },
+  {
+    "id": 745028,
+    "title": " undeclared tool ends the task and discards the patch",
+    "first_message": true,
+    "messages": 5,
+    "reported_replies": 4,
+    "chars": 4022
+  },
+  {
+    "id": 745274,
+    "title": "Discussion : Are you guys seeing gains with distillation? What's your setup?",
+    "first_message": true,
+    "messages": 1,
+    "reported_replies": null,
+    "chars": 931
+  },
+  {
+    "id": 745269,
+    "title": "Question: training an adapter on Colab with the Kaggle-hosted checkpoint",
+    "first_message": true,
+    "messages": 1,
+    "reported_replies": null,
+    "chars": 1172
+  },
+  {
+    "id": 745267,
+    "title": "Supported authorization, skill-startup and patch-recovery hooks",
+    "first_message": true,
+    "messages": 1,
+    "reported_replies": null,
+    "chars": 838
+  },
+  {
+    "id": 745249,
+    "title": "Missing python-multipart dependency in the FastAPI task environment",
+    "first_message": true,
+    "messages": 1,
+    "reported_replies": null,
+    "chars": 385
+  },
+  {
+    "id": 745220,
+    "title": "Task prompt: \"Workspace Layout\" omits the source package in 115/129 tasks, and \"Code Intelligence Tools\" tells the model to search by keyword (which always returns 0 results)",
+    "first_message": true,
+    "messages": 1,
+    "reported_replies": null,
+    "chars": 2678
+  },
+  {
+    "id": 745154,
+    "title": "Adapters / LoRA",
+    "first_message": true,
+    "messages": 1,
+    "reported_replies": null,
+    "chars": 351
+  },
+  {
+    "id": 745151,
+    "title": "Failed patches and retry behavior",
+    "first_message": true,
+    "messages": 1,
+    "reported_replies": null,
+    "chars": 448
+  },
+  {
+    "id": 745143,
+    "title": "gemma4-swe-kit: open-source local evaluation tools that behave like the scorer's vLLM",
+    "first_message": true,
+    "messages": 1,
+    "reported_replies": null,
+    "chars": 2071
+  },
+  {
+    "id": 744272,
+    "title": "Tool results reach the model double-JSON-encoded: a line of code with quotes turns into a wall of backslashes",
+    "first_message": true,
+    "messages": 7,
+    "reported_replies": 6,
+    "chars": 7716
+  },
+  {
+    "id": 745138,
+    "title": "vLLM's Gemma 4 tool-argument parser can loop forever on some malformed array arguments",
+    "first_message": true,
+    "messages": 1,
+    "reported_replies": null,
+    "chars": 1514
+  },
+  {
+    "id": 744794,
+    "title": "Several harness issues make results hard to trust: request for fixes and a status update",
+    "first_message": true,
+    "messages": 3,
+    "reported_replies": 2,
+    "chars": 2419
+  },
+  {
+    "id": 744354,
+    "title": "Thinking mode drops the model's thoughts between tool calls (vLLM ignores `reasoning_content`). Will the scoring environment be patched?",
+    "first_message": true,
+    "messages": 7,
+    "reported_replies": 6,
+    "chars": 5046
+  },
+  {
+    "id": 745027,
+    "title": "[Paper Track] Making a Legacy PHP Monolith Verifiable for a Gemma 4 Bug-Fixing Agent",
+    "first_message": true,
+    "messages": 1,
+    "reported_replies": null,
+    "chars": 1096
+  },
+  {
+    "id": 745003,
+    "title": "old_string issue",
+    "first_message": true,
+    "messages": 2,
+    "reported_replies": 1,
+    "chars": 914
+  },
+  {
+    "id": 744825,
+    "title": "Test-file reset before test_patch is a no-op (git checkout aborts on missing pathspecs)",
+    "first_message": true,
+    "messages": 2,
+    "reported_replies": 1,
+    "chars": 1877
+  },
+  {
+    "id": 744924,
+    "title": "Test on a Small Public Sample and Share Full Logs",
+    "first_message": true,
+    "messages": 4,
+    "reported_replies": 3,
+    "chars": 1081
+  },
+  {
+    "id": 744678,
+    "title": "\"'>' not supported between instances of 'int' and 'str'\". Is this same for everyone?",
+    "first_message": true,
+    "messages": 5,
+    "reported_replies": 4,
+    "chars": 717
+  },
+  {
+    "id": 744965,
+    "title": "gpu outage causing submission failure ",
+    "first_message": true,
+    "messages": 1,
+    "reported_replies": null,
+    "chars": 211
+  },
+  {
+    "id": 744941,
+    "title": "Public code sharing via a Notebook or Dataset linked from a paper-track Writeup",
+    "first_message": true,
+    "messages": 1,
+    "reported_replies": null,
+    "chars": 570
+  },
+  {
+    "id": 744813,
+    "title": "Submission 56722466 (2026-10-01 00:00 UTC) also ended with \"Notebook Threw Exception\" and no score. ",
+    "first_message": true,
+    "messages": 2,
+    "reported_replies": 1,
+    "chars": 717
+  },
+  {
+    "id": 744861,
+    "title": "Same submission failed twice with \"Notebook Threw Exception\" within minutes (Sep 30 and Oct 1), no adapters",
+    "first_message": true,
+    "messages": 2,
+    "reported_replies": 1,
+    "chars": 1877
+  },
+  {
+    "id": 743531,
+    "title": "Local Models (E4B/E2B) possible? Separate LB likely?",
+    "first_message": true,
+    "messages": 6,
+    "reported_replies": 5,
+    "chars": 2035
+  },
+  {
+    "id": 744889,
+    "title": "Does patch validation import the edited src/ package for Requests tasks?",
+    "first_message": true,
+    "messages": 1,
+    "reported_replies": null,
+    "chars": 1438
+  },
+  {
+    "id": 744805,
+    "title": "Submission 56740049: Notebook Threw Exception, no score, prompt-text-only change",
+    "first_message": true,
+    "messages": 1,
+    "reported_replies": null,
+    "chars": 807
+  },
+  {
+    "id": 744800,
+    "title": "Submission ended with \"Notebook Threw Exception\": could you check what raised?",
+    "first_message": true,
+    "messages": 3,
+    "reported_replies": 2,
+    "chars": 1507
+  },
+  {
+    "id": 744802,
+    "title": "Submission 56739788: Notebook Threw Exception after successful official-harness smoke",
+    "first_message": true,
+    "messages": 1,
+    "reported_replies": null,
+    "chars": 1055
+  },
+  {
+    "id": 744611,
+    "title": "How are you running local evaluations?",
+    "first_message": true,
+    "messages": 2,
+    "reported_replies": 1,
+    "chars": 2122
+  },
+  {
+    "id": 744153,
+    "title": "Get an error trying to submit a zip",
+    "first_message": true,
+    "messages": 2,
+    "reported_replies": 1,
+    "chars": 635
+  },
+  {
+    "id": 744692,
+    "title": "Compaction can't trigger at token_threshold 32,768, and overflow then discards the patch (follow-up to #743456)",
+    "first_message": true,
+    "messages": 4,
+    "reported_replies": 3,
+    "chars": 2104
+  },
+  {
+    "id": 744566,
+    "title": "thinking_budget and seed are missing from HTTP requests in my wheelhouse test",
+    "first_message": true,
+    "messages": 4,
+    "reported_replies": 3,
+    "chars": 2439
+  },
+  {
+    "id": 744577,
+    "title": "ONLY ONE search_similar_code call can blow your context up",
+    "first_message": true,
+    "messages": 3,
+    "reported_replies": 2,
+    "chars": 2495
+  },
+  {
+    "id": 743186,
+    "title": "Suggestions on infra for post training, SFT, and RL?",
+    "first_message": true,
+    "messages": 3,
+    "reported_replies": 2,
+    "chars": 1031
+  },
+  {
+    "id": 744319,
+    "title": "How well do your CV and LB correlate?",
+    "first_message": true,
+    "messages": 5,
+    "reported_replies": 4,
+    "chars": 1568
+  },
+  {
+    "id": 743508,
+    "title": "LoRA adapters are silently wiped in the patched vLLM 0.19.1 (Gemma4 decoder layers registered twice)",
+    "first_message": true,
+    "messages": 6,
+    "reported_replies": 5,
+    "chars": 4858
+  },
+  {
+    "id": 744589,
+    "title": "is the harness compatible with TPU build ?",
+    "first_message": true,
+    "messages": 1,
+    "reported_replies": null,
+    "chars": 316
+  },
+  {
+    "id": 744133,
+    "title": "We can submit skills correct ?",
+    "first_message": true,
+    "messages": 4,
+    "reported_replies": 3,
+    "chars": 765
+  },
+  {
+    "id": 744370,
+    "title": "FastApi tasks fail even with the gold patch, typing_inspection seems to be missing",
+    "first_message": true,
+    "messages": 4,
+    "reported_replies": 3,
+    "chars": 3291
+  },
+  {
+    "id": 742807,
+    "title": "Clarification on distillation from external LLMs",
+    "first_message": true,
+    "messages": 11,
+    "reported_replies": 10,
+    "chars": 3362
+  },
+  {
+    "id": 744355,
+    "title": "Official images per task?",
+    "first_message": true,
+    "messages": 1,
+    "reported_replies": null,
+    "chars": 286
+  },
+  {
+    "id": 744259,
+    "title": "Reference patches fail for most FastAPI tasks in the public sandbox: are hidden tasks filtered?",
+    "first_message": true,
+    "messages": 2,
+    "reported_replies": 1,
+    "chars": 1036
+  },
+  {
+    "id": 744258,
+    "title": "Does one scoring run cover both hidden partitions (~240 tasks) in the 12-hour window?",
+    "first_message": true,
+    "messages": 2,
+    "reported_replies": 1,
+    "chars": 649
+  },
+  {
+    "id": 744020,
+    "title": "Is this a python only competition for bug fixes and feature requests?",
+    "first_message": true,
+    "messages": 3,
+    "reported_replies": 2,
+    "chars": 458
+  },
+  {
+    "id": 744256,
+    "title": "Request to Organizers to provide GPU access to fine-tune model",
+    "first_message": true,
+    "messages": 3,
+    "reported_replies": 2,
+    "chars": 675
+  },
+  {
+    "id": 744040,
+    "title": "Embeddings for search_similar_code appear near-collapsed",
+    "first_message": true,
+    "messages": 2,
+    "reported_replies": 1,
+    "chars": 1796
+  },
+  {
+    "id": 743973,
+    "title": "Gold patches fail offline for most FastAPI and requests tasks (missing test dependencies in the grading environment?",
+    "first_message": true,
+    "messages": 4,
+    "reported_replies": 3,
+    "chars": 4271
+  },
+  {
+    "id": 743964,
+    "title": "Clarifications on 12h overrun, ParallelAgent concurrency, LoRA loading, and self-generated training data",
+    "first_message": true,
+    "messages": 4,
+    "reported_replies": 3,
+    "chars": 2739
+  },
+  {
+    "id": 744054,
+    "title": "L4 ×4 session queued for 13 hours—still hasn’t started",
+    "first_message": true,
+    "messages": 10,
+    "reported_replies": 9,
+    "chars": 2069
+  },
+  {
+    "id": 743297,
+    "title": "Prize payout eligibility for participants residing in Russia",
+    "first_message": true,
+    "messages": 2,
+    "reported_replies": 1,
+    "chars": 1348
+  },
+  {
+    "id": 744099,
+    "title": "Does the time between submitting and the scoring include queue time?",
+    "first_message": true,
+    "messages": 1,
+    "reported_replies": null,
+    "chars": 806
+  },
+  {
+    "id": 744078,
+    "title": "Possible mismatch between published task base commits and snapshots",
+    "first_message": true,
+    "messages": 1,
+    "reported_replies": null,
+    "chars": 929
+  },
+  {
+    "id": 744070,
+    "title": "Can the scoring server load Gemma 4 LoRA adapters?",
+    "first_message": true,
+    "messages": 2,
+    "reported_replies": 1,
+    "chars": 1147
+  },
+  {
+    "id": 744029,
+    "title": "swegemma 0.2.7: unpacked-wheel cache ignores the wheel set, so added wheels have no effect locally",
+    "first_message": true,
+    "messages": 1,
+    "reported_replies": null,
+    "chars": 1948
+  },
+  {
+    "id": 743957,
+    "title": "Onboarding notebook: what the 129 public fixes look like (+ a Kaggle survival kit)",
+    "first_message": true,
+    "messages": 1,
+    "reported_replies": null,
+    "chars": 945
+  },
+  {
+    "id": 743901,
+    "title": "L4 x4 sessions stuck in \"Queued\" for 8+ hours",
+    "first_message": true,
+    "messages": 2,
+    "reported_replies": 1,
+    "chars": 768
+  },
+  {
+    "id": 743600,
+    "title": "Getting gpu l4*4 queued and system errror",
+    "first_message": true,
+    "messages": 5,
+    "reported_replies": 4,
+    "chars": 1633
+  },
+  {
+    "id": 743800,
+    "title": "Which google-adk versions and YAML features does the official evaluator support?",
+    "first_message": true,
+    "messages": 3,
+    "reported_replies": 2,
+    "chars": 2338
+  },
+  {
+    "id": 743817,
+    "title": "Task Verification Question",
+    "first_message": true,
+    "messages": 2,
+    "reported_replies": 1,
+    "chars": 1548
+  },
+  {
+    "id": 743275,
+    "title": "Past Competition Reference ? (Anyone)",
+    "first_message": true,
+    "messages": 4,
+    "reported_replies": 3,
+    "chars": 3987
+  },
+  {
+    "id": 743316,
+    "title": "The $65k prize is cheaper than the GPUs you need to win it...",
+    "first_message": true,
+    "messages": 6,
+    "reported_replies": 5,
+    "chars": 3363
+  },
+  {
+    "id": 743752,
+    "title": "Query regarding scorer config",
+    "first_message": true,
+    "messages": 1,
+    "reported_replies": null,
+    "chars": 785
+  },
+  {
+    "id": 743751,
+    "title": "Needs clarifications on Agent Architecture + Graph/Embeddings",
+    "first_message": true,
+    "messages": 1,
+    "reported_replies": null,
+    "chars": 1037
+  },
+  {
+    "id": 743715,
+    "title": "computing resources",
+    "first_message": true,
+    "messages": 11,
+    "reported_replies": 10,
+    "chars": 3832
+  },
+  {
+    "id": 743743,
+    "title": "You can run Gemma 4 31B QAT locally with llama.cpp",
+    "first_message": true,
+    "messages": 1,
+    "reported_replies": null,
+    "chars": 773
+  },
+  {
+    "id": 743308,
+    "title": "VRAM to run Gemma locally",
+    "first_message": true,
+    "messages": 3,
+    "reported_replies": 2,
+    "chars": 654
+  },
+  {
+    "id": 743687,
+    "title": "Clima e vida cotidiana",
+    "first_message": true,
+    "messages": 1,
+    "reported_replies": null,
+    "chars": 954
+  },
+  {
+    "id": 743213,
+    "title": "Official sample_submission scores FAILED — are submitted adapters meant to be registered as named LoRA modules?",
+    "first_message": true,
+    "messages": 14,
+    "reported_replies": 13,
+    "chars": 9665
+  },
+  {
+    "id": 743383,
+    "title": "Rules: Only LORA allowed?",
+    "first_message": true,
+    "messages": 6,
+    "reported_replies": 5,
+    "chars": 1320
+  },
+  {
+    "id": 743573,
+    "title": "How to package and resolve custom Python tools in submission.zip given adk-submission's closed ToolRegistry?",
+    "first_message": true,
+    "messages": 2,
+    "reported_replies": 1,
+    "chars": 2996
+  },
+  {
+    "id": 742911,
+    "title": "Two data issues: half the graph/embedding files download empty, and the graphs contain no async functions",
+    "first_message": true,
+    "messages": 5,
+    "reported_replies": 4,
+    "chars": 4114
+  },
+  {
+    "id": 743663,
+    "title": "How much of the submission runtime is excluded as patch validation?",
+    "first_message": true,
+    "messages": 3,
+    "reported_replies": 2,
+    "chars": 946
+  },
+  {
+    "id": 743661,
+    "title": " Anyone else getting \"Notebook Exceeded Allowed Compute\" ~2 hours into evaluation?",
+    "first_message": true,
+    "messages": 3,
+    "reported_replies": 2,
+    "chars": 1246
+  },
+  {
+    "id": 743566,
+    "title": "Local eval with docker sandbox, Error Module not found",
+    "first_message": true,
+    "messages": 1,
+    "reported_replies": null,
+    "chars": 616
+  },
+  {
+    "id": 743457,
+    "title": "First scored run on the board 🎉",
+    "first_message": true,
+    "messages": 2,
+    "reported_replies": 1,
+    "chars": 994
+  },
+  {
+    "id": 743506,
+    "title": "The public leaderboard has exactly 58 tasks",
+    "first_message": true,
+    "messages": 1,
+    "reported_replies": null,
+    "chars": 1124
+  },
+  {
+    "id": 743456,
+    "title": "Does events compaction ever trigger before the context limit?",
+    "first_message": true,
+    "messages": 1,
+    "reported_replies": null,
+    "chars": 760
+  },
+  {
+    "id": 743365,
+    "title": "Budgeting the 12-hour run",
+    "first_message": true,
+    "messages": 1,
+    "reported_replies": null,
+    "chars": 3630
+  },
+  {
+    "id": 743353,
+    "title": "Not able to download data",
+    "first_message": true,
+    "messages": 4,
+    "reported_replies": 3,
+    "chars": 752
+  },
+  {
+    "id": 743263,
+    "title": "Title: 13-year-old participant eligibility with parental consent",
+    "first_message": true,
+    "messages": 2,
+    "reported_replies": 1,
+    "chars": 677
+  },
+  {
+    "id": 743056,
+    "title": "Gemma4 allowed variant",
+    "first_message": true,
+    "messages": 5,
+    "reported_replies": 4,
+    "chars": 1748
+  },
+  {
+    "id": 743241,
+    "title": "Accessibility request: direct email contact with competition organizers — Support #261909",
+    "first_message": true,
+    "messages": 1,
+    "reported_replies": null,
+    "chars": 1192
+  },
+  {
+    "id": 743162,
+    "title": "What happens when a submission reaches the 12-hour limit?",
+    "first_message": true,
+    "messages": 2,
+    "reported_replies": 1,
+    "chars": 1182
+  },
+  {
+    "id": 743106,
+    "title": "GPU Access",
+    "first_message": true,
+    "messages": 3,
+    "reported_replies": 2,
+    "chars": 651
+  }
+]

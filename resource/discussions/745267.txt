@@ -1,0 +1,16 @@
+# Supported authorization, skill-startup and patch-recovery hooks
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/745267
+
+## 3531933 /mikemiller19 TOPIC
+Thanks for clarifying that custom Python tools should be packaged as sandbox
+skill scripts. For adk-submission 0.2.12 and swegemma 0.2.7, is there a supported
+submission configuration for any of the following?
+
+1. A trusted approval check before each exact built-in tool or skill operation.
+2. Isolated Python startup for skills before workspace modules can be imported.
+3. Automatic patch recovery restricted to an explicitly selected candidate,
+   including on timeout.
+
+Please point to the supported configuration/hooks, or confirm which items
+require an organizer runtime change. We want development and official scoring
+to use the same supported interface.

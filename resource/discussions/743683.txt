@@ -1,0 +1,70 @@
+# Rerunning Failed Submissions
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743683
+
+## 3528752 /ryanholbrook ADMIN
+Hi everyone,
+
+Some submissions since yesterday were failing with `"Your notebook has requested more CPU, GPU or TPU resources than are available."` I believe I've resolved the issue, though please let me know if you're still having issues. I will rerun the affected submissions on Monday so that you won't be losing a submission.
+
+## 3529441 /dmitrysokolevskiy COMMENT
+Hi @ryanholbrook , I have a different kind of problem: I launched my notebook and it sat in the queue for 5 hours; it then ran for another 5 hours on GPU, but 10 hours were deducted from my GPU quota.
+
+![](https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F6426555%2Fcdb41f54dd33c19d64f033761ce05143%2FScreenshot%202026-09-28%20121340.png?generation=1790586918749457&alt=media)
+![](https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F6426555%2F4e9af6877fd480b4797be84dfea0cce0%2FScreenshot%202026-09-28%20121422.png?generation=1790586928959343&alt=media)
+
+## 3529475 /nihilisticneuralnet COMMENT
+same here. its showing 2x the notebook runtime
+
+## 3529491 /penguin069 COMMENT
+i think they forgot to mention here but like in arc agi 2, where the same gpus are provided, they too take double the time from your gpu quota  
+
+## 3529544 /ryanholbrook ADMIN
+Hi everyone,
+
+I'm going to pause the rescore until we can resolve the queueing for the L4x4 machines. I will get it going as soon as I can.
+
+## 3528757 /nihilisticneuralnet COMMENT
+![](https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F15559822%2Fff13fb1fad0d64c49eb279c792d21451%2FScreenshot%202026-09-26%20174740.png?generation=1790425085487856&alt=media)
+
+
+![](https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F15559822%2Faf4d11095086d1b7ed9ab27ab52bd6c7%2FScreenshot%202026-09-26%20174858.png?generation=1790425153277741&alt=media)
+
+when i click 'submit', submission fails instantly sue to system error
+
+## 3528777 /ryanholbrook ADMIN
+Has this submission run successfully in the past? I'm seeing `Did not find output file 'submission.zip' in the submitted Notebook.`
+
+## 3529487 /nihilisticneuralnet COMMENT
+if i 'save version', successfully run the notebook and then 'submit', then the submission is scored 
+
+but if i click 'submit' b4 saving the notebook, it fails
+
+## 3529541 /ryanholbrook ADMIN
+I think this is WAI. Your notebook needs to generate a submission file (`submission.zip`) before that submission can be scored. The workflow seems a little confusing, though. I will give feedback to the team.
+
+## 3529495 /tammamalasha COMMENT
+it toke more than 11 hours and not finished yet what I should do 
+
+## 3529269 /seifachour12 COMMENT
+Still same issue on my side @ryanholbrook ![](https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F9882418%2F7d651a3e62c6943dbd9a1cb31b1aec52%2Ferror_gemma4_competition.png?generation=1790535767374553&alt=media)
+
+## 3529183 /nicupetridean COMMENT
+how long does it take to score a submission? mine is running for more than 1h.
+
+## 3529214 /rokotorbarina COMMENT
+Few hours is expected
+
+## 3529416 /varunambadi COMMENT
+It takes approximately 12 hours
+
+## 3529434 /nicupetridean COMMENT
+timeout after 14 hours in my case :( 
+
+## 3528853 /rokotorbarina COMMENT
+Hi, thank you for looking into it. Lost a couple hours debugging yesterday trying to find the issue, but noticed that it happens even when I try to upload the fastest model possible. Will retry in a few hours when I get my daily submission back.
+
+## 3528765 /sharifmohamed1 COMMENT
+![](https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F30803717%2F0d43261c041e94faa9cbd3864c6f4373%2FScreenshot%202026-09-26%20155232.png?generation=1790427179329130&alt=media)
+
+## 3529255 / COMMENT
+

@@ -1,0 +1,222 @@
+# CELL 0 markdown
+# Async-Aware Repaired Code Graphs (all 129 tasks)
+
+Regenerates the competition's per-task code graphs with an async-aware, pure-stdlib AST
+walker, fixing the async blind spot documented in the companion audit kernel
+(sync 100% / classes 100% / **async 27%** coverage in the shipped graphs; 36% of tasks
+had at least one unreachable gold symbol).
+
+Output: one NetworkX node-link JSON per task (`<instance_id>.json`), schema-compatible
+with the shipped graphs (nodes `{id, name, text}` with full source text; `calls` edges
+with tiered static name resolution: same-module > same-package > unique-name), plus
+`regen_summary.json` with per-task node/edge/async counts.
+
+This is the repair artifact for the paper-track writeup
+*Coverage is the Bottleneck: Auditing and Repairing Code-Graph Context for Consumer-GPU SWE Agents*.
+
+
+# CELL 1 code
+import json
+import pathlib
+
+# 定位数据挂载
+DATA = None
+ROOTS = [pathlib.Path("/kaggle/input"), pathlib.Path("data"), pathlib.Path("../data")]
+for root in ROOTS:
+    if not root.exists():
+        continue
+    hits = [p for p in [root / "tasks.jsonl", *root.rglob("tasks.jsonl")] if p.exists()]
+    if hits:
+        DATA = hits[0].parent
+        break
+assert DATA, "tasks.jsonl not found"
+SNAP = None
+for d in (DATA, *DATA.parents):
+    if (d / "snapshots").exists():
+        SNAP = d / "snapshots"
+        break
+if SNAP is None:
+    hits = list(DATA.rglob("snapshots"))
+    SNAP = hits[0] if hits else None
+tasks = [json.loads(l) for l in open(DATA / "tasks.jsonl")]
+print("DATA =", DATA, "| tasks:", len(tasks), "| SNAP =", SNAP)
+assert SNAP is not None and (SNAP / f"{tasks[0]['instance_id']}.tgz").exists(), "snapshot dir wrong"
+print("first snapshot verified:", SNAP / f"{tasks[0]['instance_id']}.tgz")
+
+
+# CELL 2 code
+"""async-aware code-graph 生成器:从 repo 快照生成 harness 兼容的 node-link JSON。
+
+与官方图的差异目标:
+1. async def 全收录(官方图 0/305→全收)
+2. 类方法全收录(官方已全收,保持)
+3. calls 边:静态可解析调用(函数体内 Call 的函数名→repo 内同名符号,精度优先)
+"""
+import ast
+import json
+import re
+from pathlib import Path
+
+
+def module_name(py_path: str) -> str:
+    """fastapi/routing.py -> fastapi.routing; 去掉 ./ 前缀。"""
+    p = py_path.lstrip("./")
+    if p.endswith(".py"):
+        p = p[:-3]
+    return p.replace("/", ".")
+
+
+def collect_defs(py_text: str, mod: str):
+    """[(node_id, kind, start_line, end_line)] 含类方法(带装饰器起止)。"""
+    out = []
+    try:
+        tree = ast.parse(py_text)
+    except SyntaxError:
+        return out
+
+    def walk(node, prefix):
+        for ch in ast.iter_child_nodes(node):
+            if isinstance(ch, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                nid = f"{prefix}{ch.name}"
+                kind = ("asyncfunc" if isinstance(ch, ast.AsyncFunctionDef)
+                        else "func" if isinstance(ch, ast.FunctionDef) else "class")
+                start = min([ch.lineno] + [d.lineno for d in ch.decorator_list])
+                end = ch.end_lineno or ch.lineno
+                out.append((nid, kind, start, end))
+                if isinstance(ch, ast.ClassDef):
+                    walk(ch, nid + ".")
+
+    walk(tree, mod + "." if mod else "")
+    return out
+
+
+def collect_calls(py_text: str):
+    """函数体内可解析的调用名(全限定属性链或裸名)。"""
+    names = set()
+    try:
+        tree = ast.parse(py_text)
+    except SyntaxError:
+        return names
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Call):
+            f = node.func
+            parts = []
+            while isinstance(f, ast.Attribute):
+                parts.append(f.attr)
+                f = f.value
+            if isinstance(f, ast.Name):
+                parts.append(f.id)
+                names.add(".".join(reversed(parts)))
+    return names
+
+
+def build_graph(repo_dir: Path, include_tests: bool = True) -> dict:
+    files = sorted(str(p.relative_to(repo_dir)) for p in repo_dir.rglob("*.py")
+                   if ".git" not in p.parts)
+    if not include_tests:
+        files = [f for f in files if not re.search(r"(^|/)tests?/|test_[^/]*\.py$", f)]
+    nodes, texts, def_kinds = [], {}, {}
+    calls_per_file = {}
+    for f in files:
+        try:
+            src = (repo_dir / f).read_text(errors="replace")
+        except OSError:
+            continue
+        mod = module_name(f)
+        lines = src.split("\n")
+        for nid, kind, s, e in collect_defs(src, mod):
+            text = "\n".join(lines[s - 1:e])
+            nodes.append({"id": nid, "name": nid, "text": text})
+            texts[nid] = text
+            def_kinds[nid] = kind
+        calls_per_file[f] = collect_calls(src)
+
+    # 名字索引: last-name -> node ids(repo 内唯一者优先,同名的全部保留为候选)
+    by_last = {}
+    for nid in texts:
+        by_last.setdefault(nid.split(".")[-1], []).append(nid)
+
+    edges, seen = [], set()
+    for f in calls_per_file:
+        src = (repo_dir / f).read_text(errors="replace")
+        mod = module_name(f)
+        lines = src.split("\n")
+        for nid, kind, s, e in collect_defs(src, mod):
+            seg = "\n".join(lines[s - 1:e])
+            for callee in collect_calls(seg):
+                last = callee.split(".")[-1]
+                cands = [t for t in by_last.get(last, []) if t != nid]
+                if not cands:
+                    continue
+                if len(cands) == 1:
+                    targets = cands  # 唯一名:高置信
+                else:
+                    # 层级解析: 同模块 > 同顶层包 > (限定调用后缀对齐)
+                    my_mod = nid.rsplit(".", 1)[0]
+                    same_mod = [t for t in cands if t.rsplit(".", 1)[0] == my_mod]
+                    if len(same_mod) == 1:
+                        targets = same_mod
+                    elif same_mod and "." in callee:
+                        targets = [t for t in same_mod
+                                   if t.split(".")[-2:] == callee.split(".")[-2:]]
+                    elif len(same_mod) > 1 and "." not in callee:
+                        # 类内兄弟方法: 调用者属于某类且候选含同类
+                        depth_cls = ".".join(nid.split(".")[:-1])
+                        cls_c = [t for t in same_mod
+                                 if t.rsplit(".", 1)[0] == depth_cls]
+                        targets = cls_c[:1] if cls_c else []
+                    else:
+                        pkg = my_mod.split(".")[0]
+                        same_pkg = [t for t in cands if t.split(".")[0] == pkg]
+                        targets = same_pkg[:1] if len(same_pkg) == 1 else []
+                for target in targets:
+                    key = (nid, target)
+                    if key not in seen:
+                        seen.add(key)
+                        edges.append({"source": nid, "target": target,
+                                      "type": "calls", "key": len(edges)})
+    return {
+        "directed": True,
+        "multigraph": True,
+        "graph": {"repo_name": repo_dir.name, "generator": "async-aware-repair-v1"},
+        "nodes": nodes,
+        "edges": edges,
+    }
+
+
+# CELL 3 code
+import tarfile
+import tempfile
+import time
+from pathlib import Path
+
+OUT = Path("/kaggle/working") if Path("/kaggle").exists() else Path(".")
+OUT.mkdir(exist_ok=True)
+summary = []
+for i, t in enumerate(tasks):
+    tgz = SNAP / f"{t['instance_id']}.tgz"
+    if not tgz.exists():
+        summary.append({"instance_id": t["instance_id"], "ok": False, "reason": "no snapshot"})
+        continue
+    try:
+        with tempfile.TemporaryDirectory() as td:
+            with tarfile.open(tgz) as tf:
+                tf.extractall(td)
+            root = Path(td)
+            cands = [root] + [p for p in root.iterdir() if p.is_dir()]
+            repo = max(cands, key=lambda p: len(list(p.rglob("*.py"))))
+            g = build_graph(repo)
+            outp = OUT / f"{t['instance_id']}.json"
+            outp.write_text(json.dumps(g))
+            n_async = sum(1 for n in g["nodes"] if n["text"].lstrip().startswith("async def"))
+            summary.append({"instance_id": t["instance_id"], "ok": True,
+                            "nodes": len(g["nodes"]), "edges": len(g["edges"]), "async": n_async})
+    except Exception as e:  # noqa: BLE001
+        summary.append({"instance_id": t["instance_id"], "ok": False, "reason": str(e)[:100]})
+    if (i + 1) % 20 == 0:
+        print(f"{i+1}/{len(tasks)} done", flush=True)
+json.dump(summary, open(OUT / "regen_summary.json", "w"))
+ok = [s for s in summary if s.get("ok")]
+print(f"regen ok: {len(ok)}/{len(summary)}; "
+      f"avg nodes={sum(s['nodes'] for s in ok)/max(len(ok),1):.0f} "
+      f"avg async={sum(s['async'] for s in ok)/max(len(ok),1):.1f}")

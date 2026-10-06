@@ -1,0 +1,47 @@
+# How well do your CV and LB correlate?
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/744319
+
+## 3530015 /isakatsuyoshi TOPIC
+I plotted my CV against the public LB.
+
+![](https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F5927283%2Fc28f1df91e7bc0d065076a6698da889b%2Fcv_lb_public.png?generation=1790681365420102&alt=media)
+
+| CV | LB |
+|---|---|
+| 0.18 | 0.05 |
+| 0.19 | 0.06 |
+| 0.23 | 0.12 |
+| 0.24 | 0.10 |
+
+Higher CV does not seem to translate into a higher LB. How well do your CV and LB correlate?
+
+## 3530602 /goyashuto COMMENT
+I'm seeing a similar mismatch: in my small set of experiments, the configuration with the highest CV score actually had the lowest public LB score.
+
+**Dataset**
+- 38 tasks from the Rich repository (not the full public dataset)
+- Only tasks where the none/gold controls behave as expected
+- Limited to Rich for now, since I couldn't get reliable controls for other repositories in my local grading environment
+
+**Setup**
+- Generation: Kaggle Notebook with 4× L4 GPUs
+- Grading: official verifier in Docker (ARM64), run locally
+
+**Scores**
+
+| CV | Public LB |
+|---|---|
+| 0.211 | 0.10 |
+| 0.237 | 0.08 |
+| 0.316 | 0.03 |
+| 0.289 | 0.05 |
+
+## 3530352 /daoviet COMMENT
+My agent reached ~0.2 in the local validation, but when it came to LB, it dropped to < 0.12. Haven't made any progress for a week.
+
+## 3530038 /cnumber COMMENT
+Congrats to your good correlation!
+Which data did you use to calculate CV?
+
+## 3530041 /isakatsuyoshi TOPIC
+Thanks! Just the official dataset.

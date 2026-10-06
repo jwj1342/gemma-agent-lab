@@ -1,0 +1,17 @@
+{
+  "retrieved_at": "2026-10-05T03:53:56.420144+00:00",
+  "tasks": 129,
+  "repos": {
+    "fastapi/fastapi": 67,
+    "psf/requests": 13,
+    "Textualize/rich": 48,
+    "encode/httpx": 1
+  },
+  "unique_repo_commits": 127,
+  "graphs": 127,
+  "embeddings": 127,
+  "wheels": 124,
+  "snapshots": 129,
+  "snapshot_expanded_bytes": 22688489050,
+  "missing_task_assets": []
+}

@@ -1,0 +1,130 @@
+# CELL 0 markdown
+# 🐈‍⬛ Agentic · Counterexample Lab | v1
+
+**Method Summary.** A single coding agent converts explicit issue requirements into small executable counterexamples. It freezes up to three probes before editing, repairs the repository source, and replays the same assertions in fresh processes. Boundary and regression probes expose incomplete repairs. The nearest existing tests remain an additional local check.
+
+**Hypothesis.** Fixed before/after expectations may help Gemma distinguish a complete behavioral repair from a plausible patch. Generated assertions are fallible: every expectation must come from the issue or an existing API/test. Probe success does not predict hidden-test success.
+
+| Design | Choice |
+|---|---|
+| Model | Required `gemma-4-31b-it-qat-w4a16-ct`; no adapter |
+| Agent | One coder with six built-in tools and one sandbox skill |
+| Probe budget | Maximum three probes, 8-second default and 12-second cap each |
+| Issue budget | Five minutes, 100 tool calls; final time reserved for submission |
+| Submission | New prompts, configuration and Python skill; no previous archive embedded |
+
+This notebook is a standalone English experiment. Packaging runs offline on CPU; a separate GPU pilot evaluates the same payload on public development tasks. No leaderboard improvement or rank is claimed. The competition applies patches to fresh repositories and scores passed validation tests: [official evaluation](https://www.kaggle.com/competitions/gemma-4-developer-agent/overview).
+
+# CELL 1 code
+from pathlib import Path
+import json, platform, time
+import yaml
+START = time.perf_counter()
+WORK = Path('/kaggle/working') if platform.system() == 'Linux' and Path('/kaggle/working').is_dir() else Path.cwd()
+FORCE_MINIMAL_RECOVERY = False
+print('🧪 Agentic · Counterexample Lab v1 |', platform.python_version())
+
+# CELL 2 code
+CANDIDATE = {'agent.yaml': 'name: agentic_counterexample_lab\nmodel: gemma-4-31b-it-qat-w4a16-ct\ndescription: Repairs Python repository issues using frozen behavioral counterexamples and targeted verification.\ninstruction: !include prompts/system.md\ngenerate_content_config: !include configs/sampling.yaml\ntools:\n  - run_command\n  - read_file\n  - edit_file\n  - write_file\n  - get_status\n  - submit_patch\nskills:\n  - skills/counterexample-lab\n', 'prompts/system.md': "You are Agentic, an autonomous Python engineer resolving one issue in the repository at /workspace. Produce a source patch that implements the issue's requirements and preserves supported behavior. Finish with submit_patch.\n\n## Environment\nThe sandbox is offline with dependencies prepared. Do not install packages. Use repository code and the issue text as evidence. Read short source ranges and keep search output bounded. Store all scratch scripts and logs outside /workspace, in /tmp. Do not edit tests, test configuration, CI or packaging. Never use hidden tests, solution patches or future git history.\n\n## Repair procedure\n1. Read the issue. Identify the actual behavior, required behavior and any explicitly stated boundary conditions. Distinguish requirements from speculation. Extract the named API, exception or error message.\n2. Find the relevant source using bounded grep commands and read_file with a line range. Read the nearest existing tests or callers to understand the contract. Confirm module locations; assertions must exercise checkout code.\n3. Before editing, write one short sentence explaining each planned assertion and where its expectation comes from. Use the counterexample-lab skill to freeze a tiny script with a required no-argument probe_issue function. Its assertion states the issue's expected behavior. Optionally add probe_boundary and probe_regression when the issue or existing tests support their expectations. At most three probes; no mocks of the affected behavior.\n4. Run run_skill_script for counterexample-lab, scripts/probe.py, with args phase: before and code: the Python probe source. Imports and the three named functions are the only allowed top-level statements. Read the verdict. REPRODUCED requires an assertion failure in probe_issue on original source. ERROR, TIMEOUT and NO_REPRODUCTION do not establish the bug. Spend at most two preparation calls; if a meaningful probe is impractical, continue with a short /tmp reproduction or existing tests. Do not let the optional helper block a source fix.\n5. Apply the smallest complete source change with edit_file. Copy old_string exactly from the source, including indentation. Retain public signatures, defaults and exception types unless the issue explicitly requests a change. Handle supported edge cases without speculative refactoring.\n6. Compile changed source. Replay frozen probes with the same skill script and args phase: after, without code. Read each result. VERIFIED_BY_PROBES requires reproduction before editing and all frozen probes passing afterward. If a supported assertion fails, revise the source, never the assertion or baseline. Unsupported or setup-failing probes are not reasons to change API semantics. Run the nearest existing tests with python -m pytest and a narrow target, saving output to /tmp and reading the final lines.\n7. Inspect git status and the source diff. Submit the best complete patch with submit_patch and briefly state what was actually checked. Do not report hidden-test success.\n\n## Time and tool discipline\nUse get_status after about eight calls and before verification. Get a first source edit in place by the halfway point. Reserve the last quarter for checks, diff inspection and submission. Tool output may be truncated; use short ranges and tail saved test logs. Do not repeat unchanged failed searches. If an edit fails, reread its exact source and shorten the replacement. One helper run per phase is normally enough; skip optional boundary probes when time is tight. A test setup error is distinct from an assertion failure. Always reach submit_patch, including when optional verification is unavailable.\n", 'configs/sampling.yaml': 'temperature: 0.2\ntop_p: 0.95\ntop_k: 40\nmax_output_tokens: 8192\nthinking_config:\n  include_thoughts: false\n  thinking_budget: 4096\n', 'eval_config.yaml': 'evaluation:\n  timeout_seconds: 60\n  max_time_minutes: 5\n  max_tool_calls: 100\n  max_turns: 250\n', 'skills/counterexample-lab/SKILL.md': "---\nname: counterexample-lab\ndescription: Freeze up to three issue-grounded behavior probes before a source edit and replay the same assertions after the repair. Distinguish reproduction, regression, setup errors and timeouts.\n---\n# Counterexample Lab\n\nUse `run_skill_script`, skill_name `counterexample-lab`, script `scripts/probe.py`. Pass `args` as a mapping from option name to value.\n\n1. Before editing source, call with `phase: before`, `code: <Python source>` and optionally `timeout: 8`. Code may contain imports and up to three functions with no parameters: required `probe_issue`, optional `probe_boundary` and `probe_regression`. Each function must contain an assertion. Put setup inside the functions. Source is limited to 6000 bytes. Import the actual repository package; never mock the affected behavior. Keep data, caches and other scratch outputs outside the repository.\n2. Each assertion must follow the issue's explicit requirements or an existing documented API/test. State its evidence before running it. `probe_issue` should fail by assertion on the original checkout; a missing import, timeout or fixture error is not reproduction. If it cannot be made meaningful quickly, continue the normal repair workflow and existing tests. Never change the issue's meaning to make a probe pass.\n3. The script freezes the code and prints `REPRODUCED` only for an assertion failure in `probe_issue`. The baseline cannot be replaced. Each probe runs in a fresh process with an 8-second default and 12-second maximum; three probes take at most 36 seconds per phase plus process startup. Probe stdout/stderr stays in temporary logs; the printed result is bounded.\n4. After editing source, call the same script with `phase: after` and no `code`. `VERIFIED_BY_PROBES` requires the original issue assertion to fail before editing and all frozen probes to pass afterward. `REPAIR_INCOMPLETE` means a frozen assertion, error or timeout remains. `NO_REPRODUCTION` and `UNAVAILABLE` provide no repair evidence. Read each result rather than the tool success status.\n5. Run the nearest existing tests too. These generated probes are fallible checks, never a replacement for the competition's hidden tests. Do not edit existing tests, expected outputs, frozen probe code or the baseline manifest. Keep probes in /tmp and submit only the intended source changes.\n\nOn any helper failure, use a minimal /tmp reproduction and the nearest existing tests. Avoid repeated attempts. If importing an installed distribution rather than checkout code, inspect the module's `__file__` before trusting a result.\n", 'skills/counterexample-lab/scripts/probe.py': '"""Freeze and replay at most three issue-grounded probes inside the sandbox."""\nfrom __future__ import annotations\n\nimport argparse\nimport ast\nimport hashlib\nimport json\nimport math\nimport os\nfrom pathlib import Path\nimport signal\nimport subprocess\nimport sys\nimport tempfile\nimport time\nimport traceback\n\nNAMES = ("probe_issue", "probe_boundary", "probe_regression")\nMAX_CODE_BYTES = 6000\nMAX_LOG_BYTES = 2 * 1024 * 1024\n\n\ndef digest(text):\n    return hashlib.sha256(text.encode("utf-8")).hexdigest()\n\n\ndef validate_code(code):\n    if not code.strip() or len(code.encode("utf-8")) > MAX_CODE_BYTES:\n        raise ValueError("Provide between 1 and 6000 bytes of Python probe code.")\n    tree = ast.parse(code)\n    found = []\n    for node in tree.body:\n        if isinstance(node, (ast.Import, ast.ImportFrom)):\n            continue\n        if isinstance(node, ast.Expr) and isinstance(node.value, ast.Constant) and isinstance(node.value.value, str):\n            continue\n        if not isinstance(node, ast.FunctionDef) or node.name not in NAMES:\n            raise ValueError("Top level accepts only imports and the three documented probe functions.")\n        if node.decorator_list or node.args.args or node.args.posonlyargs or node.args.kwonlyargs or node.args.vararg or node.args.kwarg:\n            raise ValueError("Probe functions must have no arguments or decorators.")\n        if node.name in found or not any(isinstance(part, ast.Assert) for part in ast.walk(node)):\n            raise ValueError("Every probe needs a unique name and at least one assertion.")\n        found.append(node.name)\n    if "probe_issue" not in found:\n        raise ValueError("probe_issue is required.")\n    return [name for name in NAMES if name in found]\n\n\ndef workspace():\n    configured = os.environ.get("SWE_WORKSPACE")\n    root = Path(configured) if configured else Path("/workspace") if Path("/workspace").is_dir() else Path.cwd()\n    root = root.resolve(strict=True)\n    if not root.is_dir():\n        raise ValueError("Repository workspace is not a directory.")\n    return root\n\n\ndef state_directory(root):\n    # Resolved workspace paths isolate concurrent subprocess sandboxes; Docker has its own /tmp.\n    base = Path(os.environ.get("COUNTEREXAMPLE_STATE_ROOT", tempfile.gettempdir()))\n    result = base / "agentic-counterexample" / digest(str(root))[:24]\n    result.mkdir(parents=True, exist_ok=True)\n    if result.resolve().is_relative_to(root):\n        raise ValueError("Probe state must be outside the repository.")\n    return result\n\n\ndef save_json(path, value):\n    temporary = path.with_suffix(".tmp")\n    temporary.write_text(json.dumps(value, indent=2), encoding="utf-8")\n    temporary.replace(path)\n\n\ndef child(code_path, name, root, timeout):\n    os.environ["PYTHONDONTWRITEBYTECODE"] = "1"\n    sys.dont_write_bytecode = True\n    if os.name == "posix":\n        import resource\n        resource.setrlimit(resource.RLIMIT_FSIZE, (MAX_LOG_BYTES, MAX_LOG_BYTES))\n        resource.setrlimit(resource.RLIMIT_CPU, (math.ceil(timeout) + 1, math.ceil(timeout) + 2))\n    os.chdir(root)\n    sys.path.insert(0, root)\n    # src layouts are common. Workspace source precedes any installed distribution.\n    if (Path(root) / "src").is_dir():\n        sys.path.insert(0, str(Path(root) / "src"))\n    try:\n        code = Path(code_path).read_text(encoding="utf-8")\n        validate_code(code)\n        namespace = {"__name__": "counterexample_probes", "__file__": str(code_path)}\n        exec(compile(code, str(code_path), "exec"), namespace)\n        namespace[name]()\n        return 0\n    except AssertionError:\n        traceback.print_exc(limit=4)\n        return 10\n    except BaseException:\n        traceback.print_exc(limit=4)\n        return 11\n\n\ndef stop_tree(process):\n    if os.name == "posix":\n        try:\n            os.killpg(process.pid, signal.SIGKILL)\n        except ProcessLookupError:\n            pass\n    elif process.poll() is None:\n        subprocess.run(["taskkill", "/PID", str(process.pid), "/T", "/F"],\n                       capture_output=True, timeout=5,\n                       creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))\n    if process.poll() is None:\n        process.kill()\n    process.wait(timeout=5)\n\n\ndef run_probe(root, state, name, phase, timeout):\n    log_path = state / (phase + "_" + name + ".log")\n    command = [sys.executable, str(Path(__file__).resolve()), "--child", name,\n               "--code-path", str(state / "probes.py"), "--root", str(root), "--timeout", str(timeout)]\n    environment = dict(os.environ, PYTHONDONTWRITEBYTECODE="1", PYTHONHASHSEED="42",\n                       OMP_NUM_THREADS="1", OPENBLAS_NUM_THREADS="1", MKL_NUM_THREADS="1")\n    started = time.monotonic()\n    options = {"start_new_session": True} if os.name == "posix" else {\n        "creationflags": getattr(subprocess, "CREATE_NO_WINDOW", 0) | subprocess.CREATE_NEW_PROCESS_GROUP}\n    timed_out = False\n    with log_path.open("wb") as log:\n        process = subprocess.Popen(command, cwd=root, env=environment, stdout=log, stderr=log, **options)\n        try:\n            process.wait(timeout=timeout)\n        except subprocess.TimeoutExpired:\n            timed_out = True\n        finally:\n            stop_tree(process)\n    statuses = {0: "PASS", 10: "ASSERTION_FAIL", 11: "ERROR"}\n    status = "TIMEOUT" if timed_out else statuses.get(process.returncode, "ERROR")\n    with log_path.open("rb") as handle:\n        handle.seek(max(0, log_path.stat().st_size - 650))\n        tail = handle.read(650).decode("utf-8", errors="replace")\n    return {"name": name, "status": status, "seconds": round(time.monotonic() - started, 3),\n            "detail": tail if status != "PASS" else ""}\n\n\ndef execute(phase, code=None, timeout=8):\n    timeout = min(12.0, max(0.1, float(timeout)))\n    if not math.isfinite(timeout):\n        raise ValueError("Timeout must be finite.")\n    root = workspace()\n    state = state_directory(root)\n    manifest = state / "baseline.json"\n    if phase == "before":\n        if manifest.exists():\n            raise ValueError("Baseline already frozen. Do not redefine expectations after editing.")\n        names = validate_code(code or "")\n        baseline = {"schema": 1, "root": str(root), "code_sha256": digest(code), "names": names}\n        (state / "probes.py").write_text(code, encoding="utf-8")\n        baseline["results"] = [run_probe(root, state, name, phase, timeout) for name in names]\n        save_json(manifest, baseline)\n        issue = next(result for result in baseline["results"] if result["name"] == "probe_issue")\n        verdict = "REPRODUCED" if issue["status"] == "ASSERTION_FAIL" else "NO_REPRODUCTION"\n        return {"phase": phase, "verdict": verdict, "code_sha256": baseline["code_sha256"],\n                "results": baseline["results"]}\n    if code:\n        raise ValueError("After phase replays frozen code; do not supply replacement code.")\n    baseline = json.loads(manifest.read_text(encoding="utf-8"))\n    frozen = (state / "probes.py").read_text(encoding="utf-8")\n    if baseline["root"] != str(root) or baseline["code_sha256"] != digest(frozen):\n        raise ValueError("Frozen probe integrity check failed.")\n    names = validate_code(frozen)\n    if names != baseline["names"]:\n        raise ValueError("Frozen probe names changed.")\n    results = [run_probe(root, state, name, phase, timeout) for name in names]\n    original_issue = next(result for result in baseline["results"] if result["name"] == "probe_issue")\n    reproduced = original_issue["status"] == "ASSERTION_FAIL"\n    verdict = "VERIFIED_BY_PROBES" if reproduced and all(r["status"] == "PASS" for r in results) else (\n        "REPAIR_INCOMPLETE" if reproduced else "NO_REPRODUCTION")\n    report = {"phase": phase, "verdict": verdict, "code_sha256": baseline["code_sha256"], "results": results}\n    save_json(state / "after.json", report)\n    return report\n\n\ndef main():\n    parser = argparse.ArgumentParser(description=__doc__)\n    parser.add_argument("--phase", choices=("before", "after"))\n    parser.add_argument("--code")\n    parser.add_argument("--timeout", type=float, default=8)\n    parser.add_argument("--child", choices=NAMES, help=argparse.SUPPRESS)\n    parser.add_argument("--code-path", help=argparse.SUPPRESS)\n    parser.add_argument("--root", help=argparse.SUPPRESS)\n    args = parser.parse_args()\n    if args.child:\n        return child(args.code_path, args.child, args.root, args.timeout)\n    try:\n        if args.phase is None:\n            raise ValueError("Choose phase before or after.")\n        report = execute(args.phase, args.code, args.timeout)\n    except Exception as error:\n        report = {"verdict": "UNAVAILABLE", "error": (type(error).__name__ + ": " + str(error))[:450],\n                  "fallback": "Continue with the anchor repair workflow and nearest existing tests."}\n    print(json.dumps(report, ensure_ascii=True, separators=(",", ":")))\n    # Inspect the verdict: successful tool execution alone does not verify a repair.\n    return 0\n\n\nif __name__ == "__main__":\n    sys.exit(main())\n'}
+MINIMAL_RECOVERY = {'agent.yaml': 'name: agentic_counterexample_lab\nmodel: gemma-4-31b-it-qat-w4a16-ct\ndescription: Repairs Python repository issues using frozen behavioral counterexamples and targeted verification.\ninstruction: !include prompts/system.md\ngenerate_content_config: !include configs/sampling.yaml\ntools:\n  - run_command\n  - read_file\n  - edit_file\n  - write_file\n  - get_status\n  - submit_patch\n', 'prompts/system.md': 'You are Agentic, an autonomous Python engineer fixing one issue in /workspace. Read the issue, locate the named API with bounded grep and read_file ranges, and inspect its source and nearest tests. Make a small complete source repair using edit_file and exact source text. Preserve public behavior unless the issue changes it. Never edit tests, CI or packaging. The environment is offline; do not install packages. Keep scratch scripts in /tmp. Compile changed source, run the closest available existing tests, inspect git diff, and call submit_patch. If verification is unavailable, finish with the best supported source patch and report the limitation. Use get_status to reserve time for submission.\n', 'configs/sampling.yaml': 'temperature: 0.2\ntop_p: 0.95\ntop_k: 40\nmax_output_tokens: 8192\nthinking_config:\n  include_thoughts: false\n  thinking_budget: 4096\n', 'eval_config.yaml': 'evaluation:\n  timeout_seconds: 60\n  max_time_minutes: 5\n  max_tool_calls: 100\n  max_turns: 250\n'}
+
+# CELL 3 markdown
+**Execution contract.** `probe_issue` must fail by assertion before editing to establish reproduction. Missing imports, setup errors and timeouts are recorded separately. The after phase accepts no replacement code and checks the frozen code hash. `VERIFIED_BY_PROBES` requires original reproduction followed by all frozen probes passing. Scratch files stay outside the repository.
+
+**Graceful degradation.** If a probe is impractical or fails to run, the agent continues its source repair and nearest existing tests. If package validation fails, a newly authored minimal coder configuration provides a schema-valid recovery output. No prior submission bytes are included.
+
+# CELL 4 code
+import ast, hashlib, io, posixpath, re, zipfile
+from pathlib import Path
+import yaml
+
+MODEL = "gemma-4-31b-it-qat-w4a16-ct"
+class IncludeLoader(yaml.SafeLoader):
+    pass
+IncludeLoader.add_constructor("!include", lambda loader, node: loader.construct_scalar(node))
+
+def sha(data):
+    return hashlib.sha256(data).hexdigest()
+
+def validate(files):
+    assert "agent.yaml" in files and len(files) <= 20
+    assert sum(len(s.encode("utf-8")) for s in files.values()) < 3 * 1024**3
+    for name, source in files.items():
+        assert name and not name.startswith(("/", "\\")) and ".." not in name.split("/")
+        assert ":" not in name and "\\" not in name and Path(name).suffix in {".yaml", ".md", ".py"}
+        assert isinstance(source, str) and source.strip()
+        if name.endswith(".py"):
+            ast.parse(source, filename=name)
+        if name.endswith(".yaml"):
+            yaml.load(source, Loader=IncludeLoader)
+            for ref in re.findall(r"!include\s+([^\s]+)", source):
+                assert posixpath.normpath(posixpath.join(posixpath.dirname(name), ref)) in files
+    agent = yaml.load(files["agent.yaml"], Loader=IncludeLoader)
+    assert agent["model"] == MODEL and agent["name"] == "agentic_counterexample_lab"
+    assert agent["tools"] == ["run_command", "read_file", "edit_file", "write_file", "get_status", "submit_patch"]
+    for skill in agent.get("skills", []):
+        manifest = files[skill + "/SKILL.md"]
+        assert yaml.safe_load(manifest.split("---", 2)[1])["name"] == skill.rsplit("/", 1)[-1]
+    limits = yaml.safe_load(files["eval_config.yaml"])["evaluation"]
+    assert 0 < limits["timeout_seconds"] <= 60 and 0 < limits["max_time_minutes"] <= 5
+    assert 0 < limits["max_tool_calls"] <= 100 and 0 < limits["max_turns"] <= 250
+
+def pack(files):
+    validate(files)
+    stream = io.BytesIO()
+    with zipfile.ZipFile(stream, "w") as archive:
+        for name, source in sorted(files.items()):
+            info = zipfile.ZipInfo(name, date_time=(1980, 1, 1, 0, 0, 0))
+            info.compress_type = zipfile.ZIP_DEFLATED
+            info.create_system = 3
+            info.external_attr = 0o644 << 16
+            archive.writestr(info, source.encode("utf-8"))
+    result = stream.getvalue()
+    with zipfile.ZipFile(io.BytesIO(result)) as archive:
+        assert archive.testzip() is None and len(archive.namelist()) == len(set(archive.namelist()))
+        assert {n: archive.read(n).decode("utf-8") for n in archive.namelist()} == files
+    return result
+
+def select_bundle(candidate, minimal, force_minimal=False):
+    errors = []
+    if not force_minimal:
+        try:
+            return pack(candidate), "counterexample challenger", errors
+        except Exception as error:
+            errors.append(type(error).__name__ + ": " + str(error))
+    return pack(minimal), "minimal recovery", errors
+
+# CELL 5 code
+payload, selected, errors = select_bundle(CANDIDATE, MINIMAL_RECOVERY, FORCE_MINIMAL_RECOVERY)
+(WORK / 'submission.zip').write_bytes(payload)
+assert (WORK / 'submission.zip').read_bytes() == payload
+assert pack(CANDIDATE) == pack(CANDIDATE)
+broken = dict(CANDIDATE, **{'../escape.py': 'print(1)'})
+assert select_bundle(broken, MINIMAL_RECOVERY)[1] == 'minimal recovery'
+assert select_bundle(CANDIDATE, MINIMAL_RECOVERY, True)[1] == 'minimal recovery'
+print('✅ Archive integrity, deterministic packaging and minimal recovery checks passed.')
+
+# CELL 6 markdown
+**Validation scope.** These notebook checks cover the archive, Python syntax, configuration and recovery. The helper's local tests exercise reproduction, incomplete fixes, frozen expectations and time limits. Official compilation and GPU task results are recorded separately after execution. A small public development pilot cannot establish leaderboard performance; model inference remains stochastic.
+
+# CELL 7 code
+card = {
+    'version': 1, 'strategy': 'Agentic Counterexample Lab', 'selected': selected,
+    'fallback_used': selected != 'counterexample challenger', 'packaging_errors': errors,
+    'submission_sha256': sha(payload), 'submission_bytes': len(payload),
+    'model': MODEL, 'model_seed': None, 'probe_pythonhashseed': 42,
+    'model_stability': 'stochastic; not measured', 'packaging_hardware': 'CPU',
+    'budget': yaml.safe_load(CANDIDATE['eval_config.yaml'])['evaluation'],
+    'packaging_seconds': round(time.perf_counter() - START, 4),
+    'challenger_public_score': None, 'gpu_runtime_seconds': None, 'gpu_peak_memory_mib': None,
+}
+try:
+    import psutil
+    card['packaging_rss_mib_at_measurement'] = round(psutil.Process().memory_info().rss / 2**20, 2)
+except ImportError:
+    card['packaging_rss_mib_at_measurement'] = None
+(WORK / 'experiment_card.json').write_text(json.dumps(card, indent=2), encoding='utf-8')
+description = 'Agentic Counterexample Lab v1 | new single-agent design with frozen behavioral probes | experimental.'
+(WORK / 'submission_description.txt').write_text(description, encoding='utf-8')
+print(json.dumps(card, indent=2))
+print('📦 SUBMISSION READY:', WORK / 'submission.zip')

@@ -1,0 +1,139 @@
+{
+  "messages": [
+    {
+      "id": 3528752,
+      "postDate": "2026-09-26T12:01:49.977Z",
+      "content": "<p>Hi everyone,</p>\n<p>Some submissions since yesterday were failing with <code>\"Your notebook has requested more CPU, GPU or TPU resources than are available.\"</code> I believe I've resolved the issue, though please let me know if you're still having issues. I will rerun the affected submissions on Monday so that you won't be losing a submission.</p>",
+      "rawMarkdown": "Hi everyone,\n\nSome submissions since yesterday were failing with `\"Your notebook has requested more CPU, GPU or TPU resources than are available.\"` I believe I've resolved the issue, though please let me know if you're still having issues. I will rerun the affected submissions on Monday so that you won't be losing a submission.",
+      "votes": 12
+    },
+    {
+      "id": 3529441,
+      "postDate": "2026-09-28T09:16:17.263Z",
+      "content": "<p>Hi <a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a> , I have a different kind of problem: I launched my notebook and it sat in the queue for 5 hours; it then ran for another 5 hours on GPU, but 10 hours were deducted from my GPU quota.</p>\n<p><img src=\"https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F6426555%2Fcdb41f54dd33c19d64f033761ce05143%2FScreenshot%202026-09-28%20121340.png?generation=1790586918749457&amp;alt=media\" alt=\"\">\n<img src=\"https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F6426555%2F4e9af6877fd480b4797be84dfea0cce0%2FScreenshot%202026-09-28%20121422.png?generation=1790586928959343&amp;alt=media\" alt=\"\"></p>",
+      "rawMarkdown": "Hi @ryanholbrook , I have a different kind of problem: I launched my notebook and it sat in the queue for 5 hours; it then ran for another 5 hours on GPU, but 10 hours were deducted from my GPU quota.\n\n![](https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F6426555%2Fcdb41f54dd33c19d64f033761ce05143%2FScreenshot%202026-09-28%20121340.png?generation=1790586918749457&alt=media)\n![](https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F6426555%2F4e9af6877fd480b4797be84dfea0cce0%2FScreenshot%202026-09-28%20121422.png?generation=1790586928959343&alt=media)",
+      "votes": 1,
+      "replies": [
+        {
+          "id": 3529475,
+          "postDate": "2026-09-28T10:40:31.003Z",
+          "content": "<p>same here. its showing 2x the notebook runtime</p>",
+          "rawMarkdown": "same here. its showing 2x the notebook runtime",
+          "replies": [
+            {
+              "id": 3529491,
+              "postDate": "2026-09-28T11:18:47.027Z",
+              "content": "<p>i think they forgot to mention here but like in arc agi 2, where the same gpus are provided, they too take double the time from your gpu quota  </p>",
+              "rawMarkdown": "i think they forgot to mention here but like in arc agi 2, where the same gpus are provided, they too take double the time from your gpu quota  ",
+              "votes": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 3529544,
+      "postDate": "2026-09-28T13:17:43.667Z",
+      "content": "<p>Hi everyone,</p>\n<p>I'm going to pause the rescore until we can resolve the queueing for the L4x4 machines. I will get it going as soon as I can.</p>",
+      "rawMarkdown": "Hi everyone,\n\nI'm going to pause the rescore until we can resolve the queueing for the L4x4 machines. I will get it going as soon as I can.",
+      "votes": 2,
+      "isPinned": true,
+      "replies": [
+        {
+          "id": 3532859,
+          "postDate": "2026-10-04T23:28:43.277Z",
+          "content": "<p><a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a> was the issue resolved?</p>",
+          "rawMarkdown": "@ryanholbrook was the issue resolved?"
+        }
+      ]
+    },
+    {
+      "id": 3528757,
+      "postDate": "2026-09-26T12:19:31.400Z",
+      "content": "<p><img src=\"https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F15559822%2Fff13fb1fad0d64c49eb279c792d21451%2FScreenshot%202026-09-26%20174740.png?generation=1790425085487856&amp;alt=media\" alt=\"\"></p>\n<p><img src=\"https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F15559822%2Faf4d11095086d1b7ed9ab27ab52bd6c7%2FScreenshot%202026-09-26%20174858.png?generation=1790425153277741&amp;alt=media\" alt=\"\"></p>\n<p>when i click 'submit', submission fails instantly sue to system error</p>",
+      "rawMarkdown": "![](https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F15559822%2Fff13fb1fad0d64c49eb279c792d21451%2FScreenshot%202026-09-26%20174740.png?generation=1790425085487856&alt=media)\n\n\n![](https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F15559822%2Faf4d11095086d1b7ed9ab27ab52bd6c7%2FScreenshot%202026-09-26%20174858.png?generation=1790425153277741&alt=media)\n\nwhen i click 'submit', submission fails instantly sue to system error",
+      "votes": 1,
+      "replies": [
+        {
+          "id": 3528777,
+          "postDate": "2026-09-26T13:43:51.750Z",
+          "content": "<p>Has this submission run successfully in the past? I'm seeing <code>Did not find output file 'submission.zip' in the submitted Notebook.</code></p>",
+          "rawMarkdown": "Has this submission run successfully in the past? I'm seeing `Did not find output file 'submission.zip' in the submitted Notebook.`",
+          "replies": [
+            {
+              "id": 3529487,
+              "postDate": "2026-09-28T11:11:59.483Z",
+              "content": "<p>if i 'save version', successfully run the notebook and then 'submit', then the submission is scored </p>\n<p>but if i click 'submit' b4 saving the notebook, it fails</p>",
+              "rawMarkdown": "if i 'save version', successfully run the notebook and then 'submit', then the submission is scored \n\nbut if i click 'submit' b4 saving the notebook, it fails"
+            },
+            {
+              "id": 3529541,
+              "postDate": "2026-09-28T13:12:55.657Z",
+              "content": "<p>I think this is WAI. Your notebook needs to generate a submission file (<code>submission.zip</code>) before that submission can be scored. The workflow seems a little confusing, though. I will give feedback to the team.</p>",
+              "rawMarkdown": "I think this is WAI. Your notebook needs to generate a submission file (`submission.zip`) before that submission can be scored. The workflow seems a little confusing, though. I will give feedback to the team.",
+              "votes": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 3529495,
+      "postDate": "2026-09-28T11:26:27.437Z",
+      "content": "<p>it toke more than 11 hours and not finished yet what I should do </p>",
+      "rawMarkdown": "it toke more than 11 hours and not finished yet what I should do "
+    },
+    {
+      "id": 3529269,
+      "postDate": "2026-09-27T19:02:53.183Z",
+      "content": "<p>Still same issue on my side <a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a> <img src=\"https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F9882418%2F7d651a3e62c6943dbd9a1cb31b1aec52%2Ferror_gemma4_competition.png?generation=1790535767374553&amp;alt=media\" alt=\"\"></p>",
+      "rawMarkdown": "Still same issue on my side @ryanholbrook ![](https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F9882418%2F7d651a3e62c6943dbd9a1cb31b1aec52%2Ferror_gemma4_competition.png?generation=1790535767374553&alt=media)"
+    },
+    {
+      "id": 3529183,
+      "postDate": "2026-09-27T15:32:53.583Z",
+      "content": "<p>how long does it take to score a submission? mine is running for more than 1h.</p>",
+      "rawMarkdown": "how long does it take to score a submission? mine is running for more than 1h.",
+      "replies": [
+        {
+          "id": 3529214,
+          "postDate": "2026-09-27T16:53:16.997Z",
+          "content": "<p>Few hours is expected</p>",
+          "rawMarkdown": "Few hours is expected"
+        },
+        {
+          "id": 3529416,
+          "postDate": "2026-09-28T07:26:45.590Z",
+          "content": "<p>It takes approximately 12 hours</p>",
+          "rawMarkdown": "It takes approximately 12 hours",
+          "replies": [
+            {
+              "id": 3529434,
+              "postDate": "2026-09-28T08:45:28.917Z",
+              "content": "<p>timeout after 14 hours in my case :( </p>",
+              "rawMarkdown": "timeout after 14 hours in my case :( "
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 3528853,
+      "postDate": "2026-09-26T17:32:31.097Z",
+      "content": "<p>Hi, thank you for looking into it. Lost a couple hours debugging yesterday trying to find the issue, but noticed that it happens even when I try to upload the fastest model possible. Will retry in a few hours when I get my daily submission back.</p>",
+      "rawMarkdown": "Hi, thank you for looking into it. Lost a couple hours debugging yesterday trying to find the issue, but noticed that it happens even when I try to upload the fastest model possible. Will retry in a few hours when I get my daily submission back."
+    },
+    {
+      "id": 3528765,
+      "postDate": "2026-09-26T12:53:15.053Z",
+      "content": "<p><img src=\"https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F30803717%2F0d43261c041e94faa9cbd3864c6f4373%2FScreenshot%202026-09-26%20155232.png?generation=1790427179329130&amp;alt=media\" alt=\"\"></p>",
+      "rawMarkdown": "![](https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F30803717%2F0d43261c041e94faa9cbd3864c6f4373%2FScreenshot%202026-09-26%20155232.png?generation=1790427179329130&alt=media)"
+    },
+    {
+      "id": 3529255,
+      "postDate": "2026-09-27T18:44:50.763Z",
+      "rawMarkdown": "",
+      "isDeleted": true
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "forumTopic": {
+    "authorId": 5256933,
+    "authorThumbnailName": "5256933-kg.jpeg?t=2026-01-31-19-53-40",
+    "authorUserDisplayName": "Geremie Yeo",
+    "authorUserName": "yeoyunsianggeremie",
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3528506,
+      "postDate": "2026-09-26T06:00:05.963Z",
+      "rawMarkdown": "Observing the current LB distribution:\n\n```\n0.00, 0.01, 0.03, 0.05, 0.06, 0.08, 0.10, 0.12, 0.13\n```\n\nand since Kaggle has always rounded down LB scores, there is only one **test set size** that could lead to exactly this distribution\n\n```python\n# Displayed scores expressed in hundredths.\nobserved = {0, 1, 3, 5, 6, 8, 10, 12, 13}\n\ndef compatible(n):\n    possible = {100 * k // n for k in range(n + 1)}\n    return observed <= possible\n\nprint([n for n in range(1, 79) if compatible(n)])\n# [58]\n```\n\n| Tasks solved | Score before truncation | Displayed score |\n|---:|---:|---:|\n| 0 | 0.000000 | 0.00 |\n| 1 | 0.017241… | 0.01 |\n| 2 | 0.034482… | 0.03 |\n| 3 | 0.051724… | 0.05 |\n| 4 | 0.068965… | 0.06 |\n| 5 | 0.086206… | 0.08 |\n| 6 | 0.103448… | 0.10 |\n| 7 | 0.120689… | 0.12 |\n| 8 | 0.137931… | 0.13 |\n\nwhich is close to the ~60 described in the data description\n\n> There are about 120 tasks in the test set, evenly divided between the public and private splits.",
+      "content": "<p>Observing the current LB distribution:</p>\n<pre><code>0.00, 0.01, 0.03, 0.05, 0.06, 0.08, 0.10, 0.12, 0.13\n</code></pre>\n<p>and since Kaggle has always rounded down LB scores, there is only one <strong>test set size</strong> that could lead to exactly this distribution</p>\n<pre><code># Displayed scores expressed in hundredths.\nobserved = {0, 1, 3, 5, 6, 8, 10, 12, 13}\n\ndef compatible(n):\n    possible = {100 * k // n for k in range(n + 1)}\n    return observed &lt;= possible\n\nprint([n for n in range(1, 79) if compatible(n)])\n# [58]\n</code></pre>\n<table>\n<thead>\n<tr>\n<th>Tasks solved</th>\n<th>Score before truncation</th>\n<th>Displayed score</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>0</td>\n<td>0.000000</td>\n<td>0.00</td>\n</tr>\n<tr>\n<td>1</td>\n<td>0.017241…</td>\n<td>0.01</td>\n</tr>\n<tr>\n<td>2</td>\n<td>0.034482…</td>\n<td>0.03</td>\n</tr>\n<tr>\n<td>3</td>\n<td>0.051724…</td>\n<td>0.05</td>\n</tr>\n<tr>\n<td>4</td>\n<td>0.068965…</td>\n<td>0.06</td>\n</tr>\n<tr>\n<td>5</td>\n<td>0.086206…</td>\n<td>0.08</td>\n</tr>\n<tr>\n<td>6</td>\n<td>0.103448…</td>\n<td>0.10</td>\n</tr>\n<tr>\n<td>7</td>\n<td>0.120689…</td>\n<td>0.12</td>\n</tr>\n<tr>\n<td>8</td>\n<td>0.137931…</td>\n<td>0.13</td>\n</tr>\n</tbody>\n</table>\n<p>which is close to the ~60 described in the data description</p>\n<blockquote>\n  <p>There are about 120 tasks in the test set, evenly divided between the public and private splits.</p>\n</blockquote>",
+      "parent": {},
+      "author": {
+        "displayName": "Geremie Yeo",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/5256933-kg.jpeg?t=2026-01-31-19-53-40",
+        "url": "/yeoyunsianggeremie",
+        "tier": "GRANDMASTER",
+        "id": 5256933,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 9,
+        "canUpvote": true,
+        "totalUpvotes": 9
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 837,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Geremie Yeo",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/5256933-kg.jpeg?t=2026-01-31-19-53-40",
+          "url": "/yeoyunsianggeremie",
+          "userName": "yeoyunsianggeremie",
+          "tier": "GRANDMASTER",
+          "id": 5256933,
+          "profileUrl": "/yeoyunsianggeremie",
+          "performanceTier": "GRANDMASTER",
+          "userId": 5256933,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3528506,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 743506,
+    "name": "The public leaderboard has exactly 58 tasks",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-26T06:00:05.963872300Z",
+    "totalVotes": 9,
+    "url": "/competitions/gemma-4-developer-agent/discussion/743506",
+    "authorPerformanceTier": "GRANDMASTER",
+    "authorProgressionOptOut": false
+  }
+}

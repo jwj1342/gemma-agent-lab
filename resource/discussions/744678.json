@@ -1,0 +1,39 @@
+{
+  "messages": [
+    {
+      "id": 3530716,
+      "postDate": "2026-09-30T18:50:40.607Z",
+      "content": "<p><code>read_file</code> tool call with line ranges always fail.</p>\n<p>Is anyone else is facing this ?</p>",
+      "rawMarkdown": "`read_file` tool call with line ranges always fail.\n\nIs anyone else is facing this ?",
+      "votes": 2
+    },
+    {
+      "id": 3530769,
+      "postDate": "2026-09-30T20:33:55.190Z",
+      "content": "<p>Fix incoming.</p>",
+      "rawMarkdown": "Fix incoming.",
+      "replies": [
+        {
+          "id": 3531265,
+          "postDate": "2026-10-01T15:18:32.503Z",
+          "content": "<p><a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a> is this because of adk or vllm?</p>",
+          "rawMarkdown": "@ryanholbrook is this because of adk or vllm?"
+        },
+        {
+          "id": 3531266,
+          "postDate": "2026-10-01T15:22:02.333Z",
+          "content": "<p><a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a> I have setup this whole repo locally, sicen the repo deps are changing can u recommend how to patch these issues in my local after the fix is done?</p>",
+          "rawMarkdown": "@ryanholbrook I have setup this whole repo locally, sicen the repo deps are changing can u recommend how to patch these issues in my local after the fix is done?",
+          "replies": [
+            {
+              "id": 3531314,
+              "postDate": "2026-10-01T17:02:45.830Z",
+              "content": "<p>The fix should be in the current wheelhouse. I recommend just updating the packages.</p>",
+              "rawMarkdown": "The fix should be in the current wheelhouse. I recommend just updating the packages."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

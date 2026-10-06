@@ -1,0 +1,7 @@
+# Can TPU be used?
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/745575
+
+## 3532316 /tcristea TOPIC
+Can one use TPU end-to-end, including for submission in this competition?
+
+Thanks.

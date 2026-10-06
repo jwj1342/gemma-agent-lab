@@ -1,0 +1,10 @@
+
+\begin{tikzpicture}
+\path[use as bounding box] (0,-2.5) rectangle (13.35,.35);
+\foreach \x/\c in {0/teal,3.5/orange,7/orange,10.5/teal}{\fill[\c!8,rounded corners=2mm] (\x,-2.3) rectangle +(2.95,2.5);}
+\foreach \x in {0,3.5,7}{\draw[flow link] (\x+3,-1)--(\x+3.45,-1);}
+\node[anchor=north west,text width=2.5cm,align=left] at (.2,0){\textbf{One update}\\[3mm]\small Small batch\\Check memory};
+\node[anchor=north west,text width=2.5cm,align=left] at (3.7,0){\textbf{A tiny pilot}\\[3mm]\small 10--20 steps\\Watch the loss};
+\node[anchor=north west,text width=2.5cm,align=left] at (7.2,0){\textbf{Save + reload}\\[3mm]\small Export weights\\Fresh session};
+\node[anchor=north west,text width=2.5cm,align=left] at (10.7,0){\textbf{Compare}\\[3mm]\small Fresh tasks\\Same time limit};
+\end{tikzpicture}

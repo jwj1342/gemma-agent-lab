@@ -1,0 +1,217 @@
+# CELL 0 code
+# This Python 3 environment comes with many helpful analytics libraries installed
+# It is defined by the kaggle/python Docker image: https://github.com/kaggle/docker-python
+# For example, here's several helpful packages to load
+
+import numpy as np # linear algebra
+import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
+
+# Input data files are available in the read-only "../input/" directory
+# For example, running this (by clicking run or pressing Shift+Enter) will list all files under the input directory
+
+import os
+for dirname, _, filenames in os.walk('/kaggle/input'):
+    for filename in filenames:
+        print(os.path.join(dirname, filename))
+
+# You can write up to 20GB to the current directory (/kaggle/working/) that gets preserved as output when you create a version using "Save & Run All" 
+# You can also write temporary files to /kaggle/temp/, but they won't be saved outside of the current session
+
+# Use the kagglehub client library to attach Kaggle resources like competitions, datasets, and models to your session
+# Learn more about kagglehub: https://github.com/Kaggle/kagglehub/blob/main/README.md
+
+import kagglehub
+# kagglehub.dataset_download('<owner>/<dataset-slug>')
+
+# CELL 1 markdown
+· Mission control
+
+# CELL 2 markdown
+****
+
+# CELL 3 code
+from pathlib import Path
+import json, zipfile, platform, textwrap
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import yaml
+
+WORKING = Path('/kaggle/working') if platform.system() == 'Linux' and Path('/kaggle/working').exists() else Path.cwd()
+WORKING.mkdir(parents=True, exist_ok=True)
+print(r"""
+ /\_/\\
+( o.o )  BLACK CAT SWE AGENT // FIRST STRIKE
+ > ^ <   locate -> diagnose -> repair -> verify -> submit
+""")
+print(f'Python {platform.python_version()} | artifact directory: {WORKING}')
+
+# CELL 4 code
+stages = [
+    ('01', 'LOCATE', 'issue + bounded search'),
+    ('02', 'DIAGNOSE', 'source + nearest tests'),
+    ('03', 'REPAIR', 'minimal source patch'),
+    ('04', 'VERIFY', 'targeted reproduction'),
+    ('05', 'SUBMIT', 'checked git diff'),
+]
+fig, ax = plt.subplots(figsize=(13, 2.8), facecolor='#0b1220')
+ax.set_facecolor('#0b1220')
+colors = ['#38bdf8', '#818cf8', '#a78bfa', '#34d399', '#fbbf24']
+for i, (num, title, detail) in enumerate(stages):
+    x = i * 2.5
+    ax.scatter(x, 0, s=1100, color=colors[i], zorder=3, edgecolor='white', linewidth=1.2)
+    ax.text(x, 0, num, ha='center', va='center', color='#0b1220', weight='bold', fontsize=12)
+    ax.text(x, 0.85, title, ha='center', color='white', weight='bold', fontsize=11)
+    ax.text(x, -0.85, detail, ha='center', color='#cbd5e1', fontsize=9)
+    if i < len(stages) - 1:
+        ax.annotate('', xy=(x+2.07, 0), xytext=(x+0.43, 0),
+                    arrowprops=dict(arrowstyle='->', color='#64748b', lw=2))
+ax.set_xlim(-0.9, 10.9)
+ax.set_ylim(-1.4, 1.4)
+ax.axis('off')
+ax.set_title('One issue → one verified patch', color='white', fontsize=15, weight='bold', pad=15)
+plt.show()
+
+# CELL 5 code
+candidates = [Path.cwd() / 'tasks.jsonl', Path('/kaggle/input/gemma-4-developer-agent/tasks.jsonl')]
+input_root = Path('/kaggle/input')
+if input_root.exists():
+    candidates += list(input_root.rglob('tasks.jsonl'))
+task_path = next((p for p in candidates if p.exists()), None)
+tasks = None
+if task_path:
+    with task_path.open(encoding='utf-8') as handle:
+        rows = [json.loads(line) for line in handle if line.strip()]
+    tasks = pd.DataFrame({
+        'id': [row['instance_id'] for row in rows],
+        'repository': [row['repo'] for row in rows],
+        'issue_chars': [len(row.get('problem_statement') or '') for row in rows],
+        'reference_patch_bytes': [len((row.get('patch') or '').encode('utf-8')) for row in rows],
+    })
+    assert tasks['id'].is_unique
+    print(f'Public tasks: {len(tasks)} | repositories: {tasks.repository.nunique()} | source: {task_path.name}')
+    display(tasks.groupby('repository').agg(tasks=('id','size'),
+        median_issue_chars=('issue_chars','median'),
+        median_reference_patch_bytes=('reference_patch_bytes','median')).sort_values('tasks', ascending=False))
+else:
+    print('Public tasks.jsonl was not attached. Add the competition data to enable the EDA figures.')
+
+# CELL 6 code
+if tasks is not None:
+    counts = tasks['repository'].value_counts().sort_values()
+    fig, axes = plt.subplots(1, 2, figsize=(13, 4.4), facecolor='#0b1220')
+    for ax in axes:
+        ax.set_facecolor('#111c2e')
+        ax.tick_params(colors='#cbd5e1', labelsize=9)
+        for spine in ax.spines.values(): spine.set_visible(False)
+    axes[0].barh(counts.index, counts.values, color='#38bdf8')
+    for i, value in enumerate(counts.values):
+        axes[0].text(value + 0.6, i, str(value), color='white', va='center')
+    axes[0].set_xlim(0, counts.max() * 1.18)
+    axes[0].set_title('Public development issues by repository', color='white', weight='bold')
+    axes[0].set_xlabel('Issue count', color='#cbd5e1')
+    groups = [tasks.loc[tasks.repository == repo, 'issue_chars'].values for repo in counts.index]
+    box = axes[1].boxplot(groups, vert=False, tick_labels=counts.index, patch_artist=True,
+                          showfliers=False, medianprops=dict(color='#fbbf24', lw=2))
+    for patch in box['boxes']: patch.set_facecolor('#818cf8')
+    for item in box['whiskers'] + box['caps']: item.set_color('#cbd5e1')
+    axes[1].set_title('Problem statement length by repository', color='white', weight='bold')
+    axes[1].set_xlabel('Characters; boxes show IQR, outliers hidden', color='#cbd5e1')
+    fig.suptitle('Public data describes development coverage, not hidden-test performance',
+                 color='white', fontsize=14, weight='bold', y=1.03)
+    fig.tight_layout()
+    plt.show()
+
+# CELL 7 code
+AGENT_YAML = 'name: black_cat_swe_agent\nmodel: gemma-4-31b-it-qat-w4a16-ct\ndescription: Repository-agnostic software engineering agent for focused Python fixes.\ninstruction: !include prompts/system.md\ntools:\n  - run_command\n  - read_file\n  - edit_file\n  - write_file\n  - get_status\n  - submit_patch\n  - get_code_neighbors\n  - search_similar_code\n  - get_code_subgraph\ngenerate_content_config: !include configs/sampling.yaml\n'
+SAMPLING_YAML = 'temperature: 0.15\ntop_p: 0.90\nmax_output_tokens: 8192\nseed: 42\nthinking_config:\n  thinking_level: MEDIUM\n  thinking_budget: 2048\n  include_thoughts: false\n'
+SYSTEM_PROMPT = 'You are Black Cat, an autonomous software engineer working on one Python repository issue. Your deliverable is a minimal, working source-code patch under /workspace. The benchmark checks the patch in a fresh checkout with separate tests. Work independently and finish by calling submit_patch().\n\nOperating priorities: correctness, focused navigation, reproducible edits, and useful work within the time and tool budget. Never invent a test result or claim a file was changed before a tool confirms it.\n\n1. Orient quickly. Read the problem statement and hints. Identify exact error strings, public behavior, expected types, and likely symbols. The initial prompt includes a workspace listing. If it identifies an obvious file, read that file. Otherwise make one bounded discovery call using run_command with rg over relevant Python paths. Use search_similar_code only with a real symbol name, not a natural-language sentence; it resolves existing graph nodes, not arbitrary queries. Use graph neighbors when a caller or dependency relationship changes the fix. If graph tools are missing or return errors, use rg and read_file.\n2. Diagnose before editing. Inspect the implementation and the nearest relevant tests or examples. State a short hypothesis internally and distinguish observed behavior from guesses. Favor one small source edit over broad rewrites. Preserve signatures, existing conventions, compatibility, and error wording required by the issue. For feature requests, implement the specified behavior end to end, including edge cases that the issue names.\n3. Edit precisely with edit_file. If a matching block is ambiguous, read a narrower range before retrying. Use write_file only for a new implementation file or when a narrow replacement is impossible. Do not alter tests, snapshots, generated files, pytest.ini, conftest.py, package metadata, or unrelated formatting to make checks pass. In tasks involving executable documentation examples, docs_src or equivalent example source may be the implementation target.\n4. Verify economically. Prefer a targeted existing test or a tiny inline reproduction for the changed behavior. Specify the exact test module or test name; never run an entire repository test suite. Commands have a 300-second ceiling and truncated output. Do not install packages or access the network. If a test fails, diagnose whether it is related to the change. Fix a real regression if time permits. Ignore unrelated pre-existing environment failures after recording the uncertainty internally.\n5. Inspect git diff --check and git diff --stat, then inspect the relevant diff. Remove temporary files from /workspace; put scratch scripts in /tmp. Do not put expected-answer strings or issue-specific hardcoded patches into the repository. Never inspect hidden solution files or future commits. If time or tool calls run low, preserve the best working edit and finish promptly.\n6. Call submit_patch() as the final tool action. It captures git diff HEAD, including intended new files. Check the returned patch_size and files_changed. If no defensible edit is possible, submit the empty state honestly rather than inventing a change. Give a concise final summary with the actual verification status.\n\nTool budget guide: spend roughly 2-4 calls locating code, 2-5 calls implementing, and 1-3 calls validating. This is a guide, not a hard limit; complex issues may need more. Do not use an analysis sub-agent unless one is provided by the configuration. The harness may continue a turn if you stop without submit_patch(), so make that call explicitly.\n'
+
+# CELL 8 code
+import zipfile
+from pathlib import Path
+import yaml
+
+# Ensure WORKING directory is defined
+WORKING = Path('/kaggle/working')
+
+PRIMARY_FILES = {
+    'agent.yaml': AGENT_YAML,
+    'configs/sampling.yaml': SAMPLING_YAML,
+    'prompts/system.md': SYSTEM_PROMPT,
+}
+
+FALLBACK_FILES = {
+    'agent.yaml': (
+        'name: black_cat_fallback\n'
+        'model: gemma-4-31b-it-qat-w4a16-ct\n'
+        'instruction: !include prompts/system.md\n'
+        'tools:\n'
+        '  - run_command\n'
+        '  - read_file\n'
+        '  - edit_file\n'
+        '  - get_status\n'
+        '  - submit_patch\n'
+        'generate_content_config:\n'
+        '  temperature: 0.1\n'
+        '  max_output_tokens: 4096\n'
+    ),
+    'prompts/system.md': (
+        'Solve the Python repository issue under /workspace. '
+        'Inspect the relevant source, make the smallest correct source edit, '
+        'run a focused check when possible, inspect git diff, and call submit_patch(). '
+        'Do not alter tests or harness files. Work offline, avoid full-suite tests, '
+        'and report only verified facts.\n'
+    ),
+}
+
+def validate_files(files):
+    assert set(files) and 'agent.yaml' in files
+    allowed = {'.yaml', '.yml', '.md', '.txt', '.py', '.json', '.safetensors'}
+    for name, content in files.items():
+        path = Path(name)
+        assert not path.is_absolute() and '..' not in path.parts
+        assert path.suffix in allowed and isinstance(content, str) and content.strip()
+    root_text = files['agent.yaml']
+    for line in root_text.splitlines():
+        if '!include' in line:
+            included = line.split('!include', 1)[1].strip()
+            assert included in files, f'Missing include: {included}'
+    parsed = yaml.safe_load(root_text.replace('!include ', ''))
+    assert parsed['model'] == 'gemma-4-31b-it-qat-w4a16-ct'
+    assert 'submit_patch' in parsed['tools']
+    assert len(files) <= 10000
+    return parsed
+
+def write_archive(files, output):
+    validate_files(files)
+    with zipfile.ZipFile(output, 'w', compression=zipfile.ZIP_DEFLATED) as archive:
+        for name, content in sorted(files.items()):
+            archive.writestr(name, content.encode('utf-8'))
+    with zipfile.ZipFile(output) as archive:
+        assert archive.testzip() is None
+        assert sorted(archive.namelist()) == sorted(files)
+        assert archive.namelist().count('agent.yaml') == 1
+    return output
+
+primary = write_archive(PRIMARY_FILES, WORKING / 'submission.zip')
+fallback = write_archive(FALLBACK_FILES, WORKING / 'fallback_submission.zip')
+
+print(f'Primary archive: {primary} ({primary.stat().st_size:,} bytes)')
+print(f'Fallback archive: {fallback} ({fallback.stat().st_size:,} bytes)')
+
+# CELL 9 code
+with zipfile.ZipFile(primary) as archive:
+    names = archive.namelist()
+    print('Archive members:', ', '.join(names))
+    assert names == sorted(PRIMARY_FILES)
+    assert not any(name.startswith('adapters/') for name in names)
+    assert not any('tasks.jsonl' in name or 'patch' in name for name in names)
+print(r"""
+ /\_/\\
+( o.o )  PACKAGE CHECK PASSED
+ > ^ <   submission.zip is ready for the competition evaluator
+         Hidden-test resolution rate: pending Kaggle scoring
+""")
+
+# CELL 10 code

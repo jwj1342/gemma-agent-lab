@@ -1,0 +1,129 @@
+{
+  "forumTopic": {
+    "authorId": 4224096,
+    "authorThumbnailName": "4224096-kg.jpg?t=2024-10-13-07-07-14",
+    "authorUserDisplayName": "508shuto",
+    "authorUserName": "goyashuto",
+    "comments": [
+      {
+        "id": 3530900,
+        "postDate": "2026-10-01T01:13:17.733Z",
+        "rawMarkdown": "I use llama.cpp instead vllm, I use two setups, 2x3060 and 4x3090. In most cases my 4x3090 is busy with my local agent that's the reason to use 2x3060 for Kaggle models.",
+        "content": "<p>I use llama.cpp instead vllm, I use two setups, 2x3060 and 4x3090. In most cases my 4x3090 is busy with my local agent that's the reason to use 2x3060 for Kaggle models.</p>",
+        "parent": {},
+        "author": {
+          "displayName": "Jacek Poplawski",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/jacekpoplawski",
+          "tier": "EXPERT",
+          "id": 1139362,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "totalVotes": 1,
+          "canUpvote": true,
+          "totalUpvotes": 1
+        },
+        "kernelVersion": 0,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "reactions": [
+          {
+            "emoji": "THANK_YOU",
+            "featuredUserNames": [
+              "goyashuto"
+            ],
+            "userCount": 1
+          }
+        ],
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Jacek Poplawski",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+            "url": "/jacekpoplawski",
+            "userName": "jacekpoplawski",
+            "tier": "EXPERT",
+            "id": 1139362,
+            "profileUrl": "/jacekpoplawski",
+            "performanceTier": "EXPERT",
+            "userId": 1139362,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3530596,
+      "postDate": "2026-09-30T14:27:08.057Z",
+      "rawMarkdown": "Hi everyone,\n\nI’m curious how others are evaluating their agents before submitting.\n\nMy current workflow is to run the agent in a Kaggle Notebook with 4× L4 GPUs, then grade the generated patches locally using the official verifier in Docker. I use 4× L4 for generation to keep the hardware close to the competition setup, since execution speed affects what the agent can do before a timeout.\n\nFor now, my evaluation set is limited to 38 tasks from the Rich repository where the none/gold controls behave as expected: no patch is marked unresolved, while the reference patch is marked resolved. I’ve had trouble getting reliable reference-patch validation for other repositories, including FastAPI, in my local grading setup.\n\nI’ve read the related discussions:\n- [Local evaluation setup and differences between the public and private environments](https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/742882)\n- [Gold-patch failures and missing dependencies in the public environment](https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743973)\n- [Docker vs. Kaggle Notebook results, and the hosts’ confirmation that hidden tasks pass with gold patches](https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/744370)\n\nRather than repeating those bug reports, I’d like to hear what practical evaluation workflow people are using in the meantime:\n\n- What hardware and sandbox setup are you using for generation and grading?\n- If you use different GPUs, how do you account for execution-speed differences when setting timeouts?\n- Are you evaluating on a subset of tasks that pass none/gold checks, or have you found a reliable setup covering more repositories?\n\nI’d appreciate hearing what has worked for you. Thanks!",
+      "content": "<p>Hi everyone,</p>\n<p>I’m curious how others are evaluating their agents before submitting.</p>\n<p>My current workflow is to run the agent in a Kaggle Notebook with 4× L4 GPUs, then grade the generated patches locally using the official verifier in Docker. I use 4× L4 for generation to keep the hardware close to the competition setup, since execution speed affects what the agent can do before a timeout.</p>\n<p>For now, my evaluation set is limited to 38 tasks from the Rich repository where the none/gold controls behave as expected: no patch is marked unresolved, while the reference patch is marked resolved. I’ve had trouble getting reliable reference-patch validation for other repositories, including FastAPI, in my local grading setup.</p>\n<p>I’ve read the related discussions:</p>\n<ul>\n<li><a href=\"https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/742882\" target=\"_blank\">Local evaluation setup and differences between the public and private environments</a></li>\n<li><a href=\"https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743973\" target=\"_blank\">Gold-patch failures and missing dependencies in the public environment</a></li>\n<li><a href=\"https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/744370\" target=\"_blank\">Docker vs. Kaggle Notebook results, and the hosts’ confirmation that hidden tasks pass with gold patches</a></li>\n</ul>\n<p>Rather than repeating those bug reports, I’d like to hear what practical evaluation workflow people are using in the meantime:</p>\n<ul>\n<li>What hardware and sandbox setup are you using for generation and grading?</li>\n<li>If you use different GPUs, how do you account for execution-speed differences when setting timeouts?</li>\n<li>Are you evaluating on a subset of tasks that pass none/gold checks, or have you found a reliable setup covering more repositories?</li>\n</ul>\n<p>I’d appreciate hearing what has worked for you. Thanks!</p>",
+      "parent": {},
+      "author": {
+        "displayName": "508shuto",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/4224096-kg.jpg?t=2024-10-13-07-07-14",
+        "url": "/goyashuto",
+        "tier": "EXPERT",
+        "id": 4224096,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 1,
+        "canUpvote": true,
+        "totalUpvotes": 1
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 524,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "enabled": true,
+        "teamLeader": {
+          "displayName": "508shuto",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/4224096-kg.jpg?t=2024-10-13-07-07-14",
+          "url": "/goyashuto",
+          "userName": "goyashuto",
+          "tier": "EXPERT",
+          "id": 4224096,
+          "profileUrl": "/goyashuto",
+          "performanceTier": "EXPERT",
+          "userId": 4224096,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3530596,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 744611,
+    "name": "How are you running local evaluations?",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-30T14:27:08.057385300Z",
+    "tags": [
+      {
+        "id": 17191,
+        "name": "evaluation",
+        "listingUrl": "/search?q=evaluation+tag%3A%22evaluation%22",
+        "tagUrl": "/tags/evaluation",
+        "displayName": "Evaluation"
+      },
+      {
+        "id": 16580,
+        "name": "gpu",
+        "listingUrl": "/search?q=gpu+tag%3A%22gpu%22",
+        "tagUrl": "/tags/gpu",
+        "displayName": "GPU"
+      }
+    ],
+    "totalVotes": 1,
+    "url": "/competitions/gemma-4-developer-agent/discussion/744611",
+    "totalMessages": 1,
+    "authorPerformanceTier": "EXPERT",
+    "authorProgressionOptOut": false
+  }
+}

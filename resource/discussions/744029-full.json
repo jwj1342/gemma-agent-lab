@@ -1,0 +1,58 @@
+{
+  "forumTopic": {
+    "authorId": 14063433,
+    "authorThumbnailName": "14063433-kg.jpg?t=2024-02-26-09-26-21",
+    "authorUserDisplayName": "Francesco Simone",
+    "authorUserName": "francescosimone",
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3529468,
+      "postDate": "2026-09-28T10:23:54.893Z",
+      "rawMarkdown": "If you add wheels to your local wheels directory (for example `typing_inspection`, `inline_snapshot` or `dirty_equals`, which the public `wheels/` folder lacks and which many FastAPI tests import), a local `swegemma` run may keep failing with the same `ModuleNotFoundError` as before. The cause is the cache that `swegemma` uses for unpacked wheels.\n\nThe code is in `swegemma/harness/container_setup.py`, `_build_unpacked_wheels_tar()`:\n\n```python\ncache_dir = Path(tempfile.gettempdir()) / 'swegemma_sp_cache_v8'\ntar_path = cache_dir / f'{cache_name}.tar'\nif tar_path.exists() and tar_path.stat().st_size > 0:\n    return tar_path\n```\n\nIt is called with `cache_name='sp_base'` for all small wheels and `f'sp_whl_{pkg_norm}'` for each large one. Neither key depends on the wheels directory, on which wheels were selected, or on their versions. After the first run, every later run in the same `$TMPDIR` reuses the old tar, whatever `wheels_dir` you pass.\n\nTo reproduce:\n\n1. Run a gold-patch check on a FastAPI task, e.g. `fastapi_15588`, with the public `wheels/`. Collection fails with `ModuleNotFoundError: No module named 'typing_inspection'`.\n2. Copy `wheels/` to a new folder, add `typing_inspection-0.4.4-py3-none-any.whl`, and rerun with `wheels_dir` pointing to the new folder. Same error.\n3. `rm -rf \"$TMPDIR/swegemma_sp_cache_v8\"` and rerun. The gold patch passes (24 tests) and the empty patch now fails for the right reason (exit 1 instead of a collection error).\n\nWorkaround: clear `$TMPDIR/swegemma_sp_cache_v8` whenever you change the wheel set, or run each wheel set with its own `TMPDIR`. A fix on the harness side could put a digest of the selected wheel file names and sizes into `cache_name`, e.g. `sp_base_<sha1>`.",
+      "content": "<p>If you add wheels to your local wheels directory (for example <code>typing_inspection</code>, <code>inline_snapshot</code> or <code>dirty_equals</code>, which the public <code>wheels/</code> folder lacks and which many FastAPI tests import), a local <code>swegemma</code> run may keep failing with the same <code>ModuleNotFoundError</code> as before. The cause is the cache that <code>swegemma</code> uses for unpacked wheels.</p>\n<p>The code is in <code>swegemma/harness/container_setup.py</code>, <code>_build_unpacked_wheels_tar()</code>:</p>\n<pre><code>cache_dir = Path(tempfile.gettempdir()) / 'swegemma_sp_cache_v8'\ntar_path = cache_dir / f'{cache_name}.tar'\nif tar_path.exists() and tar_path.stat().st_size &gt; 0:\n    return tar_path\n</code></pre>\n<p>It is called with <code>cache_name='sp_base'</code> for all small wheels and <code>f'sp_whl_{pkg_norm}'</code> for each large one. Neither key depends on the wheels directory, on which wheels were selected, or on their versions. After the first run, every later run in the same <code>$TMPDIR</code> reuses the old tar, whatever <code>wheels_dir</code> you pass.</p>\n<p>To reproduce:</p>\n<ol>\n<li>Run a gold-patch check on a FastAPI task, e.g. <code>fastapi_15588</code>, with the public <code>wheels/</code>. Collection fails with <code>ModuleNotFoundError: No module named 'typing_inspection'</code>.</li>\n<li>Copy <code>wheels/</code> to a new folder, add <code>typing_inspection-0.4.4-py3-none-any.whl</code>, and rerun with <code>wheels_dir</code> pointing to the new folder. Same error.</li>\n<li><code>rm -rf \"$TMPDIR/swegemma_sp_cache_v8\"</code> and rerun. The gold patch passes (24 tests) and the empty patch now fails for the right reason (exit 1 instead of a collection error).</li>\n</ol>\n<p>Workaround: clear <code>$TMPDIR/swegemma_sp_cache_v8</code> whenever you change the wheel set, or run each wheel set with its own <code>TMPDIR</code>. A fix on the harness side could put a digest of the selected wheel file names and sizes into <code>cache_name</code>, e.g. <code>sp_base_&lt;sha1&gt;</code>.</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Francesco Simone",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/14063433-kg.jpg?t=2024-02-26-09-26-21",
+        "url": "/francescosimone",
+        "tier": "CONTRIBUTOR",
+        "id": 14063433,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "canUpvote": true
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 1215,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Francesco Simone",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/14063433-kg.jpg?t=2024-02-26-09-26-21",
+          "url": "/francescosimone",
+          "userName": "francescosimone",
+          "tier": "CONTRIBUTOR",
+          "id": 14063433,
+          "profileUrl": "/francescosimone",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 14063433,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3529468,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 744029,
+    "name": "swegemma 0.2.7: unpacked-wheel cache ignores the wheel set, so added wheels have no effect locally",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-28T10:23:54.893464800Z",
+    "url": "/competitions/gemma-4-developer-agent/discussion/744029",
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

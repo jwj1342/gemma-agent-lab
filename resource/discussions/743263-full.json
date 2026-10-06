@@ -1,0 +1,84 @@
+{
+  "forumTopic": {
+    "authorId": 36915895,
+    "authorThumbnailName": "default-thumb.png",
+    "authorUserDisplayName": "Vighnesh Hariharan",
+    "authorUserName": "vighneshhariharan",
+    "comments": [
+      {
+        "id": 3528152,
+        "postDate": "2026-09-25T14:18:23.503Z",
+        "rawMarkdown": "check this: https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/742815",
+        "content": "<p>check this: <a href=\"https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/742815\" target=\"_blank\">https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/742815</a></p>",
+        "parent": {},
+        "author": {
+          "displayName": "parthenos",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/15559822-kg.png?t=2026-08-13-14-46-51",
+          "url": "/nihilisticneuralnet",
+          "tier": "MASTER",
+          "id": 15559822,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 486,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "parthenos",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/15559822-kg.png?t=2026-08-13-14-46-51",
+            "url": "/nihilisticneuralnet",
+            "userName": "nihilisticneuralnet",
+            "tier": "MASTER",
+            "id": 15559822,
+            "profileUrl": "/nihilisticneuralnet",
+            "performanceTier": "MASTER",
+            "userId": 15559822,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3528121,
+      "postDate": "2026-09-25T12:42:30.837Z",
+      "rawMarkdown": "\n\nHi! I am 13 years old and live where the legal majority age is 18. I would like to participate in the Gemma 4 Developer Agent Competition and potentially the Paper Track. The Rules state that a minor above 13 is  eligible with Parental Consent and if the Competition Sponsor agrees. So I would like to Contact the Competition Sponsor regarding this.\n\nThank you.",
+      "content": "<p>Hi! I am 13 years old and live where the legal majority age is 18. I would like to participate in the Gemma 4 Developer Agent Competition and potentially the Paper Track. The Rules state that a minor above 13 is  eligible with Parental Consent and if the Competition Sponsor agrees. So I would like to Contact the Competition Sponsor regarding this.\nThank you.</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Vighnesh Hariharan",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+        "url": "/vighneshhariharan",
+        "tier": "CONTRIBUTOR",
+        "id": 36915895,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "canUpvote": true,
+        "totalUpvotes": 1
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false
+    },
+    "firstMessageId": 3528121,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 743263,
+    "name": "Title: 13-year-old participant eligibility with parental consent",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-25T12:42:30.835164200Z",
+    "url": "/competitions/gemma-4-developer-agent/discussion/743263",
+    "totalMessages": 1,
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

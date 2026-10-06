@@ -1,0 +1,52 @@
+% Project and collaboration
+\section{Project and collaboration}
+\sectionframe{05}{Working together}
+
+\begin{frame}{Find your way around the project in 15 minutes}
+\begin{columns}[T,onlytextwidth]
+\column{.48\textwidth}
+\softpanel{teal}{Start here}{\pathcode{README.md}\par Project map and current progress.}
+\softpanel{orange}{Understand the competition}{\pathcode{docs/overview.md}\par\pathcode{docs/data.md}\par Rules, tasks, and what the files mean.}
+\column{.48\textwidth}
+\softpanel{orange}{Explore useful examples}{\pathcode{resource/README.md}\par Official sources and public notebooks.}
+\softpanel{teal}{Try a change}{\pathcode{configs/baseline/}\par Agent instructions and settings.}
+\end{columns}
+% Sources: Existing repository files and directories.
+\note{A new teammate should read the project map first, then the rules and data guide. The resource indexes preserve source evidence; the docs synthesize it. The baseline configuration shows what the agent is instructed to do. The builder packages that configuration rather than running training. Editing slides is now separate: metadata.tex for the cover, sections for content, and figures for diagrams.}
+\end{frame}
+
+\begin{frame}{Where should I put my work?}
+\begin{columns}[T,onlytextwidth]
+\column{.47\textwidth}\eyebrow[teal]{SHARE THROUGH GIT}
+\small\renewcommand{\arraystretch}{1.12}
+\begin{tabularx}{\linewidth}{@{}lX@{}}
+\pathcode{src/} & Our code\\
+\pathcode{configs/} & Agent and training settings\\
+\pathcode{scripts/} & Commands to prepare and run\\
+\pathcode{docs/} & Guides and findings\\
+\pathcode{resource/} & Reading and source indexes\\
+\pathcode{slides/} & This presentation
+\end{tabularx}
+\column{.47\textwidth}\eyebrow{KEEP LARGE FILES SEPARATE}
+\small\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\linewidth}{@{}lX@{}}
+\pathcode{data/} & Original and prepared data\\
+\pathcode{model/} & Base weights and adapters\\
+\pathcode{runs/} & Logs, results, and checkpoints\\
+\pathcode{cache/} & Temporary files
+\end{tabularx}
+\vspace{3mm}\small Document where teammates can obtain each large input.
+\end{columns}
+\vspace{2mm}
+\takeaway{Share code and short result summaries. Keep API tokens in personal settings.}
+% Sources: Project layout and .gitignore. Check redistribution licenses and competition sharing rules before publication.
+
+\end{frame}
+
+\begin{frame}{Make each experiment easy for a teammate to follow}
+\tagline{We plan to use GitHub for shared code and review; local Git is initialized.}
+\vspace{2mm}\input{figures/collaboration-flow}\vspace{5mm}
+\softpanel{orange}{A useful experiment note}{What changed?\quad What improved?\quad What did we learn?}
+% Sources: Proposed collaboration conventions; team size and sharing restrictions: official Rules.
+\note{An issue records a hypothesis and success criteria. A feature branch isolates the implementation. A pull request lets teammates inspect code and evidence before it reaches the shared baseline. Also retain code/model revisions, seeds, budgets, and logs in the experiment record. Use the official Kaggle team and a private repository first, and check redistribution rights before publication.}
+\end{frame}

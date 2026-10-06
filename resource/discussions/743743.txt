@@ -1,0 +1,14 @@
+# You can run Gemma 4 31B QAT locally with llama.cpp
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743743
+
+## 3528877 /jacekpoplawski TOPIC
+If you're struggling to run Gemma 4 31B locally due to VRAM requirements, llama.cpp is worth trying.
+The QAT model is available as GGUF, and llama.cpp lets you offload part of the model to system RAM when it doesn't fully fit in VRAM. This makes it possible to experiment locally without consuming Kaggle GPU quota.
+
+You can also run it with llama-server, which exposes an OpenAI-compatible API, making it easy to plug into your own agent harness.
+
+Links:
+- https://huggingface.co/unsloth/gemma-4-31B-it-qat-GGUF
+- https://github.com/ggml-org/llama.cpp
+
+Has anyone else tried this setup for the competition?

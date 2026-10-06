@@ -1,0 +1,185 @@
+{
+  "forumTopic": {
+    "authorId": 14047490,
+    "authorThumbnailName": "14047490-kg.png?t=2026-03-20-15-50-47",
+    "authorUserDisplayName": "Avery Wright",
+    "authorUserName": "averywright",
+    "comments": [
+      {
+        "id": 3530752,
+        "postDate": "2026-09-30T19:58:49.873Z",
+        "rawMarkdown": "Thanks, I will look into it.",
+        "content": "<p>Thanks, I will look into it.</p>",
+        "replies": [
+          {
+            "id": 3530866,
+            "postDate": "2026-10-01T00:00:31.713Z",
+            "rawMarkdown": "Any update? Current harness readme says (since sep 25 update).\n\n>Compaction (EventsCompactionConfig):\n\n>compaction_interval = 5\n\n>token_threshold = 14,336\n\nWhich matches public notebook and that's the value I used in local runs.\n\nBut yeah +1 on confirmation. Would be great if you can tell which value scorer matches, updated 14,336 or still 32,768",
+            "content": "<p>Any update? Current harness readme says (since sep 25 update).</p>\n<blockquote>\n  <p>Compaction (EventsCompactionConfig):</p>\n  <p>compaction_interval = 5</p>\n  <p>token_threshold = 14,336</p>\n</blockquote>\n<p>Which matches public notebook and that's the value I used in local runs.</p>\n<p>But yeah +1 on confirmation. Would be great if you can tell which value scorer matches, updated 14,336 or still 32,768</p>",
+            "parent": {},
+            "author": {
+              "displayName": "Oleksii Zhukov",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/6082025-kg.png?t=2026-08-01-19-49-46",
+              "url": "/zhukovoleksiy",
+              "tier": "MASTER",
+              "id": 6082025,
+              "progressionOptOut": false
+            },
+            "authorType": "COMMENT",
+            "votes": {
+              "totalVotes": 2,
+              "canUpvote": true,
+              "totalUpvotes": 2
+            },
+            "kernelVersion": 0,
+            "competitionRanking": 281,
+            "feedbackTrackingData": {},
+            "isThankYou": false,
+            "teamUpInfo": {
+              "teamLeader": {
+                "displayName": "Oleksii Zhukov",
+                "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/6082025-kg.png?t=2026-08-01-19-49-46",
+                "url": "/zhukovoleksiy",
+                "userName": "zhukovoleksiy",
+                "tier": "MASTER",
+                "id": 6082025,
+                "profileUrl": "/zhukovoleksiy",
+                "performanceTier": "MASTER",
+                "userId": 6082025,
+                "progressionOptOut": false
+              },
+              "intro": ""
+            }
+          },
+          {
+            "id": 3530875,
+            "postDate": "2026-10-01T00:23:18.813Z",
+            "rawMarkdown": "I got the same issue. Wasted a daily submission 😭",
+            "content": "<p>I got the same issue. Wasted a daily submission 😭</p>",
+            "parent": {},
+            "author": {
+              "displayName": "Dat LQ.",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/17180946-kg.jpeg?t=2023-10-22-08-20-33",
+              "url": "/nightfurylqd",
+              "tier": "CONTRIBUTOR",
+              "id": 17180946,
+              "progressionOptOut": false
+            },
+            "authorType": "COMMENT",
+            "votes": {
+              "totalVotes": 1,
+              "canUpvote": true,
+              "totalUpvotes": 1
+            },
+            "kernelVersion": 0,
+            "competitionRanking": 1405,
+            "feedbackTrackingData": {},
+            "isThankYou": false,
+            "teamUpInfo": {
+              "teamLeader": {
+                "displayName": "Dat LQ.",
+                "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/17180946-kg.jpeg?t=2023-10-22-08-20-33",
+                "url": "/nightfurylqd",
+                "userName": "nightfurylqd",
+                "tier": "CONTRIBUTOR",
+                "id": 17180946,
+                "profileUrl": "/nightfurylqd",
+                "performanceTier": "CONTRIBUTOR",
+                "userId": 17180946,
+                "progressionOptOut": false
+              },
+              "intro": ""
+            }
+          }
+        ],
+        "parent": {},
+        "author": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "progressionOptOut": false
+        },
+        "authorType": "ADMIN",
+        "votes": {
+          "totalVotes": 3,
+          "canUpvote": true,
+          "totalUpvotes": 3
+        },
+        "kernelVersion": 0,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Ryan Holbrook",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+            "url": "/ryanholbrook",
+            "userName": "ryanholbrook",
+            "tier": "STAFF",
+            "id": 2003505,
+            "profileUrl": "/ryanholbrook",
+            "performanceTier": "STAFF",
+            "userId": 2003505,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3530742,
+      "postDate": "2026-09-30T19:34:01.137Z",
+      "rawMarkdown": "Hi @ryanholbrook, following up on https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743456 with evidence from local runs using the official wheels (swegemma 0.2.7, adk-submission 0.2.11, google-adk 1.36.1, vLLM 0.19.1):\n\nCompaction can't fire before the overflow. ADK's compaction processor checks the previous prompt's token count against token_threshold before each model call. HARNESS_README §7.2 lists 32,768 for scoring, but vLLM rejects any request where prompt + max_output_tokens > 32,768, so the prompt never reaches the threshold and the session ends with ContextWindowExceededError. With the getting-started notebook's 14,336, compaction fires and overflows are rare.\nThe overflow discards the agent's work. ContextWindowExceededError is caught by the generic except Exception in run_agent_sandbox, which skips the fallback git diff capture (only TimeoutError / LlmCallsLimitExceededError reach it). The task scores 0 even when edits were applied: 44 of 44 overflowed sessions had an empty patch, 14 of them after successful edits.\nIn our runs: about 12% of sessions overflowed at a threshold of 14,336, and 17–33% at 32,768 (depending on max_output_tokens).Compaction can't trigger at token_threshold 32,768, and overflow then discards the patch (follow-up to #743456)\n\nCould you confirm the scorer's token_threshold? ",
+      "content": "<p>Hi <a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a>, following up on <a href=\"https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743456\" target=\"_blank\">https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743456</a> with evidence from local runs using the official wheels (swegemma 0.2.7, adk-submission 0.2.11, google-adk 1.36.1, vLLM 0.19.1):</p>\n<p>Compaction can't fire before the overflow. ADK's compaction processor checks the previous prompt's token count against token_threshold before each model call. HARNESS_README §7.2 lists 32,768 for scoring, but vLLM rejects any request where prompt + max_output_tokens &gt; 32,768, so the prompt never reaches the threshold and the session ends with ContextWindowExceededError. With the getting-started notebook's 14,336, compaction fires and overflows are rare.\nThe overflow discards the agent's work. ContextWindowExceededError is caught by the generic except Exception in run_agent_sandbox, which skips the fallback git diff capture (only TimeoutError / LlmCallsLimitExceededError reach it). The task scores 0 even when edits were applied: 44 of 44 overflowed sessions had an empty patch, 14 of them after successful edits.\nIn our runs: about 12% of sessions overflowed at a threshold of 14,336, and 17–33% at 32,768 (depending on max_output_tokens).Compaction can't trigger at token_threshold 32,768, and overflow then discards the patch (follow-up to #743456)</p>\n<p>Could you confirm the scorer's token_threshold? </p>",
+      "parent": {},
+      "author": {
+        "displayName": "Avery Wright",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/14047490-kg.png?t=2026-03-20-15-50-47",
+        "url": "/averywright",
+        "tier": "CONTRIBUTOR",
+        "id": 14047490,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 2,
+        "canUpvote": true,
+        "totalUpvotes": 2
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 475,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Avery Wright",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/14047490-kg.png?t=2026-03-20-15-50-47",
+          "url": "/averywright",
+          "userName": "averywright",
+          "tier": "CONTRIBUTOR",
+          "id": 14047490,
+          "profileUrl": "/averywright",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 14047490,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3530742,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 744692,
+    "name": "Compaction can't trigger at token_threshold 32,768, and overflow then discards the patch (follow-up to #743456)",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-30T19:34:01.136558700Z",
+    "totalVotes": 2,
+    "url": "/competitions/gemma-4-developer-agent/discussion/744692",
+    "totalMessages": 3,
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

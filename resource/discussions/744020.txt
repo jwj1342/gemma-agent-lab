@@ -1,0 +1,11 @@
+# Is this a python only competition for bug fixes and feature requests?
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/744020
+
+## 3529451 /aroraaman TOPIC
+As per the data tab - "This competition evaluates AI software engineering agents on their ability to solve real-world Python bug fixes and feature requests."
+
+## 3529467 /ayuraj COMMENT
+seems like. also hello. :)
+
+## 3529971 /aroraaman TOPIC
+Oh hey!! :) Good to see you here :) 

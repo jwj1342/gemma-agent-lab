@@ -1,0 +1,218 @@
+{
+  "forumTopic": {
+    "authorId": 12607271,
+    "authorThumbnailName": "12607271-kg.png?t=2026-04-07-19-13-07",
+    "authorUserDisplayName": "RISHAV KUMAR",
+    "authorUserName": "atomstack001",
+    "comments": [
+      {
+        "id": 3530769,
+        "postDate": "2026-09-30T20:33:55.190Z",
+        "rawMarkdown": "Fix incoming.",
+        "content": "<p>Fix incoming.</p>",
+        "replies": [
+          {
+            "id": 3531265,
+            "postDate": "2026-10-01T15:18:32.503Z",
+            "rawMarkdown": "@ryanholbrook is this because of adk or vllm?",
+            "content": "<p><a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a> is this because of adk or vllm?</p>",
+            "parent": {},
+            "author": {
+              "displayName": "RISHAV KUMAR",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/12607271-kg.png?t=2026-04-07-19-13-07",
+              "url": "/atomstack001",
+              "tier": "CONTRIBUTOR",
+              "id": 12607271,
+              "progressionOptOut": false
+            },
+            "authorType": "TOPIC",
+            "votes": {
+              "canUpvote": true
+            },
+            "kernelVersion": 0,
+            "feedbackTrackingData": {},
+            "isThankYou": false,
+            "teamUpInfo": {
+              "enabled": true,
+              "teamLeader": {
+                "displayName": "RISHAV KUMAR",
+                "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/12607271-kg.png?t=2026-04-07-19-13-07",
+                "url": "/atomstack001",
+                "userName": "atomstack001",
+                "tier": "CONTRIBUTOR",
+                "id": 12607271,
+                "profileUrl": "/atomstack001",
+                "performanceTier": "CONTRIBUTOR",
+                "userId": 12607271,
+                "progressionOptOut": false
+              },
+              "intro": ""
+            }
+          },
+          {
+            "id": 3531266,
+            "postDate": "2026-10-01T15:22:02.333Z",
+            "rawMarkdown": "@ryanholbrook I have setup this whole repo locally, sicen the repo deps are changing can u recommend how to patch these issues in my local after the fix is done?",
+            "content": "<p><a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a> I have setup this whole repo locally, sicen the repo deps are changing can u recommend how to patch these issues in my local after the fix is done?</p>",
+            "replies": [
+              {
+                "id": 3531314,
+                "postDate": "2026-10-01T17:02:45.830Z",
+                "rawMarkdown": "The fix should be in the current wheelhouse. I recommend just updating the packages.",
+                "content": "<p>The fix should be in the current wheelhouse. I recommend just updating the packages.</p>",
+                "parent": {},
+                "author": {
+                  "displayName": "Ryan Holbrook",
+                  "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+                  "url": "/ryanholbrook",
+                  "tier": "STAFF",
+                  "id": 2003505,
+                  "progressionOptOut": false
+                },
+                "authorType": "ADMIN",
+                "votes": {
+                  "canUpvote": true
+                },
+                "kernelVersion": 0,
+                "feedbackTrackingData": {},
+                "isThankYou": false,
+                "teamUpInfo": {
+                  "teamLeader": {
+                    "displayName": "Ryan Holbrook",
+                    "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+                    "url": "/ryanholbrook",
+                    "userName": "ryanholbrook",
+                    "tier": "STAFF",
+                    "id": 2003505,
+                    "profileUrl": "/ryanholbrook",
+                    "performanceTier": "STAFF",
+                    "userId": 2003505,
+                    "progressionOptOut": false
+                  },
+                  "intro": ""
+                }
+              }
+            ],
+            "parent": {},
+            "author": {
+              "displayName": "RISHAV KUMAR",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/12607271-kg.png?t=2026-04-07-19-13-07",
+              "url": "/atomstack001",
+              "tier": "CONTRIBUTOR",
+              "id": 12607271,
+              "progressionOptOut": false
+            },
+            "authorType": "TOPIC",
+            "votes": {
+              "canUpvote": true
+            },
+            "kernelVersion": 0,
+            "feedbackTrackingData": {},
+            "isThankYou": false,
+            "teamUpInfo": {
+              "enabled": true,
+              "teamLeader": {
+                "displayName": "RISHAV KUMAR",
+                "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/12607271-kg.png?t=2026-04-07-19-13-07",
+                "url": "/atomstack001",
+                "userName": "atomstack001",
+                "tier": "CONTRIBUTOR",
+                "id": 12607271,
+                "profileUrl": "/atomstack001",
+                "performanceTier": "CONTRIBUTOR",
+                "userId": 12607271,
+                "progressionOptOut": false
+              },
+              "intro": ""
+            }
+          }
+        ],
+        "parent": {},
+        "author": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "progressionOptOut": false
+        },
+        "authorType": "ADMIN",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Ryan Holbrook",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+            "url": "/ryanholbrook",
+            "userName": "ryanholbrook",
+            "tier": "STAFF",
+            "id": 2003505,
+            "profileUrl": "/ryanholbrook",
+            "performanceTier": "STAFF",
+            "userId": 2003505,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3530716,
+      "postDate": "2026-09-30T18:50:40.607Z",
+      "rawMarkdown": "`read_file` tool call with line ranges always fail.\n\nIs anyone else is facing this ?",
+      "content": "<p><code>read_file</code> tool call with line ranges always fail.</p>\n<p>Is anyone else is facing this ?</p>",
+      "parent": {},
+      "author": {
+        "displayName": "RISHAV KUMAR",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/12607271-kg.png?t=2026-04-07-19-13-07",
+        "url": "/atomstack001",
+        "tier": "CONTRIBUTOR",
+        "id": 12607271,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 2,
+        "canUpvote": true,
+        "totalUpvotes": 2
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "enabled": true,
+        "teamLeader": {
+          "displayName": "RISHAV KUMAR",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/12607271-kg.png?t=2026-04-07-19-13-07",
+          "url": "/atomstack001",
+          "userName": "atomstack001",
+          "tier": "CONTRIBUTOR",
+          "id": 12607271,
+          "profileUrl": "/atomstack001",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 12607271,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3530716,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 744678,
+    "name": "\"'>' not supported between instances of 'int' and 'str'\". Is this same for everyone?",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-30T18:50:40.605490100Z",
+    "totalVotes": 2,
+    "url": "/competitions/gemma-4-developer-agent/discussion/744678",
+    "totalMessages": 4,
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

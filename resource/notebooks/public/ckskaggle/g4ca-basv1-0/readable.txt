@@ -1,0 +1,364 @@
+# CELL 0 code
+import hashlib, importlib.util, os, pkgutil, shutil, zipfile
+from pathlib import Path
+
+ON_KAGGLE = Path("/kaggle/working").exists()
+OUT = Path(os.environ.get("SUBMISSION_OUT", "/kaggle/working" if ON_KAGGLE else "."))
+BUNDLE = Path(os.environ.get("BUNDLE_DIR", "/tmp/bundle"))
+
+
+def find_data_dir():
+    if os.environ.get("GEMMA_AGENT_DATA"):
+        return Path(os.environ["GEMMA_AGENT_DATA"])
+    for root in [Path("/kaggle/input")]:
+        if root.exists():
+            for readme in root.rglob("HARNESS_README.md"):
+                return readme.parent
+    return None
+
+
+DATA_DIR = find_data_dir()
+shutil.rmtree(BUNDLE, ignore_errors=True)
+BUNDLE.mkdir(parents=True)
+
+
+def write(rel, text):
+    path = BUNDLE / rel
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8", newline="\n")
+
+
+print(f"output dir: {OUT}\nbundle dir: {BUNDLE}\ncompetition data: {DATA_DIR or 'not attached'}")
+
+# CELL 1 markdown
+## 1 · Bundle files
+
+# CELL 2 code
+write('agent.yaml', r'''name: swe_base_agent
+description: Budget-aware base-model software engineering agent for repository issue tasks.
+model: gemma-4-31b-it-qat-w4a16-ct
+instruction: !include prompts/system.md
+generate_content_config: !include configs/sampling.yaml
+tools:
+  - run_command
+  - submit_patch
+  - get_status
+  - read_file
+  - edit_file
+  - write_file
+  - get_code_neighbors
+  - search_similar_code
+  - get_code_subgraph
+  - agent_tool:
+      config_path: sub_agents/code_analyzer.yaml
+      skip_summarization: true
+''')
+
+# CELL 3 code
+write('configs/sampling.yaml', r'''temperature: 0.2
+top_p: 0.95
+top_k: 40
+max_output_tokens: 8192
+thinking_config:
+  thinking_budget: 4096
+  include_thoughts: false
+''')
+
+# CELL 4 code
+write('prompts/analyzer.md', r'''You are a read-only code investigator working for a coding agent that has a limited budget to fix an issue. Use at most 5 tool calls, then answer.
+
+Do not edit files and do not call submit_patch.
+
+1. Search for the names in the request with run_command (grep -rn) or search_similar_code. Pass search_similar_code a symbol name, not a sentence.
+2. Use get_code_neighbors when the entry point calls into the faulty code, to find callers or callees.
+3. Read only the relevant lines with read_file.
+
+Reply in under 150 words:
+
+- the file path and line numbers to change
+- the root cause, in one or two sentences
+- the minimal code change
+- one targeted test command, if a relevant test file exists
+
+Say which points you confirmed in the code and which are guesses.
+''')
+
+# CELL 5 code
+write('prompts/system.md', r'''You are an autonomous software engineer fixing exactly one issue in a Python repository.
+
+The evaluator applies your patch to a fresh copy of the repository, adds hidden tests, and runs pytest. The task passes only if those tests pass.
+
+Budget:
+
+- Your time and tool-call budget are listed in the task message. Aim to finish in about 15 tool calls; the whole benchmark shares a fixed time limit.
+- The session ends as soon as the budget runs out. Edits already made are still captured and graded, so make the fix early and verify afterwards. A task with no edit always scores zero.
+- Keep each response short: reason in a few sentences, then call a tool.
+
+Follow this workflow:
+
+1. Read the issue. Note the exact names it mentions: functions, classes, parameters, error messages, and the expected behavior.
+2. Locate the code in one or two calls. Use run_command with grep -rn on a distinctive name, or search_similar_code with a symbol name (not a sentence). Call code_analyzer only if that fails, and at most once; pass it the issue summary and the names you searched for.
+3. Read only the relevant lines with read_file, using start_line and end_line.
+4. Make the smallest source change that fixes the root cause with edit_file. Keep each edit small and split large changes into several edits. Match error messages, exception types, and signatures from the issue exactly. Preserve public APIs and local coding style.
+5. Run one targeted check: a specific test file, for example python -m pytest tests/test_module.py -q -x -k keyword, or a short python -c snippet. If it shows your change is wrong, fix it once.
+6. Call submit_patch. It must be your final tool call.
+
+Rules:
+
+- Never edit test files, pytest.ini, or conftest.py. The evaluator discards test changes, and the harness created pytest.ini and conftest.py.
+- Never run the full test suite (bare pytest, pytest ., or unittest discover). Always name a test file.
+- Put scratch scripts in /tmp, never in /workspace. Anything left in /workspace becomes part of the patch.
+- The sandbox is offline and all dependencies are installed. Do not run pip install and do not search outside /workspace.
+- If a test fails for reasons unrelated to your change, such as missing fixtures or import errors elsewhere, ignore it and submit.
+- get_status and submit_patch are free. When a tool response includes a budget warning, stop exploring and call submit_patch.
+''')
+
+# CELL 6 code
+write('sub_agents/code_analyzer.yaml', r'''name: code_analyzer
+description: Read-only investigator. Pass it the issue summary and the names you already searched for; it returns file paths, line numbers, the root cause, and a minimal fix.
+model: gemma-4-31b-it-qat-w4a16-ct
+instruction: !include ../prompts/analyzer.md
+generate_content_config: !include ../configs/sampling.yaml
+tools:
+  - run_command
+  - read_file
+  - get_code_neighbors
+  - search_similar_code
+  - get_code_subgraph
+''')
+
+# CELL 7 markdown
+## 2 · Rule checker
+
+Same code as `tools/check_submission.py`.
+
+# CELL 8 code
+"""Check a submission directory or zip against the HARNESS_README rules.
+
+This approximates the official validator (adk-submission), which is not
+installed locally. Usage: python tools/check_submission.py submission.zip
+"""
+import re
+import sys
+import tempfile
+import zipfile
+from pathlib import Path
+
+import yaml
+
+TOOLS = {"run_command", "submit_patch", "get_status", "read_file", "edit_file", "write_file",
+         "get_code_neighbors", "search_similar_code", "get_code_subgraph"}
+EXTS = {".yaml", ".yml", ".md", ".txt", ".py", ".json", ".safetensors"}
+GEN_KEYS = {"temperature", "top_p", "top_k", "max_output_tokens", "presence_penalty", "frequency_penalty",
+            "stop_sequences", "response_mime_type", "seed", "thinking_config"}
+STATE_VARS = {"problem_description", "hints"}
+ROOT_NAMES = ("agent.yaml", "agent.yml", "root_agent.yaml", "root_agent.yml")
+
+
+class Report:
+    def __init__(self):
+        self.errors, self.notes = [], []
+
+
+def _loader(report, root, base, depth):
+    class Loader(yaml.SafeLoader):
+        pass
+
+    def include(loader, node):
+        rel = loader.construct_scalar(node)
+        if rel.startswith("/") or "\0" in rel or re.match(r"^[A-Za-z]:", rel):
+            report.errors.append(f"absolute include: {rel}")
+            return None
+        target = (base / rel).resolve()
+        if root not in target.parents:
+            report.errors.append(f"include escapes root: {rel}")
+            return None
+        if not target.is_file():
+            report.errors.append(f"include missing: {rel} (from {base.name}/)")
+            return None
+        if target.suffix in (".md", ".txt"):
+            return target.read_text(encoding="utf-8")
+        return _load(report, root, target, depth + 1)
+
+    Loader.add_constructor("!include", include)
+    return Loader
+
+
+def _load(report, root, path, depth=0):
+    if depth > 10:
+        report.errors.append("include depth > 10")
+        return None
+    return yaml.load(path.read_text(encoding="utf-8"), Loader=_loader(report, root, path.parent, depth))
+
+
+def _check_agent(report, root, cfg, where, models):
+    if not isinstance(cfg, dict):
+        report.errors.append(f"{where}: not a mapping")
+        return
+    if cfg.get("model"):
+        models.add(cfg["model"].split("/")[-1])
+    if cfg.get("adapter") and not (root / "adapters" / cfg["adapter"] / "adapter_model.safetensors").is_file():
+        report.errors.append(f"{where}: adapter {cfg['adapter']} missing")
+    instruction = cfg.get("instruction") or ""
+    for var in re.findall(r"\{+([^{}]*)\}+", instruction):
+        name = var.strip().rstrip("?")
+        if name.isidentifier() and name not in STATE_VARS and not var.endswith("?"):
+            report.errors.append(f"{where}: instruction placeholder {{{var}}} is not in session state")
+    gcc = cfg.get("generate_content_config") or {}
+    for key in gcc:
+        if key not in GEN_KEYS:
+            report.errors.append(f"{where}: generate_content_config.{key} not allowed")
+    if not 1 <= gcc.get("max_output_tokens", 16384) <= 32768:
+        report.errors.append(f"{where}: max_output_tokens out of range")
+    budget = (gcc.get("thinking_config") or {}).get("thinking_budget", 4096)
+    if not 1 <= budget <= 32768:
+        report.errors.append(f"{where}: thinking_budget out of range")
+    for tool in cfg.get("tools") or []:
+        if isinstance(tool, str):
+            if tool not in TOOLS:
+                report.errors.append(f"{where}: unknown tool {tool}")
+        elif isinstance(tool, dict) and "agent_tool" in tool:
+            config_path = tool["agent_tool"].get("config_path")
+            path = root / config_path
+            if not path.is_file():
+                report.errors.append(f"{where}: agent_tool config_path missing: {config_path}")
+            else:
+                _check_agent(report, root, _load(report, root, path), config_path, models)
+        else:
+            report.errors.append(f"{where}: unrecognised tool entry {tool!r}")
+    for sub in cfg.get("sub_agents") or []:
+        if not (isinstance(sub, dict) and set(sub) == {"config_path"}):
+            keys = list(sub) if isinstance(sub, dict) else sub
+            report.errors.append(f"{where}: sub_agents entry must be {{config_path: ...}}, got {keys}")
+            continue
+        path = root / sub["config_path"]
+        if not path.is_file():
+            report.errors.append(f"{where}: sub_agent config_path missing: {sub['config_path']}")
+        else:
+            _check_agent(report, root, _load(report, root, path), sub["config_path"], models)
+    for skill in cfg.get("skills") or []:
+        skill_md = root / skill / "SKILL.md"
+        if not skill_md.is_file():
+            report.errors.append(f"{where}: skill dir {skill} has no SKILL.md")
+            continue
+        front = yaml.safe_load(skill_md.read_text(encoding="utf-8").split("---")[1])
+        if not re.fullmatch(r"[a-z0-9]+(-[a-z0-9]+)*", front.get("name", "")):
+            report.notes.append(f"{where}: skill name {front.get('name')!r} is not kebab-case (needs ADK feature flag)")
+
+
+def check_dir(root, report=None):
+    report = report or Report()
+    root = Path(root).resolve()
+    roots = [n for n in ROOT_NAMES if (root / n).is_file()]
+    if len(roots) != 1:
+        report.errors.append(f"expected exactly one root config, found {roots}")
+        return report
+    total = 0
+    for f in root.rglob("*"):
+        if f.is_symlink():
+            report.errors.append(f"symlink: {f.relative_to(root)}")
+        if f.is_file():
+            total += f.stat().st_size
+            if f.suffix not in EXTS:
+                report.errors.append(f"disallowed extension: {f.relative_to(root)}")
+    if total >= 3 * 1024**3:
+        report.errors.append(f"total size {total} >= 3 GiB")
+    models = set()
+    _check_agent(report, root, _load(report, root, root / roots[0]), roots[0], models)
+    if len(models) != 1:
+        report.errors.append(f"expected one base model, found {models}")
+    eval_config = root / "eval_config.yaml"
+    report.notes.append("eval_config: " + (str(yaml.safe_load(eval_config.read_text())) if eval_config.is_file()
+                                           else "not included (harness defaults)"))
+    report.notes.append(f"files={sum(1 for f in root.rglob('*') if f.is_file())} size={total} bytes models={models}")
+    return report
+
+
+def check(target):
+    """Check a directory or .zip; print the report and return True if it passes."""
+    target = Path(target)
+    report = Report()
+    if target.suffix == ".zip":
+        with zipfile.ZipFile(target) as archive:
+            names = archive.namelist()
+            bad = [n for n in names if "\\" in n or n.startswith("/")]
+            if bad:
+                report.errors.append(f"bad zip entry names: {bad}")
+            report.notes.append(f"zip entries: {sorted(names)}")
+            extracted = Path(tempfile.mkdtemp())
+            archive.extractall(extracted)
+        check_dir(extracted, report)
+    else:
+        check_dir(target, report)
+    for note in report.notes:
+        print("NOTE ", note)
+    for error in report.errors:
+        print("ERROR", error)
+    print("RESULT:", "FAIL" if report.errors else "PASS")
+    return not report.errors
+
+# CELL 9 code
+assert check(BUNDLE), 'bundle failed validation'
+
+# CELL 10 markdown
+## 3 · Official validator
+
+# CELL 11 code
+# The competition's own validator may be installed in the Kaggle image. If it is, run it;
+# it is the real check that our checker only approximates.
+for module in ("adk_submission", "swegemma"):
+    print(module, "installed" if importlib.util.find_spec(module) else "not installed")
+
+if importlib.util.find_spec("adk_submission"):
+    import adk_submission
+    found = {}
+    for info in pkgutil.walk_packages(adk_submission.__path__, "adk_submission."):
+        try:
+            module = importlib.import_module(info.name)
+        except Exception:
+            continue
+        for name in ("validate_directory", "validate_single_declared_model"):
+            if hasattr(module, name):
+                found.setdefault(name, getattr(module, name))
+    for name, fn in found.items():
+        try:
+            print(f"{name}: {fn(BUNDLE)!r}")
+        except Exception as exc:
+            print(f"{name} raised {type(exc).__name__}: {exc}")
+    if not found:
+        print("adk_submission has no validate_directory; check its docs for the entry point")
+
+# CELL 12 markdown
+## 4 · Compare with the official sample
+
+# CELL 13 code
+def _strip_tags(text):
+    return text.replace('!include ', '')
+
+sample = DATA_DIR / "sample_submission" if DATA_DIR else None
+if sample and sample.is_dir():
+    print("Control: the official sample must pass our checker too.")
+    assert check(sample), "checker rejects the official sample; the checker needs fixing"
+    ours = yaml.safe_load(_strip_tags((BUNDLE / "agent.yaml").read_text()))
+    theirs = yaml.safe_load(_strip_tags((sample / "agent.yaml").read_text()))
+    print("top-level keys only in ours:  ", sorted(set(ours) - set(theirs)))
+    print("top-level keys only in sample:", sorted(set(theirs) - set(ours)))
+else:
+    print("Attach the competition data to compare against sample_submission.")
+
+# CELL 14 markdown
+## 5 · Package
+
+# CELL 15 code
+zip_path = OUT / "submission.zip"
+zip_path.unlink(missing_ok=True)
+with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as archive:
+    for path in sorted(p for p in BUNDLE.rglob("*") if p.is_file()):
+        info = zipfile.ZipInfo(path.relative_to(BUNDLE).as_posix(), date_time=(1980, 1, 1, 0, 0, 0))
+        info.compress_type = zipfile.ZIP_DEFLATED
+        info.external_attr = 0o644 << 16
+        archive.writestr(info, path.read_bytes())
+
+print(f"{zip_path} ({zip_path.stat().st_size} bytes, sha256 {hashlib.sha256(zip_path.read_bytes()).hexdigest()[:12]})")
+# Fail the notebook rather than hand Kaggle a broken archive.
+assert check(zip_path), "submission.zip failed validation"

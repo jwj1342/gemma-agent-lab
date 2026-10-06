@@ -1,0 +1,99 @@
+{
+  "forumTopic": {
+    "authorId": 23041763,
+    "authorThumbnailName": "default-thumb.png",
+    "authorUserDisplayName": "THEODOROS ISLAMIDIS",
+    "authorUserName": "tislamidis",
+    "comments": [
+      {
+        "id": 3531404,
+        "postDate": "2026-10-01T19:50:42.320Z",
+        "rawMarkdown": "it's an issue with prefix numbers, whitespaces and indentation are already handled automatically\n\nprompt works for this, something along the lines like - \"strip any line-number prefixes\" (there could be other optimal ways)\n\nthere are other causes as well, like - the model is hallucinating if the context grows big enough (a fix can be like - a fresh read before every edit), will need testing for each case",
+        "content": "<p>it's an issue with prefix numbers, whitespaces and indentation are already handled automatically</p>\n<p>prompt works for this, something along the lines like - \"strip any line-number prefixes\" (there could be other optimal ways)</p>\n<p>there are other causes as well, like - the model is hallucinating if the context grows big enough (a fix can be like - a fresh read before every edit), will need testing for each case</p>",
+        "parent": {},
+        "author": {
+          "displayName": "g john rao",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/14464632-kg.jpg?t=2025-04-02-06-53-25",
+          "url": "/jaejohn",
+          "tier": "MASTER",
+          "id": 14464632,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 128,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Firat Gonen",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2332181-kg.jpeg?t=2023-11-21-11-00-29",
+            "url": "/frtgnn",
+            "userName": "frtgnn",
+            "tier": "GRANDMASTER",
+            "id": 2332181,
+            "profileUrl": "/frtgnn",
+            "performanceTier": "GRANDMASTER",
+            "userId": 2332181,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3531390,
+      "postDate": "2026-10-01T19:21:15.530Z",
+      "rawMarkdown": "hello everyone whenever my agent tries to use edit_file i get the: {'status': 'error', 'error_type': 'FileEditError', 'error_message': \"Failed to replace: old_string not found.\n\nIts the only tool that my agent fails to use, all the others seem to work fine except for that one. Is there an issue with the harness or the tools that i dont know about?",
+      "content": "<p>hello everyone whenever my agent tries to use edit_file i get the: {'status': 'error', 'error_type': 'FileEditError', 'error_message': \"Failed to replace: old_string not found.</p>\n<p>Its the only tool that my agent fails to use, all the others seem to work fine except for that one. Is there an issue with the harness or the tools that i dont know about?</p>",
+      "parent": {},
+      "author": {
+        "displayName": "THEODOROS ISLAMIDIS",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+        "url": "/tislamidis",
+        "tier": "CONTRIBUTOR",
+        "id": 23041763,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "canUpvote": true
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 125,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "THEODOROS ISLAMIDIS",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/tislamidis",
+          "userName": "tislamidis",
+          "tier": "CONTRIBUTOR",
+          "id": 23041763,
+          "profileUrl": "/tislamidis",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 23041763,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3531390,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 745003,
+    "name": "old_string issue",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-10-01T19:21:15.530962300Z",
+    "url": "/competitions/gemma-4-developer-agent/discussion/745003",
+    "totalMessages": 1,
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

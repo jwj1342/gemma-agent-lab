@@ -1,0 +1,5 @@
+# Official images per task?
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/744355
+
+## 3530091 /ayuraj TOPIC
+I am writing to see if the hosts of this competition would like to release official public images per tasks. This might be easier to use with sandboxes. 

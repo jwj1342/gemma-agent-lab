@@ -1,0 +1,10 @@
+{
+  "messages": [
+    {
+      "id": 3532354,
+      "postDate": "2026-10-03T11:10:24.183Z",
+      "content": "<p>The agent submitted a patch for “Automate release preparation,” but\nvalidation stopped while collecting tests/test_prepare_release.py:</p>\n<p>ModuleNotFoundError: No module named 'scripts.prepare_release'</p>\n<p>In another run, after that module existed, collection stopped with:</p>\n<p>ImportError: cannot import name 'RELEASE_NOTES_HEADER' from\n'scripts.prepare_release'</p>\n<p>The task’s problem statement does not mention the module path or constant\nname. These names appear in test_patch, which the agent does not see during\npatch generation. Since pytest stops at collection, it never checks the\nbehavior of an implementation using a different interface.</p>\n<p>Is this expected for the public training task, or could its validation be\nadjusted to test the required behavior without depending on names absent\nfrom the issue description? I’m trying to understand how a generic agent\nshould handle this case.</p>",
+      "rawMarkdown": "The agent submitted a patch for “Automate release preparation,” but\nvalidation stopped while collecting tests/test_prepare_release.py:\n\nModuleNotFoundError: No module named 'scripts.prepare_release'\n\nIn another run, after that module existed, collection stopped with:\n\nImportError: cannot import name 'RELEASE_NOTES_HEADER' from\n'scripts.prepare_release'\n\nThe task’s problem statement does not mention the module path or constant\nname. These names appear in test_patch, which the agent does not see during\npatch generation. Since pytest stops at collection, it never checks the\nbehavior of an implementation using a different interface.\n\nIs this expected for the public training task, or could its validation be\nadjusted to test the required behavior without depending on names absent\nfrom the issue description? I’m trying to understand how a generic agent\nshould handle this case.\n"
+    }
+  ]
+}

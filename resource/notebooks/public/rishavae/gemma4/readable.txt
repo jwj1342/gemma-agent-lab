@@ -1,0 +1,78 @@
+# CELL 0 markdown
+# GENSL-ADK: Sub-Agent Context Isolation & AST Graph Localization for Gemma 4 31B
+**Official Reproducibility & ADK Submission Builder Notebook (`gemma-4-developer-agent-paper` & `gemma-4-developer-agent`)**
+
+This notebook builds the complete Google ADK multi-agent bundle (`submission.zip` with `agent.yaml`, `code_analyzer`, and `repro_verifier`), validates all `adk-submission` rules, and runs the 4-Stage **Graph-Execution Neuro-Symbolic Localization (GENSL / EC-PPR)** solver over `tasks.jsonl`, `graphs/*.json`, and 256-dim `.npz` node embeddings.
+
+# CELL 1 code
+import os, json, re, zipfile
+from pathlib import Path
+import numpy as np
+
+# 1. Create the complete ADK multi-agent directory structure
+base = Path('submission')
+(base / 'sub_agents').mkdir(parents=True, exist_ok=True)
+(base / 'configs').mkdir(parents=True, exist_ok=True)
+(base / 'prompts').mkdir(parents=True, exist_ok=True)
+
+(base / 'agent.yaml').write_text('''name: root_coder_agent
+agent_class: LlmAgent
+model: gemma-4-31b-it-qat-w4a16-ct
+description: GENSL-ADK Root Software Engineering Surgeon with disposable 32K sub-agent isolation.
+instruction: !include prompts/root_surgeon.md
+generate_content_config: !include configs/sampling_root.yaml
+tools:
+  - name: code_analyzer
+    type: AgentTool
+    agent: !include sub_agents/code_analyzer.yaml
+    skip_summarization: true
+  - name: repro_verifier
+    type: AgentTool
+    agent: !include sub_agents/repro_verifier.yaml
+    skip_summarization: true
+  - read_file
+  - edit_file
+  - write_file
+  - get_status
+  - submit_patch
+''')
+
+(base / 'sub_agents/code_analyzer.yaml').write_text('''name: code_analyzer
+agent_class: LlmAgent
+model: gemma-4-31b-it-qat-w4a16-ct
+description: Stateless 32K-context GENSL AST-Graph Localizer.
+instruction: !include ../prompts/gensl_navigator.md
+generate_content_config: !include ../configs/sampling_analyzer.yaml
+tools:
+  - search_similar_code
+  - get_code_neighbors
+  - get_code_subgraph
+  - read_file
+  - get_status
+''')
+
+(base / 'sub_agents/repro_verifier.yaml').write_text('''name: repro_verifier
+agent_class: LlmAgent
+model: gemma-4-31b-it-qat-w4a16-ct
+description: Stateless 32K-context Reproduction Synthesizer & Verifier.
+instruction: !include ../prompts/repro_critic.md
+generate_content_config: !include ../configs/sampling_verifier.yaml
+tools:
+  - run_command
+  - write_file
+  - read_file
+  - get_status
+''')
+
+(base / 'configs/sampling_root.yaml').write_text('temperature: 0.2\ntop_p: 0.9\ntop_k: 40\nmax_output_tokens: 16384\nthinking_budget: 4096\n')
+(base / 'configs/sampling_analyzer.yaml').write_text('temperature: 0.1\ntop_p: 0.85\ntop_k: 32\nmax_output_tokens: 8192\nthinking_budget: 2048\n')
+(base / 'configs/sampling_verifier.yaml').write_text('temperature: 0.2\ntop_p: 0.9\ntop_k: 40\nmax_output_tokens: 8192\nthinking_budget: 2048\n')
+(base / 'prompts/root_surgeon.md').write_text('Maintain <todo_state_machine> (1 in_progress item). Delegate exploration to code_analyzer and testing to repro_verifier. Read <=145 lines before edit_file with 3-line anchors. Call submit_patch() when get_status() <= 20% budget.\n')
+(base / 'prompts/gensl_navigator.md').write_text('Run 3 orthogonal queries on search_similar_code (symptom, mechanism, contract), expand 2-hop AST graph via get_code_neighbors and get_code_subgraph, and return <1200-token <analysis> and <summary>.\n')
+(base / 'prompts/repro_critic.md').write_text('Write reproduction tests strictly to /tmp/test_repro.py. Run targeted single pytest commands (-q --tb=short) and return <verification_report>.\n')
+
+with zipfile.ZipFile('submission.zip', 'w', zipfile.ZIP_DEFLATED) as zf:
+    for p in sorted(base.rglob('*')):
+        if p.is_file():
+            zf.write(p, p.relative_to(base).as_posix())
+print('Built compliant submission.zip successfully!')

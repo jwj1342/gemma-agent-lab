@@ -1,0 +1,38 @@
+[
+  {
+    "path": "illustrations/gemma-4.png",
+    "download": "https://storage.googleapis.com/gweb-uniblog-publish-prod/images/gemma-4_blog_keyword_meta-dark.width-1300.png",
+    "source": "https://blog.google/innovation-and-ai/technology/developers-tools/gemma-4/",
+    "sha256": "6984b86365d7974f6b80beccc071733cd331792865a9b337f4d4c974abc6976c"
+  },
+  {
+    "path": "illustrations/nvidia-l4.jpg",
+    "download": "https://www.nvidia.com/content/nvidiaGDC/us/en_US/data-center/l4/_jcr_content/root/responsivegrid/nv_container_902983955/nv_image.coreimg.jpeg/1694423302287/nvidia-l4-qtr-left.jpeg",
+    "source": "https://www.nvidia.com/en-us/data-center/l4/",
+    "sha256": "560ca2b364855ec5f1ef3c88926adf9613ff40cad42ec3b726406a315bb039bd"
+  },
+  {
+    "path": "emoji/robot.png",
+    "download": "https://raw.githubusercontent.com/twitter/twemoji/v14.0.2/assets/72x72/1f916.png",
+    "source": "https://github.com/twitter/twemoji/tree/v14.0.2",
+    "sha256": "3ee07ef63a271f85d7ae80d9f1a70b021cd1d31df387c603fa24c8f0ee7f8b2f"
+  },
+  {
+    "path": "emoji/tools.png",
+    "download": "https://raw.githubusercontent.com/twitter/twemoji/v14.0.2/assets/72x72/1f527.png",
+    "source": "https://github.com/twitter/twemoji/tree/v14.0.2",
+    "sha256": "b497331283e0b67bf97838ae92489e2c28c6b00920ce621b080e16208bdec0a5"
+  },
+  {
+    "path": "emoji/experiment.png",
+    "download": "https://raw.githubusercontent.com/twitter/twemoji/v14.0.2/assets/72x72/1f52c.png",
+    "source": "https://github.com/twitter/twemoji/tree/v14.0.2",
+    "sha256": "ca406e03d55d2576fff51d9b45e0738a373e63407f80e7841b97e390ee0457a0"
+  },
+  {
+    "path": "emoji/rocket.png",
+    "download": "https://raw.githubusercontent.com/twitter/twemoji/v14.0.2/assets/72x72/1f680.png",
+    "source": "https://github.com/twitter/twemoji/tree/v14.0.2",
+    "sha256": "a4d8b439357e38510505048dfc85c54c9cbb08c04ef4d9d4bacd03572a17c9a5"
+  }
+]

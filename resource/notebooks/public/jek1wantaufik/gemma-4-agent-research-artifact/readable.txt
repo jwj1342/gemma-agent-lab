@@ -1,0 +1,851 @@
+# CELL 0 code
+from __future__ import annotations
+
+import hashlib
+import json
+import shutil
+from dataclasses import asdict, dataclass
+from pathlib import Path
+from typing import Any
+
+import yaml
+
+
+# ---------------------------------------------------------------------------
+# Project configuration
+# ---------------------------------------------------------------------------
+
+INPUT_ROOT = Path(
+    "/kaggle/input/models/jek1wantaufik/buddy/transformers/gemma4/1"
+)
+
+OUTPUT_ROOT = Path(
+    "/kaggle/working/paper_artifact"
+)
+
+ARTIFACTS = {
+    "experiment_card": INPUT_ROOT / "experiment_card.json",
+    "submission": INPUT_ROOT / "submission",
+    "submission_bundle": INPUT_ROOT / "submission_bundle",
+}
+
+EXPECTED_SUBMISSION_FILES = [
+    "agent.yaml",
+    "configs/sampling.yaml",
+    "prompts/system.md",
+    "prompts/analyzer.md",
+    "sub_agents/code_analyzer.yaml",
+]
+
+
+# ---------------------------------------------------------------------------
+# YAML loader with recursive !include support
+# ---------------------------------------------------------------------------
+
+class IncludeLoader(yaml.SafeLoader):
+    """
+    YAML loader supporting local !include directives.
+
+    YAML files are parsed recursively, while Markdown/text files
+    are returned as plain strings.
+    """
+
+
+TEXT_EXTENSIONS = {
+    ".md",
+    ".txt",
+    ".csv",
+    ".json",
+    ".jsonl",
+}
+
+
+def construct_include(
+    loader: IncludeLoader,
+    node: yaml.Node,
+) -> Any:
+    """
+    Resolve a local !include reference.
+
+    YAML/YML files are parsed as YAML.
+    Markdown and other text resources are returned as strings.
+    """
+    relative_path = Path(
+        loader.construct_scalar(node)
+    )
+
+    source_path = Path(
+        getattr(loader, "_source_path", ".")
+    )
+
+    include_path = (
+        source_path.parent / relative_path
+    ).resolve()
+
+    if not include_path.exists():
+        raise FileNotFoundError(
+            f"Included file not found: {include_path}"
+        )
+
+    extension = include_path.suffix.lower()
+
+    if extension in TEXT_EXTENSIONS:
+        return include_path.read_text(
+            encoding="utf-8"
+        )
+
+    if extension in {".yaml", ".yml"}:
+        with include_path.open(
+            "r",
+            encoding="utf-8",
+        ) as handle:
+
+            nested_loader = IncludeLoader(handle)
+            nested_loader._source_path = include_path
+
+            try:
+                return nested_loader.get_single_data()
+            finally:
+                nested_loader.dispose()
+
+    return include_path.read_text(
+        encoding="utf-8"
+    )
+
+
+IncludeLoader.add_constructor(
+    "!include",
+    construct_include,
+)
+
+
+def load_yaml(path: Path) -> Any:
+    """
+    Load a YAML document with recursive !include support.
+    """
+    with path.open(
+        "r",
+        encoding="utf-8",
+    ) as handle:
+
+        loader = IncludeLoader(handle)
+        loader._source_path = path.resolve()
+
+        try:
+            return loader.get_single_data()
+        finally:
+            loader.dispose()
+
+
+# ---------------------------------------------------------------------------
+# General utilities
+# ---------------------------------------------------------------------------
+
+def require_exists(
+    path: Path,
+    description: str,
+) -> None:
+    """
+    Raise an explicit error when a required artifact is missing.
+    """
+    if not path.exists():
+        raise FileNotFoundError(
+            f"Required {description} not found:\n{path}"
+        )
+
+
+def collect_files(
+    root: Path,
+) -> list[Path]:
+    """
+    Return all files below a directory in deterministic order.
+    """
+    if not root.exists():
+        return []
+
+    return sorted(
+        path
+        for path in root.rglob("*")
+        if path.is_file()
+    )
+
+
+def sha256_file(
+    path: Path,
+    chunk_size: int = 1024 * 1024,
+) -> str:
+    """
+    Calculate a SHA-256 digest without loading the entire file into memory.
+    """
+    digest = hashlib.sha256()
+
+    with path.open("rb") as handle:
+        while chunk := handle.read(chunk_size):
+            digest.update(chunk)
+
+    return digest.hexdigest()
+
+
+def safe_read_text(
+    path: Path,
+) -> str:
+    """
+    Read a UTF-8 text file.
+    """
+    return path.read_text(
+        encoding="utf-8"
+    )
+
+
+def relative_path(
+    path: Path,
+    root: Path,
+) -> str:
+    """
+    Return a normalized POSIX-style relative path.
+    """
+    return path.relative_to(root).as_posix()
+
+
+# ---------------------------------------------------------------------------
+# Artifact metadata
+# ---------------------------------------------------------------------------
+
+@dataclass
+class ArtifactSummary:
+    """
+    High-level artifact statistics.
+    """
+
+    name: str
+    path: str
+    exists: bool
+    artifact_type: str
+    file_count: int
+    total_size_bytes: int
+
+
+def summarize_artifact(
+    name: str,
+    path: Path,
+) -> ArtifactSummary:
+    """
+    Generate deterministic metadata for a file or directory.
+    """
+    if not path.exists():
+        return ArtifactSummary(
+            name=name,
+            path=str(path),
+            exists=False,
+            artifact_type="missing",
+            file_count=0,
+            total_size_bytes=0,
+        )
+
+    if path.is_file():
+        return ArtifactSummary(
+            name=name,
+            path=str(path),
+            exists=True,
+            artifact_type="file",
+            file_count=1,
+            total_size_bytes=path.stat().st_size,
+        )
+
+    files = collect_files(path)
+
+    return ArtifactSummary(
+        name=name,
+        path=str(path),
+        exists=True,
+        artifact_type="directory",
+        file_count=len(files),
+        total_size_bytes=sum(
+            file.stat().st_size
+            for file in files
+        ),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Submission validation
+# ---------------------------------------------------------------------------
+
+def validate_submission_structure(
+    root: Path,
+) -> dict[str, Any]:
+    """
+    Validate the expected submission bundle structure.
+    """
+    checks: dict[str, bool] = {}
+
+    for relative_file in EXPECTED_SUBMISSION_FILES:
+        path = root / relative_file
+        checks[relative_file] = path.is_file()
+
+    missing_files = [
+        path
+        for path, valid in checks.items()
+        if not valid
+    ]
+
+    return {
+        "valid": not missing_files,
+        "checks": checks,
+        "missing_files": missing_files,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Configuration inspection
+# ---------------------------------------------------------------------------
+
+def inspect_configuration(
+    root: Path,
+) -> dict[str, Any]:
+    """
+    Parse the main YAML configuration files.
+
+    Markdown prompts referenced through !include are handled
+    as strings by IncludeLoader.
+    """
+    result: dict[str, Any] = {
+        "agent": {
+            "loaded": False,
+            "keys": [],
+            "error": None,
+        },
+        "sampling": {
+            "loaded": False,
+            "keys": [],
+            "error": None,
+        },
+        "analyzer": {
+            "loaded": False,
+            "keys": [],
+            "error": None,
+        },
+        "prompts": {},
+    }
+
+    agent_path = root / "agent.yaml"
+
+    if agent_path.exists():
+        try:
+            agent_config = load_yaml(agent_path)
+
+            result["agent"]["loaded"] = True
+
+            if isinstance(agent_config, dict):
+                result["agent"]["keys"] = sorted(
+                    str(key)
+                    for key in agent_config.keys()
+                )
+
+        except Exception as exc:
+            result["agent"]["error"] = str(exc)
+
+    sampling_path = (
+        root / "configs" / "sampling.yaml"
+    )
+
+    if sampling_path.exists():
+        try:
+            sampling_config = load_yaml(
+                sampling_path
+            )
+
+            result["sampling"]["loaded"] = True
+
+            if isinstance(sampling_config, dict):
+                result["sampling"]["keys"] = sorted(
+                    str(key)
+                    for key in sampling_config.keys()
+                )
+
+        except Exception as exc:
+            result["sampling"]["error"] = str(exc)
+
+    analyzer_path = (
+        root
+        / "sub_agents"
+        / "code_analyzer.yaml"
+    )
+
+    if analyzer_path.exists():
+        try:
+            analyzer_config = load_yaml(
+                analyzer_path
+            )
+
+            result["analyzer"]["loaded"] = True
+
+            if isinstance(analyzer_config, dict):
+                result["analyzer"]["keys"] = sorted(
+                    str(key)
+                    for key in analyzer_config.keys()
+                )
+
+        except Exception as exc:
+            result["analyzer"]["error"] = str(exc)
+
+    prompt_paths = {
+        "system": root / "prompts" / "system.md",
+        "analyzer": root / "prompts" / "analyzer.md",
+    }
+
+    for name, path in prompt_paths.items():
+        if path.exists():
+            text = safe_read_text(path)
+
+            result["prompts"][name] = {
+                "exists": True,
+                "characters": len(text),
+                "lines": len(text.splitlines()),
+                "sha256": sha256_file(path),
+            }
+        else:
+            result["prompts"][name] = {
+                "exists": False,
+                "characters": 0,
+                "lines": 0,
+                "sha256": None,
+            }
+
+    return result
+
+
+# ---------------------------------------------------------------------------
+# File manifest
+# ---------------------------------------------------------------------------
+
+def build_file_manifest(
+    root: Path,
+) -> list[dict[str, Any]]:
+    """
+    Build a deterministic SHA-256 manifest for all research files.
+    """
+    files = collect_files(root)
+
+    manifest = []
+
+    for path in files:
+        manifest.append(
+            {
+                "path": relative_path(
+                    path,
+                    root,
+                ),
+                "size_bytes": path.stat().st_size,
+                "sha256": sha256_file(path),
+            }
+        )
+
+    return manifest
+
+
+# ---------------------------------------------------------------------------
+# Experiment card
+# ---------------------------------------------------------------------------
+
+def load_experiment_card() -> dict[str, Any]:
+    """
+    Load the experiment card if it is valid JSON.
+    """
+    path = ARTIFACTS["experiment_card"]
+
+    require_exists(
+        path,
+        "experiment card",
+    )
+
+    try:
+        data = json.loads(
+            safe_read_text(path)
+        )
+
+        if not isinstance(data, dict):
+            return {
+                "valid": False,
+                "error": "Experiment card is not a JSON object.",
+            }
+
+        return {
+            "valid": True,
+            "data": data,
+        }
+
+    except Exception as exc:
+        return {
+            "valid": False,
+            "error": str(exc),
+        }
+
+
+# ---------------------------------------------------------------------------
+# Export
+# ---------------------------------------------------------------------------
+
+def reset_output_directory(
+    path: Path,
+) -> None:
+    """
+    Remove a previous output directory and recreate it.
+    """
+    if path.exists():
+        shutil.rmtree(path)
+
+    path.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+
+def export_artifacts() -> None:
+    """
+    Copy source artifacts from read-only Kaggle input
+    into writable Kaggle working storage.
+    """
+    reset_output_directory(
+        OUTPUT_ROOT
+    )
+
+    for name, source in ARTIFACTS.items():
+        destination = (
+            OUTPUT_ROOT / name
+        )
+
+        if source.is_dir():
+            shutil.copytree(
+                source,
+                destination,
+            )
+
+        elif source.is_file():
+            shutil.copy2(
+                source,
+                destination,
+            )
+
+
+# ---------------------------------------------------------------------------
+# Research manifest
+# ---------------------------------------------------------------------------
+
+def build_research_manifest(
+    configuration: dict[str, Any],
+    experiment_card: dict[str, Any],
+) -> dict[str, Any]:
+    """
+    Create the main reproducibility manifest.
+    """
+    manifest = {
+        "project": {
+            "title": (
+                "Graph-Guided Tool-Aware "
+                "Agents for Repository Repair"
+            ),
+            "subtitle": (
+                "Combining lightweight code localization, "
+                "graph context, analyzer-coder decomposition, "
+                "and constrained patch verification"
+            ),
+            "track": (
+                "Gemma 4 Developer Agent — Paper Track"
+            ),
+        },
+        "artifact_root": str(
+            OUTPUT_ROOT
+        ),
+        "input_root": str(
+            INPUT_ROOT
+        ),
+        "experiment_card": experiment_card,
+        "artifacts": {},
+        "configuration": configuration,
+        "files": build_file_manifest(
+            OUTPUT_ROOT
+        ),
+    }
+
+    for name, path in ARTIFACTS.items():
+        exported_path = (
+            OUTPUT_ROOT / name
+        )
+
+        manifest["artifacts"][name] = asdict(
+            summarize_artifact(
+                name,
+                exported_path,
+            )
+        )
+
+    return manifest
+
+
+# ---------------------------------------------------------------------------
+# Human-readable report
+# ---------------------------------------------------------------------------
+
+def print_report(
+    manifest: dict[str, Any],
+) -> None:
+    """
+    Print a concise research artifact report.
+    """
+    project = manifest["project"]
+    validation = manifest["configuration"][
+        "submission_validation"
+    ]
+
+    print("=" * 76)
+    print(
+        "Gemma 4 Developer Agent — Paper Track"
+    )
+    print(
+        "Reproducible Research Artifact"
+    )
+    print("=" * 76)
+
+    print(
+        f"\nTitle    : {project['title']}"
+    )
+
+    print(
+        f"Track    : {project['track']}"
+    )
+
+    print("\nArtifacts:")
+
+    for name, data in manifest[
+        "artifacts"
+    ].items():
+
+        status = (
+            "OK"
+            if data["exists"]
+            else "MISSING"
+        )
+
+        print(
+            f"  [{status}] "
+            f"{name:<20} "
+            f"{data['file_count']:>4} files | "
+            f"{data['total_size_bytes']:,} bytes"
+        )
+
+    print("\nSubmission structure:")
+
+    for path, valid in validation[
+        "checks"
+    ].items():
+
+        status = (
+            "OK"
+            if valid
+            else "FAIL"
+        )
+
+        print(
+            f"  [{status}] {path}"
+        )
+
+    print(
+        "\nSubmission validation: "
+        f"{'PASS' if validation['valid'] else 'FAIL'}"
+    )
+
+    configuration = manifest[
+        "configuration"
+    ]
+
+    print("\nConfiguration:")
+
+    for component in (
+        "agent",
+        "sampling",
+        "analyzer",
+    ):
+        data = configuration[
+            component
+        ]
+
+        status = (
+            "loaded"
+            if data["loaded"]
+            else "not loaded"
+        )
+
+        print(
+            f"  {component:<10}: {status}"
+        )
+
+        if data["keys"]:
+            print(
+                f"    keys: {data['keys']}"
+            )
+
+        if data["error"]:
+            print(
+                f"    error: {data['error']}"
+            )
+
+    print("\nPrompts:")
+
+    for name, data in configuration[
+        "prompts"
+    ].items():
+
+        status = (
+            "OK"
+            if data["exists"]
+            else "MISSING"
+        )
+
+        print(
+            f"  [{status}] "
+            f"{name:<10} "
+            f"{data['characters']:,} chars | "
+            f"{data['lines']:,} lines"
+        )
+
+    total_files = len(
+        manifest["files"]
+    )
+
+    total_size = sum(
+        item["size_bytes"]
+        for item in manifest["files"]
+    )
+
+    print("\nReproducibility:")
+
+    print(
+        f"  Files       : {total_files:,}"
+    )
+
+    print(
+        f"  Total size  : {total_size:,} bytes"
+    )
+
+    print(
+        f"  Output root : {OUTPUT_ROOT}"
+    )
+
+    print("\nGenerated files:")
+
+    print(
+        f"  {OUTPUT_ROOT / 'research_manifest.json'}"
+    )
+
+    print(
+        f"  {OUTPUT_ROOT / 'research_summary.json'}"
+    )
+
+    print(
+        "\nResearch artifact preparation completed."
+    )
+
+
+# ---------------------------------------------------------------------------
+# Main execution
+# ---------------------------------------------------------------------------
+
+# 1. Validate source artifacts.
+require_exists(
+    ARTIFACTS["experiment_card"],
+    "experiment card",
+)
+
+require_exists(
+    ARTIFACTS["submission_bundle"],
+    "submission bundle",
+)
+
+# 2. Copy read-only Kaggle inputs into /kaggle/working.
+export_artifacts()
+
+# 3. Work exclusively from the exported, writable artifact.
+exported_bundle = (
+    OUTPUT_ROOT / "submission_bundle"
+)
+
+# 4. Validate the expected bundle structure.
+submission_validation = (
+    validate_submission_structure(
+        exported_bundle
+    )
+)
+
+# 5. Inspect YAML and prompt resources.
+configuration = inspect_configuration(
+    exported_bundle
+)
+
+configuration[
+    "submission_validation"
+] = submission_validation
+
+# 6. Load the experiment card.
+experiment_card = load_experiment_card()
+
+# 7. Build the reproducibility manifest.
+manifest = build_research_manifest(
+    configuration=configuration,
+    experiment_card=experiment_card,
+)
+
+# 8. Save the complete manifest.
+manifest_path = (
+    OUTPUT_ROOT / "research_manifest.json"
+)
+
+manifest_path.write_text(
+    json.dumps(
+        manifest,
+        indent=2,
+        ensure_ascii=False,
+    ),
+    encoding="utf-8",
+)
+
+# 9. Save a compact research summary.
+summary = {
+    "project": manifest["project"],
+    "experiment_card": experiment_card,
+    "submission_validation": submission_validation,
+    "configuration": {
+        "agent": configuration["agent"],
+        "sampling": configuration["sampling"],
+        "analyzer": configuration["analyzer"],
+        "prompts": configuration["prompts"],
+    },
+    "artifact_counts": {
+        name: data["file_count"]
+        for name, data
+        in manifest["artifacts"].items()
+    },
+    "total_files": len(
+        manifest["files"]
+    ),
+    "total_size_bytes": sum(
+        item["size_bytes"]
+        for item in manifest["files"]
+    ),
+}
+
+summary_path = (
+    OUTPUT_ROOT / "research_summary.json"
+)
+
+summary_path.write_text(
+    json.dumps(
+        summary,
+        indent=2,
+        ensure_ascii=False,
+    ),
+    encoding="utf-8",
+)
+
+# 10. Print final report.
+print_report(manifest)

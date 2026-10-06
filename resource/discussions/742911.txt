@@ -1,0 +1,61 @@
+# Two data issues: half the graph/embedding files download empty, and the graphs contain no async functions
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/742911
+
+## 3527537 /jasonwold TOPIC
+1) Empty files in the download (affects local runs)
+
+The graphs and embeddings are described as task-named files hard-linked to commit-named files. Zip archives can't store hard links, and in the downloaded data one side of each linked group arrives as a 0-byte file:
+
+  graphs: 129 of 256 files are empty
+  embeddings: 129 of 256 files are empty
+
+Exactly one readable copy survives per commit, but it can sit under any name in the group, including a different task's name where two tasks share a commit (requests_6589 and requests_6629; rich_3882 and rich_3894).
+
+HARNESS_README says the code intelligence tools are only enabled when the graph and embedding files exceed 100 bytes. If that holds, local swegemma runs on the downloaded data will silently lose get_code_neighbors, get_code_subgraph and search_similar_code on many tasks. The fix is to copy each commit's readable file over its empty siblings before running; every commit has a readable source.
+
+2) No async functions in the graphs
+
+For each of the 129 training tasks, I parsed every non-test .py file the reference patch touches (from the base_commit snapshot) with Python's ast module and checked whether each top-level function, method and class exists as a node ID in the task's graph. Coverage across those files:
+
+  sync functions and methods: 4,739 of 4,740 present
+  classes: 855 of 857 present
+  async functions and methods: 0 of 305 present
+
+By repo: fastapi library 0/232 async present, fastapi docs_src 0/27, httpx 0/46. rich and requests have no async definitions in the audited files.
+
+Examples with no node: fastapi.routing.serialize_response, fastapi.dependencies.utils.solve_dependencies, fastapi.dependencies.utils.request_body_to_args. Agents using the graph tools therefore can't reach async code paths. In 16 of the 121 training tasks whose reference fix lands in function or class bodies, at least one changed function is async and absent from the graph.
+
+The graphs also contain a single edge type, calls, in all four repos (no import or containment edges), and no module-level nodes.
+
+Questions for the hosts:
+1. Is the async omission intended?
+2. The data description says the test set uses identical graph generation. Does the hidden test set share it?
+3. Are the embedding archives keyed to the same node set, so search_similar_code also can't surface async code?
+4. Does the scoring environment use real hard links, so the empty-file issue only affects the public download?
+
+Happy to share the audit and repair scripts as a public notebook.
+
+## 3527654 /ryanholbrook ADMIN
+Hi @jasonwold,
+
+Thanks for the report. We will investigate and get back to you.
+
+## 3528710 /wscmisx COMMENT
+Has this issue been fixed now? Do we need to re-download the dataset? Thanks!
+
+## 3528743 /ryanholbrook ADMIN
+The embeddings are no longer empty; that has been fixed. The missing `async` functions are still missing. I don't have an ETA on that yet.
+
+## 3527552 /zhukovoleksiy COMMENT
+Thanks @jasonwold , I think I have answers to 2 of your questions. I am still verifying some things with my submission that I've pushed recently. In the meantime:
+
+>Does the scoring environment use real hard links, so the empty-file issue only affects the public download?
+
+It's not only the download. My notebook run showed Kaggle's own mounted copy has the same 129 + 129 empty files.
+
+For local runs I replaced each empty file with a hard link to its group's readable copy rather than a copy, which restores the documented layout without extra disk. Whether the scoring environment with the hidden test set is affected is still a question for the hosts.
+
+> Are the embedding archives keyed to the same node set, so search_similar_code also can't surface async code?
+
+Yes. For all 127 commits, the embedding archive's keys are exactly the graph's node IDs, no more and no less. So `search_similar_code` cannot surface async code either.
+

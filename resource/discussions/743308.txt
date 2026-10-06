@@ -1,0 +1,15 @@
+# VRAM to run Gemma locally
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743308
+
+## 3528189 /slawekbiel TOPIC
+Hello!
+
+What's the minimal amount of memory needed to run inference on a single GPU? Has anyone managed to run it successfully with full context length on 24GB?
+
+## 3528871 /johnparkerson COMMENT
+Depends. Sometimes you can do some RAM offloading. But for 24g, post training is off the table. 
+
+## 3528262 /josephadamski91 COMMENT
+I'm only figuring things out myself right now, but my 1 day tests are:
+
+On Mac: 26-29 for one agent task at the full 32k context. Local but Kaggle style (4 tasks in parallel) - 70-76 GB. 

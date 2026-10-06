@@ -1,0 +1,61 @@
+{
+  "forumTopic": {
+    "authorId": 37010891,
+    "authorThumbnailName": "default-thumb.png",
+    "authorUserDisplayName": "hawktalk",
+    "authorUserName": "hawktalk",
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3531301,
+      "postDate": "2026-10-01T16:42:49.830Z",
+      "rawMarkdown": "so are we getting a reset for our troubles or are we just sol? ",
+      "content": "<p>so are we getting a reset for our troubles or are we just sol? </p>",
+      "parent": {},
+      "author": {
+        "displayName": "hawktalk",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+        "url": "/hawktalk",
+        "tier": "CONTRIBUTOR",
+        "id": 37010891,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 2,
+        "canUpvote": true,
+        "totalUpvotes": 2
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 584,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "hawktalk",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/hawktalk",
+          "userName": "hawktalk",
+          "tier": "CONTRIBUTOR",
+          "id": 37010891,
+          "profileUrl": "/hawktalk",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 37010891,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3531301,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 744965,
+    "name": "gpu outage causing submission failure ",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-10-01T16:42:49.828990400Z",
+    "totalVotes": 2,
+    "url": "/competitions/gemma-4-developer-agent/discussion/744965",
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

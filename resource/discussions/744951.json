@@ -1,0 +1,26 @@
+{
+  "messages": [
+    {
+      "id": 3531256,
+      "postDate": "2026-10-01T15:00:33.357Z",
+      "content": "<p>same repositories as the training tasks?</p>\n<p>The training set covers fastapi, rich, requests and httpx. Does the hidden test set draw from the same four repositories (roughly similar proportions?), or does it include additional repositories?</p>",
+      "rawMarkdown": "same repositories as the training tasks?\n\nThe training set covers fastapi, rich, requests and httpx. Does the hidden test set draw from the same four repositories (roughly similar proportions?), or does it include additional repositories?",
+      "votes": 1
+    },
+    {
+      "id": 3531258,
+      "postDate": "2026-10-01T15:04:55.670Z",
+      "content": "<p>No, the test set draws from private repositories not available publicly.</p>",
+      "rawMarkdown": "No, the test set draws from private repositories not available publicly.",
+      "votes": 2,
+      "replies": [
+        {
+          "id": 3532630,
+          "postDate": "2026-10-04T08:22:28.760Z",
+          "content": "<p>Does this mean that the test set will contain completely different topics from the training tasks, or will it be fastapi, rich, requests and httpx, but in a different proportion? </p>",
+          "rawMarkdown": "Does this mean that the test set will contain completely different topics from the training tasks, or will it be fastapi, rich, requests and httpx, but in a different proportion? "
+        }
+      ]
+    }
+  ]
+}

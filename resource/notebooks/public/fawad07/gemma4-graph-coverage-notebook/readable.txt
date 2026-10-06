@@ -1,0 +1,92 @@
+# CELL 0 markdown
+# Reproducing "Blind Spots in Code Graphs"
+
+This notebook reproduces the paper's tables offline on CPU:
+- **Table 4.1**: coverage of gold functions by the released vs. rebuilt (replica/full) code graphs.
+- **Replica fidelity**: how closely the replica builder matches the released graphs.
+- **Table 4.2**: retrieval localization (BM25, identifier match, graph expansion/fusion) with paired-bootstrap CIs.
+- **Table 4.3**: the agent experiment (released vs. full graphs), from a per-task summary (the GPU runs themselves need 4× L4).
+
+Inputs: the competition data (tasks, released graphs) and the dataset `fawad07/gemma4-graph-coverage-repro`.
+
+
+# CELL 1 code
+import os, shutil, subprocess, sys
+from pathlib import Path
+
+INPUT = Path(os.environ.get('INPUT_ROOT', '/kaggle/input'))
+# Work outside /kaggle/working so only the result tables (not a working copy) become notebook output.
+WORK = Path(os.environ.get('WORK_ROOT', '/tmp')) / 'repro'
+OUT = Path(os.environ.get('OUT_ROOT', '/kaggle/working')) / 'results'
+COMP = next(p.parent for p in INPUT.rglob('tasks.jsonl') if (p.parent / 'graphs').is_dir())
+REPRO = next(p.parent for p in INPUT.rglob('graphs_full') if p.is_dir())
+print('competition data:', COMP, '| repro dataset:', REPRO)
+
+if WORK.exists():
+    shutil.rmtree(WORK)
+(WORK / 'data').mkdir(parents=True)
+(WORK / 'eval' / 'localization').mkdir(parents=True)
+(WORK / 'eval' / 'runs').mkdir(parents=True)
+shutil.copytree(REPRO / 'code' / 'scripts', WORK / 'scripts')
+os.symlink(COMP / 'tasks.jsonl', WORK / 'data' / 'tasks.jsonl')
+os.symlink(COMP / 'graphs', WORK / 'data' / 'graphs')
+for d in ('graphs_full', 'graphs_replica'):
+    os.symlink(REPRO / d, WORK / 'data' / d)
+shutil.copytree(REPRO / 'preimage', WORK / 'data' / 'preimage')  # writable copy (labels check patches with git)
+shutil.copy(REPRO / 'results' / 'paper_agent_tasks.json', WORK / 'eval' / 'paper_agent_tasks.json')
+shutil.copy(REPRO / 'results' / 'paper_agent_summary.json', WORK / 'eval' / 'runs' / 'paper_agent_summary.json')
+
+def run(*args):
+    r = subprocess.run([sys.executable, *args], cwd=WORK, capture_output=True, text=True)
+    print(r.stdout)
+    if r.returncode:
+        print(r.stderr)
+        raise RuntimeError(f'{args[0]} failed')
+
+# CELL 2 markdown
+## Table 4.1: coverage of gold functions
+Released graphs (gold labels are rebuilt from the reference patches and validated by `git apply --check`):
+
+# CELL 3 code
+run('scripts/paper/localization_labels.py')
+
+# CELL 4 markdown
+Rebuilt graphs: **replica** (released rules) and **full** (async + nested definitions, typed edges):
+
+# CELL 5 code
+run('scripts/paper/localization_labels.py', '--graphs', 'data/graphs_replica', '--out', 'eval/localization/gold_labels_replica.jsonl')
+run('scripts/paper/localization_labels.py', '--graphs', 'data/graphs_full', '--out', 'eval/localization/gold_labels_full.jsonl')
+
+# CELL 6 markdown
+## Replica fidelity vs. released graphs
+
+# CELL 7 code
+run('scripts/paper/compare_graphs.py')
+
+# CELL 8 markdown
+## Table 4.2: retrieval localization
+
+# CELL 9 code
+run('scripts/paper/retrieval_baselines.py')
+
+# CELL 10 markdown
+Paired bootstrap (10,000 resamples):
+
+# CELL 11 code
+run('scripts/paper/bootstrap_ci.py')
+
+# CELL 12 markdown
+## Table 4.3: agent with released vs. full graphs (from the per-task summary)
+
+# CELL 13 code
+run('scripts/paper/analyze_agent_experiment.py', '--from-summary', 'eval/runs/paper_agent_summary.json', '--out', 'eval/runs/paper_agent_experiment.md')
+
+# CELL 14 markdown
+## Save the result tables as notebook output
+
+# CELL 15 code
+OUT.mkdir(parents=True, exist_ok=True)
+for f in ['eval/localization/gold_labels.jsonl', 'eval/localization/gold_labels_replica.jsonl', 'eval/localization/gold_labels_full.jsonl',
+          'eval/localization/retrieval_results.md', 'eval/localization/retrieval_results.jsonl', 'eval/runs/paper_agent_experiment.md']:
+    shutil.copy(WORK / f, OUT / Path(f).name)
+print(sorted(p.name for p in OUT.iterdir()))

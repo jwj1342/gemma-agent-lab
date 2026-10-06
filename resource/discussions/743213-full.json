@@ -1,0 +1,594 @@
+{
+  "forumTopic": {
+    "authorId": 25557550,
+    "authorThumbnailName": "25557550-kg.jpg?t=2025-10-02-08-36-04",
+    "authorUserDisplayName": "Violet Notes",
+    "authorUserName": "dominicjamil",
+    "comments": [
+      {
+        "id": 3528095,
+        "postDate": "2026-09-25T10:55:01.093Z",
+        "rawMarkdown": "Hi @dominicjamil,\n\nI have a fix incoming. Will try to post a demo notebook later today.",
+        "content": "<p>Hi <a href=\"/dominicjamil\" target=\"_blank\">@dominicjamil</a>,</p>\n<p>I have a fix incoming. Will try to post a demo notebook later today.</p>",
+        "replies": [
+          {
+            "id": 3528283,
+            "postDate": "2026-09-25T18:56:08.387Z",
+            "rawMarkdown": "Confirming this is still happening as of just now (2026-09-26). I submitted the sample_submission/ bundle completely unmodified (byte-for-byte copy, adapters/main_lora and adapters/tool_lora included, no edits at all) and it also failed with the generic Kaggle Error, same as @dominicjamil reported ~8 hours ago. I also tried several of our own bundles beforehand (no adapters, various tool/sub-agent configurations, with and without eval_config.yaml) and every single one failed identically before this test, so it does not look specific to adapters or to any particular bundle structure on our end. Wanted to flag that the fix does not appear to be live yet, in case that's useful. Happy to share exact repro steps if it helps.",
+            "content": "<p>Confirming this is still happening as of just now (2026-09-26). I submitted the sample_submission/ bundle completely unmodified (byte-for-byte copy, adapters/main_lora and adapters/tool_lora included, no edits at all) and it also failed with the generic Kaggle Error, same as <a href=\"/dominicjamil\" target=\"_blank\">@dominicjamil</a> reported ~8 hours ago. I also tried several of our own bundles beforehand (no adapters, various tool/sub-agent configurations, with and without eval_config.yaml) and every single one failed identically before this test, so it does not look specific to adapters or to any particular bundle structure on our end. Wanted to flag that the fix does not appear to be live yet, in case that's useful. Happy to share exact repro steps if it helps.</p>",
+            "replies": [
+              {
+                "id": 3528298,
+                "postDate": "2026-09-25T19:31:19.847Z",
+                "rawMarkdown": "I'll check again. There might have been a data bundle that didn't catch the update. It's working in the Getting Started notebook, at least.",
+                "content": "<p>I'll check again. There might have been a data bundle that didn't catch the update. It's working in the Getting Started notebook, at least.</p>",
+                "parent": {},
+                "author": {
+                  "displayName": "Ryan Holbrook",
+                  "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+                  "url": "/ryanholbrook",
+                  "tier": "STAFF",
+                  "id": 2003505,
+                  "progressionOptOut": false
+                },
+                "authorType": "ADMIN",
+                "votes": {
+                  "canUpvote": true
+                },
+                "kernelVersion": 0,
+                "feedbackTrackingData": {},
+                "isThankYou": false,
+                "teamUpInfo": {
+                  "teamLeader": {
+                    "displayName": "Ryan Holbrook",
+                    "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+                    "url": "/ryanholbrook",
+                    "userName": "ryanholbrook",
+                    "tier": "STAFF",
+                    "id": 2003505,
+                    "profileUrl": "/ryanholbrook",
+                    "performanceTier": "STAFF",
+                    "userId": 2003505,
+                    "progressionOptOut": false
+                  },
+                  "intro": ""
+                }
+              },
+              {
+                "id": 3528735,
+                "postDate": "2026-09-26T11:29:34.573Z",
+                "rawMarkdown": "Are you referring to this notebook? https://www.kaggle.com/code/ryanholbrook/getting-started-gemma-4-developer-agent/notebook because I downloaded and submitted the submission.zip file to the leaderboard 2hrs ago and it crashed with this error just now: ![](https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F31268718%2Fb53344e9ed5ab42942b31fbe8ff68922%2FScreenshot%202026-09-26%20165754.png?generation=1790422130716964&alt=media) ",
+                "content": "<p>Are you referring to this notebook? <a href=\"https://www.kaggle.com/code/ryanholbrook/getting-started-gemma-4-developer-agent/notebook\" target=\"_blank\">https://www.kaggle.com/code/ryanholbrook/getting-started-gemma-4-developer-agent/notebook</a> because I downloaded and submitted the submission.zip file to the leaderboard 2hrs ago and it crashed with this error just now: <img src=\"https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F31268718%2Fb53344e9ed5ab42942b31fbe8ff68922%2FScreenshot%202026-09-26%20165754.png?generation=1790422130716964&amp;alt=media\" alt=\"\"> </p>",
+                "parent": {},
+                "author": {
+                  "displayName": "Varun Ambadi",
+                  "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+                  "url": "/varunambadi",
+                  "tier": "CONTRIBUTOR",
+                  "id": 31268718,
+                  "progressionOptOut": false
+                },
+                "authorType": "COMMENT",
+                "votes": {
+                  "canUpvote": true
+                },
+                "kernelVersion": 0,
+                "competitionRanking": 289,
+                "feedbackTrackingData": {},
+                "isThankYou": false,
+                "teamUpInfo": {
+                  "teamLeader": {
+                    "displayName": "Varun Ambadi",
+                    "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+                    "url": "/varunambadi",
+                    "userName": "varunambadi",
+                    "tier": "CONTRIBUTOR",
+                    "id": 31268718,
+                    "profileUrl": "/varunambadi",
+                    "performanceTier": "CONTRIBUTOR",
+                    "userId": 31268718,
+                    "progressionOptOut": false
+                  },
+                  "intro": ""
+                }
+              }
+            ],
+            "parent": {},
+            "author": {
+              "displayName": "SmitBailwal",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+              "url": "/smitbailwal",
+              "tier": "CONTRIBUTOR",
+              "id": 35132404,
+              "progressionOptOut": false
+            },
+            "authorType": "COMMENT",
+            "votes": {
+              "canUpvote": true
+            },
+            "kernelVersion": 0,
+            "competitionRanking": 913,
+            "feedbackTrackingData": {},
+            "isThankYou": false,
+            "teamUpInfo": {
+              "teamLeader": {
+                "displayName": "SmitBailwal",
+                "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+                "url": "/smitbailwal",
+                "userName": "smitbailwal",
+                "tier": "CONTRIBUTOR",
+                "id": 35132404,
+                "profileUrl": "/smitbailwal",
+                "performanceTier": "CONTRIBUTOR",
+                "userId": 35132404,
+                "progressionOptOut": false
+              },
+              "intro": ""
+            }
+          }
+        ],
+        "parent": {},
+        "author": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "progressionOptOut": false
+        },
+        "authorType": "ADMIN",
+        "votes": {
+          "totalVotes": 3,
+          "canUpvote": true,
+          "totalUpvotes": 3
+        },
+        "kernelVersion": 0,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Ryan Holbrook",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+            "url": "/ryanholbrook",
+            "userName": "ryanholbrook",
+            "tier": "STAFF",
+            "id": 2003505,
+            "profileUrl": "/ryanholbrook",
+            "performanceTier": "STAFF",
+            "userId": 2003505,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3528716,
+        "postDate": "2026-09-26T11:06:01.167Z",
+        "rawMarkdown": "Adding another one to the list: submission 56573423 (submitted today at 07:47 UTC, plain YAML bundle, no adapters) also failed with \"Your notebook has requested more CPU, GPU or TPU resources than are available.\" Ran for around 2 hours.\n\n@ryanholbrook could our team's daily slot also be restored once the platform fix is deployed? Thanks!",
+        "content": "<p>Adding another one to the list: submission 56573423 (submitted today at 07:47 UTC, plain YAML bundle, no adapters) also failed with \"Your notebook has requested more CPU, GPU or TPU resources than are available.\" Ran for around 2 hours.</p>\n<p><a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a> could our team's daily slot also be restored once the platform fix is deployed? Thanks!</p>",
+        "replies": [
+          {
+            "id": 3528740,
+            "postDate": "2026-09-26T11:36:00.160Z",
+            "rawMarkdown": "Thanks for the report. I think I've resolved this one, but please let me know.",
+            "content": "<p>Thanks for the report. I think I've resolved this one, but please let me know.</p>",
+            "parent": {},
+            "author": {
+              "displayName": "Ryan Holbrook",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+              "url": "/ryanholbrook",
+              "tier": "STAFF",
+              "id": 2003505,
+              "progressionOptOut": false
+            },
+            "authorType": "ADMIN",
+            "votes": {
+              "canUpvote": true
+            },
+            "kernelVersion": 0,
+            "feedbackTrackingData": {},
+            "isThankYou": false,
+            "teamUpInfo": {
+              "teamLeader": {
+                "displayName": "Ryan Holbrook",
+                "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+                "url": "/ryanholbrook",
+                "userName": "ryanholbrook",
+                "tier": "STAFF",
+                "id": 2003505,
+                "profileUrl": "/ryanholbrook",
+                "performanceTier": "STAFF",
+                "userId": 2003505,
+                "progressionOptOut": false
+              },
+              "intro": ""
+            }
+          }
+        ],
+        "parent": {},
+        "author": {
+          "displayName": "Saltice",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/31469616-kg.jpg?t=2026-09-29-07-05-24",
+          "url": "/saltice",
+          "tier": "CONTRIBUTOR",
+          "id": 31469616,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "totalVotes": 1,
+          "canUpvote": true,
+          "totalUpvotes": 1
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 907,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "enabled": true,
+          "teamLeader": {
+            "displayName": "Saltice",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/31469616-kg.jpg?t=2026-09-29-07-05-24",
+            "url": "/saltice",
+            "userName": "saltice",
+            "tier": "CONTRIBUTOR",
+            "id": 31469616,
+            "profileUrl": "/saltice",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 31469616,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3528695,
+        "postDate": "2026-09-26T10:22:33.590Z",
+        "rawMarkdown": "Same resource error here: submission 56563379 (2026-09-26 00:01 UTC, plain YAML bundle, no adapters) completed with no score, error_description \"Your notebook has requested more CPU, GPU or TPU resources than are available.\" Our previous submission from the same pipeline scored 0.10. @ryanholbrook, could the slot be restored for submissions that failed with this platform-side error?\n\nOne note for anyone testing adapters locally: the PyPI vllm 0.19.1 wheel still fails at startup with \"Gemma4ForConditionalGeneration does not support LoRA yet\" (we reproduced this on 2x H100 with the competition checkpoint and the sample main_lora). Only the patched vllm 0.19.1 in metric/gemma-4-developer-agent-wheelhouse adds SupportsLoRA, so local LoRA tests must install that exact wheel. With the patched wheel, see the separate report in 743508 that adapters load but are reset to zero.",
+        "content": "<p>Same resource error here: submission 56563379 (2026-09-26 00:01 UTC, plain YAML bundle, no adapters) completed with no score, error_description \"Your notebook has requested more CPU, GPU or TPU resources than are available.\" Our previous submission from the same pipeline scored 0.10. <a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a>, could the slot be restored for submissions that failed with this platform-side error?</p>\n<p>One note for anyone testing adapters locally: the PyPI vllm 0.19.1 wheel still fails at startup with \"Gemma4ForConditionalGeneration does not support LoRA yet\" (we reproduced this on 2x H100 with the competition checkpoint and the sample main_lora). Only the patched vllm 0.19.1 in metric/gemma-4-developer-agent-wheelhouse adds SupportsLoRA, so local LoRA tests must install that exact wheel. With the patched wheel, see the separate report in 743508 that adapters load but are reset to zero.</p>",
+        "parent": {},
+        "author": {
+          "displayName": "Carson Rodrigues",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/5355265-kg.png?t=2026-02-06-16-22-30",
+          "url": "/carsonrodrigues",
+          "tier": "CONTRIBUTOR",
+          "id": 5355265,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "totalVotes": 1,
+          "canUpvote": true,
+          "totalUpvotes": 1
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 218,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Carson Rodrigues",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/5355265-kg.png?t=2026-02-06-16-22-30",
+            "url": "/carsonrodrigues",
+            "userName": "carsonrodrigues",
+            "tier": "CONTRIBUTOR",
+            "id": 5355265,
+            "profileUrl": "/carsonrodrigues",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 5355265,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3528648,
+        "postDate": "2026-09-26T09:23:09.443Z",
+        "rawMarkdown": "Same here. Submission 56563939 (2026-09-26 00:08 UTC, plain YAML bundle, no adapters) completed with no score; error_description: \"Your notebook has requested more CPU, GPU or TPU resources than are available.\" My previous bundle from the same pipeline (differing only in the thinking settings in sampling.yaml and timeout_seconds in eval_config.yaml) scored 0.13 the day before, so this looks platform-side. The failed run still used the daily submission slot. @ryanholbrook, could slots be restored for submissions that failed with this resource error? Thanks!",
+        "content": "<p>Same here. Submission 56563939 (2026-09-26 00:08 UTC, plain YAML bundle, no adapters) completed with no score; error_description: \"Your notebook has requested more CPU, GPU or TPU resources than are available.\" My previous bundle from the same pipeline (differing only in the thinking settings in sampling.yaml and timeout_seconds in eval_config.yaml) scored 0.13 the day before, so this looks platform-side. The failed run still used the daily submission slot. <a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a>, could slots be restored for submissions that failed with this resource error? Thanks!</p>",
+        "parent": {},
+        "author": {
+          "displayName": "Alperen ÖZ",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/alperenzfddg",
+          "tier": "CONTRIBUTOR",
+          "id": 25691602,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "totalVotes": 1,
+          "canUpvote": true,
+          "totalUpvotes": 1
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 51,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Alperen ÖZ",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+            "url": "/alperenzfddg",
+            "userName": "alperenzfddg",
+            "tier": "CONTRIBUTOR",
+            "id": 25691602,
+            "profileUrl": "/alperenzfddg",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 25691602,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3528507,
+        "postDate": "2026-09-26T06:00:58.590Z",
+        "rawMarkdown": "Same failure here, but a different error text. Submission 56565084 (2026-09-26 00:53 UTC; a plain YAML bundle, no adapters) completed with no score and the message \"Your notebook has requested more CPU, GPU or TPU resources than are available.\" It still used the daily allowance: resubmitting the identical zip is rejected with \"Your team has used its daily Submission allowance (1) today\". The same bundle structure (only the prompt text and max_turns differ) scored normally the day before, and my Kaggle GPU quota is untouched. @ryanholbrook, could the slot be restored when a submission fails on this platform-side resource error?\n\nSeparately, once the server starts with the patched vLLM, LoRA adapters are silently wiped (no effect on outputs). I opened a separate topic with the cause and a repro: https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743508",
+        "content": "<p>Same failure here, but a different error text. Submission 56565084 (2026-09-26 00:53 UTC; a plain YAML bundle, no adapters) completed with no score and the message \"Your notebook has requested more CPU, GPU or TPU resources than are available.\" It still used the daily allowance: resubmitting the identical zip is rejected with \"Your team has used its daily Submission allowance (1) today\". The same bundle structure (only the prompt text and max_turns differ) scored normally the day before, and my Kaggle GPU quota is untouched. <a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a>, could the slot be restored when a submission fails on this platform-side resource error?</p>\n<p>Separately, once the server starts with the patched vLLM, LoRA adapters are silently wiped (no effect on outputs). I opened a separate topic with the cause and a repro: <a href=\"https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743508\" target=\"_blank\">https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743508</a></p>",
+        "replies": [
+          {
+            "id": 3528530,
+            "postDate": "2026-09-26T06:38:28.927Z",
+            "rawMarkdown": "I got the same error \"Your notebook has requested more CPU, GPU or TPU resources than are available.\" this morning. If possible, I would also be happy to get my slot back in case that's an error on Kaggle side.",
+            "content": "<p>I got the same error \"Your notebook has requested more CPU, GPU or TPU resources than are available.\" this morning. If possible, I would also be happy to get my slot back in case that's an error on Kaggle side.</p>",
+            "parent": {},
+            "author": {
+              "displayName": "omallo",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/1899997-kg.jpg",
+              "url": "/omallo",
+              "tier": "EXPERT",
+              "id": 1899997,
+              "progressionOptOut": false
+            },
+            "authorType": "COMMENT",
+            "votes": {
+              "totalVotes": 3,
+              "canUpvote": true,
+              "totalUpvotes": 3
+            },
+            "kernelVersion": 0,
+            "competitionRanking": 24,
+            "feedbackTrackingData": {},
+            "isThankYou": false,
+            "reactions": [
+              {
+                "emoji": "LOVE",
+                "featuredUserNames": [
+                  "goyashuto"
+                ],
+                "userCount": 1
+              }
+            ],
+            "teamUpInfo": {
+              "teamLeader": {
+                "displayName": "omallo",
+                "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/1899997-kg.jpg",
+                "url": "/omallo",
+                "userName": "omallo",
+                "tier": "EXPERT",
+                "id": 1899997,
+                "profileUrl": "/omallo",
+                "performanceTier": "EXPERT",
+                "userId": 1899997,
+                "progressionOptOut": false
+              },
+              "intro": ""
+            }
+          },
+          {
+            "id": 3528709,
+            "postDate": "2026-09-26T10:46:01.283Z",
+            "rawMarkdown": "I got the same error today; the notebook stopped after 4 hours... I assume it's happening to everyone, right?",
+            "content": "<p>I got the same error today; the notebook stopped after 4 hours… I assume it's happening to everyone, right?</p>",
+            "parent": {},
+            "author": {
+              "displayName": "Tom D.",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/35394636-kg.jpeg?t=2026-09-25-08-17-13",
+              "url": "/wikimindai",
+              "tier": "CONTRIBUTOR",
+              "id": 35394636,
+              "progressionOptOut": false
+            },
+            "authorType": "COMMENT",
+            "votes": {
+              "canUpvote": true
+            },
+            "kernelVersion": 0,
+            "competitionRanking": 937,
+            "feedbackTrackingData": {},
+            "isThankYou": false,
+            "teamUpInfo": {
+              "teamLeader": {
+                "displayName": "Tom D.",
+                "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/35394636-kg.jpeg?t=2026-09-25-08-17-13",
+                "url": "/wikimindai",
+                "userName": "wikimindai",
+                "tier": "CONTRIBUTOR",
+                "id": 35394636,
+                "profileUrl": "/wikimindai",
+                "performanceTier": "CONTRIBUTOR",
+                "userId": 35394636,
+                "progressionOptOut": false
+              },
+              "intro": ""
+            }
+          }
+        ],
+        "parent": {},
+        "author": {
+          "displayName": "Whisper Last",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/19641724-kg.png?t=2026-09-29-07-48-18",
+          "url": "/whisperlast",
+          "tier": "CONTRIBUTOR",
+          "id": 19641724,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "totalVotes": 2,
+          "canUpvote": true,
+          "totalUpvotes": 2
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 194,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "reactions": [
+          {
+            "emoji": "LOVE",
+            "featuredUserNames": [
+              "goyashuto"
+            ],
+            "userCount": 1
+          }
+        ],
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Whisper Last",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/19641724-kg.png?t=2026-09-29-07-48-18",
+            "url": "/whisperlast",
+            "userName": "whisperlast",
+            "tier": "CONTRIBUTOR",
+            "id": 19641724,
+            "profileUrl": "/whisperlast",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 19641724,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3528751,
+        "postDate": "2026-09-26T11:52:05.560Z",
+        "rawMarkdown": "Same resource error here. Submission 56566212 (2026-09-26 01:49 UTC): a plain YAML bundle, no adapters and no LoRA, one model (gemma-4-31b-it-qat-w4a16-ct). It completed with no score, and the error_description was \"Your notebook has requested more CPU, GPU or TPU resources than are available.\" Earlier bundles from the same pipeline, with the same structure, were scored normally. The bundle passes validate_directory and compile_submission locally. It still used the daily submission slot.\n\nThanks for looking into it, @ryanholbrook. I'll resubmit the same bundle when the next slot opens and report back here. Could the slot be restored for submissions that failed with this error before the fix?",
+        "content": "<p>Same resource error here. Submission 56566212 (2026-09-26 01:49 UTC): a plain YAML bundle, no adapters and no LoRA, one model (gemma-4-31b-it-qat-w4a16-ct). It completed with no score, and the error_description was \"Your notebook has requested more CPU, GPU or TPU resources than are available.\" Earlier bundles from the same pipeline, with the same structure, were scored normally. The bundle passes validate_directory and compile_submission locally. It still used the daily submission slot.</p>\n<p>Thanks for looking into it, <a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a>. I'll resubmit the same bundle when the next slot opens and report back here. Could the slot be restored for submissions that failed with this error before the fix?</p>",
+        "parent": {},
+        "author": {
+          "displayName": "mahmoud al-ghraibeh",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/mahmoudalghraibeh",
+          "tier": "CONTRIBUTOR",
+          "id": 34207569,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 188,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "mahmoud al-ghraibeh",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+            "url": "/mahmoudalghraibeh",
+            "userName": "mahmoudalghraibeh",
+            "tier": "CONTRIBUTOR",
+            "id": 34207569,
+            "profileUrl": "/mahmoudalghraibeh",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 34207569,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3528737,
+        "postDate": "2026-09-26T11:34:10.520Z",
+        "rawMarkdown": "Same here: submission 56571006 (2026-09-26 06:11 UTC, a plain YAML bundle with no adapters, ~3 KB zip) completed with no score and the message \"Your notebook has requested more CPU, GPU or TPU resources than are available.\" (UI: \"Notebook Exceeded Allowed Compute\"). @ryanholbrook, if slots are being restored for this platform-side error, we'd be grateful for ours too. Thanks!",
+        "content": "<p>Same here: submission 56571006 (2026-09-26 06:11 UTC, a plain YAML bundle with no adapters, ~3 KB zip) completed with no score and the message \"Your notebook has requested more CPU, GPU or TPU resources than are available.\" (UI: \"Notebook Exceeded Allowed Compute\"). <a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a>, if slots are being restored for this platform-side error, we'd be grateful for ours too. Thanks!</p>",
+        "parent": {},
+        "author": {
+          "displayName": "AjitDaGeniusGuy",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/36674148-kg.jpeg?t=2026-09-26-14-58-16",
+          "url": "/ajitdageniusguy",
+          "tier": "CONTRIBUTOR",
+          "id": 36674148,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 78,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "AjitDaGeniusGuy",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/36674148-kg.jpeg?t=2026-09-26-14-58-16",
+            "url": "/ajitdageniusguy",
+            "userName": "ajitdageniusguy",
+            "tier": "CONTRIBUTOR",
+            "id": 36674148,
+            "profileUrl": "/ajitdageniusguy",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 36674148,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3528047,
+      "postDate": "2026-09-25T08:40:06.427Z",
+      "rawMarkdown": "The official `sample_submission`, submitted byte-for-byte as-is (submission `56539111`, 2026-09-25 03:46 UTC): **FAILED, no score.** The only message is the generic `Your notebook hit an unhandled error while rerunning your code.`\n\nI could not reproduce the failure locally, and ruled three explanations out with the same pins as the official wheelhouse (`google-adk 1.36.1`, `adk-submission 0.2.11`, `swegemma 0.2.7`):\n\n- the package **compiles clean** — `compile_submission()` returns the full `LlmAgent` tree, so this is not a YAML/assembly bug;\n- `discover_adapters()` returns `main_lora` / `tool_lora` exactly as declared in `agent.yaml`, so it is not an adapter-name collision;\n- all 9 tools are registered unconditionally (`create_tools()` in `swegemma/tools/__init__.py`) — the `has_g`/`has_e` file-size check in `agent_runner.py` only gates prompt *prose*, not tool registration — so it is not the empty graph/embedding files either.\n\nThe part that matters: **the adapter never goes through local PEFT loading.** In `swegemma/models/registry.py` (`resolve_swegemma_adapter`, and `_make_adapter_model` inside `setup_gemma_model_registry`), `adapter: <name>` rewrites the agent's model into a LiteLLM id of `openai/<adapter-name>` — i.e. it asks the inference endpoint to serve a LoRA **already registered under that name** (vLLM `--lora-modules <name>=<path>`). For this submission the compiled root agent's model string is literally `openai/main_lora`. `swegemma` itself never starts the inference server (the endpoint comes from `MODEL_PROXY_URL` / `LITELLM_API_BASE` / `LOCAL_INFERENCE_URL` / `OPENAI_BASE_URL`), so that registration step appears to live entirely on the scoring side.\n\nSupporting observation: I read the packaging cells of both public notebooks whose scores are known — `nursrijan`'s starter kit (0.05) and `romanrozen`'s baseline (0.12) — and **neither writes an `adapters/` directory into its bundle**; `romanrozen`'s notebook mentions LoRA only in a validator check and in a roadmap line reading \"LoRA adapter (*if the rules allow*)\". So as far as I can tell **no public submission has exercised this path at all**, which is consistent with the failure above rather than with a bug in my packaging.\n\nTwo questions, if the organizers have a moment:\n\n1. Is the scoring server expected to register submitted adapters as named LoRA modules (`--lora-modules main_lora=...`), or to merge them into the base model first?\n2. If they are meant to be addressable, is there a required naming convention, or a constraint on `base_model_name_or_path` in `adapter_config.json` relative to the served model?\n\nFor context, an earlier participant topic here reported that the pinned `vllm 0.19.1` refuses to start with `--enable-lora` for `Gemma4ForConditionalGeneration` (\"does not support LoRA yet\"), and that topic has since been deleted — so I can't tell whether the server-side refusal or the unregistered model id is what we are hitting. The distinction matters, because a non-empty `adapters/` directory changes how the model is addressed at all: if this is the cause, then **any** submission carrying an adapter fails regardless of its rank or quality, and the LoRA route is closed rather than merely unhelpful.\n\nI can run the single-variable check on my next submission — the identical official package with `adapters/` and the two `adapter:` lines removed, nothing else touched — and report back either way.",
+      "content": "<p>The official <code>sample_submission</code>, submitted byte-for-byte as-is (submission <code>56539111</code>, 2026-09-25 03:46 UTC): <strong>FAILED, no score.</strong> The only message is the generic <code>Your notebook hit an unhandled error while rerunning your code.</code></p>\n<p>I could not reproduce the failure locally, and ruled three explanations out with the same pins as the official wheelhouse (<code>google-adk 1.36.1</code>, <code>adk-submission 0.2.11</code>, <code>swegemma 0.2.7</code>):</p>\n<ul>\n<li>the package <strong>compiles clean</strong> — <code>compile_submission()</code> returns the full <code>LlmAgent</code> tree, so this is not a YAML/assembly bug;</li>\n<li><code>discover_adapters()</code> returns <code>main_lora</code> / <code>tool_lora</code> exactly as declared in <code>agent.yaml</code>, so it is not an adapter-name collision;</li>\n<li>all 9 tools are registered unconditionally (<code>create_tools()</code> in <code>swegemma/tools/__init__.py</code>) — the <code>has_g</code>/<code>has_e</code> file-size check in <code>agent_runner.py</code> only gates prompt <em>prose</em>, not tool registration — so it is not the empty graph/embedding files either.</li>\n</ul>\n<p>The part that matters: <strong>the adapter never goes through local PEFT loading.</strong> In <code>swegemma/models/registry.py</code> (<code>resolve_swegemma_adapter</code>, and <code>_make_adapter_model</code> inside <code>setup_gemma_model_registry</code>), <code>adapter: &lt;name&gt;</code> rewrites the agent's model into a LiteLLM id of <code>openai/&lt;adapter-name&gt;</code> — i.e. it asks the inference endpoint to serve a LoRA <strong>already registered under that name</strong> (vLLM <code>--lora-modules &lt;name&gt;=&lt;path&gt;</code>). For this submission the compiled root agent's model string is literally <code>openai/main_lora</code>. <code>swegemma</code> itself never starts the inference server (the endpoint comes from <code>MODEL_PROXY_URL</code> / <code>LITELLM_API_BASE</code> / <code>LOCAL_INFERENCE_URL</code> / <code>OPENAI_BASE_URL</code>), so that registration step appears to live entirely on the scoring side.</p>\n<p>Supporting observation: I read the packaging cells of both public notebooks whose scores are known — <code>nursrijan</code>'s starter kit (0.05) and <code>romanrozen</code>'s baseline (0.12) — and <strong>neither writes an <code>adapters/</code> directory into its bundle</strong>; <code>romanrozen</code>'s notebook mentions LoRA only in a validator check and in a roadmap line reading \"LoRA adapter (<em>if the rules allow</em>)\". So as far as I can tell <strong>no public submission has exercised this path at all</strong>, which is consistent with the failure above rather than with a bug in my packaging.</p>\n<p>Two questions, if the organizers have a moment:</p>\n<ol>\n<li>Is the scoring server expected to register submitted adapters as named LoRA modules (<code>--lora-modules main_lora=...</code>), or to merge them into the base model first?</li>\n<li>If they are meant to be addressable, is there a required naming convention, or a constraint on <code>base_model_name_or_path</code> in <code>adapter_config.json</code> relative to the served model?</li>\n</ol>\n<p>For context, an earlier participant topic here reported that the pinned <code>vllm 0.19.1</code> refuses to start with <code>--enable-lora</code> for <code>Gemma4ForConditionalGeneration</code> (\"does not support LoRA yet\"), and that topic has since been deleted — so I can't tell whether the server-side refusal or the unregistered model id is what we are hitting. The distinction matters, because a non-empty <code>adapters/</code> directory changes how the model is addressed at all: if this is the cause, then <strong>any</strong> submission carrying an adapter fails regardless of its rank or quality, and the LoRA route is closed rather than merely unhelpful.</p>\n<p>I can run the single-variable check on my next submission — the identical official package with <code>adapters/</code> and the two <code>adapter:</code> lines removed, nothing else touched — and report back either way.</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Violet Notes",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/25557550-kg.jpg?t=2025-10-02-08-36-04",
+        "url": "/dominicjamil",
+        "tier": "CONTRIBUTOR",
+        "id": 25557550,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 4,
+        "canUpvote": true,
+        "totalUpvotes": 4
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 1198,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Violet Notes",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/25557550-kg.jpg?t=2025-10-02-08-36-04",
+          "url": "/dominicjamil",
+          "userName": "dominicjamil",
+          "tier": "CONTRIBUTOR",
+          "id": 25557550,
+          "profileUrl": "/dominicjamil",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 25557550,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3528047,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 743213,
+    "name": "Official sample_submission scores FAILED — are submitted adapters meant to be registered as named LoRA modules?",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-25T08:40:06.426893100Z",
+    "totalVotes": 4,
+    "url": "/competitions/gemma-4-developer-agent/discussion/743213",
+    "totalMessages": 13,
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

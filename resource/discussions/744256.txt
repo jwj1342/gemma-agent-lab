@@ -1,0 +1,11 @@
+# Request to Organizers to provide GPU access to fine-tune model
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/744256
+
+## 3529879 /dhruvpaidukle TOPIC
+Since the accepted model is relatively large(31B Parameters), The organizers are requested to provide limited GPU access, so that everyone can run the model and participate.
+
+## 3529901 /saltice COMMENT
+They are providing GPU access for us already, You can access it in kaggle notebook, 30 hours/week is the quota . You can train or test there.4 x GPU L4 are provided
+
+## 3529941 /johnparkerson COMMENT
+You should ask for a RTX Pro 6000 instead. It’s way quicker than the L4 x 4 setup we have now. 

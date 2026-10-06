@@ -1,0 +1,57 @@
+{
+  "forumTopic": {
+    "authorId": 1139362,
+    "authorThumbnailName": "default-thumb.png",
+    "authorUserDisplayName": "Jacek Poplawski",
+    "authorUserName": "jacekpoplawski",
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3528877,
+      "postDate": "2026-09-26T18:55:06.950Z",
+      "rawMarkdown": "If you're struggling to run Gemma 4 31B locally due to VRAM requirements, llama.cpp is worth trying.\nThe QAT model is available as GGUF, and llama.cpp lets you offload part of the model to system RAM when it doesn't fully fit in VRAM. This makes it possible to experiment locally without consuming Kaggle GPU quota.\n\nYou can also run it with llama-server, which exposes an OpenAI-compatible API, making it easy to plug into your own agent harness.\n\nLinks:\n- https://huggingface.co/unsloth/gemma-4-31B-it-qat-GGUF\n- https://github.com/ggml-org/llama.cpp\n\nHas anyone else tried this setup for the competition?",
+      "content": "<p>If you're struggling to run Gemma 4 31B locally due to VRAM requirements, llama.cpp is worth trying.\nThe QAT model is available as GGUF, and llama.cpp lets you offload part of the model to system RAM when it doesn't fully fit in VRAM. This makes it possible to experiment locally without consuming Kaggle GPU quota.</p>\n<p>You can also run it with llama-server, which exposes an OpenAI-compatible API, making it easy to plug into your own agent harness.</p>\n<p>Links:</p>\n<ul>\n<li><a href=\"https://huggingface.co/unsloth/gemma-4-31B-it-qat-GGUF\" target=\"_blank\">https://huggingface.co/unsloth/gemma-4-31B-it-qat-GGUF</a></li>\n<li><a href=\"https://github.com/ggml-org/llama.cpp\" target=\"_blank\">https://github.com/ggml-org/llama.cpp</a></li>\n</ul>\n<p>Has anyone else tried this setup for the competition?</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Jacek Poplawski",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+        "url": "/jacekpoplawski",
+        "tier": "EXPERT",
+        "id": 1139362,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "canUpvote": true
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Jacek Poplawski",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/jacekpoplawski",
+          "userName": "jacekpoplawski",
+          "tier": "EXPERT",
+          "id": 1139362,
+          "profileUrl": "/jacekpoplawski",
+          "performanceTier": "EXPERT",
+          "userId": 1139362,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3528877,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 743743,
+    "name": "You can run Gemma 4 31B QAT locally with llama.cpp",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-26T18:55:06.948995400Z",
+    "url": "/competitions/gemma-4-developer-agent/discussion/743743",
+    "authorPerformanceTier": "EXPERT",
+    "authorProgressionOptOut": false
+  }
+}

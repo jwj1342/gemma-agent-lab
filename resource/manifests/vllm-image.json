@@ -1,0 +1,39 @@
+{
+  "repository": "vllm/vllm-openai",
+  "tag": "v0.19.1",
+  "digest": "sha256:2622f38a0aa646c15ccc27bd5033911a58fd94ac69fd8f86aba0692d77cfe5b9",
+  "manifest": {
+    "schemaVersion": 2,
+    "mediaType": "application/vnd.docker.distribution.manifest.list.v2+json",
+    "manifests": [
+      {
+        "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+        "size": 5995,
+        "digest": "sha256:f1e05bc81cb77343d1c3c2c19351697e50dd4dbb229eaa0e87e707b8cfda02e9",
+        "platform": {
+          "architecture": "arm64",
+          "os": "linux"
+        }
+      },
+      {
+        "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+        "size": 5995,
+        "digest": "sha256:89c1d0629d377daa3f7f369cbea6167a7b48ea89aaacd12555e2b0b2f7f740d3",
+        "platform": {
+          "architecture": "amd64",
+          "os": "linux"
+        }
+      }
+    ]
+  },
+  "runtime_check": {
+    "checked_at": "2026-10-05T05:22:36.186099+00:00",
+    "python": "3.12.13",
+    "python_executable": "/usr/bin/python3.12",
+    "torch": "2.10.0+cu129",
+    "cuda_runtime": "12.9",
+    "gpu_tested": false,
+    "sif_bytes": 8868261888,
+    "note": "SIF construction and CPU Torch import passed. Build script initial diagnostic used absent python alias, now corrected."
+  }
+}

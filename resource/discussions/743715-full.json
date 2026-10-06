@@ -1,0 +1,404 @@
+{
+  "forumTopic": {
+    "authorId": 2559802,
+    "authorThumbnailName": "default-thumb.png",
+    "authorUserDisplayName": "Saurabh Dasgupta",
+    "authorUserName": "dasgupsa500",
+    "comments": [
+      {
+        "id": 3528864,
+        "postDate": "2026-09-26T18:06:02.933Z",
+        "rawMarkdown": "Is there a supported way to use the competition's four L4 GPUs in a private research notebook with no competition data source mounted, or with an official sanitized development-only resource instead?\n\nWe want to use only the permitted Gemma model, approved wheelhouse and development tasks while keeping reference fixes, verification tests and held-out tasks inaccessible during generation. Standard sanitized-only notebooks currently offer T4 x2, while attaching the competition source enables L4 x4. Does Kaggle provide an entitlement-only competition association, an approved private template, or a sanitized resource that grants L4 x4 access? Please also clarify the applicable free quota and notebook storage limits.\n\nThis is an access/configuration question; no solution code, model output, private data or credentials will be included.",
+        "content": "<p>Is there a supported way to use the competition's four L4 GPUs in a private research notebook with no competition data source mounted, or with an official sanitized development-only resource instead?</p>\n<p>We want to use only the permitted Gemma model, approved wheelhouse and development tasks while keeping reference fixes, verification tests and held-out tasks inaccessible during generation. Standard sanitized-only notebooks currently offer T4 x2, while attaching the competition source enables L4 x4. Does Kaggle provide an entitlement-only competition association, an approved private template, or a sanitized resource that grants L4 x4 access? Please also clarify the applicable free quota and notebook storage limits.</p>\n<p>This is an access/configuration question; no solution code, model output, private data or credentials will be included.</p>",
+        "replies": [
+          {
+            "id": 3528870,
+            "postDate": "2026-09-26T18:22:42.227Z",
+            "rawMarkdown": "Competition source has to be attached. Notebook can be private, but it needs to be attached. Of course, don’t abuse it for something outside this competition, since Kaggle staff can eject you by their discretion. ",
+            "content": "<p>Competition source has to be attached. Notebook can be private, but it needs to be attached. Of course, don’t abuse it for something outside this competition, since Kaggle staff can eject you by their discretion. </p>",
+            "parent": {},
+            "author": {
+              "displayName": "JohnParkerson",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+              "url": "/johnparkerson",
+              "tier": "CONTRIBUTOR",
+              "id": 36840669,
+              "progressionOptOut": false
+            },
+            "authorType": "COMMENT",
+            "votes": {
+              "canUpvote": true
+            },
+            "kernelVersion": 0,
+            "competitionRanking": 529,
+            "feedbackTrackingData": {},
+            "isThankYou": false,
+            "teamUpInfo": {
+              "teamLeader": {
+                "displayName": "JohnParkerson",
+                "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+                "url": "/johnparkerson",
+                "userName": "johnparkerson",
+                "tier": "CONTRIBUTOR",
+                "id": 36840669,
+                "profileUrl": "/johnparkerson",
+                "performanceTier": "CONTRIBUTOR",
+                "userId": 36840669,
+                "progressionOptOut": false
+              },
+              "intro": ""
+            }
+          }
+        ],
+        "parent": {},
+        "author": {
+          "displayName": "Joseph Ayanda",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/34157718-kg.jpeg?t=2026-09-28-09-39-45",
+          "url": "/josephayanda",
+          "tier": "CONTRIBUTOR",
+          "id": 34157718,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 1199,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Joseph Ayanda",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/34157718-kg.jpeg?t=2026-09-28-09-39-45",
+            "url": "/josephayanda",
+            "userName": "josephayanda",
+            "tier": "CONTRIBUTOR",
+            "id": 34157718,
+            "profileUrl": "/josephayanda",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 34157718,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3528824,
+        "postDate": "2026-09-26T16:02:39.997Z",
+        "rawMarkdown": "You probably can’t post train locally. You may be able to run the model for inference and A/B, but probably need cloud for SFT and RL.",
+        "content": "<p>You probably can’t post train locally. You may be able to run the model for inference and A/B, but probably need cloud for SFT and RL.</p>",
+        "replies": [
+          {
+            "id": 3528830,
+            "postDate": "2026-09-26T16:15:57.633Z",
+            "rawMarkdown": "Thank you John. That leaves me out. Unfortunately I don't have resources for online computing. \nThe people likely to win this competition do! \nThanks again John.",
+            "content": "<p>Thank you John. That leaves me out. Unfortunately I don't have resources for online computing. \nThe people likely to win this competition do! \nThanks again John.</p>",
+            "replies": [
+              {
+                "id": 3528868,
+                "postDate": "2026-09-26T18:21:04.643Z",
+                "rawMarkdown": "Yeah MLX would probably be slow for inference anyways. Of course, CUDA is always preferred, with tensor cores, but you could post train on the Kaggle GPUs, and run the customized harness with your own laptop to improve it, but in my experience even with my 128gb m4 MacBook, it’ll probably overheat and shut off (which would stop your iterations), so I have my own 64gb rig of Nvidia GPUs. I also was using oMLX, which is essentially one of the most optimized inference stacks for Metal. ",
+                "content": "<p>Yeah MLX would probably be slow for inference anyways. Of course, CUDA is always preferred, with tensor cores, but you could post train on the Kaggle GPUs, and run the customized harness with your own laptop to improve it, but in my experience even with my 128gb m4 MacBook, it’ll probably overheat and shut off (which would stop your iterations), so I have my own 64gb rig of Nvidia GPUs. I also was using oMLX, which is essentially one of the most optimized inference stacks for Metal. </p>",
+                "parent": {},
+                "author": {
+                  "displayName": "JohnParkerson",
+                  "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+                  "url": "/johnparkerson",
+                  "tier": "CONTRIBUTOR",
+                  "id": 36840669,
+                  "progressionOptOut": false
+                },
+                "authorType": "COMMENT",
+                "votes": {
+                  "canUpvote": true
+                },
+                "kernelVersion": 0,
+                "competitionRanking": 529,
+                "feedbackTrackingData": {},
+                "isThankYou": false,
+                "teamUpInfo": {
+                  "teamLeader": {
+                    "displayName": "JohnParkerson",
+                    "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+                    "url": "/johnparkerson",
+                    "userName": "johnparkerson",
+                    "tier": "CONTRIBUTOR",
+                    "id": 36840669,
+                    "profileUrl": "/johnparkerson",
+                    "performanceTier": "CONTRIBUTOR",
+                    "userId": 36840669,
+                    "progressionOptOut": false
+                  },
+                  "intro": ""
+                }
+              },
+              {
+                "id": 3528872,
+                "postDate": "2026-09-26T18:30:24.383Z",
+                "rawMarkdown": "Modal offers $30 of free credits a month. I typically have run SFT/RL on their systems costing about $5-8 per a run. Caveat being it is cost beneficial once you have all the setup kinks figured out. Ping me on here I'll share my open source work on Modal and using Gemma and Qwen based models on Modal which should save you a few days of pain if you want! I'm working on my setup for this competition on Modal right now and if it's not to much of a giveaway I can open source those scripts for this competition as well. \n\nHaving your SFT/RL regime and data organized and ready to go will save you compute cost and resources. ",
+                "content": "<p>Modal offers $30 of free credits a month. I typically have run SFT/RL on their systems costing about $5-8 per a run. Caveat being it is cost beneficial once you have all the setup kinks figured out. Ping me on here I'll share my open source work on Modal and using Gemma and Qwen based models on Modal which should save you a few days of pain if you want! I'm working on my setup for this competition on Modal right now and if it's not to much of a giveaway I can open source those scripts for this competition as well. </p>\n<p>Having your SFT/RL regime and data organized and ready to go will save you compute cost and resources. </p>",
+                "parent": {},
+                "author": {
+                  "displayName": "Justin Scott",
+                  "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/3881280-kg.jpg?t=2026-09-25-14-44-26",
+                  "url": "/mjustinscott",
+                  "tier": "CONTRIBUTOR",
+                  "id": 3881280,
+                  "progressionOptOut": false
+                },
+                "authorType": "COMMENT",
+                "votes": {
+                  "canUpvote": true
+                },
+                "kernelVersion": 0,
+                "feedbackTrackingData": {},
+                "isThankYou": false,
+                "isCollapsed": true,
+                "reactions": [
+                  {
+                    "emoji": "LOVE",
+                    "featuredUserNames": [
+                      "dasgupsa500"
+                    ],
+                    "userCount": 1
+                  }
+                ],
+                "teamUpInfo": {
+                  "teamLeader": {
+                    "displayName": "Justin Scott",
+                    "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/3881280-kg.jpg?t=2026-09-25-14-44-26",
+                    "url": "/mjustinscott",
+                    "userName": "mjustinscott",
+                    "tier": "CONTRIBUTOR",
+                    "id": 3881280,
+                    "profileUrl": "/mjustinscott",
+                    "performanceTier": "CONTRIBUTOR",
+                    "userId": 3881280,
+                    "progressionOptOut": false
+                  },
+                  "intro": ""
+                }
+              },
+              {
+                "id": 3528880,
+                "postDate": "2026-09-26T18:59:14.340Z",
+                "rawMarkdown": "Lowkey could I get your setup? I still need resources for post training. ",
+                "content": "<p>Lowkey could I get your setup? I still need resources for post training. </p>",
+                "parent": {},
+                "author": {
+                  "displayName": "JohnParkerson",
+                  "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+                  "url": "/johnparkerson",
+                  "tier": "CONTRIBUTOR",
+                  "id": 36840669,
+                  "progressionOptOut": false
+                },
+                "authorType": "COMMENT",
+                "votes": {
+                  "canUpvote": true
+                },
+                "kernelVersion": 0,
+                "competitionRanking": 529,
+                "feedbackTrackingData": {},
+                "isThankYou": false,
+                "isCollapsed": true,
+                "teamUpInfo": {
+                  "teamLeader": {
+                    "displayName": "JohnParkerson",
+                    "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+                    "url": "/johnparkerson",
+                    "userName": "johnparkerson",
+                    "tier": "CONTRIBUTOR",
+                    "id": 36840669,
+                    "profileUrl": "/johnparkerson",
+                    "performanceTier": "CONTRIBUTOR",
+                    "userId": 36840669,
+                    "progressionOptOut": false
+                  },
+                  "intro": ""
+                }
+              },
+              {
+                "id": 3528881,
+                "postDate": "2026-09-26T19:02:26.037Z",
+                "rawMarkdown": "[LLM Tuning](https://github.com/jscott3201/llm-tuning) [Gemma Tuning](https://github.com/jscott3201/Model-Tuning)\n\nThis should be enough to get past the hard part with Modal. For the sake of the competition I won't dive into my data mix and overall setup but this should make getting into Modal and going with Gemma pretty much out the box easier. I've built MLX/Metal inference engines around the Gemma models (Hyperion Project) so seeing this competition was a fun one to get into for me haha",
+                "content": "<p><a href=\"https://github.com/jscott3201/llm-tuning\" target=\"_blank\">LLM Tuning</a> <a href=\"https://github.com/jscott3201/Model-Tuning\" target=\"_blank\">Gemma Tuning</a></p>\n<p>This should be enough to get past the hard part with Modal. For the sake of the competition I won't dive into my data mix and overall setup but this should make getting into Modal and going with Gemma pretty much out the box easier. I've built MLX/Metal inference engines around the Gemma models (Hyperion Project) so seeing this competition was a fun one to get into for me haha</p>",
+                "parent": {},
+                "author": {
+                  "displayName": "Justin Scott",
+                  "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/3881280-kg.jpg?t=2026-09-25-14-44-26",
+                  "url": "/mjustinscott",
+                  "tier": "CONTRIBUTOR",
+                  "id": 3881280,
+                  "progressionOptOut": false
+                },
+                "authorType": "COMMENT",
+                "votes": {
+                  "canUpvote": true
+                },
+                "kernelVersion": 0,
+                "feedbackTrackingData": {},
+                "isThankYou": false,
+                "isCollapsed": true,
+                "teamUpInfo": {
+                  "teamLeader": {
+                    "displayName": "Justin Scott",
+                    "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/3881280-kg.jpg?t=2026-09-25-14-44-26",
+                    "url": "/mjustinscott",
+                    "userName": "mjustinscott",
+                    "tier": "CONTRIBUTOR",
+                    "id": 3881280,
+                    "profileUrl": "/mjustinscott",
+                    "performanceTier": "CONTRIBUTOR",
+                    "userId": 3881280,
+                    "progressionOptOut": false
+                  },
+                  "intro": ""
+                }
+              },
+              {
+                "id": 3528883,
+                "postDate": "2026-09-26T19:06:18.003Z",
+                "rawMarkdown": "Thanks John. Will wait for another competition!",
+                "content": "<p>Thanks John. Will wait for another competition!</p>",
+                "parent": {},
+                "author": {
+                  "displayName": "Saurabh Dasgupta",
+                  "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+                  "url": "/dasgupsa500",
+                  "tier": "CONTRIBUTOR",
+                  "id": 2559802,
+                  "progressionOptOut": false
+                },
+                "authorType": "TOPIC",
+                "votes": {
+                  "canUpvote": true
+                },
+                "kernelVersion": 0,
+                "feedbackTrackingData": {},
+                "isThankYou": false,
+                "isCollapsed": true
+              },
+              {
+                "id": 3528885,
+                "postDate": "2026-09-26T19:07:05.667Z",
+                "rawMarkdown": "Thank you so much for your offer Justin. I'll defo hit u up in another competition. ",
+                "content": "<p>Thank you so much for your offer Justin. I'll defo hit u up in another competition. </p>",
+                "parent": {},
+                "author": {
+                  "displayName": "Saurabh Dasgupta",
+                  "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+                  "url": "/dasgupsa500",
+                  "tier": "CONTRIBUTOR",
+                  "id": 2559802,
+                  "progressionOptOut": false
+                },
+                "authorType": "TOPIC",
+                "votes": {
+                  "canUpvote": true
+                },
+                "kernelVersion": 0,
+                "feedbackTrackingData": {},
+                "isThankYou": false,
+                "isCollapsed": true
+              }
+            ],
+            "parent": {},
+            "author": {
+              "displayName": "Saurabh Dasgupta",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+              "url": "/dasgupsa500",
+              "tier": "CONTRIBUTOR",
+              "id": 2559802,
+              "progressionOptOut": false
+            },
+            "authorType": "TOPIC",
+            "votes": {
+              "canUpvote": true
+            },
+            "kernelVersion": 0,
+            "feedbackTrackingData": {},
+            "isThankYou": false
+          }
+        ],
+        "parent": {},
+        "author": {
+          "displayName": "JohnParkerson",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/johnparkerson",
+          "tier": "CONTRIBUTOR",
+          "id": 36840669,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 529,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "reactions": [
+          {
+            "emoji": "LOVE",
+            "featuredUserNames": [
+              "dasgupsa500"
+            ],
+            "userCount": 1
+          }
+        ],
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "JohnParkerson",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+            "url": "/johnparkerson",
+            "userName": "johnparkerson",
+            "tier": "CONTRIBUTOR",
+            "id": 36840669,
+            "profileUrl": "/johnparkerson",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 36840669,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3528806,
+      "postDate": "2026-09-26T14:58:44.800Z",
+      "rawMarkdown": "i have a macbook m1 pro. is that enough for this competition? so my only free resources are kaggle gpu and people are getting timed out. do i need to us cloud computing? ree\nthank you in advance",
+      "content": "<p>i have a macbook m1 pro. is that enough for this competition? so my only free resources are kaggle gpu and people are getting timed out. do i need to us cloud computing? ree\nthank you in advance</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Saurabh Dasgupta",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+        "url": "/dasgupsa500",
+        "tier": "CONTRIBUTOR",
+        "id": 2559802,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "canUpvote": true
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false
+    },
+    "firstMessageId": 3528806,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 743715,
+    "name": "computing resources",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-26T14:58:44.801396600Z",
+    "url": "/competitions/gemma-4-developer-agent/discussion/743715",
+    "totalMessages": 10,
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

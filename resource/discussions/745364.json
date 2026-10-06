@@ -1,0 +1,10 @@
+{
+  "messages": [
+    {
+      "id": 3532062,
+      "postDate": "2026-10-03T04:09:51.190Z",
+      "content": "<p>Before investing in training, I'd like to confirm that a trained adapter works end to end in the scoring environment. Two things reported on the forum would each make one useless:</p>\n<p>That adapters are silently dropped in the patched vLLM 0.19.1 — the submission runs, but the adapter never loads.\nThat enabling LoRA shrinks the KV cache to around 7.6k tokens. Our agent uses the full 32k context, so that would truncate long tasks.</p>\n<p>Has anyone verified an adapter taking effect in a scored submission, and is there a way to confirm from the submission log that it loaded?</p>\n<p>Separately, on training: I've been unable to fit gemma-4-31b QLoRA on 2× T4 (16GB each). Sharding with device_map='auto' fails on device mismatch, and single-GPU OOMs. Is a single 80GB card the practical minimum, or has anyone trained this on less?</p>\n<p><a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a></p>",
+      "rawMarkdown": "Before investing in training, I'd like to confirm that a trained adapter works end to end in the scoring environment. Two things reported on the forum would each make one useless:\n\nThat adapters are silently dropped in the patched vLLM 0.19.1 — the submission runs, but the adapter never loads.\nThat enabling LoRA shrinks the KV cache to around 7.6k tokens. Our agent uses the full 32k context, so that would truncate long tasks.\n\nHas anyone verified an adapter taking effect in a scored submission, and is there a way to confirm from the submission log that it loaded?\n\nSeparately, on training: I've been unable to fit gemma-4-31b QLoRA on 2× T4 (16GB each). Sharding with device_map='auto' fails on device mismatch, and single-GPU OOMs. Is a single 80GB card the practical minimum, or has anyone trained this on less?\n\n@ryanholbrook"
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "messages": [
+    {
+      "id": 3529562,
+      "postDate": "2026-09-28T14:08:15.187Z",
+      "content": "<p>L4 ×4 session is queued for very long time. </p>",
+      "rawMarkdown": "L4 ×4 session is queued for very long time. \n",
+      "votes": 1
+    },
+    {
+      "id": 3527743,
+      "postDate": "2026-09-24T15:59:36.203Z",
+      "content": "<p>Hello Kagglers,</p>\n<p>Today’s most capable software engineering agents rely on massive, closed-source models running in the cloud, leaving advanced autonomous development tools out of reach for many developers.</p>\n<p>With Gemma 4, we want to change that.</p>\n<p>Our challenge to you is to push the boundaries of open-source models and post-train Gemma 4 into an autonomous coding agent capable of navigating real-world repositories and reliably resolving software engineering tasks on consumer-grade hardware. To help you get started, we’ve provided a <a href=\"https://www.kaggle.com/competitions/gemma-4-developer-agent/data?select=sample_submission\" target=\"_blank\">starter submission</a>, <a href=\"https://www.kaggle.com/competitions/gemma-4-developer-agent/data?select=tasks.jsonl\" target=\"_blank\">development tasks</a>, and a corresponding dataset of structured <a href=\"https://www.kaggle.com/competitions/gemma-4-developer-agent/data?select=graphs\" target=\"_blank\">code graphs</a> with <a href=\"https://www.kaggle.com/competitions/gemma-4-developer-agent/data?select=embeddings\" target=\"_blank\">pre-computed embeddings</a> for repository-level retrieval.</p>\n<p>Whether you explore parameter-efficient fine-tuning, novel reinforcement learning approaches, or graph-based code reasoning, we want to see how far you can take local, open models. </p>\n<p>We can't wait to see the agents you build and the solutions you invent!</p>\n<p>Google Research and The Gemma Team</p>",
+      "rawMarkdown": "Hello Kagglers,\n\nToday’s most capable software engineering agents rely on massive, closed-source models running in the cloud, leaving advanced autonomous development tools out of reach for many developers.\n\nWith Gemma 4, we want to change that.\n\nOur challenge to you is to push the boundaries of open-source models and post-train Gemma 4 into an autonomous coding agent capable of navigating real-world repositories and reliably resolving software engineering tasks on consumer-grade hardware. To help you get started, we’ve provided a [starter submission](https://www.kaggle.com/competitions/gemma-4-developer-agent/data?select=sample_submission), [development tasks](https://www.kaggle.com/competitions/gemma-4-developer-agent/data?select=tasks.jsonl), and a corresponding dataset of structured [code graphs](https://www.kaggle.com/competitions/gemma-4-developer-agent/data?select=graphs) with [pre-computed embeddings](https://www.kaggle.com/competitions/gemma-4-developer-agent/data?select=embeddings) for repository-level retrieval.\n\nWhether you explore parameter-efficient fine-tuning, novel reinforcement learning approaches, or graph-based code reasoning, we want to see how far you can take local, open models. \n\nWe can't wait to see the agents you build and the solutions you invent!\n\nGoogle Research and The Gemma Team\n",
+      "votes": 13
+    },
+    {
+      "id": 3528874,
+      "postDate": "2026-09-26T18:37:56.727Z",
+      "content": "<p>Good skills </p>",
+      "rawMarkdown": "Good skills "
+    },
+    {
+      "id": 3528756,
+      "postDate": "2026-09-26T12:18:26.770Z",
+      "content": "<p>it's the best choice for deepmind to let developers to show their skills</p>",
+      "rawMarkdown": "it's the best choice for deepmind to let developers to show their skills"
+    },
+    {
+      "id": 3527784,
+      "postDate": "2026-09-24T18:02:39.927Z",
+      "content": "<p>Or post train model with api and that can be implemented for better accuracy   </p>",
+      "rawMarkdown": "Or post train model with api and that can be implemented for better accuracy   "
+    },
+    {
+      "id": 3527783,
+      "postDate": "2026-09-24T18:01:53.037Z",
+      "content": "<p>Train gama offline?</p>",
+      "rawMarkdown": "Train gama offline?\n"
+    },
+    {
+      "id": 3529290,
+      "postDate": "2026-09-27T21:01:10.700Z",
+      "rawMarkdown": "",
+      "isDeleted": true
+    }
+  ]
+}

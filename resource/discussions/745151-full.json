@@ -1,0 +1,58 @@
+{
+  "forumTopic": {
+    "authorId": 918183,
+    "authorThumbnailName": "918183-gp.jpg",
+    "authorUserDisplayName": "tammamalasha",
+    "authorUserName": "tammamalasha",
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3531738,
+      "postDate": "2026-10-02T14:34:55.673Z",
+      "rawMarkdown": "When an agent applies a patch and the validation/test fails, does the agent receive the actual test output, including the failing assertion, traceback, expected/actual values, and relevant error messages?\nIf so, is this output exactly the same information that is available during official evaluation?",
+      "content": "<p>When an agent applies a patch and the validation/test fails, does the agent receive the actual test output, including the failing assertion, traceback, expected/actual values, and relevant error messages?\nIf so, is this output exactly the same information that is available during official evaluation?</p>",
+      "parent": {},
+      "author": {
+        "displayName": "tammamalasha",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/918183-gp.jpg",
+        "url": "/tammamalasha",
+        "tier": "CONTRIBUTOR",
+        "id": 918183,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "canUpvote": true
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 98,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "tammamalasha",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/918183-gp.jpg",
+          "url": "/tammamalasha",
+          "userName": "tammamalasha",
+          "tier": "CONTRIBUTOR",
+          "id": 918183,
+          "profileUrl": "/tammamalasha",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 918183,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3531738,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 745151,
+    "name": "Failed patches and retry behavior",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-10-02T14:34:55.674180200Z",
+    "url": "/competitions/gemma-4-developer-agent/discussion/745151",
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

@@ -1,0 +1,37 @@
+# FastApi tasks fail even with the gold patch, typing_inspection seems to be missing
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/744370
+
+## 3530115 /vivekkn12221 TOPIC
+Hi all,
+
+I was going through the tasks to see which ones can actually pass in the local harness. For each task I skipped the agent and used the local harness to apply the reference patch that's included in tasks.jsonl in the competition data, then ran the tests.
+
+All **19 fastapi** tasks I have locally failed this way. The tests don't even start. They crash while loading, because **pydantic 2.13.4** is installed but *typing_inspection* (which pydantic 2 needs) isn't in the wheels folder. So **importing pydantic fails, fastapi fails with it, and pytest stops at collection**. As far as I can tell my wheels match the competition data, so I think it's the same on the Kaggle side.
+
+If that's right, nobody can solve the fastapi tasks at the moment, even with a perfect fix. That's around half of the 129 tasks.
+
+I also saw a few other tasks fail with the gold patch. Some of the requests tasks complain about a recursive httpbin fixture. Some rich tasks produce output that doesn't match the expected text in the tests, which looks like a pygments version difference.
+
+A couple of questions for the team:
+
+1. Could you confirm whether the scoring environment has the same problem?  
+2. If it does, is there a plan to fix it, or should we treat these tasks as unsolvable?
+Also, if an agent notices the missing package and works around it by adding it into its own patch, would that be allowed, or would it count as breaking the rules? I'd rather ask now than find out at the end.
+
+Thanks!
+
+## 3530179 /zhukovoleksiy COMMENT
+I see the same, and it matches what I found when I ran every gold patch through the official harness (`Evaluator.evaluate_task` with the agent replaced by the patch) on 2026-09-25. Might have been updated.
+
+- In **Docker**: fastapi: 63 tasks fail at import, exactly as you describe: pydantic 2.13.4 arrives without `typing_inspection`. As far as I can tell, the harness unpacks the newest version of each small wheel straight into site-packages without resolving dependencies, which is how pydantic loses one. `dirty_equals` and `inline_snapshot`, which many fastapi tests import, are missing too.
+
+- In **Kaggle's notebook image** with the subprocess sandbox behaves differently. It ships pydantic 2.12.3 with typing-inspection 0.4.2, so fastapi imports work there, and 71 tasks pass with their gold patch (42 rich, 29 fastapi). The remaining fastapi failures there are the missing `inline_snapshot` and `dirty_equals` helpers. requests and httpx can't be tested there because of their src layout.
+
+
+The leaderboard tasks come from private repositories, so this mainly distorts local CV. But if the scorer stages dependencies the same way, some hidden tasks could fail for the same reason whatever the agent does. It would be great if the hosts could confirm how dependencies are installed for the hidden tasks.
+
+## 3530187 /ryanholbrook ADMIN
+I can confirm that the hidden tasks validate at 100% with a "gold patch" submission.
+
+## 3530263 /ritwikakancharla COMMENT
+Could you please fix the training data, inline snapshots are missing in a lot of the fastapi tasks. 

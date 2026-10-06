@@ -1,0 +1,258 @@
+{
+  "forumTopic": {
+    "authorId": 36929342,
+    "authorThumbnailName": "default-thumb.png",
+    "authorUserDisplayName": "Vladrad_",
+    "authorUserName": "vladradd",
+    "comments": [
+      {
+        "id": 3528316,
+        "postDate": "2026-09-25T20:33:42.767Z",
+        "rawMarkdown": "Our evaluation system in this competition is only able to accept LoRA adapters.",
+        "content": "<p>Our evaluation system in this competition is only able to accept LoRA adapters.</p>",
+        "replies": [
+          {
+            "id": 3528317,
+            "postDate": "2026-09-25T20:38:06.733Z",
+            "rawMarkdown": "So If I pre-train and post-train a 120B coder variant of gemma 4 you would not allow it into the competition? ",
+            "content": "<p>So If I pre-train and post-train a 120B coder variant of gemma 4 you would not allow it into the competition? </p>",
+            "replies": [
+              {
+                "id": 3528363,
+                "postDate": "2026-09-26T00:16:50.423Z",
+                "rawMarkdown": "I'm a competitor but here are the [Gemma Docs](https://ai.google.dev/gemma/docs/tune) on tuning. Using Lora with swappable heads is likely the best path. ",
+                "content": "<p>I'm a competitor but here are the <a href=\"https://ai.google.dev/gemma/docs/tune\" target=\"_blank\">Gemma Docs</a> on tuning. Using Lora with swappable heads is likely the best path. </p>",
+                "parent": {},
+                "author": {
+                  "displayName": "Justin Scott",
+                  "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/3881280-kg.jpg?t=2026-09-25-14-44-26",
+                  "url": "/mjustinscott",
+                  "tier": "CONTRIBUTOR",
+                  "id": 3881280,
+                  "progressionOptOut": false
+                },
+                "authorType": "COMMENT",
+                "votes": {
+                  "totalVotes": 1,
+                  "canUpvote": true,
+                  "totalUpvotes": 1
+                },
+                "kernelVersion": 0,
+                "feedbackTrackingData": {},
+                "isThankYou": false,
+                "teamUpInfo": {
+                  "teamLeader": {
+                    "displayName": "Justin Scott",
+                    "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/3881280-kg.jpg?t=2026-09-25-14-44-26",
+                    "url": "/mjustinscott",
+                    "userName": "mjustinscott",
+                    "tier": "CONTRIBUTOR",
+                    "id": 3881280,
+                    "profileUrl": "/mjustinscott",
+                    "performanceTier": "CONTRIBUTOR",
+                    "userId": 3881280,
+                    "progressionOptOut": false
+                  },
+                  "intro": ""
+                }
+              },
+              {
+                "id": 3528430,
+                "postDate": "2026-09-26T04:22:24.427Z",
+                "rawMarkdown": "I have my own methods ive been working on for about a year now. I can provide weights.",
+                "content": "<p>I have my own methods ive been working on for about a year now. I can provide weights.</p>",
+                "parent": {},
+                "author": {
+                  "displayName": "Vladrad_",
+                  "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+                  "url": "/vladradd",
+                  "tier": "CONTRIBUTOR",
+                  "id": 36929342,
+                  "progressionOptOut": false
+                },
+                "authorType": "TOPIC",
+                "votes": {
+                  "canUpvote": true
+                },
+                "kernelVersion": 0,
+                "feedbackTrackingData": {},
+                "isThankYou": false,
+                "teamUpInfo": {
+                  "teamLeader": {
+                    "displayName": "Vladrad_",
+                    "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+                    "url": "/vladradd",
+                    "userName": "vladradd",
+                    "tier": "CONTRIBUTOR",
+                    "id": 36929342,
+                    "profileUrl": "/vladradd",
+                    "performanceTier": "CONTRIBUTOR",
+                    "userId": 36929342,
+                    "progressionOptOut": false
+                  },
+                  "intro": ""
+                }
+              },
+              {
+                "id": 3528749,
+                "postDate": "2026-09-26T11:46:00.320Z",
+                "rawMarkdown": "It's not against the rules per se, it's just that our system isn't configured to run it. For one, we don't have the GPUs. The system is configured to accept LoRA adapters, so if you tried to submit it, the script would just throw an error. We chose to accept LoRA adapters to allow some amount of finetuning while also keeping submission file sizes moderate and for being more accessible under the hardware people are likely to have access to.",
+                "content": "<p>It's not against the rules per se, it's just that our system isn't configured to run it. For one, we don't have the GPUs. The system is configured to accept LoRA adapters, so if you tried to submit it, the script would just throw an error. We chose to accept LoRA adapters to allow some amount of finetuning while also keeping submission file sizes moderate and for being more accessible under the hardware people are likely to have access to.</p>",
+                "parent": {},
+                "author": {
+                  "displayName": "Ryan Holbrook",
+                  "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+                  "url": "/ryanholbrook",
+                  "tier": "STAFF",
+                  "id": 2003505,
+                  "progressionOptOut": false
+                },
+                "authorType": "ADMIN",
+                "votes": {
+                  "totalVotes": 1,
+                  "canUpvote": true,
+                  "totalUpvotes": 1
+                },
+                "kernelVersion": 0,
+                "feedbackTrackingData": {},
+                "isThankYou": false,
+                "teamUpInfo": {
+                  "teamLeader": {
+                    "displayName": "Ryan Holbrook",
+                    "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+                    "url": "/ryanholbrook",
+                    "userName": "ryanholbrook",
+                    "tier": "STAFF",
+                    "id": 2003505,
+                    "profileUrl": "/ryanholbrook",
+                    "performanceTier": "STAFF",
+                    "userId": 2003505,
+                    "progressionOptOut": false
+                  },
+                  "intro": ""
+                }
+              }
+            ],
+            "parent": {},
+            "author": {
+              "displayName": "Vladrad_",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+              "url": "/vladradd",
+              "tier": "CONTRIBUTOR",
+              "id": 36929342,
+              "progressionOptOut": false
+            },
+            "authorType": "TOPIC",
+            "votes": {
+              "canUpvote": true
+            },
+            "kernelVersion": 0,
+            "feedbackTrackingData": {},
+            "isThankYou": false,
+            "teamUpInfo": {
+              "teamLeader": {
+                "displayName": "Vladrad_",
+                "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+                "url": "/vladradd",
+                "userName": "vladradd",
+                "tier": "CONTRIBUTOR",
+                "id": 36929342,
+                "profileUrl": "/vladradd",
+                "performanceTier": "CONTRIBUTOR",
+                "userId": 36929342,
+                "progressionOptOut": false
+              },
+              "intro": ""
+            }
+          }
+        ],
+        "parent": {},
+        "author": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "progressionOptOut": false
+        },
+        "authorType": "ADMIN",
+        "votes": {
+          "totalVotes": 2,
+          "canUpvote": true,
+          "totalUpvotes": 2
+        },
+        "kernelVersion": 0,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Ryan Holbrook",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+            "url": "/ryanholbrook",
+            "userName": "ryanholbrook",
+            "tier": "STAFF",
+            "id": 2003505,
+            "profileUrl": "/ryanholbrook",
+            "performanceTier": "STAFF",
+            "userId": 2003505,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3528312,
+      "postDate": "2026-09-25T20:22:57.263Z",
+      "rawMarkdown": "Hello! I was curious whether the rules allow only LoRA adapters, or whether we can use other methods as long as the base model is the correct one?\n\nthanks",
+      "content": "<p>Hello! I was curious whether the rules allow only LoRA adapters, or whether we can use other methods as long as the base model is the correct one?</p>\n<p>thanks</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Vladrad_",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+        "url": "/vladradd",
+        "tier": "CONTRIBUTOR",
+        "id": 36929342,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 2,
+        "canUpvote": true,
+        "totalUpvotes": 2
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Vladrad_",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/vladradd",
+          "userName": "vladradd",
+          "tier": "CONTRIBUTOR",
+          "id": 36929342,
+          "profileUrl": "/vladradd",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 36929342,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3528312,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 743383,
+    "name": "Rules: Only LORA allowed?",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-25T20:22:57.264191900Z",
+    "totalVotes": 1,
+    "url": "/competitions/gemma-4-developer-agent/discussion/743383",
+    "totalMessages": 5,
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

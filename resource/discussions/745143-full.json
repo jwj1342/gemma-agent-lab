@@ -1,0 +1,61 @@
+{
+  "forumTopic": {
+    "authorId": 31027446,
+    "authorThumbnailName": "31027446-kg.jpg?t=2026-03-13-03-58-07",
+    "authorUserDisplayName": "D A M",
+    "authorUserName": "adesolanke",
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3531718,
+      "postDate": "2026-10-02T13:56:44.297Z",
+      "rawMarkdown": "I have published the tools we use to test agents locally before spending a submission: https://github.com/damsolanke/gemma4-swe-kit (Apache 2.0). I am posting it here because the rules ask that publicly shared competition code also be shared on this forum.\n\nWhat is in it:\n\n- **g4kit-proxy**: an OpenAI-compatible endpoint over Ollama (raw mode) or MLX that renders requests with the Gemma 4 chat template the way vLLM 0.19 does and parses calls with vLLM's gemma4 parser. A malformed call stays in the content, so the harness nudges exactly as on the scorer. A prompt plus max_tokens over 32,768 is rejected as vLLM rejects it, so a sub-agent overflow empties the patch locally too. thinking_budget is enforced as a hard cap.\n- **g4kit-fake-llm**: a scripted model that walks every agent and the core harness tools of a submission through the real harness in seconds, without a GPU.\n- **g4kit-scorer-time**: projects scorer hours for about 120 tasks from the per-call token counts of a local run.\n- **g4kit-replay** and **g4kit-log-stats**: resend logged decision points under prompt or sampling changes with paired tests, and count loops, failed edits, malformed calls and overflows in proxy logs.\n- **g4kit-convert-openhands** and **g4kit-render-distill**: turn nebius/SWE-rebench-openhands-trajectories (CC BY 4.0, attribution in NOTICE) into training windows rendered as the scorer would render them.\n\nThe kit does not ship the chat template or vLLM's parser file. g4kit-assets downloads and fingerprints both. The README lists what we measured with these tools. One example: with shell commands written as examples in the prompt, 31% of replayed calls at known failure points came out as malformed tool names, against 5% with the commands described in prose. The vLLM parser hang from topic 745138 is detected by the proxy.\n\nBug reports and pull requests are welcome.\n",
+      "content": "<p>I have published the tools we use to test agents locally before spending a submission: <a href=\"https://github.com/damsolanke/gemma4-swe-kit\" target=\"_blank\">https://github.com/damsolanke/gemma4-swe-kit</a> (Apache 2.0). I am posting it here because the rules ask that publicly shared competition code also be shared on this forum.</p>\n<p>What is in it:</p>\n<ul>\n<li><strong>g4kit-proxy</strong>: an OpenAI-compatible endpoint over Ollama (raw mode) or MLX that renders requests with the Gemma 4 chat template the way vLLM 0.19 does and parses calls with vLLM's gemma4 parser. A malformed call stays in the content, so the harness nudges exactly as on the scorer. A prompt plus max_tokens over 32,768 is rejected as vLLM rejects it, so a sub-agent overflow empties the patch locally too. thinking_budget is enforced as a hard cap.</li>\n<li><strong>g4kit-fake-llm</strong>: a scripted model that walks every agent and the core harness tools of a submission through the real harness in seconds, without a GPU.</li>\n<li><strong>g4kit-scorer-time</strong>: projects scorer hours for about 120 tasks from the per-call token counts of a local run.</li>\n<li><strong>g4kit-replay</strong> and <strong>g4kit-log-stats</strong>: resend logged decision points under prompt or sampling changes with paired tests, and count loops, failed edits, malformed calls and overflows in proxy logs.</li>\n<li><strong>g4kit-convert-openhands</strong> and <strong>g4kit-render-distill</strong>: turn nebius/SWE-rebench-openhands-trajectories (CC BY 4.0, attribution in NOTICE) into training windows rendered as the scorer would render them.</li>\n</ul>\n<p>The kit does not ship the chat template or vLLM's parser file. g4kit-assets downloads and fingerprints both. The README lists what we measured with these tools. One example: with shell commands written as examples in the prompt, 31% of replayed calls at known failure points came out as malformed tool names, against 5% with the commands described in prose. The vLLM parser hang from topic 745138 is detected by the proxy.</p>\n<p>Bug reports and pull requests are welcome.</p>",
+      "parent": {},
+      "author": {
+        "displayName": "D A M",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/31027446-kg.jpg?t=2026-03-13-03-58-07",
+        "url": "/adesolanke",
+        "tier": "CONTRIBUTOR",
+        "id": 31027446,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 1,
+        "canUpvote": true,
+        "totalUpvotes": 1
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 571,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "D A M",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/31027446-kg.jpg?t=2026-03-13-03-58-07",
+          "url": "/adesolanke",
+          "userName": "adesolanke",
+          "tier": "CONTRIBUTOR",
+          "id": 31027446,
+          "profileUrl": "/adesolanke",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 31027446,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3531718,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 745143,
+    "name": "gemma4-swe-kit: open-source local evaluation tools that behave like the scorer's vLLM",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-10-02T13:56:44.297881900Z",
+    "totalVotes": 1,
+    "url": "/competitions/gemma-4-developer-agent/discussion/745143",
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

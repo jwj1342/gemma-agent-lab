@@ -1,0 +1,8 @@
+# Submission 56722466 (2026-10-01 00:00 UTC) also ended with "Notebook Threw Exception" and no score. 
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/744813
+
+## 3530932 /prajvalp TOPIC
+Submission 56722466 (2026-10-01 00:00 UTC) also ended with "Notebook Threw Exception" and no score. It's an agent with no LoRA adapters that passed the official compiler and ran cleanly in a 4×L4 lab with the official harness, on the wheelhouse before yesterday's update. Could you check what raised and, if it was on the scorer side, rerun it or restore the allowance? 
+
+## 3531183 /pinocchio COMMENT
+I have just made my first submission and it failed with the same error, your note restored my confidence!

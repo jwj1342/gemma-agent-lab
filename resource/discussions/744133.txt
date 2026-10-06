@@ -1,0 +1,17 @@
+# We can submit skills correct ?
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/744133
+
+## 3529688 /atomstack001 TOPIC
+can anyone answer this question?
+
+
+## 3529698 /connortynan COMMENT
+Yes. See www.kaggle.com/competitions/gemma-4-developer-agent/overview/evaluation
+
+Each skill is a folder under skills/ containing a SKILL.md.
+
+## 3530344 /shivam2212 COMMENT
+whats stopping someone from putting up a whole submission bloated with skills
+
+## 3530451 /connortynan COMMENT
+Nothing stops it: the harness allows up to 1,000 skills, 50 MiB each, within the 3 GiB limit. That said, the ADK puts every skill's name and description into each model call, so a large library will eat through the 32k context window fast and trigger compaction sooner.

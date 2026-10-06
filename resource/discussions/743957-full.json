@@ -1,0 +1,61 @@
+{
+  "forumTopic": {
+    "authorId": 3006135,
+    "authorThumbnailName": "3006135-kg.jpeg",
+    "authorUserDisplayName": "Osama Abdelaal",
+    "authorUserName": "osama133",
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3529334,
+      "postDate": "2026-09-28T00:22:55.387Z",
+      "rawMarkdown": "I put together an onboarding notebook for anyone starting out: https://www.kaggle.com/code/osama133/gemma-4-dev-agent-task-anatomy-survival-kit\n\nTask anatomy: 57% of the public tasks are single-file fixes of 20 lines or fewer; in ~76% the issue names neither the file nor the function to change; about 1 in 6 fixes touch async code; and issue length does not predict fix size.\n\nWhat it means: research framing (SWE-bench, SWE-agent, Agentless, IR-based bug localisation) and design alternatives for localise / repair / validate / budget.\n\nSurvival kit: finding where inputs are mounted, getting files out of an interactive GPU session, delivering submission.zip from a CPU notebook, and GPU queue notes.\n\nRuns on CPU in under a minute. Feedback welcome!",
+      "content": "<p>I put together an onboarding notebook for anyone starting out: <a href=\"https://www.kaggle.com/code/osama133/gemma-4-dev-agent-task-anatomy-survival-kit\" target=\"_blank\">https://www.kaggle.com/code/osama133/gemma-4-dev-agent-task-anatomy-survival-kit</a></p>\n<p>Task anatomy: 57% of the public tasks are single-file fixes of 20 lines or fewer; in ~76% the issue names neither the file nor the function to change; about 1 in 6 fixes touch async code; and issue length does not predict fix size.</p>\n<p>What it means: research framing (SWE-bench, SWE-agent, Agentless, IR-based bug localisation) and design alternatives for localise / repair / validate / budget.</p>\n<p>Survival kit: finding where inputs are mounted, getting files out of an interactive GPU session, delivering submission.zip from a CPU notebook, and GPU queue notes.</p>\n<p>Runs on CPU in under a minute. Feedback welcome!</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Osama Abdelaal",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/3006135-kg.jpeg",
+        "url": "/osama133",
+        "tier": "CONTRIBUTOR",
+        "id": 3006135,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 3,
+        "canUpvote": true,
+        "totalUpvotes": 3
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 221,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Osama Abdelaal",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/3006135-kg.jpeg",
+          "url": "/osama133",
+          "userName": "osama133",
+          "tier": "CONTRIBUTOR",
+          "id": 3006135,
+          "profileUrl": "/osama133",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 3006135,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3529334,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 743957,
+    "name": "Onboarding notebook: what the 129 public fixes look like (+ a Kaggle survival kit)",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-28T00:22:55.385646900Z",
+    "totalVotes": 3,
+    "url": "/competitions/gemma-4-developer-agent/discussion/743957",
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "messages": [
+    {
+      "id": 3530932,
+      "postDate": "2026-10-01T02:48:53.927Z",
+      "content": "<p>Submission 56722466 (2026-10-01 00:00 UTC) also ended with \"Notebook Threw Exception\" and no score. It's an agent with no LoRA adapters that passed the official compiler and ran cleanly in a 4×L4 lab with the official harness, on the wheelhouse before yesterday's update. Could you check what raised and, if it was on the scorer side, rerun it or restore the allowance? </p>",
+      "rawMarkdown": "Submission 56722466 (2026-10-01 00:00 UTC) also ended with \"Notebook Threw Exception\" and no score. It's an agent with no LoRA adapters that passed the official compiler and ran cleanly in a 4×L4 lab with the official harness, on the wheelhouse before yesterday's update. Could you check what raised and, if it was on the scorer side, rerun it or restore the allowance? ",
+      "votes": 2
+    },
+    {
+      "id": 3531183,
+      "postDate": "2026-10-01T12:57:53.810Z",
+      "content": "<p>I have just made my first submission and it failed with the same error, your note restored my confidence!</p>",
+      "rawMarkdown": "I have just made my first submission and it failed with the same error, your note restored my confidence!"
+    }
+  ]
+}

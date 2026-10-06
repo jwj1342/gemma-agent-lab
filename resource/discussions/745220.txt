@@ -1,0 +1,38 @@
+# Task prompt: "Workspace Layout" omits the source package in 115/129 tasks, and "Code Intelligence Tools" tells the model to search by keyword (which always returns 0 results)
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/745220
+
+## 3531866 /singhaltarun TOPIC
+Hi @ryanholbrook ,
+
+Two small issues in the task prompt that swegemma/harness/agent_runner.py builds for every task. Submissions can't change this text, and both points actively mislead the model.
+
+1. "Workspace Layout" is cut off before the source code
+
+The tree is built with:
+
+cd /workspace && find . -maxdepth 3 -not -path "./.git/*" -not -name "*.pyc" -not -name "__pycache__" | sort | head -150
+
+Because of the alphabetical sort plus head -150, ./.github, ./benchmarks, ./docs and ./docs_src fill the 150 lines before the package directory is reached. We rebuilt this listing for all 129 public tasks at their base commits: in 115/129 tasks (all 67 fastapi, all 48 rich) neither the file changed by the reference patch nor its folder appears in the listing. Example: in fastapi_15588 the listing is 149 lines of .github/ and docs_src/ tutorials, and fastapi/ and fastapi/sse.py never appear. In our traces the agent then opens docs_src/.../tutorial001.py files looking for the code.
+
+Possible fixes: exclude .github/, docs/ and docs_src/ (and tests/) from the tree, list .py files of the package directories first, or raise the line limit.
+
+2. "Code Intelligence Tools" describes search_similar_code as "by keyword"
+
+The section, added whenever graph data exists, says:
+search_similar_code(query): Find semantically similar functions/classes by keyword.
+
+But embedding_utils.embed() is an exact dictionary lookup over the stored node keys, with no text encoder. Only an exact full dotted node name returns results. Tested on requests_6644 with the official functions:
+
+query	results
+requests.models.RequestEncodingMixin.path_url	5
+RequestEncodingMixin.path_url	0
+path_url	0
+path separator leading /	0
+
+get_code_neighbors behaves the same way (exact full name only), and its docstring's examples ('parse_request', edge_type='CALLS') return nothing, since all edges are stored as lowercase calls. In our runs the model follows the prompt and sends keyword queries, which all return 0 results (7 of 7 graph calls across 8 tasks in one run).
+
+Possible fixes: describe the input as "the full dotted name of an existing node, e.g. pkg.module.Class.method", fix the docstring examples, and/or make the lookup accept short names or name suffixes.
+
+Since this section is added regardless of which tools agent.yaml declares, it also feeds the undeclared-tool crash reported in #745028.
+
+Thanks!

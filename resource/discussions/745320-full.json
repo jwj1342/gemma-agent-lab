@@ -1,0 +1,190 @@
+{
+  "forumTopic": {
+    "authorId": 5578954,
+    "authorThumbnailName": "5578954-kg.png?t=2023-11-25-02-36-56",
+    "authorUserDisplayName": "Shoto",
+    "authorUserName": "bloodymonday",
+    "comments": [
+      {
+        "id": 3532263,
+        "postDate": "2026-10-03T07:26:10.333Z",
+        "rawMarkdown": "Hi Shoto! To submit your work you need to wait till your notebook will be finished, dont cancel it. After that you go to submissions section and press submit prediction,then notebook part. Select exact notebook and press submit. So after this procedure your submission will have score, you just need to wait for 10-12 hours`",
+        "content": "<p>Hi Shoto! To submit your work you need to wait till your notebook will be finished, dont cancel it. After that you go to submissions section and press submit prediction,then notebook part. Select exact notebook and press submit. So after this procedure your submission will have score, you just need to wait for 10-12 hours`</p>",
+        "replies": [
+          {
+            "id": 3532735,
+            "postDate": "2026-10-04T14:47:30.117Z",
+            "rawMarkdown": "@kozykappa \nHi, thanks for the suggestion. I followed those steps, which I let the notebook finish, submitted the completed notebook version from the Submissions page, and did not cancel it. However, my submission has now been waiting for about 13 hours without getting a score. At this point, I suspect this may be related to the competition GPU queue rather than the submission procedure itself.  \nIf anyone else is seeing the same behavior, please let me know!! It would also be helpful if the organizers could clarify whether this is expected at the moment. \n\n![](https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F5578954%2F31ce5d4de8a24cce01c200acf9ec05b1%2FScreenshot%202026-10-04%20at%2011.43.52PM.png?generation=1791125049795083&alt=media)",
+            "content": "<p><a href=\"/kozykappa\" target=\"_blank\">@kozykappa</a> \nHi, thanks for the suggestion. I followed those steps, which I let the notebook finish, submitted the completed notebook version from the Submissions page, and did not cancel it. However, my submission has now been waiting for about 13 hours without getting a score. At this point, I suspect this may be related to the competition GPU queue rather than the submission procedure itself.<br>\nIf anyone else is seeing the same behavior, please let me know!! It would also be helpful if the organizers could clarify whether this is expected at the moment. </p>\n<p><img src=\"https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F5578954%2F31ce5d4de8a24cce01c200acf9ec05b1%2FScreenshot%202026-10-04%20at%2011.43.52PM.png?generation=1791125049795083&amp;alt=media\" alt=\"\"></p>",
+            "replies": [
+              {
+                "id": 3532776,
+                "postDate": "2026-10-04T17:06:48.663Z",
+                "rawMarkdown": "Oh, you just need to wait till it comes to your order to use GPU, most of the users are utilizing L4 x4, dont worry competition author will solve this problem asap, wait and your notebook will run, after full run you can submit your notebook to score, score will run without queue",
+                "content": "<p>Oh, you just need to wait till it comes to your order to use GPU, most of the users are utilizing L4 x4, dont worry competition author will solve this problem asap, wait and your notebook will run, after full run you can submit your notebook to score, score will run without queue</p>",
+                "parent": {},
+                "author": {
+                  "displayName": "Kozykorpesh",
+                  "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/35802336-kg.jpg?t=2026-10-03-17-20-08",
+                  "url": "/kozykappa",
+                  "tier": "CONTRIBUTOR",
+                  "id": 35802336,
+                  "progressionOptOut": false
+                },
+                "authorType": "COMMENT",
+                "votes": {
+                  "canUpvote": true
+                },
+                "kernelVersion": 0,
+                "competitionRanking": 12,
+                "feedbackTrackingData": {},
+                "isThankYou": false,
+                "teamUpInfo": {
+                  "teamLeader": {
+                    "displayName": "Baidalin Adilzhan [dsmlkz]",
+                    "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/24167891-kg.jpg?t=2026-06-09-08-56-09",
+                    "url": "/baidalinadilzhan",
+                    "userName": "baidalinadilzhan",
+                    "tier": "MASTER",
+                    "id": 24167891,
+                    "profileUrl": "/baidalinadilzhan",
+                    "performanceTier": "MASTER",
+                    "userId": 24167891,
+                    "progressionOptOut": false
+                  },
+                  "intro": ""
+                }
+              }
+            ],
+            "parent": {},
+            "author": {
+              "displayName": "Shoto",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/5578954-kg.png?t=2023-11-25-02-36-56",
+              "url": "/bloodymonday",
+              "tier": "CONTRIBUTOR",
+              "id": 5578954,
+              "progressionOptOut": false
+            },
+            "authorType": "TOPIC",
+            "votes": {
+              "canUpvote": true
+            },
+            "kernelVersion": 0,
+            "feedbackTrackingData": {},
+            "isThankYou": false,
+            "teamUpInfo": {
+              "teamLeader": {
+                "displayName": "Shoto",
+                "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/5578954-kg.png?t=2023-11-25-02-36-56",
+                "url": "/bloodymonday",
+                "userName": "bloodymonday",
+                "tier": "CONTRIBUTOR",
+                "id": 5578954,
+                "profileUrl": "/bloodymonday",
+                "performanceTier": "CONTRIBUTOR",
+                "userId": 5578954,
+                "progressionOptOut": false
+              },
+              "intro": ""
+            }
+          }
+        ],
+        "parent": {},
+        "author": {
+          "displayName": "Kozykorpesh",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/35802336-kg.jpg?t=2026-10-03-17-20-08",
+          "url": "/kozykappa",
+          "tier": "CONTRIBUTOR",
+          "id": 35802336,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 12,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "reactions": [
+          {
+            "emoji": "THANK_YOU",
+            "featuredUserNames": [
+              "bloodymonday",
+              "hashimrazi"
+            ],
+            "userCount": 2
+          }
+        ],
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Baidalin Adilzhan [dsmlkz]",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/24167891-kg.jpg?t=2026-06-09-08-56-09",
+            "url": "/baidalinadilzhan",
+            "userName": "baidalinadilzhan",
+            "tier": "MASTER",
+            "id": 24167891,
+            "profileUrl": "/baidalinadilzhan",
+            "performanceTier": "MASTER",
+            "userId": 24167891,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3532005,
+      "postDate": "2026-10-03T02:10:05.303Z",
+      "rawMarkdown": "Easy step to reproduce: \n1) Copy and Run from [ryanholbrook](https://www.kaggle.com/code/ryanholbrook/getting-started-gemma-4-developer-agent)\n2) You see immediate fail\n\nI am assuming this is part of GPU issue that people talked about? But GPU issue for immediate failure? really? Appreciate your help in advance. \n\n![](https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F5578954%2F342551f690c65838c3609b43f4309642%2FScreenshot%202026-10-03%20at%2011.06.23AM.png?generation=1790993244280411&alt=media)",
+      "content": "<p>Easy step to reproduce: \n1) Copy and Run from <a href=\"https://www.kaggle.com/code/ryanholbrook/getting-started-gemma-4-developer-agent\" target=\"_blank\">ryanholbrook</a>\n2) You see immediate fail</p>\n<p>I am assuming this is part of GPU issue that people talked about? But GPU issue for immediate failure? really? Appreciate your help in advance. </p>\n<p><img src=\"https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F5578954%2F342551f690c65838c3609b43f4309642%2FScreenshot%202026-10-03%20at%2011.06.23AM.png?generation=1790993244280411&amp;alt=media\" alt=\"\"></p>",
+      "parent": {},
+      "author": {
+        "displayName": "Shoto",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/5578954-kg.png?t=2023-11-25-02-36-56",
+        "url": "/bloodymonday",
+        "tier": "CONTRIBUTOR",
+        "id": 5578954,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 1,
+        "canUpvote": true,
+        "totalUpvotes": 1
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Shoto",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/5578954-kg.png?t=2023-11-25-02-36-56",
+          "url": "/bloodymonday",
+          "userName": "bloodymonday",
+          "tier": "CONTRIBUTOR",
+          "id": 5578954,
+          "profileUrl": "/bloodymonday",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 5578954,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3532005,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 745320,
+    "name": "Why official starter notebook fails in second with no specific error msg",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-10-03T02:10:05.302146500Z",
+    "totalVotes": 1,
+    "url": "/competitions/gemma-4-developer-agent/discussion/745320",
+    "totalMessages": 3,
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

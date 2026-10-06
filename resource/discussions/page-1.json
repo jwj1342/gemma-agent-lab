@@ -1,0 +1,172 @@
+{
+  "topics": [
+    {
+      "id": 742815,
+      "title": "How to get started + Competition's Official Discord",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/742815",
+      "commentCount": 2,
+      "votes": 5,
+      "postDate": "2026-09-23T16:34:50.717Z",
+      "lastCommentPostDate": "2026-10-04T12:01:26.573Z",
+      "isSticky": true
+    },
+    {
+      "id": 743007,
+      "title": "Welcome to the Gemma 4 Developer Agent Competition",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/743007",
+      "commentCount": 6,
+      "votes": 13,
+      "postDate": "2026-09-24T15:59:36.202Z",
+      "lastCommentPostDate": "2026-09-28T14:08:15.186Z",
+      "isSticky": true
+    },
+    {
+      "id": 745855,
+      "title": "The first task in the list (fastapi_15661) seems unsolvable from the prompt alone: hidden tests import names that appear nowhere in the task",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/745855",
+      "commentCount": 1,
+      "votes": 2,
+      "postDate": "2026-10-04T22:19:52.084Z",
+      "lastCommentPostDate": "2026-10-05T02:02:35.083Z"
+    },
+    {
+      "id": 743683,
+      "title": "Rerunning Failed Submissions",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/743683",
+      "commentCount": 18,
+      "votes": 12,
+      "postDate": "2026-09-26T12:01:49.976Z",
+      "lastCommentPostDate": "2026-10-04T23:28:43.276Z"
+    },
+    {
+      "id": 745850,
+      "title": "inline_snapshot wheel missing for notebook environment but required by tasks",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/745850",
+      "postDate": "2026-10-04T21:27:50.285Z",
+      "lastCommentPostDate": "2026-10-04T21:27:50.286Z"
+    },
+    {
+      "id": 745320,
+      "title": "Why official starter notebook fails in second with no specific error msg",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/745320",
+      "commentCount": 3,
+      "votes": 1,
+      "postDate": "2026-10-03T02:10:05.302Z",
+      "lastCommentPostDate": "2026-10-04T17:06:48.663Z"
+    },
+    {
+      "id": 745818,
+      "title": "CuriosIT: Autonomous Bare-Metal Diagnostics with Gemma 4 on Android (100% Offline & Air-Gapped)",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/745818",
+      "postDate": "2026-10-04T15:44:31.602Z",
+      "lastCommentPostDate": "2026-10-04T15:44:31.603Z"
+    },
+    {
+      "id": 743063,
+      "title": "Scoring-run questions: task concurrency, eval_config keys, and the 12 h limit ",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/743063",
+      "commentCount": 7,
+      "votes": 6,
+      "postDate": "2026-09-24T19:22:17.197Z",
+      "lastCommentPostDate": "2026-10-04T15:29:51.190Z"
+    },
+    {
+      "id": 745805,
+      "title": "Aggregated questions from what has generally been asked on the forum : HOSTS ANSWER PLEASE",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/745805",
+      "postDate": "2026-10-04T14:19:41.162Z",
+      "lastCommentPostDate": "2026-10-04T14:19:41.163Z"
+    },
+    {
+      "id": 745775,
+      "title": "Missing FastAPI test dependencies in the evaluation sandbox",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/745775",
+      "commentCount": 1,
+      "votes": 3,
+      "postDate": "2026-10-04T10:32:37.239Z",
+      "lastCommentPostDate": "2026-10-04T14:04:30.363Z"
+    },
+    {
+      "id": 745800,
+      "title": "Validating locally: how representative are the public tasks, and can we see per-task outcomes?",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/745800",
+      "postDate": "2026-10-04T13:33:12.975Z",
+      "lastCommentPostDate": "2026-10-04T13:33:12.976Z"
+    },
+    {
+      "id": 745796,
+      "title": "Expected domain shift between the provided repositories and hidden evaluation",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/745796",
+      "votes": 4,
+      "postDate": "2026-10-04T13:22:23.422Z",
+      "lastCommentPostDate": "2026-10-04T13:22:23.423Z"
+    },
+    {
+      "id": 745792,
+      "title": "Expose ADK `exit_loop` as an allowed tool for LoopAgent submissions",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/745792",
+      "votes": 1,
+      "postDate": "2026-10-04T12:32:39.460Z",
+      "lastCommentPostDate": "2026-10-04T12:32:39.460Z"
+    },
+    {
+      "id": 745625,
+      "title": "One of my test notebooks with GPU queued for 3+ hours.... is there really so much demand?",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/745625",
+      "commentCount": 4,
+      "votes": 3,
+      "postDate": "2026-10-03T12:18:55.920Z",
+      "lastCommentPostDate": "2026-10-04T12:25:14.486Z"
+    },
+    {
+      "id": 744331,
+      "title": "With LoRA enabled, the 4xL4 KV cache shrinks to ~7.6k tokens; requests longer than that hang",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/744331",
+      "commentCount": 4,
+      "votes": 3,
+      "postDate": "2026-09-29T12:28:56.508Z",
+      "lastCommentPostDate": "2026-10-04T11:22:14.336Z"
+    },
+    {
+      "id": 745780,
+      "title": "Repeated “Kaggle Error” on agent submissions — where can I find evaluation diagnostics?",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/745780",
+      "votes": 1,
+      "postDate": "2026-10-04T10:56:23.648Z",
+      "lastCommentPostDate": "2026-10-04T10:56:23.650Z"
+    },
+    {
+      "id": 745774,
+      "title": "The baseline agent repeats the same command up to 69 times (local eval, 10 tasks)",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/745774",
+      "votes": 3,
+      "postDate": "2026-10-04T10:19:07.574Z",
+      "lastCommentPostDate": "2026-10-04T10:19:07.573Z"
+    },
+    {
+      "id": 745691,
+      "title": "[Multi-Agent SWE Architecture] Separating Bug Investigation from Surgical Patching with Gemma 4",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/745691",
+      "commentCount": 1,
+      "postDate": "2026-10-03T18:27:35.069Z",
+      "lastCommentPostDate": "2026-10-04T09:27:31.270Z"
+    },
+    {
+      "id": 745766,
+      "title": "Six immediate \"Kaggle Error\" submissions in Gemma 4 Developer Agent",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/745766",
+      "postDate": "2026-10-04T08:58:32.506Z",
+      "lastCommentPostDate": "2026-10-04T08:58:32.506Z"
+    },
+    {
+      "id": 744951,
+      "title": "Hidden test set",
+      "topicUrl": "/competitions/gemma-4-developer-agent/discussion/744951",
+      "commentCount": 2,
+      "votes": 1,
+      "postDate": "2026-10-01T15:00:33.356Z",
+      "lastCommentPostDate": "2026-10-04T08:22:28.760Z"
+    }
+  ],
+  "totalCount": 116
+}

@@ -1,0 +1,194 @@
+{
+  "forumTopic": {
+    "authorId": 2212893,
+    "authorThumbnailName": "2212893-kg.jpg?t=2023-09-12-07-15-57",
+    "authorUserDisplayName": "Ayush Thakur",
+    "authorUserName": "ayuraj",
+    "comments": [
+      {
+        "id": 3528271,
+        "postDate": "2026-09-25T18:25:56.137Z",
+        "rawMarkdown": "Broken from the Data page, too. I will try re-uploading the dataset. Thanks for the heads up.",
+        "content": "<p>Broken from the Data page, too. I will try re-uploading the dataset. Thanks for the heads up.</p>",
+        "replies": [
+          {
+            "id": 3528272,
+            "postDate": "2026-09-25T18:28:24.183Z",
+            "rawMarkdown": "Hi Ryan, is it possible to get RTX PRO 6000 gpus instead of L4x4?",
+            "content": "<p>Hi Ryan, is it possible to get RTX PRO 6000 gpus instead of L4x4?</p>",
+            "replies": [
+              {
+                "id": 3528277,
+                "postDate": "2026-09-25T18:34:51.520Z",
+                "rawMarkdown": "That's unlikely, unfortunately.",
+                "content": "<p>That's unlikely, unfortunately.</p>",
+                "parent": {},
+                "author": {
+                  "displayName": "Ryan Holbrook",
+                  "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+                  "url": "/ryanholbrook",
+                  "tier": "STAFF",
+                  "id": 2003505,
+                  "progressionOptOut": false
+                },
+                "authorType": "ADMIN",
+                "votes": {
+                  "canUpvote": true
+                },
+                "kernelVersion": 0,
+                "feedbackTrackingData": {},
+                "isThankYou": false,
+                "reactions": [
+                  {
+                    "emoji": "LOVE",
+                    "featuredUserNames": [
+                      "penguin069"
+                    ],
+                    "userCount": 1
+                  }
+                ],
+                "teamUpInfo": {
+                  "teamLeader": {
+                    "displayName": "Ryan Holbrook",
+                    "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+                    "url": "/ryanholbrook",
+                    "userName": "ryanholbrook",
+                    "tier": "STAFF",
+                    "id": 2003505,
+                    "profileUrl": "/ryanholbrook",
+                    "performanceTier": "STAFF",
+                    "userId": 2003505,
+                    "progressionOptOut": false
+                  },
+                  "intro": ""
+                }
+              }
+            ],
+            "parent": {},
+            "author": {
+              "displayName": "Penguin",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+              "url": "/penguin069",
+              "tier": "CONTRIBUTOR",
+              "id": 33714352,
+              "progressionOptOut": false
+            },
+            "authorType": "COMMENT",
+            "votes": {
+              "canUpvote": true
+            },
+            "kernelVersion": 0,
+            "competitionRanking": 427,
+            "feedbackTrackingData": {},
+            "isThankYou": false,
+            "teamUpInfo": {
+              "teamLeader": {
+                "displayName": "Penguin",
+                "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+                "url": "/penguin069",
+                "userName": "penguin069",
+                "tier": "CONTRIBUTOR",
+                "id": 33714352,
+                "profileUrl": "/penguin069",
+                "performanceTier": "CONTRIBUTOR",
+                "userId": 33714352,
+                "progressionOptOut": false
+              },
+              "intro": ""
+            }
+          }
+        ],
+        "parent": {},
+        "author": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "progressionOptOut": false
+        },
+        "authorType": "ADMIN",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "reactions": [
+          {
+            "emoji": "THANK_YOU",
+            "featuredUserNames": [
+              "ayuraj"
+            ],
+            "userCount": 1
+          }
+        ],
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Ryan Holbrook",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+            "url": "/ryanholbrook",
+            "userName": "ryanholbrook",
+            "tier": "STAFF",
+            "id": 2003505,
+            "profileUrl": "/ryanholbrook",
+            "performanceTier": "STAFF",
+            "userId": 2003505,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3528257,
+      "postDate": "2026-09-25T18:09:46.200Z",
+      "rawMarkdown": "Running `kaggle competitions download -c gemma-4-developer-agent` gives me `404 Client Error: Not Found for url: https://api.kaggle.com/v1/competitions.CompetitionApiService/DownloadDataFiles`. The same is true when I used \n\n```\nimport kagglehub; path = kagglehub.competition_download('gemma-4-developer-agent')\n```\n\nIs this known?",
+      "content": "<p>Running <code>kaggle competitions download -c gemma-4-developer-agent</code> gives me <code>404 Client Error: Not Found for url: https://api.kaggle.com/v1/competitions.CompetitionApiService/DownloadDataFiles</code>. The same is true when I used </p>\n<pre><code>import kagglehub; path = kagglehub.competition_download('gemma-4-developer-agent')\n</code></pre>\n<p>Is this known?</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Ayush Thakur",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2212893-kg.jpg?t=2023-09-12-07-15-57",
+        "url": "/ayuraj",
+        "tier": "MASTER",
+        "id": 2212893,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "canUpvote": true
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ayush Thakur",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2212893-kg.jpg?t=2023-09-12-07-15-57",
+          "url": "/ayuraj",
+          "userName": "ayuraj",
+          "tier": "MASTER",
+          "id": 2212893,
+          "profileUrl": "/ayuraj",
+          "performanceTier": "MASTER",
+          "userId": 2212893,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3528257,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 743353,
+    "name": "Not able to download data",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-25T18:09:46.200681200Z",
+    "url": "/competitions/gemma-4-developer-agent/discussion/743353",
+    "totalMessages": 3,
+    "authorPerformanceTier": "MASTER",
+    "authorProgressionOptOut": false
+  }
+}

@@ -1,0 +1,59 @@
+# Clarification on distillation from external LLMs
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/742807
+
+## 3527349 /cnumber TOPIC
+Hi organizers,
+
+My understanding is that using external LLM APIs to generate synthetic training data has generally been allowed in recent Kaggle competitions. Given Section 2.6, I would expect this to be permitted here as well, subject to the competition’s external data and model requirements.
+
+Could you clarify whether participants may use proprietary models, such as OpenAI Astra or Claude Opus 5.5, to generate code patches and agent trajectories for training Gemma specifically for this competition?
+
+Regarding provider restrictions on developing competing models, my current understanding is that training a model solely for this competition may be permissible, while deploying or using the resulting model outside the competition could raise separate concerns. I recognize that participants remain responsible for complying with their providers’ terms.
+
+With that distinction in mind, could you clarify:
+
+1. Does the competition allow this form of distillation from proprietary API models? Are there any restrictions on which teacher models may be used?
+2. Are there different requirements for proprietary API teachers versus open-weight teachers?
+3. How would a model intended solely for competition use fit with the winner licensing and release requirements under Sections 2.5 and 2.8? In particular, would winners need to release the trained weights or adapters for unrestricted use outside the competition?
+
+Examples of acceptable teacher models would be very helpful.
+
+Thank you!
+
+## 3530102 /ashleyoldacre ADMIN
+Hello and thank you for your question and your patience. As long as you are using those models in accordance with their model license terms, and the output you're using to submit to that competition doesn't 'conflict with the license requirement of the rules of this competition, you may use them. 
+
+## 3530104 /johnparkerson COMMENT
+So models like Claude and GPT are off the table, but Muse and Chinese aren’t?
+
+## 3527657 /ryanholbrook ADMIN
+Hi @cnumber,
+
+We are confering and will have an answer for you soon.
+
+## 3529121 /whoamircc COMMENT
+any updates? :) 
+
+## 3529944 /johnparkerson COMMENT
+> Hi @cnumber,
+> 
+> We are confering and will have an answer for you soon.
+
+Any updates? If not, I’ll just start with GLM 5.3
+
+## 3528171 /mjustinscott COMMENT
+I'm looking at using distillation methods for open source models as well. I'm not against open sourcing my training data results from the distillation process as I have a tool that does this for Gemma 4 already developed. I'm curious what they decide on here!
+
+Edit: Here is my KD tool which I'll be updating for this competition [Ghostwriter](https://github.com/jscott3201/ghostwriter-rs)
+
+## 3529224 /tadityasasidhar COMMENT
+hey this looks cool, thanks
+
+## 3528113 /promptfail COMMENT
+what a state this world is in when a response like this warms my heart ❣️
+
+## 3528227 /xiaoz259 COMMENT
+I worry a bit about getting my accounts banned or routed to inferior models for distillation.
+
+## 3528232 /mjustinscott COMMENT
+I wouldn't do this with closed source models but given that Gemma 31B is a smaller model you can get some good gains from open source KD. It is very much against their ToS doing any type of distillation. 

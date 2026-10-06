@@ -1,0 +1,11 @@
+{
+  "messages": [
+    {
+      "id": 3532649,
+      "postDate": "2026-10-04T10:19:07.573Z",
+      "content": "<p>Ran the official evaluator on Kaggle (L4 x4) on 10 spread-out tasks from <code>tasks.jsonl</code>, with a 10-minute / 100-tool-call budget per task and the public analyzer+coder bundle.</p>\n<ul>\n<li>4 of 10 tasks used 92-97 of 100 tool calls.</li>\n<li>In one, the same <code>python3 -c</code> command ran 69 times; in another, the same <code>grep</code> ran 46 times. 0-2 edits, no test runs.</li>\n<li>The system prompt already says \"never run the same command twice unchanged\". The model ignores it once it's in a loop.</li>\n<li>Temp 0.7 made it worse (5/10 tasks looped, 66 calls on average vs 36). Temp 0.7 + thinking_budget 4096 resolved 3/10 but within noise.</li>\n<li>Re-running the same baseline resolved 3/10, then 1/10. Treat small score differences as noise.</li>\n</ul>\n<p>The harness's registries are closed, so custom callbacks can't break loops from the bundle. Has anyone found a prompt or sub-agent structure that actually stops repetition?</p>",
+      "rawMarkdown": "Ran the official evaluator on Kaggle (L4 x4) on 10 spread-out tasks from `tasks.jsonl`, with a 10-minute / 100-tool-call budget per task and the public analyzer+coder bundle.\n\n- 4 of 10 tasks used 92-97 of 100 tool calls.\n- In one, the same `python3 -c` command ran 69 times; in another, the same `grep` ran 46 times. 0-2 edits, no test runs.\n- The system prompt already says \"never run the same command twice unchanged\". The model ignores it once it's in a loop.\n- Temp 0.7 made it worse (5/10 tasks looped, 66 calls on average vs 36). Temp 0.7 + thinking_budget 4096 resolved 3/10 but within noise.\n- Re-running the same baseline resolved 3/10, then 1/10. Treat small score differences as noise.\n\nThe harness's registries are closed, so custom callbacks can't break loops from the bundle. Has anyone found a prompt or sub-agent structure that actually stops repetition?",
+      "votes": 3
+    }
+  ]
+}

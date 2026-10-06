@@ -1,0 +1,182 @@
+{
+  "forumTopic": {
+    "authorId": 193104,
+    "authorThumbnailName": "193104-kg.jpg",
+    "authorUserDisplayName": "Hamed Seyed-allaei",
+    "authorUserName": "pinocchio",
+    "comments": [
+      {
+        "id": 3531207,
+        "postDate": "2026-10-01T13:42:53.323Z",
+        "rawMarkdown": "same thing happened with me. maybe wait for them to provide more information",
+        "content": "<p>same thing happened with me. maybe wait for them to provide more information</p>",
+        "parent": {},
+        "author": {
+          "displayName": "youchy",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/16901185-kg.png?t=2025-08-16-16-28-51",
+          "url": "/youchy",
+          "tier": "CONTRIBUTOR",
+          "id": 16901185,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "totalVotes": 1,
+          "canUpvote": true,
+          "totalUpvotes": 1
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 7,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "youchy",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/16901185-kg.png?t=2025-08-16-16-28-51",
+            "url": "/youchy",
+            "userName": "youchy",
+            "tier": "CONTRIBUTOR",
+            "id": 16901185,
+            "profileUrl": "/youchy",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 16901185,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3531201,
+        "postDate": "2026-10-01T13:27:42.710Z",
+        "rawMarkdown": "yes, same happened with me. They should provide the exact error logs",
+        "content": "<p>yes, same happened with me. They should provide the exact error logs</p>",
+        "parent": {},
+        "author": {
+          "displayName": "yashraj2308",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/yashraj2308",
+          "tier": "CONTRIBUTOR",
+          "id": 1179624,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "totalVotes": 1,
+          "canUpvote": true,
+          "totalUpvotes": 1
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 1451,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "yashraj2308",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+            "url": "/yashraj2308",
+            "userName": "yashraj2308",
+            "tier": "CONTRIBUTOR",
+            "id": 1179624,
+            "profileUrl": "/yashraj2308",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 1179624,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3531317,
+        "postDate": "2026-10-01T17:14:55.393Z",
+        "rawMarkdown": "Also it doesn't make sense to loose daily submission limit when the problem happens before the task actually started.",
+        "content": "<p>Also it doesn't make sense to loose daily submission limit when the problem happens before the task actually started.</p>",
+        "parent": {},
+        "author": {
+          "displayName": "Hamed Seyed-allaei",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/193104-kg.jpg",
+          "url": "/pinocchio",
+          "tier": "EXPERT",
+          "id": 193104,
+          "progressionOptOut": false
+        },
+        "authorType": "TOPIC",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 1449,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Hamed Seyed-allaei",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/193104-kg.jpg",
+            "url": "/pinocchio",
+            "userName": "pinocchio",
+            "tier": "EXPERT",
+            "id": 193104,
+            "profileUrl": "/pinocchio",
+            "performanceTier": "EXPERT",
+            "userId": 193104,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3531195,
+      "postDate": "2026-10-01T13:19:46.430Z",
+      "rawMarkdown": "My first submission today failed. Kaggle showed only:  **“Notebook Threw Exception.”** \nI had no clue what went wrong or how to fix it.\nI understand why Kaggle limits logs from private test data: detailed logs could reveal information about that data. \n\nCould Kaggle first run each submission on **a small sample of public data and show the full log?**\nIf a submission fails on private data, Kaggle could still show only a general error message. This would help me tell whether the problem is in my notebook or in Kaggle’s system, while keeping the private data safe.",
+      "content": "<p>My first submission today failed. Kaggle showed only:  <strong>“Notebook Threw Exception.”</strong> \nI had no clue what went wrong or how to fix it.\nI understand why Kaggle limits logs from private test data: detailed logs could reveal information about that data. </p>\n<p>Could Kaggle first run each submission on <strong>a small sample of public data and show the full log?</strong>\nIf a submission fails on private data, Kaggle could still show only a general error message. This would help me tell whether the problem is in my notebook or in Kaggle’s system, while keeping the private data safe.</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Hamed Seyed-allaei",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/193104-kg.jpg",
+        "url": "/pinocchio",
+        "tier": "EXPERT",
+        "id": 193104,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 2,
+        "canUpvote": true,
+        "totalUpvotes": 2
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 1449,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Hamed Seyed-allaei",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/193104-kg.jpg",
+          "url": "/pinocchio",
+          "userName": "pinocchio",
+          "tier": "EXPERT",
+          "id": 193104,
+          "profileUrl": "/pinocchio",
+          "performanceTier": "EXPERT",
+          "userId": 193104,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3531195,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 744924,
+    "name": "Test on a Small Public Sample and Share Full Logs",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-10-01T13:19:46.431320400Z",
+    "totalVotes": 2,
+    "url": "/competitions/gemma-4-developer-agent/discussion/744924",
+    "totalMessages": 3,
+    "authorPerformanceTier": "EXPERT",
+    "authorProgressionOptOut": false
+  }
+}

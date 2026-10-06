@@ -1,0 +1,180 @@
+{
+  "forumTopic": {
+    "authorId": 35004207,
+    "authorThumbnailName": "default-thumb.png",
+    "authorUserDisplayName": "Veronika Yaitskikh",
+    "authorUserName": "veronikayaitskikh",
+    "comments": [
+      {
+        "id": 3530630,
+        "postDate": "2026-09-30T15:52:50.227Z",
+        "rawMarkdown": "Hi @veronikayaitskikh,\n\nThanks for the heads up. I will patch.",
+        "content": "<p>Hi <a href=\"/veronikayaitskikh\" target=\"_blank\">@veronikayaitskikh</a>,</p>\n<p>Thanks for the heads up. I will patch.</p>",
+        "replies": [
+          {
+            "id": 3530731,
+            "postDate": "2026-09-30T19:10:59.720Z",
+            "rawMarkdown": "How we can reproduce that patch in our systems?",
+            "content": "<p>How we can reproduce that patch in our systems?</p>",
+            "replies": [
+              {
+                "id": 3530753,
+                "postDate": "2026-09-30T19:59:18.313Z",
+                "rawMarkdown": "The most recent wheelhouse dataset should have the patches.",
+                "content": "<p>The most recent wheelhouse dataset should have the patches.</p>",
+                "parent": {},
+                "author": {
+                  "displayName": "Ryan Holbrook",
+                  "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+                  "url": "/ryanholbrook",
+                  "tier": "STAFF",
+                  "id": 2003505,
+                  "progressionOptOut": false
+                },
+                "authorType": "ADMIN",
+                "votes": {
+                  "canUpvote": true
+                },
+                "kernelVersion": 0,
+                "feedbackTrackingData": {},
+                "isThankYou": false,
+                "teamUpInfo": {
+                  "teamLeader": {
+                    "displayName": "Ryan Holbrook",
+                    "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+                    "url": "/ryanholbrook",
+                    "userName": "ryanholbrook",
+                    "tier": "STAFF",
+                    "id": 2003505,
+                    "profileUrl": "/ryanholbrook",
+                    "performanceTier": "STAFF",
+                    "userId": 2003505,
+                    "progressionOptOut": false
+                  },
+                  "intro": ""
+                }
+              }
+            ],
+            "parent": {},
+            "author": {
+              "displayName": "RISHAV KUMAR",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/12607271-kg.png?t=2026-04-07-19-13-07",
+              "url": "/atomstack001",
+              "tier": "CONTRIBUTOR",
+              "id": 12607271,
+              "progressionOptOut": false
+            },
+            "authorType": "COMMENT",
+            "votes": {
+              "canUpvote": true
+            },
+            "kernelVersion": 0,
+            "feedbackTrackingData": {},
+            "isThankYou": false,
+            "teamUpInfo": {
+              "enabled": true,
+              "teamLeader": {
+                "displayName": "RISHAV KUMAR",
+                "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/12607271-kg.png?t=2026-04-07-19-13-07",
+                "url": "/atomstack001",
+                "userName": "atomstack001",
+                "tier": "CONTRIBUTOR",
+                "id": 12607271,
+                "profileUrl": "/atomstack001",
+                "performanceTier": "CONTRIBUTOR",
+                "userId": 12607271,
+                "progressionOptOut": false
+              },
+              "intro": ""
+            }
+          }
+        ],
+        "parent": {},
+        "author": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "progressionOptOut": false
+        },
+        "authorType": "ADMIN",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Ryan Holbrook",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+            "url": "/ryanholbrook",
+            "userName": "ryanholbrook",
+            "tier": "STAFF",
+            "id": 2003505,
+            "profileUrl": "/ryanholbrook",
+            "performanceTier": "STAFF",
+            "userId": 2003505,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3530508,
+      "postDate": "2026-09-30T10:12:12.580Z",
+      "rawMarkdown": "Hi organizers,\n\nI found a possible problem with thinking_budget and seed. I tested the packages from the official wheelhouse v25 in a Kaggle CPU notebook.\n\nI used a short message, the same in every test. The request went through the installed adk_submission thinking-config bridge, Google ADK and LiteLLM. A small local HTTP server recorded the final request and returned a fixed reply. I did not load Gemma or run the full scoring process.\n\nPackages: adk-submission 0.2.11, google-adk 1.36.1, google-genai 2.11.0, litellm 1.82.4 and openai 2.32.0.\n\nResults:\n- thinking_budget=4096 and thinking_budget=1024 produced the same HTTP body. Neither request included a numeric thinking budget.\n- seed=1234 and seed=4321 also produced the same HTTP body. The seed field was missing.\n- As a check, changing max_output_tokens from 8192 to 4096 changed max_completion_tokens in the request.\n- Changing include_thoughts from true to false changed chat_template_kwargs.enable_thinking correctly.\n\nAll seven test cases completed successfully. This test checks what the client sends. It does not prove that the hidden scorer uses exactly the same path. It also does not test whether vLLM applies a budget after receiving it.\n\nIn the code I checked, the bridge handles include_thoughts and thinking_level, but not thinking_budget. The ADK conversion also does not pass seed. The upstream vLLM 0.19.1 API has fields named seed and thinking_token_budget.\n\nThis seems separate from the loss of thoughts between tool calls discussed here: https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/744354\n\nCould you please clarify:\n1. Does the scoring environment pass these two parameters to vLLM?\n2. If not, could the harness pass seed and map thinking_budget to thinking_token_budget? Could you also check that the server can apply the limit correctly for Gemma?\n3. Will the planned reasoning patch cover this issue too, or does it need a separate fix?\n\nThank you for your help!",
+      "content": "<p>Hi organizers,</p>\n<p>I found a possible problem with thinking_budget and seed. I tested the packages from the official wheelhouse v25 in a Kaggle CPU notebook.</p>\n<p>I used a short message, the same in every test. The request went through the installed adk_submission thinking-config bridge, Google ADK and LiteLLM. A small local HTTP server recorded the final request and returned a fixed reply. I did not load Gemma or run the full scoring process.</p>\n<p>Packages: adk-submission 0.2.11, google-adk 1.36.1, google-genai 2.11.0, litellm 1.82.4 and openai 2.32.0.</p>\n<p>Results:</p>\n<ul>\n<li>thinking_budget=4096 and thinking_budget=1024 produced the same HTTP body. Neither request included a numeric thinking budget.</li>\n<li>seed=1234 and seed=4321 also produced the same HTTP body. The seed field was missing.</li>\n<li>As a check, changing max_output_tokens from 8192 to 4096 changed max_completion_tokens in the request.</li>\n<li>Changing include_thoughts from true to false changed chat_template_kwargs.enable_thinking correctly.</li>\n</ul>\n<p>All seven test cases completed successfully. This test checks what the client sends. It does not prove that the hidden scorer uses exactly the same path. It also does not test whether vLLM applies a budget after receiving it.</p>\n<p>In the code I checked, the bridge handles include_thoughts and thinking_level, but not thinking_budget. The ADK conversion also does not pass seed. The upstream vLLM 0.19.1 API has fields named seed and thinking_token_budget.</p>\n<p>This seems separate from the loss of thoughts between tool calls discussed here: <a href=\"https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/744354\" target=\"_blank\">https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/744354</a></p>\n<p>Could you please clarify:</p>\n<ol>\n<li>Does the scoring environment pass these two parameters to vLLM?</li>\n<li>If not, could the harness pass seed and map thinking_budget to thinking_token_budget? Could you also check that the server can apply the limit correctly for Gemma?</li>\n<li>Will the planned reasoning patch cover this issue too, or does it need a separate fix?</li>\n</ol>\n<p>Thank you for your help!</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Veronika Yaitskikh",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+        "url": "/veronikayaitskikh",
+        "tier": "CONTRIBUTOR",
+        "id": 35004207,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 1,
+        "canUpvote": true,
+        "totalUpvotes": 1
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 359,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Veronika Yaitskikh",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/veronikayaitskikh",
+          "userName": "veronikayaitskikh",
+          "tier": "CONTRIBUTOR",
+          "id": 35004207,
+          "profileUrl": "/veronikayaitskikh",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 35004207,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3530508,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 744566,
+    "name": "thinking_budget and seed are missing from HTTP requests in my wheelhouse test",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-30T10:12:12.580441700Z",
+    "totalVotes": 1,
+    "url": "/competitions/gemma-4-developer-agent/discussion/744566",
+    "totalMessages": 3,
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

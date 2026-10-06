@@ -1,0 +1,60 @@
+{
+  "forumTopic": {
+    "authorId": 33297404,
+    "authorThumbnailName": "default-thumb.png",
+    "authorUserDisplayName": "Yashashwani Dixit",
+    "authorUserName": "yashashwanidixit",
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3530551,
+      "postDate": "2026-09-30T12:25:27.617Z",
+      "rawMarkdown": "since the free tier 2*t4 GPUs are not good memory and architecture wise , I was thinking to use TPUs to run the harness , does the harness support tpu jax ?",
+      "content": "<p>since the free tier 2*t4 GPUs are not good memory and architecture wise , I was thinking to use TPUs to run the harness , does the harness support tpu jax ?</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Yashashwani Dixit",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+        "url": "/yashashwanidixit",
+        "tier": "CONTRIBUTOR",
+        "id": 33297404,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 1,
+        "canUpvote": true,
+        "totalUpvotes": 1
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Yashashwani Dixit",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/yashashwanidixit",
+          "userName": "yashashwanidixit",
+          "tier": "CONTRIBUTOR",
+          "id": 33297404,
+          "profileUrl": "/yashashwanidixit",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 33297404,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3530551,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 744589,
+    "name": "is the harness compatible with TPU build ?",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-30T12:25:27.615568600Z",
+    "totalVotes": 1,
+    "url": "/competitions/gemma-4-developer-agent/discussion/744589",
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

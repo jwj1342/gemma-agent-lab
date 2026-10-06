@@ -1,0 +1,635 @@
+Metadata-Version: 2.4
+Name: adk-submission
+Version: 0.2.12
+Summary: Sandboxed ADK agent compiler for Kaggle competition submissions
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: google-adk<2.0,>=1.34.0
+Requires-Dist: pyyaml>=6.0
+Requires-Dist: pydantic>=2.0
+Provides-Extra: dev
+Requires-Dist: pytest>=8.0; extra == "dev"
+Requires-Dist: pytest-asyncio>=0.23; extra == "dev"
+Provides-Extra: serving
+Requires-Dist: requests>=2.28.0; extra == "serving"
+Requires-Dist: litellm>=1.0.0; extra == "serving"
+
+# adk_submission
+
+A sandboxed compiler that builds [ADK](https://google.github.io/adk-docs/) agents from declarative YAML configurations — designed for Kaggle competitions where submissions must be confined to agent architectures and arbitrary code execution is not permitted.
+
+## How It Works
+
+Competitors submit a zip archive containing:
+
+- A **YAML configuration** describing their agent architecture
+- Optional **Markdown files** with prompts and instructions (referenced via `!include`)
+- Optional **model adapters** (LoRA weights, GGUF files, etc.)
+
+The evaluation environment unpacks the archive, then `adk_submission` compiles the YAML into a live ADK agent — resolving all tools, models, and callbacks through **closed registries** controlled by the competition organizer.
+
+```
+┌────────────────────────┐     ┌──────────────────────────────────┐
+│  Submission Directory  │     │  Competition Environment         │
+│                        │     │                                  │
+│  agent.yaml            │────▶│  ToolRegistry    (organizer)     │
+│  prompts/system.md     │     │  ModelRegistry   (organizer)     │
+│  sub_agents/critic.yaml│     │  SkillRegistry   (organizer)     │
+│  adapters/lora.safet.. │     │  CallbackRegistry (organizer)    │
+│  skills/sql/SKILL.md   │     │  GenerationConstraints (organizer)│
+└────────────────────────┘     └──────────┬───────────────────────┘
+                                          │
+                                          ▼
+                                   Live ADK Agent
+```
+
+---
+
+## For Competition Participants
+
+### Submission Format
+
+Your submission is a directory (or zip archive) with this structure:
+
+```
+my_submission/
+├── agent.yaml              # Required: root agent configuration
+├── prompts/                # Optional: instruction files
+│   ├── system.md
+│   └── task.md
+├── sub_agents/             # Optional: sub-agent configs
+│   ├── researcher.yaml
+│   └── critic.yaml
+├── adapters/               # Optional: model weights / LoRA adapters
+│   └── my_lora.safetensors
+└── skills/                 # Optional: custom ADK agent skills
+    └── sql-analyst/
+        ├── SKILL.md
+        └── scripts/
+            └── query.py
+```
+
+### Writing `agent.yaml`
+
+The root config defines your agent using a restricted subset of the ADK declarative format. Here's a complete example:
+
+```yaml
+# agent.yaml
+name: research_coordinator
+model: strong                              # Model alias from registry
+instruction: !include prompts/system.md    # Load instructions from file
+output_key: final_answer
+tools:
+  - google_search                          # Tool name from registry
+  - load_web_page
+  - submit_answer
+skills:
+  - sql-analyst                            # Skill name from registry
+generate_content_config:
+  temperature: 0.3
+  max_output_tokens: 4096
+sub_agents:
+  - config_path: sub_agents/researcher.yaml
+  - config_path: sub_agents/critic.yaml
+```
+
+### Available Agent Types
+
+#### LlmAgent (default)
+
+An LLM-powered agent with tools, instructions, and optional sub-agents.
+
+```yaml
+# agent_class defaults to LlmAgent, so you can omit it
+name: my_agent
+model: fast
+instruction: You are a helpful research assistant.
+tools:
+  - google_search
+output_key: result
+```
+
+#### SequentialAgent
+
+Runs sub-agents one after another in order.
+
+```yaml
+agent_class: SequentialAgent
+name: pipeline
+sub_agents:
+  - config_path: steps/gather.yaml
+  - config_path: steps/analyze.yaml
+  - config_path: steps/report.yaml
+```
+
+#### ParallelAgent
+
+Runs sub-agents concurrently.
+
+```yaml
+agent_class: ParallelAgent
+name: parallel_research
+sub_agents:
+  - config_path: workers/web_search.yaml
+  - config_path: workers/doc_analysis.yaml
+```
+
+#### LoopAgent
+
+Repeats sub-agents up to `max_iterations` times.
+
+```yaml
+agent_class: LoopAgent
+name: refinement_loop
+max_iterations: 5
+sub_agents:
+  - config_path: steps/draft.yaml
+  - config_path: steps/review.yaml
+```
+
+### Using `!include`
+
+Reference external Markdown or text files for long instructions:
+
+```yaml
+instruction: !include prompts/detailed_system_prompt.md
+```
+
+- Supported file types: `.md`, `.txt`, `.yaml`, `.yml`
+- Paths are relative to the submission root directory
+- Path traversal (`../`) is blocked for security
+
+You can also include YAML files to compose configs:
+
+```yaml
+generate_content_config: !include config/generation.yaml
+```
+
+### Generation Parameters
+
+You may configure generation parameters if the competition allows it:
+
+```yaml
+generate_content_config:
+  temperature: 0.7
+  top_p: 0.9
+  top_k: 40
+  max_output_tokens: 4096
+  stop_sequences: ["END", "DONE"]
+  presence_penalty: 0.1
+  frequency_penalty: 0.2
+  response_mime_type: text/plain
+  seed: 0
+```
+
+> **Note:** The competition organizer controls which parameters you're allowed to set and their valid ranges. Check the competition description for details.
+
+### Callbacks
+
+If the competition provides pre-approved callbacks, reference them by name:
+
+```yaml
+before_model_callbacks:
+  - rate_limit
+after_agent_callbacks:
+  - log_to_state
+```
+
+Available callback positions: `before_agent_callbacks`, `after_agent_callbacks`, `before_model_callbacks`, `after_model_callbacks`, `before_tool_callbacks`, `after_tool_callbacks`.
+
+### Model Adapters
+
+Include LoRA adapters or fine-tuned weights in your submission:
+
+```
+my_submission/
+├── agent.yaml
+└── adapters/
+    └── my_lora.safetensors
+```
+
+Pair any registered base model with your adapter using the `model` and `adapter` fields:
+
+```yaml
+model: fast
+adapter: my_lora
+```
+
+Supported formats: `.safetensors`, `.bin`, `.gguf`, `.ggml`
+
+### Skills
+
+Include custom ADK skills in your submission:
+
+```
+my_submission/
+├── agent.yaml
+└── skills/
+    └── sql-analyst/
+        ├── SKILL.md
+        └── scripts/
+            └── query.py
+```
+
+Reference them in your config using the `skills:` list:
+
+```yaml
+skills:
+  - sql-analyst
+```
+
+When compiled, `adk_submission` wraps requested skills in an ADK `SkillToolset` and appends it to the agent's tools. E.g., scripts run securely via the sandboxed `code_executor` configured by the competition harness.
+
+### What's NOT Allowed
+
+The following are **rejected** by the schema validator:
+
+```yaml
+# ❌ Python import paths for tools
+tools:
+  - name: my_library.my_tools.custom_tool
+    args:
+      - name: param1
+        value: value1
+
+# ❌ Code references for sub-agents
+sub_agents:
+  - code: my_library.agents.CustomAgent
+
+# ❌ Arbitrary model constructors
+model_code:
+  name: google.adk.models.lite_llm.LiteLlm
+  args:
+    - name: model
+      value: openai/gpt-4o
+
+# ❌ Code-based callbacks
+before_model_callbacks:
+  - name: my_library.callbacks.my_callback
+
+# ❌ Safety settings overrides
+generate_content_config:
+  safety_settings:
+    - category: HARM_CATEGORY_DANGEROUS
+      threshold: BLOCK_NONE
+```
+
+### Limits
+
+Submissions are subject to organizer-configured limits. Typical defaults:
+
+| Limit | Default |
+|---|---|
+| Max total size | 500 MB |
+| Max YAML size (per file / `!include`) | 1 MB |
+| Max skill directory size | 256 KB |
+| Max file count | 50 |
+| Max YAML files | 20 |
+| Max agents (total) | 20 |
+| Max sub-agent nesting depth | 5 |
+| Max instruction length (per agent) | 100,000 chars |
+| Max total instruction length | 500,000 chars |
+| Max loop iterations | 50 |
+| Allowed file extensions | `.yaml`, `.yml`, `.md`, `.txt`, `.json`, `.py`, `.sh`, `.sql`, `.csv`, `.tsv`, `.safetensors`, `.bin`, `.gguf`, `.ggml` |
+
+---
+
+## For Competition Organizers
+
+### Quick Start
+
+```python
+from adk_submission import (
+    compile_submission,
+    discover_adapters,
+    discover_skills,
+    ToolRegistry,
+    ModelRegistry,
+    SkillRegistry,
+    CallbackRegistry,
+    CallbackType,
+    SubmissionLimits,
+    GenerationConstraints,
+    NumericRange,
+)
+
+# 1. Set up tool registry
+tools = ToolRegistry()
+tools.register("google_search", google_search_tool)
+tools.register("load_web_page", load_web_page_tool)
+tools.register("submit_answer", submit_answer_tool)
+
+# 2. Set up model registry
+models = ModelRegistry()
+models.register("fast", "gemini-2.5-flash")
+models.register("strong", "gemini-2.5-pro")
+
+# 3. Handle adapters (optional)
+manifest = discover_adapters("/path/to/unpacked/submission")
+for name, info in manifest.adapters.items():
+    vllm_load_adapter(info.path, info.name)  # Your serving logic
+manifest.register_all(models, lambda info: f"hosted_vllm/llama3:{info.name}")
+
+# 4. Handle skills (optional)
+from google.adk.skills import load_skill_from_dir
+skills = SkillRegistry()
+skill_manifest = discover_skills("/path/to/unpacked/submission")
+skill_manifest.register_all(skills, lambda info: load_skill_from_dir(info.path))
+
+# 4. Set up callbacks (optional)
+callbacks = CallbackRegistry()
+callbacks.register("rate_limit", rate_limit_fn, types={CallbackType.BEFORE_MODEL})
+callbacks.register("log_to_state", log_fn)
+
+# 5. Configure limits
+limits = SubmissionLimits(max_agents=10, max_sub_agent_depth=3)
+gen_constraints = GenerationConstraints(
+    allowed_fields=frozenset({"temperature", "max_output_tokens", "top_p"}),
+    temperature=NumericRange(0.0, 1.5),
+    max_output_tokens=NumericRange(1, 8192),
+    defaults={"temperature": 0.7},
+)
+
+# 6. Compile
+agent = compile_submission(
+    submission_dir="/path/to/unpacked/submission",
+    tool_registry=tools,
+    model_registry=models,
+    skill_registry=skills,
+    callback_registry=callbacks,
+    limits=limits,
+    generation_constraints=gen_constraints,
+)
+
+# 7. Run with ADK Runner
+from google.adk.runners import Runner
+from google.adk.sessions import InMemorySessionService
+from google.genai import types
+
+session_service = InMemorySessionService()
+runner = Runner(agent=agent, app_name="competition", session_service=session_service)
+session = await session_service.create_session(app_name="competition", user_id="eval")
+
+async for event in runner.run_async(
+    user_id="eval",
+    session_id=session.id,
+    new_message=types.Content(
+        role="user", parts=[types.Part.from_text(text=task_prompt)]
+    ),
+):
+    if event.is_final_response():
+        answer = event.content.parts[0].text
+```
+
+### Tool Registry
+
+Register the tools that submissions can reference by name:
+
+```python
+tools = ToolRegistry()
+tools.register("google_search", google_search)
+
+# ADK FunctionTools, BaseTool subclasses, or plain callables all work
+tools.register("calculator", my_calculator_function)
+
+tools.list_available()  # → ["calculator", "google_search"]
+```
+
+If a submission references a tool not in the registry, compilation fails with a `ToolNotFoundError` that lists available tools in the error message.
+
+### Model Registry
+
+Map short aliases to model identifiers (strings or `BaseLlm` instances):
+
+```python
+models = ModelRegistry()
+models.register("fast", "gemini-2.5-flash")
+models.register("strong", "gemini-2.5-pro")
+
+# After adapter discovery:
+manifest.register_all(models, lambda info: f"hosted_vllm/llama3:{info.name}")
+# This registers "adapter:my_lora" → "hosted_vllm/llama3:my_lora"
+```
+
+### Skill Registry
+
+Map short names to ADK `Skill` objects:
+
+```python
+from google.adk.skills import load_skill_from_dir
+skills = SkillRegistry()
+
+# After skill discovery:
+skill_manifest.register_all(skills, lambda info: load_skill_from_dir(info.path))
+# This registers "sql-analyst" → Skill(name="sql-analyst", ...)
+```
+
+### Callback Registry
+
+Register pre-approved callbacks with optional type restrictions:
+
+```python
+callbacks = CallbackRegistry()
+
+# Unrestricted — usable in any callback position
+callbacks.register("log_to_state", log_fn)
+
+# Restricted to before_model only
+callbacks.register("rate_limit", rate_limit_fn, types={CallbackType.BEFORE_MODEL})
+
+# Using a restricted callback in the wrong position raises CallbackNotFoundError
+```
+
+### Generation Constraints
+
+Control which generation parameters participants can set:
+
+```python
+# Example 1: Only allow temperature and max_output_tokens
+constraints = GenerationConstraints(
+    allowed_fields=frozenset({"temperature", "max_output_tokens"}),
+    temperature=NumericRange(0.0, 1.0),
+    max_output_tokens=NumericRange(1, 4096),
+)
+
+# Example 2: Allow everything, but cap output tokens and set defaults
+constraints = GenerationConstraints(
+    max_output_tokens=NumericRange(1, 8192),
+    defaults={"temperature": 0.5},
+)
+
+# Example 3: Block all generation config (organizer defaults only)
+constraints = GenerationConstraints(allowed_fields=frozenset())
+
+# Example 4: No restrictions
+constraints = None  # or omit the parameter
+```
+
+The `defaults` dict provides fallback values when a submission doesn't specify a parameter. Submission-specified values always take priority over defaults.
+
+### Adapter Discovery
+
+Discover adapter files without interacting with serving infrastructure:
+
+```python
+manifest = discover_adapters("/path/to/submission")
+
+for name, info in manifest.adapters.items():
+    print(f"{info.name}: {info.format}, {info.size_bytes} bytes")
+    print(f"  Path: {info.path}")
+
+# Register into the model registry with your serving convention
+manifest.register_all(models, lambda info: f"hosted_vllm/base:{info.name}")
+```
+
+The library discovers files by extension (`.safetensors`, `.bin`, `.gguf`, `.ggml`) within the `adapters/` directory of the submission.
+
+### Skill Discovery
+
+Discover skill directories (any directory containing `SKILL.md`):
+
+```python
+skill_manifest = discover_skills("/path/to/submission")
+
+for name, info in skill_manifest.skills.items():
+    print(f"{info.name}: Path: {info.path}")
+
+# Register into the skill registry
+from google.adk.skills import load_skill_from_dir
+skill_manifest.register_all(skills, lambda info: load_skill_from_dir(info.path))
+```
+
+### Submission Limits
+
+Override any default limit:
+
+```python
+limits = SubmissionLimits(
+    max_total_size_bytes=100 * 1024 * 1024,  # 100 MB
+    max_file_count=20,
+    max_agents=5,
+    max_sub_agent_depth=3,
+    max_loop_iterations=10,
+    max_skills=5,
+    max_instruction_chars=50_000,
+)
+```
+
+### Error Handling
+
+All errors inherit from `SubmissionError`:
+
+```python
+from adk_submission import (
+    SubmissionError,
+    SubmissionValidationError,  # Bad structure, schema, or constraints
+    LimitExceededError,         # A configured limit was exceeded
+    PathTraversalError,         # Path escape attempt
+    ToolNotFoundError,          # Unknown tool name
+    ModelNotFoundError,         # Unknown model alias
+    SkillNotFoundError,         # Unknown skill name
+    CallbackNotFoundError,      # Unknown callback name or wrong type
+)
+
+try:
+    agent = compile_submission(submission_dir, tools, models)
+except SubmissionValidationError as e:
+    print(f"Invalid submission: {e}")
+except ToolNotFoundError as e:
+    print(f"Unknown tool: {e.tool_name}")
+    print(f"Available: {e.available}")
+except SkillNotFoundError as e:
+    print(f"Unknown skill: {e.skill_name}")
+    print(f"Available: {e.available}")
+except SubmissionError as e:
+    print(f"Submission error: {e}")
+```
+
+---
+
+## API Reference
+
+### `compile_submission()`
+
+```python
+def compile_submission(
+    submission_dir: str | Path,
+    tool_registry: ToolRegistry | dict[str, Callable[..., Any]],
+    model_registry: ModelRegistry,
+    callback_registry: CallbackRegistry | None = None,
+    limits: SubmissionLimits | None = None,
+    generation_constraints: GenerationConstraints | None = None,
+    code_executor: BaseCodeExecutor | None = None,
+    script_timeout: int = 300,
+    skill_registry: SkillRegistry | None = None,
+    adapter_manifest: AdapterManifest | None = None,
+    adapter_resolver_fn: Callable[[Any, AdapterInfo], Any] | None = None,
+    agent_factory: AgentClassFactory | None = None,
+) -> BaseAgent
+```
+
+Compile a submission directory into a live ADK agent.
+
+### `discover_adapters()`
+
+```python
+def discover_adapters(
+    submission_dir: str | Path,
+    adapter_extensions: frozenset[str] | None = None,
+) -> AdapterManifest
+```
+
+Discover adapter files and return a manifest. Does not interact with serving infrastructure.
+
+### `discover_skills()`
+
+```python
+def discover_skills(
+    submission_dir: str | Path,
+    limits: SubmissionLimits | None = None,
+) -> SkillManifest
+```
+
+Discover skill directories and return a manifest. Does not interact with ADK or filesystem loading.
+
+### `validate_directory()`
+
+```python
+def validate_directory(
+    submission_dir: str | Path,
+    limits: SubmissionLimits | None = None,
+) -> SubmissionDirectory
+```
+
+Validate directory structure and return a catalogued view of all files.
+
+### `spawn_vllm_server()`
+
+```python
+def spawn_vllm_server(
+    config: VllmConfig | None = None,
+    adapter_manifest: AdapterManifest | None = None,
+    lora_modules: Mapping[str, str | Path] | None = None,
+    **kwargs: Any,
+) -> VllmServer
+```
+
+Spawn and manage a local vLLM API server as a context manager within evaluation metrics:
+
+```python
+from adk_submission import compile_submission, discover_adapters
+from adk_submission.server import VllmConfig, spawn_vllm_server
+
+config = VllmConfig(model="Qwen/Qwen2.5-7B-Instruct", port=8000)
+adapters = discover_adapters(submission_dir)
+
+with spawn_vllm_server(config, adapter_manifest=adapters) as server:
+    models = server.create_model_registry({"fast": "Qwen/Qwen2.5-7B-Instruct"})
+    agent = compile_submission(
+        submission_dir=submission_dir,
+        tool_registry=tools,
+        model_registry=models,
+        adapter_manifest=adapters,
+    )
+    # Evaluate compiled agent
+```

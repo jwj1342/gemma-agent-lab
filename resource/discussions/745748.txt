@@ -1,0 +1,27 @@
+# [Resource & Benchmark] 50 Multi-Turn Gemma 4 SWE-bench Trajectories + Closed-Loop TFD-Agent Framework
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/745748
+
+## 3532597 /rajrajak99 TOPIC
+Hi everyone,
+
+To contribute to the Gemma 4 Developer Agent community and support reproducibility, we have released an open-source trajectory benchmark dataset alongside our research notebook.
+
+### 🌟 Key Open-Source Artifacts:
+* 📦 **Dataset (50 Clean Trajectories):** [Gemma 4 TFD Agentic Trajectories & Benchmark](https://www.kaggle.com/datasets/rajrajak99/gemma-4-tfd-agentic-trajectories)
+* 📓 **Research Notebook / Architecture:** [TFD-Agent: Autonomous SWE-bench Resolution with Gemma 4](https://www.kaggle.com/code/rajrajak99/tfd-agent-autonomous-swe-bench-resolution-with-ge)
+* 💻 **Open-Source Code:** [GitHub Repository](https://github.com/rajrajak99/gemma4-tfd-agent)
+
+---
+
+### 🔍 What is in this Resource?
+1. **50 Granular Agentic Trajectories:** Contains multi-turn tool invocations (`search_similar_code`, `get_code_neighbors`, `edit_file`, and isolated bash reproduction) across real-world Python repositories.
+2. **Closed-Loop Verification Signals:** Full test-feedback loops showing how the agent detects regression failures and refines patches dynamically.
+3. **Graph Tool Diagnostics:** Case studies comparing direct string-search localization against AST code-graph traversal (`networkx` dependency subgraphs).
+
+### 💡 Why this helps competitors:
+* **LoRA & SFT Fine-Tuning:** If you are fine-tuning Gemma 4 31B, standard instruction pairs often lack multi-turn agent coherence. These trajectories provide end-to-end multi-turn demonstrations formatted for SFT.
+* **Failure Mode Analysis:** Review where agents stall or exceed step limits to tune your `thinking_budget` and turn ceilings.
+
+We would love to hear feedback from fellow competitors and researchers. Feel free to explore the dataset and fork the notebook! 
+
+**Let us know in the comments: what context window and thinking budget configuration is giving you the best stability on the hidden split?**

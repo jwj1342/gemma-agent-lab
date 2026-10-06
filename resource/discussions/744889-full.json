@@ -1,0 +1,58 @@
+{
+  "forumTopic": {
+    "authorId": 18091305,
+    "authorThumbnailName": "default-thumb.png",
+    "authorUserDisplayName": "ansheng jhang",
+    "authorUserName": "anshengjhang",
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3531090,
+      "postDate": "2026-10-01T09:03:30.880Z",
+      "rawMarkdown": "I am trying to make sure local validation reflects the code that the agent actually edits. In the published swegemma 0.2.7 wheel, install_editable_package() returns early for SubprocessManager/SubprocessSandbox. The subprocess environment sets PYTHONPATH to /workspace, while Requests task snapshots place the package under /workspace/src/requests. The official getting-started notebook uses sandbox='subprocess' for its sample evaluation.\n\nOn the public task requests_7315, I ran the unmodified verify_task test and a separate diagnostic test process in the same sandbox. Both failed the same assertion. The diagnostic process imported the system Requests package rather than /workspace/src/requests; with PYTHONPATH=src, a minimal probe imported the edited workspace code. This observation is from a local Kaggle CPU evaluation, not a claim about the hidden final scoring environment.\n\nCould the organizers clarify: (1) which sandbox/backend final patch validation uses; (2) how src-layout packages are made importable from the patched workspace; and (3) whether participants should take any supported action, or whether final scoring handles this? I want to avoid optimizing an agent against a local validation path that may not match final scoring.",
+      "content": "<p>I am trying to make sure local validation reflects the code that the agent actually edits. In the published swegemma 0.2.7 wheel, install_editable_package() returns early for SubprocessManager/SubprocessSandbox. The subprocess environment sets PYTHONPATH to /workspace, while Requests task snapshots place the package under /workspace/src/requests. The official getting-started notebook uses sandbox='subprocess' for its sample evaluation.</p>\n<p>On the public task requests_7315, I ran the unmodified verify_task test and a separate diagnostic test process in the same sandbox. Both failed the same assertion. The diagnostic process imported the system Requests package rather than /workspace/src/requests; with PYTHONPATH=src, a minimal probe imported the edited workspace code. This observation is from a local Kaggle CPU evaluation, not a claim about the hidden final scoring environment.</p>\n<p>Could the organizers clarify: (1) which sandbox/backend final patch validation uses; (2) how src-layout packages are made importable from the patched workspace; and (3) whether participants should take any supported action, or whether final scoring handles this? I want to avoid optimizing an agent against a local validation path that may not match final scoring.</p>",
+      "parent": {},
+      "author": {
+        "displayName": "ansheng jhang",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+        "url": "/anshengjhang",
+        "tier": "CONTRIBUTOR",
+        "id": 18091305,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "canUpvote": true
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 1384,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "ansheng jhang",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/anshengjhang",
+          "userName": "anshengjhang",
+          "tier": "CONTRIBUTOR",
+          "id": 18091305,
+          "profileUrl": "/anshengjhang",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 18091305,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3531090,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 744889,
+    "name": "Does patch validation import the edited src/ package for Requests tasks?",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-10-01T09:03:30.881596500Z",
+    "url": "/competitions/gemma-4-developer-agent/discussion/744889",
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

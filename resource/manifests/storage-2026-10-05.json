@@ -1,0 +1,8 @@
+{
+  "captured_at": "2026-10-05T04:16:42.588099+00:00",
+  "host": "trig-login01",
+  "diskusage_report": "                            Description                Space         # of files\n                       /home (user jwj)      1453MiB/ 100GiB          14K/1000K\n                    /scratch (user jwj)        41GiB/  25TiB        2738 /  10M\n        /project (project def-zhouyang)         0  B/1024GiB           4 /2000K\n--\nOn some clusters, a break down per user may be available by adding the option '--per_user'.\n",
+  "df_bytes": "Filesystem                                 1B-blocks        Used      Available Use% Mounted on\ntrillium.vast.local:/trillium_home      118111600640  1523580928   116588019712   2% /home\ntrillium.vast.local:/trillium_scratch 30236569763840 44385173504 30192184590336   1% /scratch\ntrillium.vast.local:/trillium_project  1209463209984           0  1209463209984   0% /project\n",
+  "df_inodes": "Filesystem                              Inodes IUsed    IFree IUse% Mounted on\ntrillium.vast.local:/trillium_home     1100000 13939  1086061    2% /home\ntrillium.vast.local:/trillium_scratch 11000000  2738 10997262    1% /scratch\ntrillium.vast.local:/trillium_project  2200000     4  2199996    1% /project\n",
+  "interpretation": "Current diskusage_report limits are approximately 1/1.1 of df limits. Cause unverified; budget to 100 GiB HOME, 25 TiB SCRATCH, 1 TiB group PROJECT, and 1M/10M/2M files."
+}

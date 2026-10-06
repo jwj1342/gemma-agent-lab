@@ -1,0 +1,353 @@
+# CELL 0 markdown
+# GTUA — Graph-Tool Utility Audit
+
+Public-safe reproducibility notebook for the Gemma 4 Developer Agent Paper Track.
+
+This notebook reconstructs the robustness audit from official competition inputs and emits only aggregate outputs. It does **not** export raw task text, patches, graphs, snapshots, or the row-level derived utility table.
+
+Final interpretation: repository interaction is descriptive and reproducible in this corpus, while graph-alignment effects are parameter-sensitive and are **not** promoted as a universal mechanism.
+
+Original notebook code: Apache-2.0. Competition data remain governed by Kaggle/competition terms.
+
+
+# CELL 1 code
+from pathlib import Path
+import json,re,collections,tarfile,zipfile,math
+import numpy as np
+import pandas as pd
+from sklearn.feature_extraction.text import TfidfVectorizer
+from scipy.stats import fisher_exact
+
+INPUT=Path('/kaggle/input'); WORK=Path('/kaggle/working')
+task_files=list(INPUT.rglob('tasks.jsonl'))
+if not task_files: raise FileNotFoundError('tasks.jsonl not found')
+tasks_path=task_files[0]; root=tasks_path.parent
+tasks=[json.loads(x) for x in tasks_path.read_text(errors='replace').splitlines() if x.strip()]
+
+def tid(t,i): return str(t.get('instance_id') or t.get('id') or t.get('task_id') or f'row-{i}')
+def repo(t): return str(t.get('repo') or t.get('repository') or t.get('repo_name') or 'UNKNOWN')
+def problem(t): return str(t.get('problem_statement') or t.get('issue') or t.get('description') or '')
+def patch_paths(txt):
+    if not isinstance(txt,str): return []
+    out=[]
+    for m in re.finditer(r'^(?:\+\+\+|---)\s+[ab]/(.+)$',txt,re.M):
+        p=m.group(1).strip()
+        if p!='/dev/null': out.append(p)
+    return sorted(set(out))
+def targets(t):
+    out=[]
+    for k,v in t.items():
+        if 'patch' in k.lower(): out.extend(patch_paths(v))
+    return sorted(set(out))
+def source_targets(t):
+    xs=targets(t)
+    ys=[p for p in xs if not (p.startswith('tests/') or '/tests/' in p or Path(p).name.startswith('test_'))]
+    return ys or xs
+
+graph_files=list((root/'graphs').glob('*.json')) if (root/'graphs').exists() else list(root.rglob('graphs/*.json'))
+snapshot_files=[]
+for d in [root/'snapshots',root]:
+    if d.exists():
+        for p in d.rglob('*'):
+            if p.is_file() and (p.name.endswith(('.tar.gz','.tgz','.tar','.zip')) or 'snapshot' in p.name.lower()):
+                snapshot_files.append(p)
+snapshot_files=sorted(set(snapshot_files))
+
+def candidate_files(files,t,i):
+    ID=tid(t,i);commit=str(t.get('base_commit') or '');short=repo(t).split('/')[-1].lower();sc=[]
+    for p in files:
+        n=p.name;score=0
+        if ID in n:score+=100
+        if commit and commit in n:score+=90
+        if commit and commit[:12] in n:score+=50
+        if short in n.lower():score+=10
+        if score:sc.append((-score,p.stat().st_size==0,len(n),p))
+    return [x[-1] for x in sorted(sc)]
+
+def load_graph(t,i):
+    for p in candidate_files(graph_files,t,i):
+        if p.stat().st_size==0:continue
+        try:
+            g=json.loads(p.read_text(errors='replace'))
+            if isinstance(g,dict) and isinstance(g.get('nodes'),list) and isinstance(g.get('edges'),list):return p,g
+        except:pass
+    return None,None
+
+def archive_pyfiles(p):
+    try:
+        if p.name.endswith(('.tar.gz','.tgz','.tar')):
+            mode='r:gz' if p.name.endswith(('.tar.gz','.tgz')) else 'r:'
+            with tarfile.open(p,mode) as tf:names=[m.name for m in tf.getmembers() if m.isfile() and m.name.endswith('.py')]
+        elif p.name.endswith('.zip'):
+            with zipfile.ZipFile(p) as zf:names=[n for n in zf.namelist() if n.endswith('.py')]
+        else:return []
+    except:return []
+    out=[]
+    for n in names:
+        n=n.replace('\\','/').lstrip('./');parts=n.split('/')
+        if len(parts)>1 and (parts[0].startswith('repo') or parts[0].startswith('workspace') or len(parts[0])>30):n='/'.join(parts[1:])
+        out.append(n)
+    return sorted(set(out))
+
+snap_cache={}
+def get_snapshot(t,i):
+    key=tid(t,i)
+    if key in snap_cache:return snap_cache[key]
+    for p in candidate_files(snapshot_files,t,i):
+        fs=archive_pyfiles(p)
+        if fs:snap_cache[key]=(p,fs);return p,fs
+    snap_cache[key]=(None,[]);return None,[]
+
+def module_from_path(p):
+    p=p.replace('\\','/').lstrip('./')
+    if p.startswith('src/'):p=p[4:]
+    if not p.endswith('.py'):return None
+    p=p[:-3]
+    if p.endswith('/__init__'):p=p[:-9]
+    return p.replace('/','.')
+def module_map(fs):
+    return sorted([(m,p) for p in fs if (m:=module_from_path(p))],key=lambda z:len(z[0]),reverse=True)
+def symbol_to_file(s,mm):
+    s=str(s)
+    for m,p in mm:
+        if s==m or s.startswith(m+'.'):return p
+    return None
+def nid(n,j):return str(n.get('id') if isinstance(n,dict) and 'id' in n else n.get('name') if isinstance(n,dict) and 'name' in n else j)
+def ntext(n):return (' '.join(str(n.get(k,'')) for k in ['name','id','text']))[:12000] if isinstance(n,dict) else str(n)
+def endpoint(e,side):
+    for k in (['source','from','src','u'] if side=='s' else ['target','to','dst','v']):
+        if k in e:return str(e[k])
+    return None
+def samefile(a,b):
+    a=a.replace('\\','/').lstrip('./');b=b.replace('\\','/').lstrip('./')
+    return a==b or a.endswith('/'+b) or b.endswith('/'+a)
+
+# -------- Precompute lexical scores, file mapping, adjacency once --------
+cache=[]
+for i,t in enumerate(tasks):
+    gp,g=load_graph(t,i);sp,fs=get_snapshot(t,i)
+    if not g or not fs:continue
+    mm=module_map(fs);nodes=g['nodes'];edges=g.get('edges',[])
+    ids=[nid(n,j) for j,n in enumerate(nodes)];id2j={x:j for j,x in enumerate(ids)}
+    paths=[symbol_to_file((n.get('id') or n.get('name')) if isinstance(n,dict) else n,mm) for n in nodes]
+    valid=[j for j,p in enumerate(paths) if p]
+    if not valid:continue
+    q=problem(t);docs=[ntext(nodes[j]) for j in valid]
+    vec=TfidfVectorizer(lowercase=True,strip_accents='unicode',ngram_range=(1,2),max_features=60000,sublinear_tf=True)
+    X=vec.fit_transform([q]+docs);sims=(X[1:]@X[0].T).toarray().ravel()
+    lex=np.zeros(len(nodes))
+    for j,s in zip(valid,sims):lex[j]=s
+    adj=collections.defaultdict(set)
+    for e in edges:
+        if isinstance(e,dict):
+            s=endpoint(e,'s');d=endpoint(e,'d')
+            if s in id2j and d in id2j:
+                a=id2j[s];b=id2j[d];adj[a].add(b);adj[b].add(a)
+    gold=source_targets(t)
+    cache.append(dict(instance_id=tid(t,i),repo=repo(t),lex=lex,adj=adj,paths=paths,gold=gold,
+                      n_nodes=len(nodes),n_edges=len(edges),matched_ratio=len(valid)/max(1,len(nodes))))
+    if len(cache)%25==0:print('precomputed',len(cache))
+assert len(cache)==129,len(cache)
+
+def rank_from_scores(c,node_scores):
+    fs=collections.defaultdict(float)
+    for j,p in enumerate(c['paths']):
+        if p:fs[p]=max(fs[p],float(node_scores[j]))
+    ranked=[p for p,_ in sorted(fs.items(),key=lambda z:(-z[1],z[0]))]
+    return next((k+1 for k,p in enumerate(ranked) if any(samefile(p,g) for g in c['gold'])),None)
+
+def metrics(ranks):
+    rr=np.array([0.0 if x is None else 1/x for x in ranks])
+    a=np.array([999999 if x is None else x for x in ranks])
+    return dict(r1=float(np.mean(a<=1)),r5=float(np.mean(a<=5)),r10=float(np.mean(a<=10)),mrr=float(rr.mean()))
+
+# A is fixed
+A_ranks=[rank_from_scores(c,c['lex']) for c in cache]
+A_metrics=metrics(A_ranks)
+assert abs(A_metrics['mrr']-0.30135700319530584)<1e-12
+
+# -------- Corrected cross-file rescue reachability --------
+reach_rows=[]
+for c,Ar in zip(cache,A_ranks):
+    seeds=np.argsort(c['lex'])[::-1][:20]
+    seed_already_gold=0
+    rescue=False
+    rescue_edges=0
+    eligible_non_gold_seeds=0
+    for a in seeds:
+        pa=c['paths'][int(a)]
+        if pa and any(samefile(pa,g) for g in c['gold']):
+            seed_already_gold+=1
+            continue
+        eligible_non_gold_seeds+=1
+        for b in c['adj'].get(int(a),()):
+            pb=c['paths'][int(b)]
+            if not pb or (pa and samefile(pa,pb)): # explicit cross-file only
+                continue
+            if any(samefile(pb,g) for g in c['gold']):
+                rescue=True; rescue_edges+=1
+    reach_rows.append({
+        'instance_id':c['instance_id'],'repo':c['repo'],'A_rank':Ar,
+        'seed_already_gold_count':seed_already_gold,
+        'eligible_non_gold_seed_count':eligible_non_gold_seeds,
+        'cross_file_non_gold_seed_to_gold_onehop':int(rescue),
+        'cross_file_rescue_edges':rescue_edges,
+        'matched_ratio':c['matched_ratio']
+    })
+reach=pd.DataFrame(reach_rows)
+R=reach[reach.repo=='Textualize/rich'];F=reach[reach.repo=='fastapi/fastapi']
+tab=np.array([[int(R.cross_file_non_gold_seed_to_gold_onehop.sum()),int(len(R)-R.cross_file_non_gold_seed_to_gold_onehop.sum())],
+              [int(F.cross_file_non_gold_seed_to_gold_onehop.sum()),int(len(F)-F.cross_file_non_gold_seed_to_gold_onehop.sum())]])
+or_cf,p_cf=fisher_exact(tab)
+corrected_reach={
+ 'rich_rate':float(R.cross_file_non_gold_seed_to_gold_onehop.mean()),
+ 'fastapi_rate':float(F.cross_file_non_gold_seed_to_gold_onehop.mean()),
+ 'odds_ratio':float(or_cf),'p':float(p_cf),'table':tab.tolist()
+}
+
+# -------- Frozen sensitivity grid --------
+alphas=[0.2,0.35,0.45,0.6,0.8]
+seed_counts=[5,10,20]
+edge_modes=['all','cross_file']
+grid=[]
+baseline_labels=None
+baseline_key=(0.45,20,'all')
+
+for alpha in alphas:
+  for kseed in seed_counts:
+    for mode in edge_modes:
+      B_ranks=[]
+      for c in cache:
+        lex=c['lex'];seeds=np.argsort(lex)[::-1][:kseed];prop=np.zeros(len(lex))
+        for a in seeds:
+          pa=c['paths'][int(a)]
+          for b in c['adj'].get(int(a),()):
+            pb=c['paths'][int(b)]
+            if mode=='cross_file':
+              if not pa or not pb or samefile(pa,pb):continue
+            prop[b]=max(prop[b],lex[a]*alpha)
+        B_ranks.append(rank_from_scores(c,lex+prop))
+
+      bm=metrics(B_ranks)
+      labels=[]
+      for ar,br in zip(A_ranks,B_ranks):
+        arx=999999 if ar is None else ar;brx=999999 if br is None else br
+        am=0 if ar is None else 1/ar; bmr=0 if br is None else 1/br
+        dr5=int(brx<=5)-int(arx<=5);dr10=int(brx<=10)-int(arx<=10);dm=bmr-am
+        if dr5>0 or dr10>0 or dm>=0.05: lab='Help'
+        elif dr5<0 or dr10<0 or dm<=-0.05: lab='Hurt'
+        else:lab='Neutral'
+        labels.append(lab)
+      if (alpha,kseed,mode)==baseline_key:baseline_labels=labels
+
+      repos=np.array([c['repo'] for c in cache])
+      Aarr=np.array([999999 if x is None else x for x in A_ranks])
+      Barr=np.array([999999 if x is None else x for x in B_ranks])
+      Arr=np.array([0 if x is None else 1/x for x in A_ranks])
+      Brr=np.array([0 if x is None else 1/x for x in B_ranks])
+      rich=repos=='Textualize/rich';fast=repos=='fastapi/fastapi'
+      row=dict(alpha=alpha,seeds=kseed,edge_mode=mode,
+               B_r1=bm['r1'],B_r5=bm['r5'],B_r10=bm['r10'],B_mrr=bm['mrr'],
+               help_n=labels.count('Help'),hurt_n=labels.count('Hurt'),neutral_n=labels.count('Neutral'),
+               rich_delta_mrr=float((Brr-Arr)[rich].mean()),
+               rich_delta_r5=float((Barr[rich]<=5).mean()-(Aarr[rich]<=5).mean()),
+               fastapi_delta_mrr=float((Brr-Arr)[fast].mean()),
+               fastapi_delta_r5=float((Barr[fast]<=5).mean()-(Aarr[fast]<=5).mean()))
+      row['_labels']=labels
+      grid.append(row)
+
+assert baseline_labels is not None
+for r in grid:
+    r['label_agreement_with_baseline']=float(np.mean(np.array(r.pop('_labels'))==np.array(baseline_labels)))
+grid=pd.DataFrame(grid)
+
+# Frozen robustness tests:
+sign_flip=((grid.rich_delta_mrr>0)&(grid.fastapi_delta_r5<0))
+cross_only=grid[grid.edge_mode=='cross_file']
+criteria={
+ 'grid_configs':int(len(grid)),
+ 'sign_flip_configs':int(sign_flip.sum()),
+ 'sign_flip_rate':float(sign_flip.mean()),
+ 'median_label_agreement':float(grid.label_agreement_with_baseline.median()),
+ 'min_label_agreement':float(grid.label_agreement_with_baseline.min()),
+ 'cross_file_only_sign_flip_rate':float(((cross_only.rich_delta_mrr>0)&(cross_only.fastapi_delta_r5<0)).mean()),
+ 'corrected_cross_file_reachability':corrected_reach
+}
+
+# FastAPI high-quality subset check (>=0.95 is impossible, report it explicitly).
+base_idx=grid[(grid.alpha==0.45)&(grid.seeds==20)&(grid.edge_mode=='all')].index[0]
+# recompute baseline B ranks once
+Bbase=[]
+for c in cache:
+    lex=c['lex'];seeds=np.argsort(lex)[::-1][:20];prop=np.zeros(len(lex))
+    for a in seeds:
+        for b in c['adj'].get(int(a),()):
+            prop[b]=max(prop[b],lex[a]*0.45)
+    Bbase.append(rank_from_scores(c,lex+prop))
+rows=[]
+for c,ar,br in zip(cache,A_ranks,Bbase):
+    if c['repo']=='fastapi/fastapi':
+        rows.append({'matched_ratio':c['matched_ratio'],'A_rank':ar,'B_rank':br})
+fq=pd.DataFrame(rows)
+q75=float(fq.matched_ratio.quantile(.75))
+hq=fq[fq.matched_ratio>=q75]
+def dmet(g):
+    A=np.array([999999 if pd.isna(x) else x for x in g.A_rank]);B=np.array([999999 if pd.isna(x) else x for x in g.B_rank])
+    Arr=np.array([0 if pd.isna(x) else 1/x for x in g.A_rank]);Brr=np.array([0 if pd.isna(x) else 1/x for x in g.B_rank])
+    return {'n':len(g),'delta_mrr':float((Brr-Arr).mean()),'delta_r5':float((B<=5).mean()-(A<=5).mean()),'delta_r10':float((B<=10).mean()-(A<=10).mean())}
+criteria['fastapi_max_matched_ratio']=float(fq.matched_ratio.max())
+criteria['fastapi_n_ge_095']=int((fq.matched_ratio>=.95).sum())
+criteria['fastapi_top_quartile_threshold']=q75
+criteria['fastapi_top_quartile_effects']=dmet(hq)
+
+# Decision: mechanism robustness needs corrected cross-file reachability + grid sign stability.
+support=(corrected_reach['odds_ratio']>1.5 and corrected_reach['p']<0.05 and
+         criteria['sign_flip_rate']>=0.80 and criteria['cross_file_only_sign_flip_rate']>=0.80)
+decision='ROBUST_GRAPH_ALIGNMENT_MECHANISM' if support else 'DOWNGRADE_TO_DESCRIPTIVE_REPOSITORY_INTERACTION'
+
+grid.to_csv(WORK/'GTUA_SENSITIVITY_GRID.csv',index=False)
+(WORK/'GTUA_ROBUSTNESS_CRITERIA.json').write_text(json.dumps(criteria,indent=2))
+report=[
+'# Gemma 4 Phase 1.8 — Red-Team Robustness Audit','',
+f'- Decision: **{decision}**','',
+'## Corrected cross-file rescue reachability',
+'```json',json.dumps(corrected_reach,indent=2),'```','',
+'## Frozen sensitivity criteria',
+'```json',json.dumps(criteria,indent=2),'```','',
+'## Guardrails',
+'- Reachability excludes seeds already in the gold file and excludes same-file edges.',
+'- The sensitivity grid was frozen before this run: alpha={0.2,0.35,0.45,0.6,0.8}, seeds={5,10,20}, edge mode={all,cross_file}.',
+'- Repository-level generalization is NOT claimed from task-level p-values.',
+'- FastAPI matched_ratio>=0.95 is reported rather than forced; if there are zero such tasks, the check is infeasible.',
+'- No leaderboard submission is made.'
+]
+(WORK/'GTUA_ROBUSTNESS_REPORT.md').write_text('\n'.join(report))
+print('\n'.join(report))
+print('\nSaved public-safe aggregate outputs to',WORK)
+
+# ---- Public publication guard ----
+# Do not leave any row-level task-derived tables in /kaggle/working.
+for forbidden in [
+    'PHASE1_8_CORRECTED_REACHABILITY_AGG_INPUT.csv',
+    'GEMMA4_GRAPH_TOOL_UTILITY_RESOURCE.csv',
+    'GEMMA4_GRAPH_TOOL_UTILITY_RESOURCE_LEAKAGE_FREE.csv',
+    'GEMMA4_PHASE1_7_MECHANISM_RESOURCE.csv'
+]:
+    p = WORK/forbidden
+    if p.exists():
+        p.unlink()
+
+print()
+print("GTUA FINAL PUBLIC RESULT")
+print("Decision:", decision)
+print("Corrected cross-file rescue reachability:",
+      {"Rich": corrected_reach["rich_rate"],
+       "FastAPI": corrected_reach["fastapi_rate"],
+       "OR": corrected_reach["odds_ratio"],
+       "p": corrected_reach["p"]})
+print("Sensitivity:",
+      {"configs": criteria["grid_configs"],
+       "sign_flip_rate": criteria["sign_flip_rate"],
+       "cross_file_only_sign_flip_rate": criteria["cross_file_only_sign_flip_rate"],
+       "median_label_agreement": criteria["median_label_agreement"]})
+print("PUBLICATION GUARD PASS: no row-level competition-derived resource exported.")

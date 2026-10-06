@@ -1,0 +1,835 @@
+# CELL 0 markdown
+<div style="background:linear-gradient(120deg,#0b1f3a 0%,#1d4e89 55%,#1baf7a 100%);border-radius:16px;padding:30px 34px;color:#ffffff;">
+  <div style="font-size:12px;letter-spacing:.14em;text-transform:uppercase;opacity:.85">Google · The Gemma 4 Developer Agent Competition</div>
+  <div style="font-size:36px;font-weight:800;margin:8px 0 6px;line-height:1.15">🧭 Pathfinder Agent</div>
+  <div style="font-size:17px;opacity:.95;margin-bottom:16px">EDA &nbsp;→&nbsp; graph-tool study &nbsp;→&nbsp; ADK agent &nbsp;→&nbsp; <span style="background:rgba(255,255,255,.18);padding:2px 8px;border-radius:6px;font-family:monospace">submission.zip</span></div>
+  <span style="display:inline-block;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.4);padding:4px 12px;border-radius:999px;font-size:12px;margin:0 6px 6px 0;color:#ffffff">⚡ CPU only · runs in about a minute</span>
+  <span style="display:inline-block;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.4);padding:4px 12px;border-radius:999px;font-size:12px;margin:0 6px 6px 0;color:#ffffff">🛡️ Run-All safe</span>
+  <span style="display:inline-block;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.4);padding:4px 12px;border-radius:999px;font-size:12px;margin:0 6px 6px 0;color:#ffffff">🔬 original graph-tool study</span>
+  <span style="display:inline-block;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.4);padding:4px 12px;border-radius:999px;font-size:12px;margin:0 6px 6px 0;color:#ffffff">✅ built-in validator</span>
+</div>
+
+# CELL 1 markdown
+**The task in one line:** build an agent on Gemma 4 31B that reads a real GitHub issue, edits a Python repository inside a sandbox, and submits a patch that makes hidden tests pass. You don't submit code. You submit a small bundle of YAML and prompts that the harness compiles into an agent.
+
+### ✨ What's inside
+
+<div style="display:flex;flex-wrap:wrap;gap:12px;margin:8px 0 18px">
+<div style="flex:1 1 230px;background:#ffffff;border:1px solid #e3e6ea;border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.06);color:#1f2328"><div style="font-size:22px">📊</div><div style="font-weight:700;font-size:15px;margin:4px 0 4px;color:#0b1f3a">The benchmark in numbers</div><div style="font-size:13px;line-height:1.45;color:#44484e">What the 129 reference fixes look like, and the prompt rules that follow from them.</div></div>
+<div style="flex:1 1 230px;background:#ffffff;border:1px solid #e3e6ea;border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.06);color:#1f2328"><div style="font-size:22px">📦</div><div style="font-weight:700;font-size:15px;margin:4px 0 4px;color:#0b1f3a">The official sample, read in full</div><div style="font-size:13px;line-height:1.45;color:#44484e">Every text file in <code>sample_submission/</code>, including the <code>eval_config.yaml</code> most people skip.</div></div>
+<div style="flex:1 1 230px;background:#ffffff;border:1px solid #e3e6ea;border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.06);color:#1f2328"><div style="font-size:22px">🕸️</div><div style="font-weight:700;font-size:15px;margin:4px 0 4px;color:#0b1f3a">Graph & embedding files done right</div><div style="font-size:13px;line-height:1.45;color:#44484e">The task-named files are empty on Kaggle. Here's which files to load instead, and the real <code>.npz</code> layout.</div></div>
+<div style="flex:1 1 230px;background:#ffffff;border:1px solid #e3e6ea;border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.06);color:#1f2328"><div style="font-size:22px">🔬</div><div style="font-weight:700;font-size:15px;margin:4px 0 4px;color:#0b1f3a">Is <code>search_similar_code</code> worth it?</div><div style="font-size:13px;line-height:1.45;color:#44484e">An offline replay of the graph tool against the reference fixes, compared with plain text search.</div></div>
+<div style="flex:1 1 230px;background:#ffffff;border:1px solid #e3e6ea;border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.06);color:#1f2328"><div style="font-size:22px">⏱️</div><div style="font-weight:700;font-size:15px;margin:4px 0 4px;color:#0b1f3a">Runtime budget planning</div><div style="font-size:13px;line-height:1.45;color:#44484e">12 hours shared by ~120 tasks, and how the agent paces itself to stay inside it.</div></div>
+<div style="flex:1 1 230px;background:#ffffff;border:1px solid #e3e6ea;border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.06);color:#1f2328"><div style="font-size:22px">🧭</div><div style="font-weight:700;font-size:15px;margin:4px 0 4px;color:#0b1f3a">The Pathfinder agent</div><div style="font-size:13px;line-height:1.45;color:#44484e">A coder plus a read-only analyzer, data-driven prompts, and a validator that blocks bad bundles.</div></div>
+</div>
+
+### 🚀 Quick start
+
+<div style="display:flex;flex-wrap:wrap;gap:10px;margin:6px 0 16px">
+<div style="flex:1 1 200px;display:flex;align-items:center;gap:10px;background:#eaf2fc;border-radius:10px;padding:10px 14px;color:#0b1f3a;font-size:13px"><div style="flex:0 0 28px;height:28px;border-radius:50%;background:#2a78d6;color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center">1</div><span>Attach the competition data (<b>Add Input</b>)</span></div>
+<div style="flex:1 1 200px;display:flex;align-items:center;gap:10px;background:#eaf2fc;border-radius:10px;padding:10px 14px;color:#0b1f3a;font-size:13px"><div style="flex:0 0 28px;height:28px;border-radius:50%;background:#2a78d6;color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center">2</div><span><b>Run All</b>: CPU, internet off</span></div>
+<div style="flex:1 1 200px;display:flex;align-items:center;gap:10px;background:#eaf2fc;border-radius:10px;padding:10px 14px;color:#0b1f3a;font-size:13px"><div style="flex:0 0 28px;height:28px;border-radius:50%;background:#2a78d6;color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center">3</div><span>Submit <code>/kaggle/working/submission.zip</code></span></div>
+</div>
+
+<sub>Built on ideas from two public notebooks, <i>GEMMA: EDA, Baseline for a start</i> and <i>Black Cat SWE Agent</i>. If you find this useful, give them an upvote too.</sub>
+
+# CELL 2 markdown
+## ⚙️ Config
+
+Everything you'd want to change is in `CFG`. The sampling defaults match settings that are already known to score on the leaderboard, so you start from a safe baseline and change one thing at a time.
+
+# CELL 3 code
+import os, re, json, time, zipfile, hashlib, shutil, warnings, html
+from pathlib import Path
+from collections import Counter, defaultdict
+from contextlib import contextmanager
+from datetime import datetime, timezone
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import yaml
+from IPython.display import display, HTML
+
+warnings.filterwarnings("ignore")
+
+CFG = {
+    # agent
+    "architecture": "analyzer+coder",   # "analyzer+coder" (default) or "single"
+    "temperature": 0.2,
+    "top_p": 0.95,
+    "top_k": 40,
+    "max_output_tokens": 8192,
+    "thinking_budget": 4096,
+    "include_thoughts": False,          # keep reasoning out of the context window (see the runtime section)
+    "soft_limit_seconds": 240,          # the agent wraps up and submits after this (checked via get_status)
+    "ship_eval_config": False,          # copy the official eval_config.yaml into the bundle
+    # analysis
+    "graph_study_max_commits": 60,
+    "graph_study_seconds": 300,
+    "seed": 42,
+}
+
+# CELL 4 markdown
+<sub>The next cell holds the paths and small display helpers (cards, callouts). Nothing in it needs changing.</sub>
+
+# CELL 5 code
+MODEL = "gemma-4-31b-it-qat-w4a16-ct"
+HARNESS_TOOLS = ["run_command", "submit_patch", "get_status", "read_file", "edit_file",
+                 "write_file", "get_code_neighbors", "search_similar_code", "get_code_subgraph"]
+
+INPUT_ROOT = Path(os.environ.get("GEMMA_INPUT_ROOT", "/kaggle/input"))
+WORK = Path(os.environ.get("GEMMA_OUTPUT_ROOT", "/kaggle/working"))
+WORK.mkdir(parents=True, exist_ok=True)
+
+# ── look & feel ────────────────────────────────────────────────────────────
+BLUE, ORANGE, AQUA, NAVY = "#2a78d6", "#eb6834", "#1baf7a", "#0b1f3a"
+INK, MUTED, GRID = "#1f2328", "#5f6368", "#e6e5e1"
+plt.rcParams.update({
+    "figure.dpi": 110, "axes.spines.top": False, "axes.spines.right": False,
+    "axes.edgecolor": MUTED, "axes.labelcolor": INK, "xtick.color": MUTED, "ytick.color": MUTED,
+    "axes.grid": True, "grid.color": GRID, "grid.linewidth": 0.8, "axes.axisbelow": True,
+    "axes.titleweight": "bold", "axes.titlesize": 12, "font.size": 10,
+})
+
+def esc(s):
+    return html.escape(str(s))
+
+def callout(msg, kind="info"):
+    bg, bar, icon = {"info": ("#eaf2fc", BLUE, "💡"), "ok": ("#e7f6ef", AQUA, "✅"),
+                     "warn": ("#fdf3e3", "#eda100", "⚠️"), "idea": ("#f3effd", "#6b4fd8", "🧭")}[kind]
+    display(HTML(f'<div style="background:{bg};border-left:5px solid {bar};padding:12px 16px;border-radius:8px;'
+                 f'margin:8px 0;color:{INK};font-size:14px;line-height:1.55">{icon}&nbsp; {msg}</div>'))
+
+def kpis(items, accent=BLUE):
+    # items: (label, value, optional note)
+    cards = ""
+    for item in items:
+        label, value, note = (list(item) + [""])[:3]
+        cards += (f'<div style="flex:1 1 150px;background:#ffffff;border:1px solid #e3e6ea;border-radius:12px;'
+                  f'padding:12px 16px;box-shadow:0 1px 3px rgba(0,0,0,.06)">'
+                  f'<div style="font-size:11px;color:{MUTED};text-transform:uppercase;letter-spacing:.05em">{esc(label)}</div>'
+                  f'<div style="font-size:{26 if len(str(value)) <= 9 else 20}px;font-weight:800;color:{accent};margin-top:2px">{esc(value)}</div>'
+                  + (f'<div style="font-size:12px;color:{MUTED}">{esc(note)}</div>' if note else "") + '</div>')
+    display(HTML(f'<div style="display:flex;flex-wrap:wrap;gap:10px;margin:8px 0 14px">{cards}</div>'))
+
+@contextmanager
+def section(name):
+    # An unexpected data format shows a warning instead of breaking Run All.
+    try:
+        yield
+    except Exception as e:
+        callout(f"<b>{esc(name)}</b> skipped: <code>{esc(type(e).__name__)}: {esc(e)}</code>", "warn")
+
+kpis([("model", "Gemma 4 31B", "QAT w4a16"), ("architecture", CFG["architecture"]),
+      ("thinking budget", f'{CFG["thinking_budget"]:,}', "tokens, hidden from context"),
+      ("soft time limit", f'{CFG["soft_limit_seconds"] // 60} min', "per task, self-paced")], accent=NAVY)
+
+# CELL 6 code
+def find_data_dir():
+    explicit = os.environ.get("GEMMA_DATA_DIR")
+    if explicit:
+        return Path(explicit)
+    if not INPUT_ROOT.exists():
+        return None
+    found = sorted({p.parent for p in INPUT_ROOT.rglob("tasks.jsonl")})
+    good = [p for p in found if (p / "graphs").is_dir()]
+    return (good or found or [None])[0]
+
+DATA_DIR = find_data_dir()
+TASKS = []
+if DATA_DIR and (DATA_DIR / "tasks.jsonl").is_file():
+    with open(DATA_DIR / "tasks.jsonl", encoding="utf-8") as f:
+        TASKS = [json.loads(line) for line in f if line.strip()]
+    callout(f"Found <b>{len(TASKS)}</b> public tasks in <code>{esc(DATA_DIR)}</code>", "ok")
+else:
+    callout("Competition data not attached. The analysis sections will be skipped, but the submission is still built.", "warn")
+
+# CELL 7 markdown
+## 📊 1 · The benchmark in numbers
+
+Each public task comes with its reference patch, and the hidden test set is built the same way. So the *shape* of these fixes is a fair guide to what the agent should aim for. Every number below turns into a rule in the prompt.
+
+# CELL 8 code
+def parse_patch(patch):
+    files, hunks, added, removed, cur = [], [], 0, 0, None
+    for line in (patch or "").splitlines():
+        if line.startswith("diff --git "):
+            m = re.match(r"diff --git a/(\S+) b/(\S+)", line)
+            cur = m.group(2) if m else None
+            if cur:
+                files.append(cur)
+        elif line.startswith("@@"):
+            m = re.match(r"@@[^@]*@@ ?(.*)", line)
+            hunks.append((cur, (m.group(1) if m else "").strip()))
+        elif line.startswith("+") and not line.startswith("+++"):
+            added += 1
+        elif line.startswith("-") and not line.startswith("---"):
+            removed += 1
+    return files, hunks, added, removed
+
+PR_TEMPLATE = re.compile(r"<!--|## Checklist|## Pull Request|Please start with a GitHub Discussion", re.I)
+
+rows = []
+for t in TASKS:
+    files, hunks, a, r = parse_patch(t.get("patch"))
+    tp = t.get("test_patch") or ""
+    rows.append({
+        "id": t["instance_id"], "repo": t["repo"].split("/")[-1],
+        "files": len(files), "hunks": len(hunks), "churn": a + r,
+        "non_py_files": sum(not f.endswith(".py") for f in files),
+        "docs_src": any(f.startswith("docs_src/") for f in files),
+        "pr_template": bool(PR_TEMPLATE.search(t.get("problem_statement") or "")),
+        "tests_add_new": bool(re.search(r"^\+\s*(async\s+)?def test_", tp, re.M)),
+        "issue_words": len((t.get("problem_statement") or "").split()),
+    })
+FIX = pd.DataFrame(rows)
+
+if len(FIX):
+    kpis([("tasks", len(FIX), f"{FIX.repo.nunique()} repositories"),
+          ("median fix", f"{FIX.churn.median():.0f} lines", "added + removed"),
+          ("single-file fixes", f"{(FIX.files == 1).mean():.0%}"),
+          ("tests add new functions", f"{FIX.tests_add_new.mean():.0%}"),
+          ("PR-template issues", f"{FIX.pr_template.mean():.0%}"),
+          ("fix touches docs_src/", f"{FIX.docs_src.mean():.0%}")])
+    by_repo = FIX.groupby("repo").agg(tasks=("id", "size"), median_lines=("churn", "median"),
+                                      single_file=("files", lambda s: (s == 1).mean()),
+                                      median_issue_words=("issue_words", "median")).sort_values("tasks", ascending=False)
+    display(by_repo.style.format({"single_file": "{:.0%}", "median_lines": "{:.0f}", "median_issue_words": "{:.0f}"})
+            .bar(subset=["tasks"], color="#cfe0f6"))
+
+# CELL 9 code
+with section("fix-shape charts"):
+    if len(FIX):
+        fig, axes = plt.subplots(1, 2, figsize=(11, 3.6))
+        buckets = FIX.files.clip(upper=5).value_counts().reindex(range(1, 6), fill_value=0)
+        axes[0].bar([str(i) if i < 5 else "5+" for i in buckets.index], buckets.values, color=BLUE, width=0.6)
+        for x, v in enumerate(buckets.values):
+            axes[0].text(x, v, str(v), ha="center", va="bottom", fontsize=9, color=INK)
+        axes[0].set_title("Files changed per reference fix"); axes[0].set_xlabel("files"); axes[0].set_ylabel("tasks")
+        bins = np.logspace(0, np.log10(max(FIX.churn.max(), 10)), 25)
+        axes[1].hist(FIX.churn.clip(lower=1), bins=bins, color=BLUE, edgecolor="white", linewidth=1)
+        axes[1].axvline(FIX.churn.median(), color=ORANGE, ls="--", lw=1.5)
+        axes[1].text(FIX.churn.median() * 1.1, axes[1].get_ylim()[1] * 0.9, f"median {FIX.churn.median():.0f}", fontsize=9)
+        axes[1].set_xscale("log"); axes[1].set_title("Changed lines per fix (log scale)")
+        axes[1].set_xlabel("added + removed lines"); axes[1].set_ylabel("tasks")
+        plt.tight_layout(); plt.show()
+
+# CELL 10 code
+with section("prompt rules"):
+    if len(FIX):
+        rules = [
+            ("🎯", "Stay small", f"{(FIX.files == 1).mean():.0%} of fixes touch one file, median {FIX.churn.median():.0f} lines. "
+                               "A diff past ~60 lines or 3 files usually means the issue was misread."),
+            ("🏷️", "Use the issue's exact names", f"In {FIX.tests_add_new.mean():.0%} of tasks the hidden tests add new test functions. "
+                               "They call new parameters and messages by the name the issue gives them."),
+            ("🧹", "Look past PR boilerplate", f"{FIX.pr_template.mean():.0%} of issues are pasted pull-request templates. "
+                               "The title, code snippets and error text are the real spec."),
+            ("📚", "Examples are code too", f"{FIX.docs_src.mean():.0%} of fixes touch <code>docs_src/</code>, which tests import directly."),
+        ]
+        items = "".join(f'<div style="display:flex;gap:12px;align-items:flex-start;padding:8px 0;border-top:1px solid #e3e6ea">'
+                        f'<div style="font-size:20px">{i}</div><div><b style="color:{NAVY}">{t}</b><br>'
+                        f'<span style="color:{MUTED};font-size:13px">{d}</span></div></div>' for i, t, d in rules)
+        display(HTML(f'<div style="background:#ffffff;border:1px solid #e3e6ea;border-radius:12px;padding:12px 18px;color:{INK}">'
+                     f'<div style="font-weight:800;font-size:15px;color:{NAVY};margin-bottom:4px">Rules that go into the prompt</div>{items}</div>'))
+
+# CELL 11 markdown
+## 📦 2 · The official sample, read in full
+
+Most notebooks only list these files. Reading them is the quickest way to learn the schema the harness actually expects.
+
+# CELL 12 code
+SAMPLE_TEXT = {}
+with section("sample submission"):
+    cand = DATA_DIR / "sample_submission" if DATA_DIR else None
+    if cand and cand.is_dir():
+        for p in sorted(cand.rglob("*")):
+            if p.is_file() and p.suffix in (".yaml", ".yml", ".md", ".txt", ".json"):
+                SAMPLE_TEXT[str(p.relative_to(cand))] = p.read_text(encoding="utf-8", errors="replace")
+        blocks = ""
+        for name, text in SAMPLE_TEXT.items():
+            lines = text.splitlines()
+            shown = "\n".join(lines[:40]) + (f"\n... ({len(lines) - 40} more lines)" if len(lines) > 40 else "")
+            blocks += (f'<details style="margin:4px 0" {"open" if name.endswith((".yaml", ".yml")) else ""}>'
+                       f'<summary style="cursor:pointer;font-weight:600">📄 {esc(name)} '
+                       f'<span style="color:{MUTED};font-weight:400">({len(text):,} chars)</span></summary>'
+                       f'<pre style="font-family:ui-monospace,Menlo,Consolas,monospace;background:#f6f8fa;color:{INK};padding:10px 12px;border-radius:8px;font-size:12px;'
+                       f'overflow-x:auto">{esc(shown)}</pre></details>')
+        display(HTML(blocks))
+        binaries = sorted(str(p.relative_to(cand)) for p in cand.rglob("*") if p.is_file() and str(p.relative_to(cand)) not in SAMPLE_TEXT)
+        if binaries:
+            callout("Binary files, not shown: " + ", ".join(f"<code>{esc(b)}</code>" for b in binaries))
+    else:
+        callout("<code>sample_submission/</code> not found.", "warn")
+
+# CELL 13 code
+with section("sample findings"):
+    if SAMPLE_TEXT:
+        yaml_text = "\n".join(t for n, t in SAMPLE_TEXT.items() if n.endswith((".yaml", ".yml")))
+        ev = SAMPLE_TEXT.get("eval_config.yaml")
+        ev_keys = ", ".join(map(str, (yaml.safe_load(ev) or {}).keys())) if ev else "n/a"
+        kpis([("include_thoughts set", "yes" if "include_thoughts" in yaml_text else "no"),
+              ("uses !include", "yes" if "!include" in yaml_text else "no"),
+              ("'../' includes", "yes" if re.search(r"!include\s+\.\./", yaml_text) else "no"),
+              ("eval_config.yaml", "shipped" if ev else "none", f"keys: {ev_keys}")], accent=NAVY)
+
+# CELL 14 markdown
+## 🕸️ 3 · Graph and embedding files, loaded correctly
+
+The data page says every graph and embedding exists twice: a task-named file (`fastapi_15661.json`) hard-linked to a commit-named one (`fastapi_<sha>.json`). The hard links don't survive on Kaggle, so **the task-named copies are empty**. Load the commit-named file instead:
+
+# CELL 15 code
+def asset_path(kind, task):
+    ext = ".json" if kind == "graphs" else ".npz"
+    short = task["repo"].split("/")[-1]
+    for stem in (task["instance_id"], f"{short}_{task['base_commit']}"):
+        p = DATA_DIR / kind / f"{stem}{ext}"
+        if p.is_file() and p.stat().st_size > 100:
+            return p
+    return None
+
+with section("asset inventory"):
+    if TASKS:
+        counts = Counter()
+        for t in TASKS:
+            short = t["repo"].split("/")[-1]
+            for kind, ext in (("graphs", ".json"), ("embeddings", ".npz")):
+                a = DATA_DIR / kind / f"{t['instance_id']}{ext}"
+                b = DATA_DIR / kind / f"{short}_{t['base_commit']}{ext}"
+                counts[(kind, "task")] += a.is_file() and a.stat().st_size > 100
+                counts[(kind, "commit")] += b.is_file() and b.stat().st_size > 100
+        n = len(TASKS)
+        kpis([("graphs · task-named", f"{counts[('graphs', 'task')]}/{n}", "usable files"),
+              ("graphs · commit-named", f"{counts[('graphs', 'commit')]}/{n}", "usable files"),
+              ("embeddings · task-named", f"{counts[('embeddings', 'task')]}/{n}", "usable files"),
+              ("embeddings · commit-named", f"{counts[('embeddings', 'commit')]}/{n}", "usable files")])
+
+# CELL 16 markdown
+The embeddings aren't one matrix either. Each `.npz` has **one entry per code symbol**: the key is the symbol id and the value is its 256-dim vector.
+
+# CELL 17 code
+def load_embeddings(path):
+    with np.load(path, allow_pickle=False) as z:
+        keys = list(z.files)
+        mat = np.stack([np.asarray(z[k], dtype=np.float32).ravel() for k in keys]) if keys else np.zeros((0, 256), np.float32)
+    return keys, mat
+
+def load_graph(path):
+    g = json.loads(path.read_text(encoding="utf-8-sig"))
+    return g.get("nodes", []), g.get("edges", g.get("links", []))
+
+with section("asset demo"):
+    if TASKS:
+        t0 = TASKS[0]
+        gp, ep = asset_path("graphs", t0), asset_path("embeddings", t0)
+        cards = []
+        if gp:
+            nodes, edges = load_graph(gp)
+            cards += [("graph nodes", f"{len(nodes):,}", gp.name[:28] + "…"), ("graph edges", f"{len(edges):,}",
+                      ", ".join(f"{k}: {v}" for k, v in Counter(e.get("type") for e in edges).items()))]
+        if ep:
+            keys, mat = load_embeddings(ep)
+            cards += [("embedded symbols", f"{len(keys):,}", f"{mat.shape[1]} dims each")]
+        kpis(cards)
+        if gp:
+            display(pd.DataFrame([{"symbol id": n.get("id"), "source chars": len(n.get("text") or "")} for n in nodes[:6]]))
+
+# CELL 18 markdown
+## 🔬 4 · Is `search_similar_code` worth a tool call?
+
+Tool calls cost time, so it's worth knowing which ones pay off. We replayed the graph tool offline against the reference fixes.
+
+**Setup.** For each task, the *gold symbols* are the functions and classes the reference patch edits, read from its `@@ ... def name` hunk headers. The *queries* are the identifiers an agent would plausibly search for in the issue text: backticked names, `snake_case`, `CamelCase` and `dotted.paths`. Then three strategies race to find the gold symbol:
+
+| Strategy | What it simulates |
+|---|---|
+| 🔵 **Name lookup** | step one of `search_similar_code(name)`: resolve the name to a symbol (exact → suffix → case-insensitive → substring) |
+| 🟠 **Embedding top-10** | the full tool: the 10 nearest neighbours of that symbol by cosine similarity |
+| 🟢 **Text search top-10** | a grep: rank symbols by how many issue identifiers appear in their source |
+
+The replay follows the tool as described in `HARNESS_README.md`. It approximates the real implementation rather than reproducing it exactly.
+
+# CELL 19 code
+STOP = set('''the and for with that this from into when have none true false self return import class def async
+await print issue pull request description checklist discussion github python fastapi rich requests httpx
+code example test tests docs error value values type types added adds using used should would could'''.split())
+
+def issue_symbols(text, k=8):
+    text = re.sub(r"<!--.*?-->", " ", text or "", flags=re.S)
+    raw = re.findall(r"`([^`\n]{2,80})`", text)
+    raw += re.findall(r"\b[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)+\b", text)
+    raw += re.findall(r"\b[a-z]+_[a-z0-9_]+\b", text)
+    raw += re.findall(r"\b[A-Z][a-z0-9]+(?:[A-Z][a-z0-9]*)+\b", text)
+    out = []
+    for r in raw:
+        m = re.match(r"\s*([A-Za-z_][\w.]*)", r)
+        if not m:
+            continue
+        s = m.group(1).strip(".")
+        if len(s) >= 4 and s.lower() not in STOP and not s.startswith(("http", "www")) and s not in out:
+            out.append(s)
+    return out[:k]
+
+def gold_symbols(task, by_last):
+    gold = set()
+    for f, ctx in parse_patch(task.get("patch"))[1]:
+        m = re.search(r"\b(?:def|class)\s+([A-Za-z_]\w*)", ctx or "")
+        if not f or not f.endswith(".py") or not m:
+            continue
+        stem = Path(f).stem
+        for nid in by_last.get(m.group(1), []):
+            if stem == "__init__" or stem in re.split(r"[./]", nid):
+                gold.add(nid)
+    return gold
+
+class SymbolIndex:
+    def __init__(self, keys, mat):
+        self.keys = keys
+        self.pos = {k: i for i, k in enumerate(keys)}
+        self.lower = {}
+        for k in keys:
+            self.lower.setdefault(k.lower(), k)
+        norms = np.linalg.norm(mat, axis=1, keepdims=True)
+        self.unit = mat / np.maximum(norms, 1e-8)
+
+    def resolve(self, q):
+        if q in self.pos:
+            return q
+        suffix = [k for k in self.keys if k.endswith("." + q) or k.endswith("/" + q)]
+        if suffix:
+            return min(suffix, key=len)
+        if q.lower() in self.lower:
+            return self.lower[q.lower()]
+        ql = q.lower()
+        sub = [k for k in self.keys if ql in k.lower()]
+        return min(sub, key=len) if sub else None
+
+    def neighbours(self, node, k=10):
+        sims = self.unit @ self.unit[self.pos[node]]
+        order = np.argsort(-sims)
+        return [self.keys[i] for i in order[: k + 1] if self.keys[i] != node][:k]
+
+# CELL 20 code
+STUDY, n_scanned = [], 0
+with section("graph tool replay"):
+    if TASKS:
+        by_commit = defaultdict(list)
+        for t in TASKS:
+            by_commit[(t["repo"], t["base_commit"])].append(t)
+        started = time.time()
+        for (repo, commit), group in by_commit.items():
+            if n_scanned >= CFG["graph_study_max_commits"] or time.time() - started > CFG["graph_study_seconds"]:
+                break
+            n_scanned += 1
+            ep, gp = asset_path("embeddings", group[0]), asset_path("graphs", group[0])
+            if not ep:
+                continue
+            keys, mat = load_embeddings(ep)
+            if not keys:
+                continue
+            idx = SymbolIndex(keys, mat)
+            by_last = defaultdict(list)
+            for k in keys:
+                by_last[re.split(r"[./]", k)[-1]].append(k)
+            texts = {}
+            if gp:
+                nodes, _ = load_graph(gp)
+                texts = {n.get("id"): (str(n.get("id")) + "\n" + str(n.get("text") or "")).lower() for n in nodes}
+            text_ids = list(texts)
+            for t in group:
+                gold = gold_symbols(t, by_last)
+                if not gold:
+                    continue
+                queries = issue_symbols(t.get("problem_statement"))
+                resolved = [r for r in (idx.resolve(q) for q in queries) if r]
+                embed_hits = set(resolved)
+                for r in resolved:
+                    embed_hits.update(idx.neighbours(r, 10))
+                lex_hit = False
+                if text_ids and queries:
+                    terms = [q.split(".")[-1].lower() for q in queries]
+                    scores = np.array([sum(term in texts[i] for term in terms) for i in text_ids])
+                    top = [text_ids[i] for i in np.argsort(-scores, kind="stable")[:10] if scores[i] > 0]
+                    lex_hit = bool(gold & set(top))
+                STUDY.append({
+                    "repo": repo.split("/")[-1], "id": t["instance_id"], "queries": len(queries),
+                    "name lookup": bool(gold & set(resolved)),
+                    "embedding top-10": bool(gold & embed_hits),
+                    "text search top-10": lex_hit,
+                })
+        kpis([("tasks replayed", len(STUDY), "with identifiable gold symbols"),
+              ("snapshots scanned", f"{n_scanned}/{len(by_commit)}"),
+              ("time", f"{time.time() - started:.0f}s")], accent=NAVY)
+STUDY = pd.DataFrame(STUDY)
+
+# CELL 21 code
+STRATS = ["name lookup", "embedding top-10", "text search top-10"]
+with section("replay results"):
+    if len(STUDY):
+        summary = STUDY.groupby("repo")[STRATS].mean()
+        summary.loc["all"] = STUDY[STRATS].mean()
+        summary["tasks"] = STUDY.groupby("repo").size().reindex(summary.index).fillna(len(STUDY)).astype(int)
+
+        fig, ax = plt.subplots(figsize=(9, 4.2))
+        x = np.arange(len(summary.index)); w = 0.26
+        for i, (s, c) in enumerate(zip(STRATS, [BLUE, ORANGE, AQUA])):
+            vals = summary[s].values
+            ax.bar(x + (i - 1) * w, vals, w - 0.03, color=c, label=s)
+            for xi, v in zip(x + (i - 1) * w, vals):
+                ax.text(xi, v + 0.02, f"{v:.0%}", ha="center", va="bottom", fontsize=8, color=INK)
+        ax.set_xticks(x); ax.set_xticklabels([f"{r}\n(n={n})" for r, n in zip(summary.index, summary.tasks)])
+        ax.set_ylim(0, 1.12); ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{v:.0%}"))
+        ax.set_ylabel("gold symbol found")
+        ax.set_title("How often each search strategy finds the symbol the reference fix edits")
+        ax.legend(frameon=False, ncol=3, loc="upper center", bbox_to_anchor=(0.5, -0.22), fontsize=9)
+        plt.tight_layout(); plt.show()
+
+        a = STUDY[STRATS].mean()
+        best = a.idxmax()
+        gain = a["embedding top-10"] - a["name lookup"]
+        verdict = ("Text search does at least as well as the embedding tool, so Pathfinder <b>greps first</b> and only "
+                   "uses graph tools on a confirmed symbol name." if a["text search top-10"] >= a["embedding top-10"] else
+                   "The embedding tool beats plain text search here, so Pathfinder tries <code>search_similar_code</code> "
+                   "on the first confirmed symbol name.")
+        callout(f"Across <b>{len(STUDY)}</b> tasks, <b>{best}</b> finds the gold symbol most often (<b>{a[best]:.0%}</b>). "
+                f"Expanding a resolved name to its 10 embedding neighbours adds <b>{gain:+.0%}</b> over the lookup alone. {verdict}", "idea")
+    else:
+        callout("No replay results: data missing or no gold symbols found.", "warn")
+
+# CELL 22 markdown
+<sub>Caveats: gold symbols only cover edits inside an existing function or class, so fixes that only add new code are skipped. The identifier extraction is a heuristic, while a real agent also reads files and follows leads. Read these numbers as a comparison between strategies, not a prediction of the score.</sub>
+
+# CELL 23 markdown
+## ⏱️ 5 · Planning the runtime budget
+
+The harness gives the whole hidden set, about 120 tasks, **12 hours** on 4× L4 GPUs, sandbox setup included. The per-task budget printed in each task message is generous (60 minutes by default), but that's a ceiling, not a target. If tasks run one after another, the average has to stay low:
+
+# CELL 24 code
+with section("budget arithmetic"):
+    n_tasks, setup_min = 120, 1.5            # ~120 hidden tasks; setup time is an estimate
+    per_task = np.linspace(1, 10, 181)
+    hours = n_tasks * (per_task + setup_min) / 60
+    breakeven = 12 * 60 / n_tasks - setup_min
+    target = CFG["soft_limit_seconds"] / 60
+
+    fig, ax = plt.subplots(figsize=(9, 3.6))
+    ax.fill_between(per_task, 0, hours, where=hours <= 12, color=AQUA, alpha=0.10)
+    ax.plot(per_task, hours, color=BLUE, lw=2)
+    ax.axhline(12, color=ORANGE, lw=1.5, ls="--")
+    ax.text(9.9, 12.4, "12 h limit", color=INK, fontsize=9, ha="right")
+    ax.axvline(breakeven, color=MUTED, lw=1, ls=":")
+    ax.text(breakeven + 0.1, 20.5, f"break-even ≈ {breakeven:.1f} min", color=INK, fontsize=9)
+    ax.scatter([target], [n_tasks * (target + setup_min) / 60], s=60, color=AQUA, zorder=3, edgecolor="white", linewidth=1.5)
+    ax.annotate(f"Pathfinder soft limit: {target:.0f} min", xy=(target, n_tasks * (target + setup_min) / 60),
+                xytext=(5.6, 5.0), fontsize=9, color=INK, arrowprops=dict(arrowstyle="->", color=MUTED))
+    ax.set_xlabel("average agent minutes per task (+ ~1.5 min setup)")
+    ax.set_ylabel("total run time (hours)")
+    ax.set_title("~120 tasks in 12 hours leaves about 4.5 agent-minutes per task")
+    ax.set_xlim(1, 10); ax.set_ylim(0, 25)
+    plt.tight_layout(); plt.show()
+
+# CELL 25 markdown
+Three design choices keep Pathfinder well inside that budget:
+
+<div style="display:flex;flex-wrap:wrap;gap:12px;margin:8px 0 6px">
+<div style="flex:1 1 230px;background:#ffffff;border:1px solid #e3e6ea;border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.06);color:#1f2328"><div style="font-size:22px">🧠</div><div style="font-weight:700;font-size:15px;margin:4px 0 4px;color:#0b1f3a">Reasoning stays out of context</div><div style="font-size:13px;line-height:1.45;color:#44484e"><code>include_thoughts: false</code> on every agent. The model still thinks, but its reasoning isn't carried into the 32k window turn after turn. Both leaderboard-scoring public notebooks do this too.</div></div>
+<div style="flex:1 1 230px;background:#ffffff;border:1px solid #e3e6ea;border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.06);color:#1f2328"><div style="font-size:22px">⏲️</div><div style="font-weight:700;font-size:15px;margin:4px 0 4px;color:#0b1f3a">The agent paces itself</div><div style="font-size:13px;line-height:1.45;color:#44484e">The prompt asks for <code>get_status()</code> every few calls, then a wrap-up and submit once <code>agent_elapsed_seconds</code> passes the soft limit. Most tasks finish well before it.</div></div>
+<div style="flex:1 1 230px;background:#ffffff;border:1px solid #e3e6ea;border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.06);color:#1f2328"><div style="font-size:22px">📄</div><div style="font-weight:700;font-size:15px;margin:4px 0 4px;color:#0b1f3a">No hand-written eval_config</div><div style="font-size:13px;line-height:1.45;color:#44484e">The official sample's <code>eval_config.yaml</code> is shown in section 2. Pathfinder doesn't ship one by default. Set <code>CFG['ship_eval_config']</code> to include the official file unchanged.</div></div>
+</div>
+
+# CELL 26 markdown
+## 🧭 6 · The Pathfinder agent
+
+A **coder** that edits and submits, plus a read-only **`code_analyzer`** wrapped as a tool. The analyzer explores in its own context and hands back a short report, so file dumps never fill the coder's 32k window.
+
+# CELL 27 code
+MULTI = CFG["architecture"] == "analyzer+coder"
+stages = [("📝", "Issue", "PR boilerplate stripped"),
+          ("🔎", "code_analyzer" if MULTI else "Locate", "grep first, graph on a known symbol"),
+          ("🛠️", "Coder", "small edit_file changes"),
+          ("🧪", "Verify", "one targeted check"),
+          ("📦", "submit_patch", "git diff → hidden tests")]
+colors = [MUTED, "#6b4fd8", BLUE, AQUA, ORANGE]
+boxes = []
+for (icon, title, sub), c in zip(stages, colors):
+    boxes.append(f'<div style="flex:1 1 120px;background:#ffffff;border:2px solid {c};border-radius:12px;padding:10px 12px;'
+                 f'text-align:center;color:{INK}"><div style="font-size:22px">{icon}</div>'
+                 f'<div style="font-weight:800;color:{c};font-size:14px">{title}</div>'
+                 f'<div style="font-size:12px;color:{MUTED}">{sub}</div></div>')
+arrow = f'<div style="align-self:center;font-size:20px;color:{MUTED}">➜</div>'
+display(HTML(f'<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:stretch;margin:6px 0 14px">{arrow.join(boxes)}</div>'))
+
+# CELL 28 markdown
+What goes into the prompts, and why:
+
+| | Choice | Why |
+|---|---|---|
+| 🏷️ | Exact names from the issue | Hidden tests call new parameters and messages by those names (section 1) |
+| 🧹 | Skip PR-template boilerplate | Many issues are pasted pull requests. The title and snippets are the spec |
+| 🎯 | Fixes stay small | Most reference fixes are one file and about a dozen lines |
+| ⏲️ | Self-pacing with `get_status()` | Keeps the average task well under the budget (section 5) |
+| 📁 | No `../` in includes | The README says paths with `..` are rejected, so the analyzer's prompt sits next to its YAML |
+| `{ }` | No braces in prompts | ADK treats `{name}` in an instruction as a template variable |
+
+# CELL 29 code
+SOFT = CFG["soft_limit_seconds"]
+
+LOCATE = (
+    "Call code_analyzer once, passing the issue title, the key names it mentions and the behaviour that is wrong. "
+    "It returns the files and functions to change. Confirm its answer by reading those lines yourself."
+    if MULTI else
+    "Start with a grep for the exact names or error text from the issue, for example "
+    "`git grep -n 'some_name' -- '*.py' | head -20`. Use search_similar_code or get_code_neighbors only once "
+    "you know a real symbol name, and drop them if they return an error."
+)
+
+SYSTEM_PROMPT = f'''You are fixing one issue in the Python repository at /workspace. The only thing that is graded is your git diff: it is applied to a clean checkout and hidden tests are run. Those tests usually call the exact names, parameters and messages the issue describes.
+
+READ THE ISSUE CAREFULLY
+- Many issues are pasted pull-request descriptions. Skip the template parts (HTML comments, discussion links, checklists, AI disclaimers). The title, code snippets, error text and API names are the real specification.
+- Note the expected behaviour, the public names involved and any exact strings. If the issue introduces a new parameter, function, option or message, use exactly that name and spelling.
+
+WORKFLOW
+1. Locate. {LOCATE}
+2. Read the implementation and the closest existing test with read_file and a line range. Do not read whole large files.
+3. Reproduce if it is cheap: a python3 -c one-liner or one pytest node id. Scratch files go in /tmp, never in /workspace.
+4. Fix with edit_file, using a small old_string copied exactly from what you just read. Most real fixes change one file and about a dozen lines. If your change grows past about 60 lines or 3 files, stop and re-check your diagnosis.
+5. Verify with the same command. If it still fails, read the error before editing again. Do not change existing tests to make them pass, because edited test files are reset before grading.
+6. Run git diff HEAD. Remove anything accidental (scratch files, debug prints, changes to pytest.ini or conftest.py). Then call submit_patch as your final tool call and reply with one sentence.
+
+PACE
+All tasks share one 12-hour budget, so treat the per-task budget in the task message as a ceiling, not a target. Aim to submit within about {SOFT // 60} minutes and 25 tool calls. Call get_status after every 8 or so tool calls. Once agent_elapsed_seconds is above {SOFT}, stop exploring, keep the best edit you have and submit it. A reasonable patch submitted on time beats a perfect one that never arrives. Keep your reasoning brief and get to the next tool call.
+
+RULES
+- The sandbox is offline. Do not pip install or use the network.
+- Never run the whole test suite. Target one test file or one test.
+- search_similar_code takes a symbol name such as APIRoute, not a sentence.
+'''
+
+ANALYZER_PROMPT = '''You are a read-only code navigator. You receive a description of an issue in the repository at /workspace. Find where it has to be fixed. Never edit files.
+
+Use at most 8 tool calls:
+- grep for exact names and error text, for example git grep -n 'name' -- '*.py' | head -20
+- read the relevant functions with read_file and a line range
+- optionally call get_code_neighbors on a confirmed symbol to find callers
+
+Reply in under 150 words, in this format:
+FILES: path:start-end for each place to change, most important first
+CAUSE: one or two sentences
+FIX: the concrete change
+TESTS: the closest existing test file, if any
+'''
+
+def sampling_block():
+    return {
+        "temperature": CFG["temperature"], "top_p": CFG["top_p"], "top_k": CFG["top_k"],
+        "max_output_tokens": CFG["max_output_tokens"],
+        "thinking_config": {"thinking_budget": CFG["thinking_budget"], "include_thoughts": CFG["include_thoughts"]},
+    }
+
+display(HTML(f'<details style="margin:4px 0"><summary style="cursor:pointer;font-weight:600">📜 Coder prompt '
+             f'<span style="color:{MUTED};font-weight:400">({len(SYSTEM_PROMPT.split())} words)</span></summary>'
+             f'<pre style="font-family:ui-monospace,Menlo,Consolas,monospace;background:#f6f8fa;color:{INK};padding:10px 12px;border-radius:8px;font-size:12px;white-space:pre-wrap">{esc(SYSTEM_PROMPT)}</pre></details>'
+             + (f'<details style="margin:4px 0"><summary style="cursor:pointer;font-weight:600">🔎 Analyzer prompt '
+                f'<span style="color:{MUTED};font-weight:400">({len(ANALYZER_PROMPT.split())} words)</span></summary>'
+                f'<pre style="font-family:ui-monospace,Menlo,Consolas,monospace;background:#f6f8fa;color:{INK};padding:10px 12px;border-radius:8px;font-size:12px;white-space:pre-wrap">{esc(ANALYZER_PROMPT)}</pre></details>' if MULTI else "")))
+
+# CELL 30 code
+BUNDLE = WORK / "submission_bundle"
+shutil.rmtree(BUNDLE, ignore_errors=True)
+
+def write(rel, text):
+    p = BUNDLE / rel
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(text.rstrip() + "\n", encoding="utf-8")
+
+sampling_yaml = yaml.safe_dump(sampling_block(), sort_keys=False)
+write("configs/sampling.yaml", sampling_yaml)
+write("prompts/system.md", SYSTEM_PROMPT)
+
+coder_tools = ["run_command", "read_file", "edit_file", "write_file", "get_status", "submit_patch"]
+if not MULTI:
+    coder_tools += ["search_similar_code", "get_code_neighbors", "get_code_subgraph"]
+tools_lines = [f"  - {t}" for t in coder_tools]
+
+if MULTI:
+    write("sub_agents/analyzer.md", ANALYZER_PROMPT)
+    write("sub_agents/code_analyzer.yaml", "\n".join([
+        "name: code_analyzer",
+        f"model: {MODEL}",
+        "description: Read-only code navigator. Give it the issue; it returns the files, root cause and fix plan.",
+        "instruction: !include analyzer.md",
+        "generate_content_config:",
+        *["  " + l for l in sampling_yaml.rstrip().splitlines()],
+        "tools:",
+        *[f"  - {t}" for t in ["run_command", "read_file", "search_similar_code", "get_code_neighbors", "get_code_subgraph"]],
+    ]))
+    tools_lines += ["  - agent_tool:", "      config_path: sub_agents/code_analyzer.yaml", "      skip_summarization: true"]
+
+write("agent.yaml", "\n".join([
+    "name: pathfinder",
+    f"model: {MODEL}",
+    "description: Software engineer that fixes one repository issue with a small, verified patch.",
+    "instruction: !include prompts/system.md",
+    "generate_content_config: !include configs/sampling.yaml",
+    "tools:", *tools_lines,
+]))
+
+if CFG["ship_eval_config"] and "eval_config.yaml" in SAMPLE_TEXT:
+    write("eval_config.yaml", SAMPLE_TEXT["eval_config.yaml"])   # the official file, unchanged
+
+tree = "\n".join(f"{'  ' * (len(p.relative_to(BUNDLE).parts) - 1)}{'📁' if p.is_dir() else '📄'} {p.name}"
+                 for p in sorted(BUNDLE.rglob("*")))
+yaml_blocks = "".join(f'<details style="margin:4px 0" open><summary style="cursor:pointer;font-weight:600">📄 {esc(p.relative_to(BUNDLE))}</summary>'
+                      f'<pre style="font-family:ui-monospace,Menlo,Consolas,monospace;background:#f6f8fa;color:{INK};padding:10px 12px;border-radius:8px;font-size:12px">{esc(p.read_text())}</pre></details>'
+                      for p in sorted(BUNDLE.rglob("*.yaml")))
+display(HTML(f'<pre style="font-family:ui-monospace,Menlo,Consolas,monospace;background:{NAVY};color:#e8eef7;padding:12px 16px;border-radius:10px;font-size:13px">submission_bundle/\n{esc(tree)}</pre>{yaml_blocks}'))
+
+# CELL 31 markdown
+## 🛡️ 7 · Validator and packaging
+
+With one submission a day, a broken bundle costs a full day. These checks run before the zip is written, and the build stops if any blocking check fails. They cover the model, the tools, includes, thinking settings, prompt braces, file types and size.
+
+# CELL 32 code
+class IncludeLoader(yaml.SafeLoader):
+    pass
+IncludeLoader.add_constructor("!include", lambda loader, node: {"__include__": loader.construct_scalar(node)})
+
+def resolve_includes(obj, base, root, problems):
+    if isinstance(obj, dict) and set(obj) == {"__include__"}:
+        rel = obj["__include__"]
+        if rel.startswith("/") or ".." in Path(rel).parts:
+            problems.append(f"include '{rel}' uses an absolute path or '..'")
+            return None
+        target = (base / rel).resolve()
+        if root not in target.parents or not target.is_file():
+            problems.append(f"include '{rel}' does not resolve inside the bundle")
+            return None
+        if target.suffix in (".yaml", ".yml"):
+            return resolve_includes(yaml.load(target.read_text(), Loader=IncludeLoader), target.parent, root, problems)
+        return target.read_text(encoding="utf-8")
+    if isinstance(obj, dict):
+        return {k: resolve_includes(v, base, root, problems) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [resolve_includes(v, base, root, problems) for v in obj]
+    return obj
+
+def validate(bundle):
+    root = Path(bundle).resolve()
+    checks = []
+    def check(ok, name, detail="", blocking=True):
+        checks.append({"status": "PASS" if ok else ("FAIL" if blocking else "WARN"), "check": name, "detail": detail})
+
+    roots = [n for n in ("agent.yaml", "agent.yml", "root_agent.yaml", "root_agent.yml") if (root / n).exists()]
+    check(len(roots) == 1, "exactly one root config", ", ".join(roots) or "none")
+
+    agents, problems = {}, []
+    def load_agent(path):
+        if path in agents:
+            return
+        cfg = resolve_includes(yaml.load(path.read_text(), Loader=IncludeLoader), path.parent, root, problems)
+        agents[path] = cfg
+        for tool in cfg.get("tools") or []:
+            if isinstance(tool, dict) and "agent_tool" in tool:
+                load_agent((root / tool["agent_tool"]["config_path"]).resolve())
+        for sub in cfg.get("sub_agents") or []:
+            load_agent((root / sub["config_path"]).resolve())
+    try:
+        load_agent(root / roots[0])
+    except Exception as e:
+        problems.append(f"{type(e).__name__}: {e}")
+    check(not problems, "YAML parses, includes resolve, no '..'", "; ".join(problems) or f"{len(agents)} agent(s)")
+
+    models = {a.get("model") for a in agents.values()}
+    check(models == {MODEL}, "single required model", ", ".join(map(str, models)))
+    tools = {t for a in agents.values() for t in (a.get("tools") or []) if isinstance(t, str)}
+    check(tools <= set(HARNESS_TOOLS), "only harness tools", ", ".join(sorted(tools - set(HARNESS_TOOLS))) or f"{len(tools)} tools")
+    check(any("submit_patch" in (a.get("tools") or []) for a in agents.values()), "submit_patch available")
+
+    for path, a in agents.items():
+        name = path.relative_to(root)
+        gcc = a.get("generate_content_config") or {}
+        tc = gcc.get("thinking_config") or {}
+        hidden = tc.get("include_thoughts") is False or str(tc.get("thinking_level", "")).upper() == "NONE"
+        check(hidden, f"{name}: reasoning kept out of context", str(tc))
+        mot = gcc.get("max_output_tokens", 16384)
+        check(1 <= mot <= 32768 and tc.get("thinking_budget", 0) < mot, f"{name}: token limits", f"max_output={mot}")
+        instr = a.get("instruction") or ""
+        check("{" not in instr and "}" not in instr, f"{name}: no template braces in instruction")
+
+    has_eval = (root / "eval_config.yaml").exists()
+    check(not has_eval or CFG["ship_eval_config"], "eval_config.yaml only if requested", "present" if has_eval else "absent")
+
+    files = [p for p in root.rglob("*") if p.is_file()]
+    allowed = {".yaml", ".yml", ".md", ".txt", ".py", ".json", ".safetensors"}
+    bad = [str(p.relative_to(root)) for p in files if p.suffix not in allowed]
+    check(not bad, "allowed file types", ", ".join(bad) or "ok")
+    size = sum(p.stat().st_size for p in files)
+    check(size < 3 * 1024**3, "size < 3 GiB", f"{size:,} bytes")
+    return pd.DataFrame(checks)
+
+def show_report(df):
+    style = {"PASS": ("#e7f6ef", "#127a52"), "FAIL": ("#fdeaea", "#b3261e"), "WARN": ("#fdf3e3", "#8a5a00")}
+    rows = "".join(
+        f'<tr style="border-top:1px solid #e3e6ea"><td style="text-align:left;padding:6px 10px;width:70px">'
+        f'<span style="background:{style[s][0]};color:{style[s][1]};font-weight:700;padding:2px 10px;border-radius:999px;font-size:12px">{s}</span></td>'
+        f'<td style="text-align:left;padding:6px 10px">{esc(c)}</td><td style="text-align:left;padding:6px 10px;color:{MUTED};font-family:monospace;font-size:12px">{esc(d)}</td></tr>'
+        for s, c, d in df[["status", "check", "detail"]].itertuples(index=False))
+    display(HTML(f'<table style="border-collapse:collapse;width:100%;font-size:13px">{rows}</table>'))
+
+REPORT = validate(BUNDLE)
+show_report(REPORT)
+assert not (REPORT.status == "FAIL").any(), "Blocking validation failure: fix before submitting."
+
+# CELL 33 code
+ZIP_PATH = WORK / "submission.zip"
+ZIP_PATH.unlink(missing_ok=True)
+with zipfile.ZipFile(ZIP_PATH, "w", zipfile.ZIP_DEFLATED) as z:
+    for p in sorted(p for p in BUNDLE.rglob("*") if p.is_file()):
+        info = zipfile.ZipInfo(p.relative_to(BUNDLE).as_posix(), date_time=(2026, 1, 1, 0, 0, 0))
+        info.compress_type, info.external_attr = zipfile.ZIP_DEFLATED, 0o644 << 16
+        z.writestr(info, p.read_bytes())
+
+# round trip: unzip and validate the archive itself, not just the folder
+rt = WORK / "_roundtrip"
+shutil.rmtree(rt, ignore_errors=True)
+with zipfile.ZipFile(ZIP_PATH) as z:
+    assert z.testzip() is None
+    names = z.namelist()
+    z.extractall(rt)
+assert not (validate(rt).status == "FAIL").any()
+shutil.rmtree(rt, ignore_errors=True)
+
+SHA = hashlib.sha256(ZIP_PATH.read_bytes()).hexdigest()
+card = {"created_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"), "sha256": SHA,
+        "architecture": CFG["architecture"], "files": names,
+        "sampling": sampling_block(), "soft_limit_seconds": SOFT,
+        "prompt_sha": hashlib.sha256(SYSTEM_PROMPT.encode()).hexdigest()[:12]}
+(WORK / "experiment_card.json").write_text(json.dumps(card, indent=2))
+
+files_html = "".join(f'<span style="display:inline-block;background:rgba(255,255,255,.16);padding:3px 10px;border-radius:999px;'
+                     f'font-size:12px;margin:0 6px 6px 0;font-family:monospace">{esc(n)}</span>' for n in names)
+display(HTML(
+    f'<div style="background:linear-gradient(120deg,#0e7a54 0%,#1baf7a 100%);border-radius:14px;padding:20px 24px;color:#ffffff">'
+    f'<div style="font-size:22px;font-weight:800">✅ submission.zip is ready</div>'
+    f'<div style="opacity:.9;margin:4px 0 12px">{ZIP_PATH.stat().st_size:,} bytes · sha256 <code style="color:#fff;background:rgba(0,0,0,.15)">{SHA[:16]}…</code> · all checks passed</div>'
+    f'{files_html}</div>'))
+
+# CELL 34 markdown
+## 📈 8 · Results and roadmap
+
+| Version | What changed | Public LB |
+|---|---|---|
+| **v1** | Coder + analyzer, data-driven prompts, self-pacing, validator | *pending, will be updated* |
+
+Each new version changes **one thing**, so the score actually tells us something. Next up:
+
+<div style="display:flex;flex-wrap:wrap;gap:10px;margin:6px 0 14px">
+<div style="flex:1 1 220px;border:1px solid #e3e6ea;border-radius:12px;padding:12px 14px"><b>🔀 Single vs. analyzer + coder</b><br><span style="font-size:13px;color:#5f6368">Same prompts and sampling, only the architecture changes.</span></div>
+<div style="flex:1 1 220px;border:1px solid #e3e6ea;border-radius:12px;padding:12px 14px"><b>🧠 Thinking-level sweep</b><br><span style="font-size:13px;color:#5f6368">LOW / MEDIUM / HIGH, trading speed against quality.</span></div>
+<div style="flex:1 1 220px;border:1px solid #e3e6ea;border-radius:12px;padding:12px 14px"><b>🎛️ LoRA from successful runs</b><br><span style="font-size:13px;color:#5f6368">The harness serves up to 8 adapters. Winning trajectories become training data.</span></div>
+</div>
+
+<div style="background:linear-gradient(120deg,#0b1f3a 0%,#1d4e89 100%);border-radius:12px;padding:16px 20px;color:#ffffff;font-size:15px">
+🧭 <b>If Pathfinder helped you get started, an upvote helps others find it.</b> Questions, results from your own runs, or ideas for the next version are very welcome in the comments.
+</div>

@@ -1,0 +1,9 @@
+# Reference patches fail for most FastAPI tasks in the public sandbox: are hidden tasks filtered?
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/744259
+
+## 3529883 /erhiteshkumar TOPIC
+Hi @elanlearns 
+In the public sandbox (Dockerfile.sandbox plus the public wheel cache, with typing_inspection, h11, blinker and greenlet added), the reference patch passes only 18 of our 40 TRAIN tasks (3 of 23 FastAPI). swegemma injects the newest cached wheels (e.g. Starlette 1.6.0), so older FastAPI commits fail collection, and inline_snapshot, dirty_equals and attrs are missing from the cache. We reproduced this on two hosts. Also, one public task (rich_3468) passes with an empty patch. Are hidden tasks filtered to those whose reference patch passes, and whose empty patch fails, in the scoring environment?
+
+## 3530086 /ryanholbrook ADMIN
+The tasks in the test set have been more rigorously filtered. I can confirm that a submission with "gold patches" validates at 100%. We will work on improving the training set.

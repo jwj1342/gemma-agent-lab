@@ -1,0 +1,9 @@
+# Submission 56739788: Notebook Threw Exception after successful official-harness smoke
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/744802
+
+## 3530904 /f0909172434 TOPIC
+Submission 56739788 (2026-10-01 00:48:59 UTC) failed with "Notebook Threw Exception" and no score. The API reports COMPLETE but includes the generic notebook error_description. Could the team inspect the underlying scorer exception?
+
+The submitted ZIP has agent.yaml at the root, uses gemma-4-31b-it-qat-w4a16-ct and the official sample LoRA adapters, and passed the official compiler plus a two-task smoke in an offline Kaggle notebook on 4 L4 GPUs. One task passed verification and one did not; both finished within 300 seconds. Downloading the uploaded ZIP from the submission page confirmed it is byte-identical to the tested package.
+
+The failed submission used today's only allowance. If the failure is platform-side, could it be rerun or the allowance restored? I have not established the root cause and am not assuming this is an infrastructure bug.

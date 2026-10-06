@@ -1,0 +1,21 @@
+# Aggregated questions from what has generally been asked on the forum : HOSTS ANSWER PLEASE
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/745805
+
+## 3532724 /iztanmaymohan TOPIC
+Answers to the following questions will clear up most uncertainties me and a lot of other participants have been facing. @ryanholbrook Is it possible to get accurate answers to these questions soon? I'll really appreciate it.
+
+1) Is the fix that scores unfinished tasks as 0 at the 12-hour limit live now? If a submission exceeds 12 hours today, does the whole submission still error?
+
+2) Which EventsCompactionConfig does the scorer use today (token_threshold, compaction_interval, overlap, retention)? Do you plan to change it before the final deadline, for example to keep tool results in the summary?
+
+3) In swegemma/harness/verification.py the verification pytest call uses timeout=config.harness.command_timeout_seconds, which is the submission's eval_config.yaml timeout_seconds. Does the scorer apply our timeout_seconds to the hidden verification run? If so, a correct patch on a task whose test files are slow could be scored as failing. Is that intended?
+
+4)Does the scorer's Docker sandbox run under gVisor (runsc) or runc? Is there a rough figure for command overhead compared with a plain container?
+
+5)Is the private leaderboard score taken from the same scoring run as the public score, or are the two selected final submissions re-run (the code mentions a rerun/ layout)?
+
+6) Does the 12-hour limit include vLLM server start-up?
+
+7)Would you consider publishing per-submission aggregate counts (tasks that hit the time limit, context-overflow errors, sandbox errors), with no task identities, so that participants can budget time without guessing?
+
+8)You mentioned possibly supporting other Gemma 4 variants. Will any of them be allowed as sub-agent models before the deadline, or is the 31B QAT model final?

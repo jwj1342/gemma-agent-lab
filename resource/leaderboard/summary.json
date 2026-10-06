@@ -1,0 +1,114 @@
+{
+  "source": "gemma-4-developer-agent-publicleaderboard-2026-10-05T03:50:43.csv",
+  "teams_with_score": 1755,
+  "min": 0.0,
+  "max": 0.24,
+  "mean": 0.081994301994302,
+  "median": 0.08,
+  "score_counts": {
+    "0.24": 1,
+    "0.17": 6,
+    "0.15": 41,
+    "0.13": 139,
+    "0.12": 307,
+    "0.1": 344,
+    "0.08": 316,
+    "0.06": 200,
+    "0.05": 148,
+    "0.03": 65,
+    "0.01": 55,
+    "0.0": 133
+  },
+  "top_10": [
+    {
+      "Rank": "1",
+      "TeamId": "16948405",
+      "TeamName": "ТониСтарк собрал реактор в яме",
+      "LastSubmissionDate": "2026-10-04 07:55:43",
+      "Score": "0.24",
+      "SubmissionCount": "4",
+      "TeamMemberUserNames": "samson8"
+    },
+    {
+      "Rank": "2",
+      "TeamId": "16950258",
+      "TeamName": "Statistical Science by Lasme",
+      "LastSubmissionDate": "2026-10-04 10:02:18",
+      "Score": "0.17",
+      "SubmissionCount": "11",
+      "TeamMemberUserNames": "sslasme"
+    },
+    {
+      "Rank": "3",
+      "TeamId": "17017549",
+      "TeamName": "Anh Nguyen Duong",
+      "LastSubmissionDate": "2026-10-03 05:17:55",
+      "Score": "0.17",
+      "SubmissionCount": "2",
+      "TeamMemberUserNames": "anhnguyenduong"
+    },
+    {
+      "Rank": "4",
+      "TeamId": "17019429",
+      "TeamName": "Reiji Kobayashi",
+      "LastSubmissionDate": "2026-10-04 05:40:50",
+      "Score": "0.17",
+      "SubmissionCount": "3",
+      "TeamMemberUserNames": "reijikobayashi"
+    },
+    {
+      "Rank": "5",
+      "TeamId": "16992887",
+      "TeamName": "Kirill Labzin",
+      "LastSubmissionDate": "2026-10-04 00:00:01",
+      "Score": "0.17",
+      "SubmissionCount": "5",
+      "TeamMemberUserNames": "kirilllabzin"
+    },
+    {
+      "Rank": "6",
+      "TeamId": "17014863",
+      "TeamName": "Bardia Bahadori",
+      "LastSubmissionDate": "2026-10-03 04:05:31",
+      "Score": "0.17",
+      "SubmissionCount": "3",
+      "TeamMemberUserNames": "bardiabahadori"
+    },
+    {
+      "Rank": "7",
+      "TeamId": "16975243",
+      "TeamName": "youchy",
+      "LastSubmissionDate": "2026-10-04 07:23:00",
+      "Score": "0.17",
+      "SubmissionCount": "5",
+      "TeamMemberUserNames": "youchy"
+    },
+    {
+      "Rank": "8",
+      "TeamId": "16953627",
+      "TeamName": "Makus",
+      "LastSubmissionDate": "2026-10-04 04:38:52",
+      "Score": "0.15",
+      "SubmissionCount": "6",
+      "TeamMemberUserNames": "alexmartinez75"
+    },
+    {
+      "Rank": "9",
+      "TeamId": "16957317",
+      "TeamName": "sergiomalv",
+      "LastSubmissionDate": "2026-10-04 00:12:25",
+      "Score": "0.15",
+      "SubmissionCount": "10",
+      "TeamMemberUserNames": "sergiomalv"
+    },
+    {
+      "Rank": "10",
+      "TeamId": "16977789",
+      "TeamName": "GopiPitchai",
+      "LastSubmissionDate": "2026-09-29 00:14:22",
+      "Score": "0.15",
+      "SubmissionCount": "2",
+      "TeamMemberUserNames": "gopipitchai"
+    }
+  ]
+}

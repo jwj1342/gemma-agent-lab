@@ -1,0 +1,527 @@
+# CELL 0 markdown
+<div style="background:linear-gradient(135deg,#0d366b,#2a78d6);color:#ffffff;border-radius:10px;padding:22px 26px;margin-bottom:8px">
+<div style="font-size:26px;font-weight:700;line-height:1.25">Onboarding: read the tasks before you build the agent</div>
+<div style="font-size:15px;opacity:0.92;margin-top:6px">Gemma 4 Developer Agent — task anatomy, what it means, design alternatives, and a Kaggle survival kit</div>
+<div style="margin-top:14px;font-size:13px">
+<span style="background:rgba(255,255,255,0.18);border-radius:12px;padding:3px 10px;margin-right:6px">⏱ runs in &lt; 1 min</span>
+<span style="background:rgba(255,255,255,0.18);border-radius:12px;padding:3px 10px;margin-right:6px">💻 CPU only</span>
+<span style="background:rgba(255,255,255,0.18);border-radius:12px;padding:3px 10px;margin-right:6px">📦 input: competition data</span>
+<span style="background:rgba(255,255,255,0.18);border-radius:12px;padding:3px 10px">🎯 level: new to SWE agents</span>
+</div></div>
+
+**Who this is for.** You joined the competition, looked at `tasks.jsonl`, and want to know what you are up
+against before writing prompts, sub-agents or LoRA adapters.
+
+**What you'll learn**
+1. What a task is, end to end — with one real example.
+2. What the 129 public fixes look like: size, spread, and how much the issue gives away.
+3. How each finding is framed in research (SWE-bench, SWE-agent, Agentless, IR-based bug localisation) and
+   what it means for engineering an agent.
+4. The **design alternatives** at each stage (localise → repair → validate → budget), with trade-offs.
+5. How to set up experiments you can trust — and a survival kit of practical Kaggle helpers.
+
+**How to read each section.** Every analysis follows the same rhythm, with colour-coded boxes:
+
+<div style="background:#f6f6f4;border-left:5px solid #52514e;border-radius:6px;padding:12px 16px;margin:10px 0"><div style="font-weight:600;color:#52514e;margin-bottom:6px">🔎 What the numbers say</div><div style="color:#1f1f1e;line-height:1.55">the result, read carefully, with the actual numbers.</div></div>
+<div style="background:#f4f2fb;border-left:5px solid #6b5bb5;border-radius:6px;padding:12px 16px;margin:10px 0"><div style="font-weight:600;color:#6b5bb5;margin-bottom:6px">🎓 Academic view</div><div style="color:#1f1f1e;line-height:1.55">how researchers frame the question.</div></div>
+<div style="background:#edf7f2;border-left:5px solid #2f8f6b;border-radius:6px;padding:12px 16px;margin:10px 0"><div style="font-weight:600;color:#2f8f6b;margin-bottom:6px">🛠️ Engineering view</div><div style="color:#1f1f1e;line-height:1.55">what it changes in an agent design.</div></div>
+<div style="background:#fdf6ec;border-left:5px solid #b8741a;border-radius:6px;padding:12px 16px;margin:10px 0"><div style="font-weight:600;color:#b8741a;margin-bottom:6px">🧪 Implications for your experiments</div><div style="color:#1f1f1e;line-height:1.55">how it should change the way you measure progress.</div></div>
+<div style="background:#eef4fc;border-left:5px solid #2a78d6;border-radius:6px;padding:12px 16px;margin:10px 0"><div style="font-weight:600;color:#2a78d6;margin-bottom:6px">💡 Key takeaway</div><div style="color:#1f1f1e;line-height:1.55">one sentence to remember.</div></div>
+
+
+# CELL 1 markdown
+### Contents
+1. [The problem, framed](#s0)
+2. [Load the tasks](#s1)
+3. [One task, end to end](#s2)
+4. [Turning patches into measurements](#s3)
+5. [How big are the fixes?](#s4)
+6. [How many files does a fix touch?](#s5)
+7. [Does each repository look the same?](#s6)
+8. [Does the issue tell you where to look?](#s7)
+9. [Is a longer issue a bigger fix?](#s8)
+10. [Async code](#s9)
+11. [Design alternatives, stage by stage](#s10)
+12. [Experiments you can trust — checklist](#s11)
+13. [Your first three experiments](#s12)
+14. [Kaggle survival kit](#s13)
+15. [Further reading](#s14)
+
+
+# CELL 2 markdown
+<a id="s0"></a>
+## 0. The problem, framed
+
+Each **task** is a real issue from an open-source Python project, plus the repository at the commit just before
+it was fixed. Your agent — the fixed Gemma 4 31B model, driven by your prompts, sub-agents, skills and optional
+LoRA adapters — must produce a **patch** (a `git diff`). The grader applies the maintainers' **hidden tests**;
+the task counts only if they all pass. The score is the fraction of tasks solved.
+
+<div style="background:#f4f2fb;border-left:5px solid #6b5bb5;border-radius:6px;padding:12px 16px;margin:10px 0"><div style="font-weight:600;color:#6b5bb5;margin-bottom:6px">🎓 Academic view</div><div style="color:#1f1f1e;line-height:1.55">This is the <b>SWE-bench</b> setting (Jimenez et al., ICLR 2024): repository-level issue resolution, scored by executing held-out tests rather than by text similarity. Two families of systems frame how it is approached:<ul style="margin:4px 0 0 0;padding-left:20px"><li><b>Agent loops with a designed interface</b> (Yang et al., <i>SWE-agent</i>, NeurIPS 2024): the model acts through tools — search, view, edit, run — and the <i>design of those tools</i> strongly affects success.</li><li><b>Decomposed pipelines</b> (Xia et al., <i>Agentless</i>, 2024): localisation → repair → validation as separate, simpler steps.</li></ul></div></div>
+<div style="background:#edf7f2;border-left:5px solid #2f8f6b;border-radius:6px;padding:12px 16px;margin:10px 0"><div style="font-weight:600;color:#2f8f6b;margin-bottom:6px">🛠️ Engineering view</div><div style="color:#1f1f1e;line-height:1.55">The model is the same for every team, so a submission is really a <b>system design</b>: what the model sees, in which order, with which tools and budgets. Knowing the task distribution tells you where design effort pays off.</div></div>
+
+
+# CELL 3 code
+import matplotlib.pyplot as plt
+from matplotlib.patches import FancyBboxPatch
+
+def pipeline_diagram():
+    stages = [('Issue +\nrepository', '#f6f6f4', '#52514e'), ('1. Localise\nwhere is the fix?', '#eef4fc', '#2a78d6'),
+              ('2. Repair\nwrite a minimal patch', '#eef4fc', '#2a78d6'), ('3. Validate\ndoes it work?', '#eef4fc', '#2a78d6'),
+              ('Patch\n(git diff)', '#f6f6f4', '#52514e')]
+    fig, ax = plt.subplots(figsize=(11, 1.9), facecolor='#fcfcfb'); ax.set_xlim(0, 11); ax.set_ylim(0, 2); ax.axis('off')
+    for i, (label, face, edge) in enumerate(stages):
+        x = 0.15 + i * 2.2
+        ax.add_patch(FancyBboxPatch((x, 0.45), 1.8, 1.1, boxstyle='round,pad=0.02,rounding_size=0.12', facecolor=face, edgecolor=edge, linewidth=1.5))
+        ax.text(x + 0.9, 1.0, label, ha='center', va='center', fontsize=10, color='#0b0b0b')
+        if i < len(stages) - 1:
+            ax.annotate('', xy=(x + 2.18, 1.0), xytext=(x + 1.82, 1.0), arrowprops=dict(arrowstyle='->', color='#898781', lw=1.5))
+    ax.text(5.5, 0.12, 'budget (turns, tool calls, minutes) constrains every stage', ha='center', fontsize=9, color='#898781')
+    plt.tight_layout(); plt.show()
+
+pipeline_diagram()
+
+
+# CELL 4 markdown
+<div style="background:#eef4fc;border-left:5px solid #2a78d6;border-radius:6px;padding:12px 16px;margin:10px 0"><div style="font-weight:600;color:#2a78d6;margin-bottom:6px">💡 Key takeaway</div><div style="color:#1f1f1e;line-height:1.55">Think of every task as three questions — <b>where</b> is the fix, <b>what</b> is the change, <b>how would you know</b> it works — under a hard budget. The rest of this notebook measures each of them from the data.</div></div>
+
+<details><summary><b>Glossary</b> (click to expand)</summary>
+
+| term | meaning |
+|---|---|
+| **patch / diff** | text saying which lines to remove (`-`) and add (`+`) in which files |
+| **hunk** | one contiguous block of changes inside a file (a patch can have several per file) |
+| **source file** | a non-test `.py` file — what the agent must change; tests are excluded from every count here |
+| **reference patch** | the maintainers' real fix, shipped in `tasks.jsonl` for the public tasks |
+| **`docs_src/`** | fastapi's documentation example code — sometimes updated together with the library |
+| **async** | `async def` functions — common in fastapi |
+| **`hints_text`** | optional extra context a task may ship with |
+</details>
+
+
+# CELL 5 markdown
+<a id="s1"></a>
+## 1. Load the tasks
+
+We look for `tasks.jsonl` under `/kaggle/input` instead of hard-coding a path: the mount layout is not the same in
+every session (see the survival kit).
+
+
+# CELL 6 code
+import glob, json, re
+from collections import Counter
+from pathlib import Path
+import pandas as pd
+
+_tasks = sorted(glob.glob('/kaggle/input/**/tasks.jsonl', recursive=True)) or ['data/tasks.jsonl']
+TASKS_PATH = Path(_tasks[0])
+tasks = [json.loads(l) for l in TASKS_PATH.read_text().splitlines() if l.strip()]
+print(f'{len(tasks)} tasks from {TASKS_PATH}')
+print(Counter(t['repo'] for t in tasks))
+
+
+# CELL 7 markdown
+<div style="background:#f6f6f4;border-left:5px solid #52514e;border-radius:6px;padding:12px 16px;margin:10px 0"><div style="font-weight:600;color:#52514e;margin-bottom:6px">🔎 What the numbers say</div><div style="color:#1f1f1e;line-height:1.55">129 tasks from 4 projects, very unevenly: fastapi 67, rich 48, requests 13, httpx 1.</div></div>
+<div style="background:#fdf6ec;border-left:5px solid #b8741a;border-radius:6px;padding:12px 16px;margin:10px 0"><div style="font-weight:600;color:#b8741a;margin-bottom:6px">🧪 Implications for your experiments</div><div style="color:#1f1f1e;line-height:1.55">This is a small, skewed sample. Scores computed on it are good for <b>comparing your own variants</b> under identical conditions and weak for <b>predicting the leaderboard</b>, whose tasks come from other repositories.</div></div>
+
+
+# CELL 8 markdown
+<a id="s2"></a>
+## 2. One task, end to end
+
+Statistics are easier to trust after looking closely at one case: the issue text the agent receives, and the
+maintainers' fix.
+
+
+# CELL 9 code
+ex = next(t for t in tasks if t['instance_id'] == 'requests_7205')
+print('ISSUE (what the agent sees):\n' + ex['problem_statement'][:600] + '\n')
+print('REFERENCE FIX (what a correct patch looks like):')
+print('\n'.join(l for l in ex['patch'].splitlines() if not l.startswith('index ')))
+
+
+# CELL 10 markdown
+<div style="background:#f6f6f4;border-left:5px solid #52514e;border-radius:6px;padding:12px 16px;margin:10px 0"><div style="font-weight:600;color:#52514e;margin-bottom:6px">🔎 What the numbers say</div><div style="color:#1f1f1e;line-height:1.55">The whole fix is one condition in one function: <code>if _netrc:</code> becomes <code>if _netrc and any(_netrc):</code> inside <code>get_netrc_auth</code>.</div></div>
+<div style="background:#f4f2fb;border-left:5px solid #6b5bb5;border-radius:6px;padding:12px 16px;margin:10px 0"><div style="font-weight:600;color:#6b5bb5;margin-bottom:6px">🎓 Academic view</div><div style="color:#1f1f1e;line-height:1.55">The issue talks about behaviour (an empty <code>Authorization</code> header, Python 3.11 netrc parsing); the code talks in identifiers (<code>get_netrc_auth</code>). Bridging that vocabulary gap is the classic problem of <b>information-retrieval-based bug localisation</b> (e.g. Zhou, Zhang &amp; Lo, <i>BugLocator</i>, ICSE 2012).</div></div>
+<div style="background:#edf7f2;border-left:5px solid #2f8f6b;border-radius:6px;padding:12px 16px;margin:10px 0"><div style="font-weight:600;color:#2f8f6b;margin-bottom:6px">🛠️ Engineering view</div><div style="color:#1f1f1e;line-height:1.55">Typing the fix is trivial; <b>finding the function</b> among hundreds and changing it <b>without breaking anything else</b> is the job. Designs that separate "where" from "what" are easier to debug and to budget.</div></div>
+<div style="background:#eef4fc;border-left:5px solid #2a78d6;border-radius:6px;padding:12px 16px;margin:10px 0"><div style="font-weight:600;color:#2a78d6;margin-bottom:6px">💡 Key takeaway</div><div style="color:#1f1f1e;line-height:1.55">Most of the difficulty is in the search, not in the edit.</div></div>
+
+
+# CELL 11 markdown
+<a id="s3"></a>
+## 3. Turning patches into measurements
+
+To make claims about <i>all</i> tasks we compute features per task directly from each reference patch:
+source files changed, hunks, lines added + removed, new files, `docs_src/` changes, async code, and changed
+function names. Function names come from the `@@ … @@` **hunk headers**, where git prints the nearest
+enclosing `def`/`class`.
+
+<div style="background:#fbefef;border-left:5px solid #b54040;border-radius:6px;padding:12px 16px;margin:10px 0"><div style="font-weight:600;color:#b54040;margin-bottom:6px">⚠️ Caveat</div><div style="color:#1f1f1e;line-height:1.55">This is cheap (no repository snapshots needed) but approximate: a change at module level or in a nested function can be attributed to the wrong name. Treat function-level numbers as <b>lower bounds</b>.</div></div>
+
+
+# CELL 12 code
+TEST_RE = re.compile(r'(^|/)(tests?|testing)/|(^|/)test_[^/]*\.py$|_test\.py$|(^|/)conftest\.py$')
+HUNK_RE = re.compile(r'^@@ [^@]+ @@\s?(.*)$')
+DEF_RE = re.compile(r'(?:async\s+)?(?:def|class)\s+([A-Za-z_]\w*)')
+
+def parse(patch):
+    files, cur = {}, None
+    for line in patch.splitlines():
+        if line.startswith('+++ '):
+            path = line[4:].strip(); path = path[2:] if path.startswith('b/') else path
+            cur = files.setdefault(path, {'add': 0, 'rem': 0, 'hunks': 0, 'new': False, 'defs': set(), 'async': False})
+        elif cur is not None and (m := HUNK_RE.match(line)):
+            cur['hunks'] += 1
+            if line.startswith('@@ -0,0 '): cur['new'] = True
+            if (d := DEF_RE.search(m.group(1))): cur['defs'].add(d.group(1))
+            if 'async def' in m.group(1): cur['async'] = True
+        elif cur is not None and line.startswith('+') and not line.startswith('+++'):
+            cur['add'] += 1
+            if re.match(r'\+\s*async\s+def\s', line): cur['async'] = True
+        elif cur is not None and line.startswith('-') and not line.startswith('---'):
+            cur['rem'] += 1
+    return files
+
+rows = []
+for t in tasks:
+    f = {p: v for p, v in parse(t['patch']).items() if not TEST_RE.search(p)}
+    defs = set().union(*[v['defs'] for v in f.values()]) if f else set()
+    ps = t['problem_statement']
+    rows.append({
+        'task': t['instance_id'], 'repo': t['repo'].split('/')[-1],
+        'src_files': len(f), 'hunks': sum(v['hunks'] for v in f.values()),
+        'lines_changed': sum(v['add'] + v['rem'] for v in f.values()),
+        'new_files': sum(v['new'] for v in f.values()),
+        'touches_docs_src': any(p.startswith('docs_src/') for p in f),
+        'async_touched': any(v['async'] for v in f.values()),
+        'issue_names_file': any(Path(p).name in ps for p in f),
+        'issue_names_function': any(d in ps for d in defs),
+        'issue_has_code_or_traceback': '```' in ps or 'Traceback' in ps,
+        'issue_chars': len(ps), 'has_hints': bool(t.get('hints_text', '').strip()),
+    })
+df = pd.DataFrame(rows)
+df.head()
+
+
+# CELL 13 code
+# Chart helper: one colour, value written on each bar, faint grid; exact numbers are always also shown as a table.
+BLUE, INK, INK2, MUTED, GRID, BG = '#2a78d6', '#0b0b0b', '#52514e', '#898781', '#e1e0d9', '#fcfcfb'
+
+def _frame(ax, title, xlabel):
+    ax.set_facecolor(BG); ax.set_title(title, loc='left', color=INK, fontsize=12, pad=10)
+    ax.set_xlabel(xlabel, color=MUTED, fontsize=9); ax.tick_params(colors=MUTED, labelsize=9)
+    ax.grid(color=GRID, linewidth=0.8); ax.set_axisbelow(True)
+    for side in ('top', 'right', 'left'): ax.spines[side].set_visible(False)
+    ax.spines['bottom'].set_color(GRID)
+
+def hbar(labels, values, notes, title, xlabel):
+    fig, ax = plt.subplots(figsize=(8.5, 0.55 * len(labels) + 1.3), facecolor=BG)
+    y = list(range(len(labels)))[::-1]
+    ax.barh(y, values, height=0.55, color=BLUE, edgecolor=BG, linewidth=2)
+    ax.set_yticks(y, labels, color=INK2, fontsize=10); ax.tick_params(axis='y', length=0)
+    for yi, v, n in zip(y, values, notes):
+        ax.text(v + max(values) * 0.01, yi, n, va='center', color=INK, fontsize=10)
+    ax.set_xlim(0, max(values) * 1.22); _frame(ax, title, xlabel); ax.grid(axis='y', visible=False)
+    plt.tight_layout(); plt.show()
+
+
+# CELL 14 markdown
+<a id="s4"></a>
+## 4. How big are the fixes?
+
+**Why:** fix size is the simplest proxy for difficulty, and it bounds what a good patch should look like.
+**How:** source lines added + removed per task (tests excluded), grouped into four bands.
+
+
+# CELL 15 code
+bins = pd.cut(df.lines_changed, [0, 5, 20, 60, 100_000], labels=['≤5 lines', '6–20 lines', '21–60 lines', '>60 lines'])
+counts = bins.value_counts().sort_index(); share = (counts / counts.sum() * 100).round().astype(int)
+hbar(list(counts.index), list(counts.values), [f'{c} tasks ({s}%)' for c, s in zip(counts.values, share.values)],
+     'Most fixes are small', 'number of tasks')
+print('median lines:', int(df.lines_changed.median()), '| 90th percentile:', int(df.lines_changed.quantile(.9)),
+      '| largest:', int(df.lines_changed.max()), f"({df.loc[df.lines_changed.idxmax(), 'task']})")
+pd.DataFrame({'tasks': counts, 'share': share.astype(str) + '%'})
+
+
+# CELL 16 markdown
+<div style="background:#f6f6f4;border-left:5px solid #52514e;border-radius:6px;padding:12px 16px;margin:10px 0"><div style="font-weight:600;color:#52514e;margin-bottom:6px">🔎 What the numbers say</div><div style="color:#1f1f1e;line-height:1.55"><ul style="margin:4px 0 0 0;padding-left:20px"><li><b>64%</b> of fixes change 20 lines or fewer; <b>34%</b> change 5 or fewer.</li><li>The median is <b>12 lines</b>, but the 90th percentile is ~127 and the largest fix (<code>rich_3930</code>) changes 12,714 lines — it regenerates Unicode data tables across 26 files.</li><li>That long tail is why we report <b>medians</b>, not means: one generated-data task drags the average far from anything typical.</li></ul></div></div>
+<div style="background:#f4f2fb;border-left:5px solid #6b5bb5;border-radius:6px;padding:12px 16px;margin:10px 0"><div style="font-weight:600;color:#6b5bb5;margin-bottom:6px">🎓 Academic view</div><div style="color:#1f1f1e;line-height:1.55">In the SWE-bench literature, resolution rates fall as the number of edited lines, hunks and files grows: several consistent changes must be right at once, and a single wrong hunk fails the whole task. The distribution is <b>heavy-headed</b> — most of the solvable mass sits in small fixes.</div></div>
+<div style="background:#edf7f2;border-left:5px solid #2f8f6b;border-radius:6px;padding:12px 16px;margin:10px 0"><div style="font-weight:600;color:#2f8f6b;margin-bottom:6px">🛠️ Engineering view</div><div style="color:#1f1f1e;line-height:1.55">Aim the design at the common case: <b>one small, targeted change in the right place</b>. Discourage refactors and stylistic edits — every extra changed line is another chance to break a hidden test.</div></div>
+<div style="background:#fdf6ec;border-left:5px solid #b8741a;border-radius:6px;padding:12px 16px;margin:10px 0"><div style="font-weight:600;color:#b8741a;margin-bottom:6px">🧪 Implications for your experiments</div><div style="color:#1f1f1e;line-height:1.55"><b>Stratify results by fix size</b>. Two variants with the same total can solve completely different tasks; a gain concentrated in the large-fix tail is fragile and likely noise.</div></div>
+<div style="background:#eef4fc;border-left:5px solid #2a78d6;border-radius:6px;padding:12px 16px;margin:10px 0"><div style="font-weight:600;color:#2a78d6;margin-bottom:6px">💡 Key takeaway</div><div style="color:#1f1f1e;line-height:1.55">Small, precise patches are the target — the typical fix is a dozen lines in one file.</div></div>
+
+
+# CELL 17 markdown
+<a id="s5"></a>
+## 5. How many files does a fix touch?
+
+**Why:** every additional file is a separate localisation problem, and the changes must stay consistent.
+
+
+# CELL 18 code
+fb = pd.cut(df.src_files, [0, 1, 2, 5, 1000], labels=['1 file', '2 files', '3–5 files', '6+ files'])
+fc = fb.value_counts().sort_index(); fs = (fc / fc.sum() * 100).round().astype(int)
+hbar(list(fc.index), list(fc.values), [f'{c} tasks ({s}%)' for c, s in zip(fc.values, fs.values)],
+     'Seven in ten fixes stay in one file', 'number of tasks')
+sweet = int(((df.src_files == 1) & (df.lines_changed <= 20)).sum())
+big_multi = int(((df.lines_changed > 20) & (df.src_files > 1)).sum()); big = int((df.lines_changed > 20).sum())
+print(f'single-file AND ≤20 lines: {sweet}/{len(df)} ({round(100*sweet/len(df))}%)')
+print(f'of the {big} fixes over 20 lines, {big_multi} span more than one file')
+pd.DataFrame({'tasks': fc, 'share': fs.astype(str) + '%'})
+
+
+# CELL 19 markdown
+<div style="background:#f6f6f4;border-left:5px solid #52514e;border-radius:6px;padding:12px 16px;margin:10px 0"><div style="font-weight:600;color:#52514e;margin-bottom:6px">🔎 What the numbers say</div><div style="color:#1f1f1e;line-height:1.55"><ul style="margin:4px 0 0 0;padding-left:20px"><li><b>71%</b> of fixes touch exactly one source file; 15% touch two; 15% touch three or more.</li><li><b>57%</b> of all tasks are both single-file <i>and</i> 20 lines or fewer — the "sweet spot".</li><li>Size and spread travel together: of the 48 fixes over 20 lines, 30 span several files.</li></ul></div></div>
+<div style="background:#edf7f2;border-left:5px solid #2f8f6b;border-radius:6px;padding:12px 16px;margin:10px 0"><div style="font-weight:600;color:#2f8f6b;margin-bottom:6px">🛠️ Engineering view</div><div style="color:#1f1f1e;line-height:1.55">Localising to <b>one</b> file is usually enough, so a design can commit to a single location first and only widen the search if tests or reasoning demand it. Multi-file fixes need a way to find related call sites (callers, imports, docs examples).</div></div>
+<div style="background:#fdf6ec;border-left:5px solid #b8741a;border-radius:6px;padding:12px 16px;margin:10px 0"><div style="font-weight:600;color:#b8741a;margin-bottom:6px">🧪 Implications for your experiments</div><div style="color:#1f1f1e;line-height:1.55">Report the sweet-spot subset separately: it is where differences between reasonable designs show up first, and where regressions hurt most.</div></div>
+<div style="background:#eef4fc;border-left:5px solid #2a78d6;border-radius:6px;padding:12px 16px;margin:10px 0"><div style="font-weight:600;color:#2a78d6;margin-bottom:6px">💡 Key takeaway</div><div style="color:#1f1f1e;line-height:1.55">Most tasks need exactly one well-chosen file.</div></div>
+
+
+# CELL 20 markdown
+<a id="s6"></a>
+## 6. Does each repository look the same?
+
+**Why:** an overall picture can hide very different sub-populations — and the hidden set comes from other projects.
+
+
+# CELL 21 code
+per_repo = df.groupby('repo').agg(
+    tasks=('task', 'count'), median_lines=('lines_changed', 'median'), mean_lines=('lines_changed', lambda s: round(s.mean())),
+    single_file_pct=('src_files', lambda s: round(100 * (s == 1).mean())),
+    new_file_tasks=('new_files', lambda s: int((s > 0).sum())), docs_src_tasks=('touches_docs_src', 'sum'),
+    async_pct=('async_touched', lambda s: round(100 * s.mean())),
+)
+ordered = per_repo.sort_values('tasks', ascending=False)
+charted = ordered[ordered.tasks >= 5]   # a repo with 1–4 tasks would draw a big bar from a single data point
+hbar([f'{r} (n={n})' for r, n in zip(charted.index, charted.tasks)], list(charted.median_lines),
+     [f'{int(v)} lines' for v in charted.median_lines], 'Median fix size differs by project', 'median source lines changed')
+print('not charted (fewer than 5 tasks, see table):', list(ordered.index[ordered.tasks < 5]))
+per_repo
+
+
+# CELL 22 markdown
+<div style="background:#f6f6f4;border-left:5px solid #52514e;border-radius:6px;padding:12px 16px;margin:10px 0"><div style="font-weight:600;color:#52514e;margin-bottom:6px">🔎 What the numbers say</div><div style="color:#1f1f1e;line-height:1.55"><ul style="margin:4px 0 0 0;padding-left:20px"><li>Median fix: requests <b>4</b> lines, rich <b>9</b>, fastapi <b>18</b> (httpx has a single task — 79 lines — so it is left out of the chart and shown only in the table: one data point is not a pattern).</li><li>rich's <b>mean</b> (287) is 30× its median (9): one generated-data task dominates the mean. Always check medians.</li><li>fastapi fixes are more often multi-file, sometimes add new files (10 tasks), and 15 also update <code>docs_src/</code> examples that tests may import.</li></ul></div></div>
+<div style="background:#f4f2fb;border-left:5px solid #6b5bb5;border-radius:6px;padding:12px 16px;margin:10px 0"><div style="font-weight:600;color:#6b5bb5;margin-bottom:6px">🎓 Academic view</div><div style="color:#1f1f1e;line-height:1.55">This is <b>distribution shift</b> in miniature. What transfers to unseen repositories is <i>behaviour</i> (search, read, edit, verify), not knowledge of a codebase. Tuning to the public repositories is the classic benchmark-overfitting failure.</div></div>
+<div style="background:#edf7f2;border-left:5px solid #2f8f6b;border-radius:6px;padding:12px 16px;margin:10px 0"><div style="font-weight:600;color:#2f8f6b;margin-bottom:6px">🛠️ Engineering view</div><div style="color:#1f1f1e;line-height:1.55">Keep repository-specific rules out of prompts. If a behaviour only helps on fastapi, assume it is neutral or harmful elsewhere.</div></div>
+<div style="background:#fdf6ec;border-left:5px solid #b8741a;border-radius:6px;padding:12px 16px;margin:10px 0"><div style="font-weight:600;color:#b8741a;margin-bottom:6px">🧪 Implications for your experiments</div><div style="color:#1f1f1e;line-height:1.55">Keep the <b>repository mix fixed</b> when comparing variants (same task list every run) and look at per-repo results — a gain concentrated in one repository is weak evidence.</div></div>
+<div style="background:#eef4fc;border-left:5px solid #2a78d6;border-radius:6px;padding:12px 16px;margin:10px 0"><div style="font-weight:600;color:#2a78d6;margin-bottom:6px">💡 Key takeaway</div><div style="color:#1f1f1e;line-height:1.55">Design for behaviours that generalise; treat per-repo quirks as noise.</div></div>
+
+
+# CELL 23 markdown
+<a id="s7"></a>
+## 7. Does the issue tell you where to look?
+
+**Why:** it measures how much localisation work the agent must do on its own.
+**How:** does the issue mention a changed file's name or a changed function/class name, contain code or a
+traceback, or ship `hints_text`?
+
+
+# CELL 24 code
+sig = {
+    'names a changed file': df.issue_names_file.mean(),
+    'names a changed function/class': df.issue_names_function.mean(),
+    'names neither': (~df.issue_names_file & ~df.issue_names_function).mean(),
+    'contains code or a traceback': df.issue_has_code_or_traceback.mean(),
+    'ships hints_text': df.has_hints.mean(),
+}
+pct = {k: round(100 * v) for k, v in sig.items()}
+hbar(list(pct), list(pct.values()), [f'{v}%' for v in pct.values()], 'The issue rarely points at the code', '% of tasks')
+print('function named, by repo:', (df.groupby('repo').issue_names_function.mean() * 100).round().astype(int).to_dict())
+pd.DataFrame({'share of tasks': {k: f'{v}%' for k, v in pct.items()}})
+
+
+# CELL 25 markdown
+<div style="background:#f6f6f4;border-left:5px solid #52514e;border-radius:6px;padding:12px 16px;margin:10px 0"><div style="font-weight:600;color:#52514e;margin-bottom:6px">🔎 What the numbers say</div><div style="color:#1f1f1e;line-height:1.55"><ul style="margin:4px 0 0 0;padding-left:20px"><li>In <b>76%</b> of tasks the issue names <i>neither</i> the file nor the function that changes.</li><li>Only 8% name a changed file; 21% name a changed function or class (lower bound — see the caveat in section 3).</li><li>Only 15% contain code or a traceback, and <b>no</b> public task ships <code>hints_text</code>.</li></ul></div></div>
+<div style="background:#f4f2fb;border-left:5px solid #6b5bb5;border-radius:6px;padding:12px 16px;margin:10px 0"><div style="font-weight:600;color:#6b5bb5;margin-bottom:6px">🎓 Academic view</div><div style="color:#1f1f1e;line-height:1.55">In IR terms, most bug reports are <b>vocabulary-mismatched</b> queries: they describe behaviour, while code uses identifiers. That is why pure keyword search is a weak baseline, and why systems combine lexical search, code structure and model judgement.</div></div>
+<div style="background:#edf7f2;border-left:5px solid #2f8f6b;border-radius:6px;padding:12px 16px;margin:10px 0"><div style="font-weight:600;color:#2f8f6b;margin-bottom:6px">🛠️ Engineering view</div><div style="color:#1f1f1e;line-height:1.55">Budget turns for localisation <b>before</b> editing: search for every identifier and error message the issue does contain, read callers and callees, and commit to a location hypothesis. Retrieval quality is an upper bound on everything downstream — an agent cannot fix code it never looked at.</div></div>
+<div style="background:#fdf6ec;border-left:5px solid #b8741a;border-radius:6px;padding:12px 16px;margin:10px 0"><div style="font-weight:600;color:#b8741a;margin-bottom:6px">🧪 Implications for your experiments</div><div style="color:#1f1f1e;line-height:1.55">Measure localisation <b>separately</b> from resolution: "did the agent open or edit the file the reference fix changes?" is cheap to compute from logs and tells you whether a failure is a <i>finding</i> problem or a <i>fixing</i> problem — two different next experiments.</div></div>
+<div style="background:#eef4fc;border-left:5px solid #2a78d6;border-radius:6px;padding:12px 16px;margin:10px 0"><div style="font-weight:600;color:#2a78d6;margin-bottom:6px">💡 Key takeaway</div><div style="color:#1f1f1e;line-height:1.55">Expect to search: three issues in four never name the code.</div></div>
+
+
+# CELL 26 markdown
+<a id="s8"></a>
+## 8. Is a longer issue a bigger fix?
+
+**Why:** a tempting heuristic is "long, detailed issue → big change". If it held, an agent could budget effort
+from the issue alone.
+
+
+# CELL 27 code
+fig, ax = plt.subplots(figsize=(8.5, 4.2), facecolor=BG)
+ax.scatter(df.issue_chars, df.lines_changed, s=36, color=BLUE, alpha=0.75, edgecolor=BG, linewidth=1.5)
+ax.set_xscale('log'); ax.set_yscale('log'); _frame(ax, 'Issue length does not predict fix size', 'issue length (characters, log scale)')
+ax.set_ylabel('source lines changed (log scale)', color=MUTED, fontsize=9)
+plt.tight_layout(); plt.show()
+rho = df.issue_chars.rank().corr(df.lines_changed.rank())
+print(f'rank correlation (Spearman) between issue length and fix size: {rho:.2f}')
+print('issue length quartiles:', df.issue_chars.quantile([.25, .5, .75]).round().astype(int).to_dict())
+
+
+# CELL 28 markdown
+<div style="background:#f6f6f4;border-left:5px solid #52514e;border-radius:6px;padding:12px 16px;margin:10px 0"><div style="font-weight:600;color:#52514e;margin-bottom:6px">🔎 What the numbers say</div><div style="color:#1f1f1e;line-height:1.55"><ul style="margin:4px 0 0 0;padding-left:20px"><li>The points form a cloud with no trend; the rank correlation is <b>0.07</b> — essentially none.</li><li>Issues range from ~150 characters (lower quartile) to ~1,000 (upper quartile); median 418.</li></ul></div></div>
+<div style="background:#edf7f2;border-left:5px solid #2f8f6b;border-radius:6px;padding:12px 16px;margin:10px 0"><div style="font-weight:600;color:#2f8f6b;margin-bottom:6px">🛠️ Engineering view</div><div style="color:#1f1f1e;line-height:1.55">Do not size effort from the issue text. Decide how much to explore <i>after</i> localisation (how many places does the behaviour touch?), not before.</div></div>
+<div style="background:#eef4fc;border-left:5px solid #2a78d6;border-radius:6px;padding:12px 16px;margin:10px 0"><div style="font-weight:600;color:#2a78d6;margin-bottom:6px">💡 Key takeaway</div><div style="color:#1f1f1e;line-height:1.55">A short issue can hide a big change, and a long one a one-liner.</div></div>
+
+
+# CELL 29 markdown
+<a id="s9"></a>
+## 9. Async code
+
+**Why:** language features change which tools work.
+
+
+# CELL 30 code
+ap = (df.groupby('repo').async_touched.mean() * 100).round().astype(int).reindex(charted.index)
+hbar([f'{r} (n={n})' for r, n in zip(charted.index, charted.tasks)], list(ap.values), [f'{v}%' for v in ap.values],
+     'Async fixes are a fastapi phenomenon', '% of tasks whose fix touches async code')
+print(f"tasks whose fix touches async code: {int(df.async_touched.sum())}/{len(df)}")
+
+
+# CELL 31 markdown
+<div style="background:#f6f6f4;border-left:5px solid #52514e;border-radius:6px;padding:12px 16px;margin:10px 0"><div style="font-weight:600;color:#52514e;margin-bottom:6px">🔎 What the numbers say</div><div style="color:#1f1f1e;line-height:1.55"><ul style="margin:4px 0 0 0;padding-left:20px"><li>21 of 129 fixes (16%) touch <code>async def</code> code — 30% of fastapi tasks, none in rich or requests (httpx: its single task).</li></ul></div></div>
+<div style="background:#edf7f2;border-left:5px solid #2f8f6b;border-radius:6px;padding:12px 16px;margin:10px 0"><div style="font-weight:600;color:#2f8f6b;margin-bottom:6px">🛠️ Engineering view</div><div style="color:#1f1f1e;line-height:1.55">As noted in the discussion forum, the provided code graphs contain no async functions, so graph tools return nothing for these code paths. Treat an empty tool result as <b>"unknown"</b>, not "absent", and fall back to <code>git grep</code> / <code>read_file</code>. More generally: know the blind spots of every tool you hand the model.</div></div>
+<div style="background:#fdf6ec;border-left:5px solid #b8741a;border-radius:6px;padding:12px 16px;margin:10px 0"><div style="font-weight:600;color:#b8741a;margin-bottom:6px">🧪 Implications for your experiments</div><div style="color:#1f1f1e;line-height:1.55">Before crediting or blaming a tool (graph, embeddings, a custom skill) for a score change, check its <b>coverage</b> on the tasks where it would matter.</div></div>
+<div style="background:#eef4fc;border-left:5px solid #2a78d6;border-radius:6px;padding:12px 16px;margin:10px 0"><div style="font-weight:600;color:#2a78d6;margin-bottom:6px">💡 Key takeaway</div><div style="color:#1f1f1e;line-height:1.55">Every tool has blind spots; design fallbacks for them.</div></div>
+
+
+# CELL 32 markdown
+<a id="s10"></a>
+## 10. Design alternatives, stage by stage
+
+The findings above do not prescribe one design; they tell you which trade-offs matter. Here are the common options
+at each stage, as discussed in the literature — pick based on your budget and what your own measurements show.
+
+### Localise — *where is the fix?*
+
+| option | how it works | strengths | weaknesses | reach for it when… |
+|---|---|---|---|---|
+| **Keyword search** (`git grep`) | search identifiers / error strings from the issue | exact, fast, always available | fails on vocabulary mismatch (most issues, §7) | the issue names code or quotes an error |
+| **Lexical ranking** (BM25-style) | rank files/functions by term overlap with the issue | cheap, tolerant of partial overlap | still lexical; misses paraphrases | you want a short candidate list to inspect |
+| **Embedding search** | nearest code chunks to the issue in vector space | handles paraphrase | needs an index; can return long, noisy chunks | behaviour is described without names |
+| **Code-graph traversal** | follow callers/callees from a known symbol | great for "where else is this used?" | only as complete as the graph (§9) | you have one anchor and need related sites |
+| **Hierarchical LLM narrowing** (Agentless-style) | file → class/function → lines, the model choosing at each level | uses model judgement, bounded cost | depends on a good candidate list | you can afford a few model calls up front |
+| **Exploration sub-agent** | a read-only helper explores and returns a short report | keeps the main context clean | extra calls; can loop | long exploration would flood the main context |
+
+### Repair — *what is the change?*
+
+| option | strengths | weaknesses |
+|---|---|---|
+| **Single targeted edit** | cheap, minimal diff | no second chance |
+| **Edit → test → refine loop** | catches obvious mistakes | costs turns; can churn |
+| **Several candidate patches + selection** | robustness through diversity | multiplies cost; needs a good selector |
+| **Explicit "minimal diff" constraint** | protects hidden tests from collateral damage | may under-fix multi-site bugs |
+
+### Validate — *how would you know it works?*
+
+| option | strengths | weaknesses |
+|---|---|---|
+| **Reproduction script** | directly checks the reported behaviour | the model may write a wrong repro |
+| **Run nearby existing tests** | catches regressions | slow on big suites; unrelated failures add noise |
+| **Self-review of the diff** | cheap sanity check | weak signal from the same model |
+
+### Budget — *how much of each?*
+
+| lever | trade-off |
+|---|---|
+| **Turn / tool-call caps** | predictable cost vs. cutting off slow-but-correct runs |
+| **Wall-clock cap per task** | protects the overall time limit vs. losing long tasks |
+| **Output length / thinking budget** | long generations are slow on modest GPUs and consume context |
+
+<div style="background:#eef4fc;border-left:5px solid #2a78d6;border-radius:6px;padding:12px 16px;margin:10px 0"><div style="font-weight:600;color:#2a78d6;margin-bottom:6px">💡 Key takeaway</div><div style="color:#1f1f1e;line-height:1.55">No option dominates. Choose per stage, and let your own measurements — not intuition — decide which stage is the bottleneck.</div></div>
+
+
+# CELL 33 markdown
+<a id="s11"></a>
+## 11. Experiments you can trust — a checklist
+
+<div style="background:#fdf6ec;border-left:5px solid #b8741a;border-radius:6px;padding:12px 16px;margin:10px 0"><div style="font-weight:600;color:#b8741a;margin-bottom:6px">🧪 Checklist</div><div style="color:#1f1f1e;line-height:1.55"><ul style="margin:4px 0 0 0;padding-left:20px"><li><b>Validate the evaluator before the agent.</b> Check your evaluation setup on cases whose answer you already know (the public tasks ship their reference fixes). A score is only as good as the harness that produced it.</li><li><b>Fix the task list and the conditions.</b> Same tasks, same budgets, same hardware load for every variant.</li><li><b>Respect the sample size.</b> With ~60 tasks, one task ≈ 1.7 points. Re-run before believing a one-task difference, and keep a held-out slice you never inspect while tuning.</li><li><b>Decompose the score.</b> Track where each task is lost — not localised, no edit, wrong file, wrong fix — and stratify by fix size and repository. The biggest bucket is your next experiment.</li><li><b>Mind the real budget.</b> The scoring hardware and the time limit are part of the problem; a design that wins on a fast GPU with generous time can lose under the real constraints.</li><li><b>Record everything.</b> Save the exact config, budgets and logs of every run so a surprising result can be explained later.</li></ul></div></div>
+
+
+# CELL 34 markdown
+<a id="s12"></a>
+## 12. Your first three experiments
+
+1. **Measure a baseline end to end** on a fixed task list, and record *where* each task is lost (§7 experiments box).
+2. **Change one stage at a time** — e.g. localisation only — and compare on the same list, stratified by fix size (§4).
+3. **Re-run your best variant** to see how much the score moves on its own. Only differences larger than that
+   movement are worth acting on.
+
+<div style="background:#fbefef;border-left:5px solid #b54040;border-radius:6px;padding:12px 16px;margin:10px 0"><div style="font-weight:600;color:#b54040;margin-bottom:6px">⚠️ Caveat</div><div style="color:#1f1f1e;line-height:1.55">Resist tuning prompts to specific public tasks: the hidden repositories are different (§6).</div></div>
+
+
+# CELL 35 markdown
+<a id="s13"></a>
+---
+# Kaggle survival kit
+
+Each helper below is written **without indented blocks** so it survives being pasted into the Kaggle editor
+(pasting sometimes drops indentation, which silently turns a loop body into top-level code).
+
+### A. Find your inputs instead of hard-coding `/kaggle/input/...`
+
+
+# CELL 36 code
+import glob, pathlib
+print('mounted:', sorted(glob.glob('/kaggle/input/*')) + sorted(glob.glob('/kaggle/input/*/*')))
+_found = {name: sorted(glob.glob(pattern, recursive=True))[:1] for name, pattern in {'tasks.jsonl': '/kaggle/input/**/tasks.jsonl', 'a wheel': '/kaggle/input/**/*.whl', 'model config.json': '/kaggle/input/**/config.json'}.items()}
+_ = [print(f'{k:18} -> {v[0] if v else "NOT FOUND (attach it in the Input panel)"}') for k, v in _found.items()]
+
+
+# CELL 37 markdown
+<div style="background:#edf7f2;border-left:5px solid #2f8f6b;border-radius:6px;padding:12px 16px;margin:10px 0"><div style="font-weight:600;color:#2f8f6b;margin-bottom:6px">🛠️ Engineering view</div><div style="color:#1f1f1e;line-height:1.55">The mount layout differs between images and sessions. Discovering paths once, at the top of a notebook, prevents a whole class of "file not found" failures an hour into a GPU run.</div></div>
+
+### B. Get files out of an interactive GPU session
+
+Files in `/kaggle/working` of an interactive session can't be fetched with the CLI, and the side-panel download
+doesn't always work. Print them as one compressed text block, copy it, and decode anywhere.
+
+
+# CELL 38 code
+import base64, gzip, json, pathlib
+W = pathlib.Path('/kaggle/working'); names = [p.name for p in W.glob('*.json*')][:10]
+blob = base64.b64encode(gzip.compress(json.dumps({n: (W / n).read_text() for n in names}).encode(), 9)).decode()
+print('files:', names, '| chars:', len(blob)); print('===BEGIN_BLOB==='); print(blob); print('===END_BLOB===')
+
+
+# CELL 39 code
+# Decode on your machine:
+# files = json.loads(gzip.decompress(base64.b64decode(open('blob.txt').read().strip())))
+
+
+# CELL 40 markdown
+### C. Deliver `submission.zip` without the GPU queue
+
+A submission is just a zip of your agent config (YAML, prompts, skills, adapters). Building it needs no GPU, so a
+**CPU** notebook that writes `/kaggle/working/submission.zip` runs in seconds and can be submitted from its Output
+tab. Embed the zip so the notebook needs no inputs:
+
+
+# CELL 41 code
+# On your machine:  python3 -c "import base64;print(base64.b64encode(open('submission.zip','rb').read()).decode())" > payload.txt
+PAYLOAD = ''  # paste payload.txt here
+import base64, hashlib, zipfile, pathlib
+out = pathlib.Path('/kaggle/working/submission.zip')
+_ = out.write_bytes(base64.b64decode(PAYLOAD)) if PAYLOAD else print('PAYLOAD empty — nothing written (demo)')
+_ = print('sha256', hashlib.sha256(out.read_bytes()).hexdigest()[:12], sorted(zipfile.ZipFile(out).namelist())) if PAYLOAD else None
+
+
+# CELL 42 markdown
+<div style="background:#edf7f2;border-left:5px solid #2f8f6b;border-radius:6px;padding:12px 16px;margin:10px 0"><div style="font-weight:600;color:#2f8f6b;margin-bottom:6px">🛠️ Engineering view</div><div style="color:#1f1f1e;line-height:1.55">Printing a checksum of the zip lets you confirm the file you submit is byte-for-byte the one you tested.</div></div>
+
+### D. Queue notes
+- Batch GPU runs started from the CLI count against a limit of **2 queued/running batch GPU sessions**; a third
+  push fails with *"Maximum batch GPU session count of 2 reached"*.
+- Saving a new version while an older one is still queued can cancel the queued one — check **Active Events**
+  (the dot next to your avatar) before assuming it is still waiting.
+
+
+# CELL 43 markdown
+<a id="s14"></a>
+## Further reading
+- Jimenez et al., *SWE-bench: Can Language Models Resolve Real-World GitHub Issues?* ICLR 2024.
+- Yang et al., *SWE-agent: Agent-Computer Interfaces Enable Automated Software Engineering.* NeurIPS 2024.
+- Xia et al., *Agentless: Demystifying LLM-based Software Engineering Agents.* 2024.
+- Zhou, Zhang & Lo, *Where Should the Bugs Be Fixed? More Accurate Information Retrieval-Based Bug Localization
+  Based on Bug Reports* (BugLocator). ICSE 2012.
+
+<div style="background:#eef4fc;border-left:5px solid #2a78d6;border-radius:6px;padding:12px 16px;margin:10px 0"><div style="font-weight:600;color:#2a78d6;margin-bottom:6px">💡 Wrap-up</div><div style="color:#1f1f1e;line-height:1.55">Read the tasks, measure the stages, change one thing at a time — and share what you learn in the discussion forum. Good luck!</div></div>

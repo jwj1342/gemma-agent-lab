@@ -1,0 +1,19 @@
+# "'>' not supported between instances of 'int' and 'str'". Is this same for everyone?
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/744678
+
+## 3530716 /atomstack001 TOPIC
+`read_file` tool call with line ranges always fail.
+
+Is anyone else is facing this ?
+
+## 3530769 /ryanholbrook ADMIN
+Fix incoming.
+
+## 3531265 /atomstack001 TOPIC
+@ryanholbrook is this because of adk or vllm?
+
+## 3531266 /atomstack001 TOPIC
+@ryanholbrook I have setup this whole repo locally, sicen the repo deps are changing can u recommend how to patch these issues in my local after the fix is done?
+
+## 3531314 /ryanholbrook ADMIN
+The fix should be in the current wheelhouse. I recommend just updating the packages.

@@ -1,0 +1,84 @@
+{
+  "forumTopic": {
+    "authorId": 35802336,
+    "authorThumbnailName": "35802336-kg.jpg?t=2026-10-03-17-20-08",
+    "authorUserDisplayName": "Kozykorpesh",
+    "authorUserName": "kozykappa",
+    "comments": [
+      {
+        "id": 3532272,
+        "postDate": "2026-10-03T07:46:50.537Z",
+        "rawMarkdown": "Thank you for the Google Gemma and ARC AGI 2 have the same problem of queue @kozykappa ",
+        "content": "<p>Thank you for the Google Gemma and ARC AGI 2 have the same problem of queue <a href=\"/kozykappa\" target=\"_blank\">@kozykappa</a> </p>",
+        "parent": {},
+        "author": {
+          "displayName": "Navneet",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/15692441-kg.jpg?t=2025-05-18-07-58-06",
+          "url": "/navneetbende",
+          "tier": "CONTRIBUTOR",
+          "id": 15692441,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "totalVotes": -4,
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "feedbackTrackingData": {},
+        "isThankYou": false
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3532264,
+      "postDate": "2026-10-03T07:28:50.413Z",
+      "rawMarkdown": "all notebooks related to GPU L4 x4 are in long queue?",
+      "content": "<p>all notebooks related to GPU L4 x4 are in long queue?</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Kozykorpesh",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/35802336-kg.jpg?t=2026-10-03-17-20-08",
+        "url": "/kozykappa",
+        "tier": "CONTRIBUTOR",
+        "id": 35802336,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "canUpvote": true
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 12,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Baidalin Adilzhan [dsmlkz]",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/24167891-kg.jpg?t=2026-06-09-08-56-09",
+          "url": "/baidalinadilzhan",
+          "userName": "baidalinadilzhan",
+          "tier": "MASTER",
+          "id": 24167891,
+          "profileUrl": "/baidalinadilzhan",
+          "performanceTier": "MASTER",
+          "userId": 24167891,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3532264,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 745543,
+    "name": "Googel Gemma and ARC AGI 2 have same problem of queue",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-10-03T07:28:50.414970300Z",
+    "url": "/competitions/gemma-4-developer-agent/discussion/745543",
+    "totalMessages": 1,
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

@@ -1,0 +1,10 @@
+
+\begin{tikzpicture}
+\path[use as bounding box] (0,-2.5) rectangle (13.35,.4);
+\node[fill=teal!8,rounded corners=2mm,minimum width=3.6cm,minimum height=1.7cm,align=center] (model) at (1.9,-.8)
+{\emoji[7mm]{robot}\\[1mm]\textbf{Model}};
+\node[fill=orange!10,rounded corners=2mm,minimum width=3.6cm,minimum height=1.7cm,align=center] (tools) at (11.2,-.8)
+{\emoji[7mm]{tools}\\[1mm]\textbf{Tools}};
+\draw[flow link,draw=teal] (3.8,-.3)--node[above=1.5mm,font=\small]{Request an action}(9.3,-.3);
+\draw[flow link,draw=orange] (9.3,-1.3)--node[below=1.5mm,font=\small]{Return a result}(3.8,-1.3);
+\end{tikzpicture}

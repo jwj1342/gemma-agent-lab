@@ -1,0 +1,7 @@
+# Query regarding scorer config
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743752
+
+## 3528897 /iztanmaymohan TOPIC
+Hi Ryan, two quick questions about the scoring run, because the README and the Getting Started notebook differ:
+1. Events compaction: HARNESS_README §7.2 says `metric/scoring.py` uses `EventsCompactionConfig(compaction_interval=15, overlap_size=2, token_threshold=32768, event_retention_size=5)`; the Getting Started notebook uses `token_threshold=14336`. Which value does the scorer use today? Also, does it pass `default_chat_template_kwargs` (e.g. `{'enable_thinking': True}`) to vLLM, as the notebook does?
+2. Sandbox: does the scorer run tasks in the Docker backend (and under gVisor/runsc?) or the subprocess backend the notebook uses?

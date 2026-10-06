@@ -1,0 +1,1020 @@
+# CELL 0 markdown
+# Code graph audit
+
+Every task in this competition comes with a code graph and node embeddings, which the agent reaches through
+`get_code_neighbors`, `search_similar_code` and `get_code_subgraph`. This notebook checks those files against the
+source they describe and against real calls recorded while each project's own test suite runs. It then rebuilds
+every graph with the gaps fixed, runs the harness's own lookup code on both, and measures what a better graph
+changes for finding the code a fix has to touch.
+
+It runs offline on the competition files, the competition's wheelhouse dataset (for the harness code) and one
+small dataset of recorded calls.
+
+Released under the Apache 2.0 license. The rebuilt graphs it writes contain source code from fastapi (MIT),
+rich (MIT), requests (Apache 2.0) and httpx (BSD-3-Clause), which stays under each project's own license.
+Source data: [the competition dataset](https://www.kaggle.com/competitions/gemma-4-developer-agent/data).
+
+# CELL 1 code
+import ast, json, re, shutil, subprocess, tarfile, textwrap
+import multiprocessing as mp
+from collections import Counter, defaultdict
+from concurrent.futures import ProcessPoolExecutor
+from pathlib import Path
+import numpy as np, networkx as nx
+import matplotlib.pyplot as plt
+from scipy.stats import spearmanr
+from sklearn.feature_extraction.text import TfidfVectorizer
+
+KAGGLE = Path('/kaggle/input').exists()
+if KAGGLE:
+    DATA = next(Path('/kaggle/input').rglob('tasks.jsonl')).parent
+    TRACES = next(Path('/kaggle/input').rglob('trace_calls.py')).parent
+    OUT = Path('/kaggle/working')
+else:  # local run from the working folder, with full clones of each repository under repos/
+    DATA, TRACES, OUT = Path('data'), Path('kaggle/traces'), Path('nb_out')
+REBUILT = OUT / 'rebuilt_graphs'
+REBUILT.mkdir(parents=True, exist_ok=True)
+TASKS = {}
+BY_GRAPH = defaultdict(list)  # released graph name -> tasks at that commit
+for line in open(DATA / 'tasks.jsonl'):
+    t = json.loads(line)
+    t['short'] = t['instance_id'].rsplit('_', 1)[0]
+    TASKS[t['instance_id']] = t
+    BY_GRAPH[f"{t['short']}_{t['base_commit']}"].append(t)
+LATEST = {t['short']: f"{t['short']}_{t['base_commit']}" for t in sorted(TASKS.values(), key=lambda t: t['created_at'])}
+print(len(TASKS), 'tasks at', len(BY_GRAPH), 'commits:', dict(Counter(t['short'] for t in TASKS.values())))
+
+# CELL 2 markdown
+## 1. The builder
+
+It writes the same JSON schema as the released graphs. It adds calls between methods (`self.x()`, `cls.x()`,
+`super().x()`, calls on variables whose class is known from an annotation or a constructor call, and property
+reads), async defs, import-aware name resolution, caller-to-callee direction, and a separate `contains` edge for
+class membership. The last cell runs its self-check.
+
+# CELL 3 code
+# Rebuild a repo's code graph at one commit in the released JSON schema, adding what the
+# released graphs leave out: async defs, method-to-method calls (self, cls, super), import-aware
+# name resolution (star imports included), and typed 'contains' edges (class -> member) instead of
+# containment stored as calls.
+# Usage: python build_graph.py <repo_dir> <sha> <out.json>    Self-check: python build_graph.py --check
+import ast, json, re, subprocess, sys
+from collections import defaultdict
+
+FUNC = (ast.FunctionDef, ast.AsyncFunctionDef)
+
+
+def module_of(path):
+    """File path to the dotted module prefix the released graphs use (src/ and docs_src/ dropped)."""
+    p = re.sub(r'^(src|docs_src)/', '', path)[:-3]
+    return re.sub(r'/__init__$', '', p).replace('/', '.')
+
+
+def read_commit(repo_dir, sha):
+    """All .py files at a commit, as {path: source}, via one git cat-file --batch process."""
+    names = subprocess.run(['git', '-C', repo_dir, 'ls-tree', '-r', '-z', '--name-only', sha],
+                           capture_output=True, text=True, check=True).stdout.split('\0')
+    names = [n for n in names if n.endswith('.py')]
+    p = subprocess.Popen(['git', '-C', repo_dir, 'cat-file', '--batch'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+    out = {}
+    for n in names:
+        p.stdin.write(f'{sha}:{n}\n'.encode()); p.stdin.flush()
+        size = int(p.stdout.readline().split()[2])
+        out[n] = p.stdout.read(size).decode('utf-8', 'replace'); p.stdout.read(1)
+    p.stdin.close(); p.wait()
+    return out
+
+
+class Graph:
+    def __init__(self, files):
+        self.nodes, self.kind, self.cls_of, self.bases_expr, self.defs, self.props = {}, {}, {}, {}, [], set()
+        self.imports = defaultdict(dict)  # module -> alias -> dotted target
+        self.stars = defaultdict(list)  # module -> modules it star-imports
+        for path, src in files.items():
+            try:
+                tree = ast.parse(src)
+            except SyntaxError:
+                continue
+            self.collect(tree, module_of(path), path.endswith('__init__.py'), src)
+        self.edges = set()
+        for i, node, mod, cls in self.defs:
+            if cls and self.kind[i] != 'class':
+                self.edges.add((cls, i, 'contains'))
+            if isinstance(node, FUNC):
+                for dst in self.calls(node, mod, cls):
+                    if dst and dst != i:
+                        self.edges.add((i, dst, 'calls'))
+
+    def collect(self, node, mod, is_pkg, src, prefix='', cls=None):
+        for ch in ast.iter_child_nodes(node):
+            if isinstance(ch, FUNC + (ast.ClassDef,)):
+                i = f'{mod}.{prefix}{ch.name}'
+                if isinstance(ch, FUNC):
+                    self.kind[i] = 'method' if cls else 'function'
+                    self.nodes[i] = ast.get_source_segment(src, ch) or ''
+                    if any(getattr(d, 'id', getattr(d, 'attr', '')) in ('property', 'cached_property') for d in ch.decorator_list):
+                        self.props.add(i)
+                else:
+                    self.kind[i] = 'class'
+                    lines = (ast.get_source_segment(src, ch) or '').splitlines()
+                    self.nodes[i] = '\n'.join([lines[0]] + [l for l in lines[1:] if l.lstrip().startswith(('def ', 'async def '))])
+                    self.bases_expr[i] = (ch.bases, mod)
+                    self.collect(ch, mod, is_pkg, src, prefix + ch.name + '.', i)
+                if cls:
+                    self.cls_of[i] = cls
+                self.defs.append((i, ch, mod, cls))
+            elif isinstance(ch, (ast.Import, ast.ImportFrom)):
+                self.add_import(ch, mod, is_pkg)
+            else:
+                self.collect(ch, mod, is_pkg, src, prefix, cls)
+
+    def add_import(self, n, mod, is_pkg):
+        if isinstance(n, ast.Import):
+            for a in n.names:
+                self.imports[mod][a.asname or a.name.split('.')[0]] = a.name if a.asname else a.name.split('.')[0]
+            return
+        base = n.module or ''
+        if n.level:
+            parts = mod.split('.')
+            keep = len(parts) - n.level + (1 if is_pkg else 0)
+            base = '.'.join(parts[:max(keep, 0)] + ([n.module] if n.module else []))
+        for a in n.names:
+            if a.name == '*':
+                self.stars[mod].append(base)
+            else:
+                self.imports[mod][a.asname or a.name] = f'{base}.{a.name}' if base else a.name
+
+    def star(self, mod, x, depth=0):
+        """Target of a public name that reaches a module only through `from m import *` (last one wins)."""
+        if x.startswith('_') or depth > 5:
+            return None
+        return next((r for s in reversed(self.stars.get(mod, [])) for r in [self.resolve(f'{s}.{x}', depth + 1)] if r),
+                    None)
+
+    def resolve(self, dotted, depth=0):
+        """Dotted name to a node id, following re-exports through package imports."""
+        if dotted in self.nodes or depth > 5:
+            return dotted if dotted in self.nodes else None
+        parts = dotted.split('.')
+        for k in range(len(parts) - 1, 0, -1):
+            m, rest = '.'.join(parts[:k]), parts[k:]
+            if rest[0] in self.imports.get(m, {}):
+                return self.resolve('.'.join([self.imports[m][rest[0]]] + rest[1:]), depth + 1)
+            t = self.star(m, rest[0], depth)
+            if t:
+                return self.resolve('.'.join([t] + rest[1:]), depth + 1)
+        return None
+
+    def name(self, x, mod):
+        """Target a bare name refers to inside a module: local def, else an import."""
+        if f'{mod}.{x}' in self.nodes:
+            return f'{mod}.{x}'
+        t = self.imports.get(mod, {}).get(x)
+        return (self.resolve(t) or t) if t else self.star(mod, x)
+
+    def expr(self, e, mod):
+        if isinstance(e, ast.Name):
+            return self.name(e.id, mod)
+        if isinstance(e, ast.Attribute):
+            b = self.expr(e.value, mod)
+            return (self.resolve(f'{b}.{e.attr}') or f'{b}.{e.attr}') if b else None
+        if isinstance(e, ast.Subscript):
+            return self.expr(e.value, mod)
+        return None
+
+    def bases(self, cls):
+        exprs, mod = self.bases_expr.get(cls, ([], ''))
+        return [b for b in (self.expr(e, mod) for e in exprs) if self.kind.get(b) == 'class']
+
+    def method(self, cls, name, depth=0):
+        if f'{cls}.{name}' in self.nodes:
+            return f'{cls}.{name}'
+        for b in self.bases(cls) if depth < 6 else []:
+            r = self.method(b, name, depth + 1)
+            if r:
+                return r
+        return None
+
+    def ann_class(self, a, mod):
+        """Class id named by a type annotation: X, "X", Optional[X], X | None."""
+        if isinstance(a, ast.Constant) and isinstance(a.value, str):
+            try:
+                a = ast.parse(a.value, mode='eval').body
+            except SyntaxError:
+                return None
+        if isinstance(a, ast.Subscript) and getattr(a.value, 'id', getattr(a.value, 'attr', '')) == 'Optional':
+            a = a.slice
+        if isinstance(a, ast.BinOp) and isinstance(a.op, ast.BitOr):
+            a = a.right if isinstance(a.left, ast.Constant) and a.left.value is None else a.left
+        t = self.expr(a, mod) if isinstance(a, (ast.Name, ast.Attribute)) else None
+        return t if self.kind.get(t) == 'class' else None
+
+    def local_types(self, fn, mod):
+        """Variable -> class id, from parameter annotations, annotated assignments and x = Class(...)."""
+        types = {}
+        for a in fn.args.posonlyargs + fn.args.args + fn.args.kwonlyargs:
+            t = a.annotation and self.ann_class(a.annotation, mod)
+            if t:
+                types[a.arg] = t
+        for n in ast.walk(fn):
+            if isinstance(n, ast.Assign) and len(n.targets) == 1 and isinstance(n.targets[0], ast.Name) and isinstance(n.value, ast.Call):
+                t = self.expr(n.value.func, mod)
+                if self.kind.get(t) == 'class':
+                    types[n.targets[0].id] = t
+            elif isinstance(n, ast.AnnAssign) and isinstance(n.target, ast.Name):
+                t = self.ann_class(n.annotation, mod)
+                if t:
+                    types[n.target.id] = t
+        return types
+
+    def calls(self, fn, mod, cls):
+        types = self.local_types(fn, mod)
+        for n in ast.walk(fn):
+            if isinstance(n, ast.Attribute) and isinstance(n.ctx, ast.Load) and isinstance(n.value, ast.Name):
+                owner = cls if n.value.id in ('self', 'cls') else types.get(n.value.id)
+                m = self.method(owner, n.attr) if owner else None
+                if m in self.props:  # property reads run code too
+                    yield m
+            if not isinstance(n, ast.Call):
+                continue
+            f = n.func
+            if isinstance(f, ast.Attribute) and isinstance(f.value, ast.Name) and f.value.id in ('self', 'cls') and cls:
+                yield self.method(cls, f.attr)
+            elif isinstance(f, ast.Attribute) and isinstance(f.value, ast.Name) and f.value.id in types:
+                yield self.method(types[f.value.id], f.attr)
+            elif isinstance(f, ast.Attribute) and isinstance(f.value, ast.Call) and getattr(f.value.func, 'id', '') == 'super' and cls:
+                yield next((r for b in self.bases(cls) for r in [self.method(b, f.attr)] if r), None)
+            else:
+                t = self.expr(f, mod)
+                if self.kind.get(t) == 'class':
+                    yield t
+                    yield self.method(t, '__init__')
+                elif t and isinstance(f, ast.Attribute) and t not in self.nodes:
+                    owner = self.expr(f.value, mod)
+                    yield self.method(owner, f.attr) if self.kind.get(owner) == 'class' else None
+                else:
+                    yield t if t in self.nodes else None
+
+    def to_json(self, name):
+        return {'directed': True, 'multigraph': True, 'graph': {'repo_name': name},
+                'nodes': [{'id': i, 'name': i, 'text': t} for i, t in self.nodes.items()],
+                'edges': [{'source': a, 'target': b, 'type': k, 'key': 0} for a, b, k in sorted(self.edges)]}
+
+
+def check():
+    files = {
+        'pkg/__init__.py': 'from .core import Engine\n',
+        'pkg/core.py': ('class Base:\n    @property\n    def size(self):\n        return 1\n'
+                        '    def run(self):\n        return self.step() + self.size\n    def step(self):\n        pass\n'
+                        'class Engine(Base):\n    async def run(self):\n        await helper()\n        return super().run()\n'
+                        'async def helper():\n    pass\n'),
+        'pkg/app.py': ('import pkg\nfrom pkg import Engine as E\nfrom pkg import star\ndef main():\n    E().run()\n'
+                       '    pkg.Engine()\ndef use(engine: "E", other: E | None = None):\n    engine.step()\n'
+                       'def via_star():\n    star.Engine()\n'),
+        'pkg/star.py': 'from .core import *\ndef make():\n    return helper()\n',
+    }
+    g = Graph(files)
+    e = {(a, b) for a, b, _ in g.edges}
+    assert 'pkg.core.Engine.run' in g.nodes and 'pkg.core.helper' in g.nodes  # async defs kept
+    assert ('pkg.core.Base.run', 'pkg.core.Base.step') in e  # self call
+    assert ('pkg.core.Engine.run', 'pkg.core.Base.run') in e  # super call
+    assert ('pkg.core.Engine.run', 'pkg.core.helper') in e  # call to async function
+    assert ('pkg.app.main', 'pkg.core.Engine') in e  # constructor through a re-export and alias
+    assert ('pkg.core.Engine', 'pkg.core.Engine.run', 'contains') in g.edges
+    assert ('pkg.core.Base.run', 'pkg.core.Base.size') in e  # property read
+    assert ('pkg.app.use', 'pkg.core.Base.step') in e  # typed receiver, method found on the base class
+    assert ('pkg.star.make', 'pkg.core.helper') in e  # bare name from a star import
+    assert ('pkg.app.via_star', 'pkg.core.Engine') in e  # module attribute re-exported by a star import
+    print('check ok')
+
+# CELL 4 code
+check()
+
+# CELL 5 markdown
+## 2. Rebuild every graph and find the code each reference fix edits
+
+Each snapshot is a git repository whose HEAD holds the base commit's tree (the history is rewritten), so the
+builder reads HEAD. The same pass maps each reference patch to the defs it edits: for every changed line, the
+innermost def around it. These are the gold defs used in section 7.
+
+# CELL 6 code
+def parse_patch(patch):
+    """Per file: old path, new path, hunks as (old_start, [lines])."""
+    files = []
+    for line in patch.splitlines():
+        if line.startswith('--- '):
+            old = line[4:].split('\t')[0]
+            files.append({'old': None if old == '/dev/null' else old[2:], 'hunks': []})
+        elif line.startswith('+++ '):
+            new = line[4:].split('\t')[0]
+            files[-1]['new'] = None if new == '/dev/null' else new[2:]
+        elif line.startswith('@@'):
+            files[-1]['hunks'].append((int(re.match(r'@@ -(\d+)', line).group(1)), []))
+        elif files and files[-1]['hunks'] and line[:1] in (' ', '-', '+'):
+            files[-1]['hunks'][-1][1].append(line)
+    return files
+
+
+def apply(old_lines, hunks):
+    """Apply hunks to old file lines. Returns new lines, old line numbers removed, new line numbers added."""
+    new, removed, added, i = [], set(), set(), 0
+    for start, body in hunks:
+        start = max(start, 1)
+        new += old_lines[i:start - 1]
+        i = start - 1
+        for l in body:
+            if l[0] == ' ':
+                new.append(old_lines[i]); i += 1
+            elif l[0] == '-':
+                removed.add(i + 1); i += 1
+            else:
+                new.append(l[1:]); added.add(len(new))
+    return new + old_lines[i:], removed, added
+
+
+def spans(src):
+    """(first_line, last_line, qualname) for every def and class, decorators included."""
+    out = []
+
+    def walk(node, prefix):
+        for ch in ast.iter_child_nodes(node):
+            if isinstance(ch, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                q = prefix + ch.name
+                out.append((min([ch.lineno] + [d.lineno for d in ch.decorator_list]), ch.end_lineno, q))
+                walk(ch, q + '.')
+            else:
+                walk(ch, prefix)
+    walk(ast.parse(src), '')
+    return out
+
+
+def label(t, show, id_sets):
+    """For each id set: the innermost def around every changed line that the set contains."""
+    gold = [set() for _ in id_sets]
+    for f in parse_patch(t['patch']):
+        path = f['new'] or f['old']
+        if not path.endswith('.py'):
+            continue
+        is_new = not f['old'] or f['hunks'][0][0] == 0  # new files still carry '--- a/' headers here
+        old = '' if is_new else show(f['old'])
+        new_lines, removed, added = apply(old.splitlines(), f['hunks'])
+        mod, old_sp, new_sp = module_of(path), spans(old) if old else [], spans('\n'.join(new_lines))
+        for line_no, sp in [(n, old_sp) for n in removed] + [(n, new_sp) for n in added]:
+            chain = [q for a, b, q in sorted(sp, key=lambda s: s[1] - s[0]) if a <= line_no <= b]
+            for ids, g in zip(id_sets, gold):
+                hit = next((f'{mod}.{q}' for q in chain if f'{mod}.{q}' in ids), None)
+                if hit:
+                    g.add(hit)
+    return gold
+
+
+def extract(t, root='/tmp/snap'):
+    """Unpack only the .git directory of a task snapshot."""
+    d = Path(root) / t['instance_id']
+    kw = {'filter': 'data'} if hasattr(tarfile, 'data_filter') else {}
+    with tarfile.open(DATA / 'snapshots' / f"{t['instance_id']}.tgz", 'r|gz') as tf:
+        for m in tf:
+            if re.match(r'(\./)?\.git(/|$)', m.name):
+                tf.extract(m, d, **kw)
+    return str(d)
+
+
+def process(name):
+    """Rebuild one commit's graph (unless already saved) and label the tasks at that commit."""
+    t0 = BY_GRAPH[name][0]
+    d, rev = (extract(t0), 'HEAD') if KAGGLE else (f"repos/{t0['short']}", t0['base_commit'])
+    try:
+        out = REBUILT / f'{name}.json'
+        if not out.exists():
+            json.dump(Graph(read_commit(d, rev)).to_json(name), open(out, 'w'))
+        rebuilt = {n['id'] for n in json.load(open(out))['nodes']}
+        released = {n['id'] for n in json.load(open(DATA / 'graphs' / f'{name}.json'))['nodes']}
+        show = lambda p: subprocess.run(['git', '-C', d, 'show', f'{rev}:{p}'], capture_output=True,
+                                        encoding='utf-8', errors='replace', check=True).stdout
+        rows = []
+        for t in BY_GRAPH[name]:
+            gold, gold_full = label(t, show, [released, rebuilt])
+            rows.append({'id': t['instance_id'], 'repo': t['short'], 'graph': name,
+                         'gold': sorted(gold), 'gold_full': sorted(gold_full)})
+        return rows
+    finally:
+        if KAGGLE:
+            shutil.rmtree(d, ignore_errors=True)
+
+
+with ProcessPoolExecutor(4, mp_context=mp.get_context('fork')) as ex:
+    LABELS = [r for rows in ex.map(process, sorted(BY_GRAPH)) for r in rows]
+print(len(list(REBUILT.glob('*.json'))), 'graphs rebuilt;', sum(bool(l['gold_full']) for l in LABELS), 'of',
+      len(LABELS), 'tasks edit at least one def')
+
+# CELL 7 markdown
+## 3. What the released graphs contain
+
+Edge types and direction, how class membership is stored, which defs are missing, and which calls are recorded.
+The call check uses a small resolver that reads each node's own source text and resolves only the plain cases
+(a bare name, a constructor, `self.m()`, `super().m()`, `Class.m()`, `module.f()`), so it does not depend on the
+rebuilt graphs.
+
+# CELL 8 code
+TEST = re.compile(r'(.*\.)?tests?\.')
+
+
+def load(path):
+    g = json.load(open(path))
+    return {n['id']: n['text'] for n in g['nodes']}, [(e['source'], e['target'], e['type']) for e in g['edges']]
+
+
+def by_last(ids):
+    last = defaultdict(list)
+    for i in ids:
+        last[i.rsplit('.', 1)[-1]].append(i)
+    return last
+
+
+class Repo:
+    """A released graph, plus a small call resolver that works from node source text alone."""
+
+    def __init__(self, name):
+        self.nodes, self.typed_edges = load(DATA / 'graphs' / f'{name}.json')
+        self.edges = {(a, b) for a, b, _ in self.typed_edges}
+        self.is_class = {i: bool(re.match(r'(@[^\n]*\n)*class ', t)) for i, t in self.nodes.items()}
+        self.cand = [i for i in self.nodes if not TEST.match(i)]
+        self.last = by_last(self.cand)
+
+    def parent(self, i):
+        return i.rsplit('.', 1)[0] if '.' in i else ''
+
+    def module(self, i):
+        p = self.parent(i)
+        return self.parent(p) if self.is_class.get(p) else p
+
+    def top(self, x, mod):
+        """Resolve a bare name: same module first, else a unique non-method definition repo-wide."""
+        if f'{mod}.{x}' in self.nodes:
+            return f'{mod}.{x}'
+        c = [i for i in self.last.get(x, []) if not self.is_class.get(self.parent(i))]
+        return c[0] if len(c) == 1 else None
+
+    def bases(self, cls):
+        m = re.search(r'class \w+\((.*?)\):', self.nodes.get(cls, ''), re.S)
+        out = []
+        for b in (m.group(1).split(',') if m else []):
+            b = b.strip().split('[')[0].split('.')[-1]
+            r = self.top(b, self.module(cls)) if b.isidentifier() else None
+            if r and self.is_class.get(r):
+                out.append(r)
+        return out
+
+    def method(self, cls, name, depth=0):
+        if f'{cls}.{name}' in self.nodes:
+            return f'{cls}.{name}'
+        for b in self.bases(cls) if depth < 4 else []:
+            r = self.method(b, name, depth + 1)
+            if r:
+                return r
+        return None
+
+    def resolved_calls(self):
+        """Statically clear call edges (src, dst, kind) found in node source text."""
+        out = set()
+        for i in self.cand:
+            if self.is_class[i]:
+                continue
+            try:
+                tree = ast.parse(textwrap.dedent(self.nodes[i]))
+            except SyntaxError:
+                continue
+            p, mod = self.parent(i), self.module(i)
+            cls = p if self.is_class.get(p) else None
+            for n in ast.walk(tree):
+                if not isinstance(n, ast.Call):
+                    continue
+                f, dst, kind = n.func, None, None
+                if isinstance(f, ast.Name):
+                    dst, kind = self.top(f.id, mod), 'bare name'
+                    if dst and self.is_class.get(dst):
+                        kind = 'constructor'
+                elif isinstance(f, ast.Attribute):
+                    v = f.value
+                    if isinstance(v, ast.Name) and v.id in ('self', 'cls') and cls:
+                        dst, kind = self.method(cls, f.attr), 'self.m()'
+                    elif isinstance(v, ast.Call) and isinstance(v.func, ast.Name) and v.func.id == 'super' and cls:
+                        dst = next((r for b in self.bases(cls) for r in [self.method(b, f.attr)] if r), None)
+                        kind = 'super().m()'
+                    elif isinstance(v, ast.Name):
+                        c = self.top(v.id, mod)
+                        if c and self.is_class.get(c):
+                            dst, kind = self.method(c, f.attr), 'Class.m()'
+                        else:
+                            m = [x for x in self.last.get(f.attr, []) if x.endswith(f'.{v.id}.{f.attr}')]
+                            dst, kind = (m[0], 'module.f()') if len(m) == 1 else (None, None)
+                if dst and dst != i:
+                    out.add((i, dst, kind))
+        return out
+
+
+A, CALLER_RECALL = Counter(), []
+GOLD = defaultdict(set)
+for l in LABELS:
+    GOLD[l['graph']].update(l['gold_full'])
+for name in sorted(BY_GRAPH):
+    R = Repo(name)
+    fn, fe = load(REBUILT / f'{name}.json')
+    A.update('released edge type ' + k for _, _, k in R.typed_edges)
+    A['released edges'] += len(R.edges)
+    A['released edges whose reverse is also present'] += sum((b, a) in R.edges for a, b in R.edges)
+    for a, b, k in fe:
+        A[f'rebuilt edge type {k}'] += 1
+        if k == 'contains' and a in R.nodes and b in R.nodes:
+            A['class members'] += 1
+            A['class members linked to their class by calls edges'] += (a, b) in R.edges or (b, a) in R.edges
+    A['rebuilt defs'] += len(fn)
+    for i, text in fn.items():
+        if i not in R.nodes:
+            flat = re.sub(r'\.[^.]+\.([^.]+)$', r'.\1', i)  # pkg.mod.Cls.m -> pkg.mod.m
+            A['missing from released: ' + ('async def' if text.lstrip().startswith('async ') else
+                                           'method filed under module scope' if flat != i and flat in R.nodes else
+                                           'other')] += 1
+    A['released ids not in rebuilt (nested defs, misfiled methods)'] += len(set(R.nodes) - set(fn))
+    callers = defaultdict(set)
+    for s, d, k in R.resolved_calls():
+        A[f'resolved {k} calls'] += 1
+        A[f'resolved {k} calls present in released'] += (s, d) in R.edges
+        callers[d].add(s)
+    nb = defaultdict(set)
+    for a, b in R.edges:
+        nb[a].add(b)
+        nb[b].add(a)
+    for g in GOLD[name]:
+        if callers[g]:
+            CALLER_RECALL.append((bool(R.is_class.get(R.parent(g))), len(callers[g] & nb[g]) / len(callers[g])))
+for k in sorted(A):
+    print(f'{k:62s} {A[k]:>9,}')
+print(f"\nreverse edge present: {A['released edges whose reverse is also present'] / A['released edges']:.1%}",
+      f"| class members linked by calls: {A['class members linked to their class by calls edges'] / A['class members']:.1%}")
+for k in ('bare name', 'constructor', 'module.f()', 'Class.m()', 'self.m()', 'super().m()'):
+    print(f"resolved {k:12s} calls present in released: {A[f'resolved {k} calls present in released'] / A[f'resolved {k} calls']:.1%}"
+          f" of {A[f'resolved {k} calls']:,}")
+for is_m, what in ((True, 'methods'), (False, 'functions and classes')):
+    v = [r for m, r in CALLER_RECALL if m == is_m]
+    print(f'gold {what}: share of their resolved callers that are graph neighbours {np.mean(v):.2f} (n={len(v)})')
+
+# CELL 9 markdown
+At the latest commit of each repository: which defs are missing, and where a lookup for one would land. The
+harness README (section 6.3) says the graph tools resolve a name in four tiers (exact id, `.` or `/` suffix,
+case-insensitive, substring). The shipped code only does the first (section 6), so today a missing def returns an
+empty list. This simulates the documented tiers, with the name an agent would type (`Class.method` for a method,
+the bare name for a function), to show what changes if they ship: when the def is missing, any match is a
+different def.
+
+# CELL 10 code
+def lookup(name, ids):
+    for hit in (lambda i: i == name, lambda i: i.endswith(('.' + name, '/' + name)),
+                lambda i: i.lower() == name.lower(), lambda i: name in i):
+        m = sorted(i for i in ids if hit(i))
+        if m:
+            return m
+    return []
+
+
+for repo, name in sorted(LATEST.items()):
+    rn, _ = load(DATA / 'graphs' / f'{name}.json')
+    fn, _ = load(REBUILT / f'{name}.json')
+    gone = [i for i in fn if i not in rn]
+    asy = [i for i in gone if fn[i].lstrip().startswith('async ')]
+    own = [i for i in asy if i.startswith(repo + '.')]
+    typed = lambda i: '.'.join(i.split('.')[-2 if fn.get(i.rsplit('.', 1)[0], '').lstrip().startswith('class ') else -1:])
+    wrong = [(typed(i), m[0]) for i in own if (m := lookup(typed(i), rn))]
+    print(f'{repo}: {len(asy)} async defs missing, top packages {Counter(i.split(".")[0] for i in asy).most_common(3)};'
+          f' {len(own)} in {repo}, of which {len(wrong)} resolve by name to another def {wrong[:2]}')
+    mis = Counter(i.rsplit('.', 1)[0] for i in gone if i not in asy and re.sub(r'\.[^.]+\.([^.]+)$', r'.\1', i) in rn)
+    if mis:
+        cls, k = mis.most_common(1)[0]
+        print(f'  most misfiled class {cls}: {k} of {sum(i.rsplit(".", 1)[0] == cls for i in fn)} members '
+              f'under module scope ({sum(mis.values())} in all)')
+
+# CELL 11 markdown
+## 4. What the embeddings encode
+
+`search_similar_code` ranks defs by cosine similarity of these vectors. If the vectors carried meaning, defs with
+similar code would be close, and defs with identical source would be closest. If they carry position, defs near
+each other in the graph would be close. Measured at the latest commit of each repository, from 300 random
+starting defs: 10 random partners each, plus up to 5 partners at each graph distance from 1 to 6 hops.
+
+# CELL 12 code
+def words(s):
+    """Split identifiers into lowercase words: HTTPConnection.get_value -> http connection get value."""
+    s = re.sub(r'([a-z0-9])([A-Z])', r'\1 \2', s)
+    s = re.sub(r'([A-Z]+)([A-Z][a-z])', r'\1 \2', s)
+    return re.sub(r'[_.]', ' ', s).lower()
+
+
+def emb_stats(name, rng):
+    nodes, edges = load(DATA / 'graphs' / f'{name}.json')
+    Z = np.load(DATA / 'embeddings' / f'{name}.npz')
+    keys = set(Z.files)
+    ids = [i for i in nodes if i in keys]
+    V = np.stack([Z[i] for i in ids]).astype(np.float64)
+    V /= np.linalg.norm(V, axis=1, keepdims=True)
+    T = TfidfVectorizer(token_pattern=r'[a-z][a-z0-9]+', sublinear_tf=True).fit_transform(
+        [words(i) + ' ' + words(nodes[i]) for i in ids])
+    G = nx.Graph()
+    G.add_nodes_from(ids)
+    G.add_edges_from((a, b) for a, b, _ in edges if a in keys and b in keys)
+    pos = {i: k for k, i in enumerate(ids)}
+    pe, pt, ph, by_hop = [], [], [], defaultdict(list)
+    for s in rng.choice(len(ids), 300, replace=False):
+        hops = nx.single_source_shortest_path_length(G, ids[s])
+        ring = defaultdict(list)
+        for j, h in hops.items():
+            if 0 < h <= 6:
+                ring[h].append(j)
+        for h, js in ring.items():
+            by_hop[h] += [V[s] @ V[pos[j]] for j in rng.choice(js, min(5, len(js)), replace=False)]
+        for d in rng.choice(len(ids), 10, replace=False):
+            if d != s:
+                pe.append(V[s] @ V[d]); pt.append(T[s].multiply(T[d]).sum()); ph.append(hops.get(ids[d], np.inf))
+                if ids[d] not in hops:
+                    by_hop['not connected'].append(pe[-1])
+    pe, pt, ph = map(np.array, (pe, pt, ph))
+    ok = np.isfinite(ph)
+    same_text = defaultdict(list)
+    for i in ids:
+        same_text[nodes[i]].append(pos[i])
+    twins = [V[a] @ V[b] for g in same_text.values() for a, b in zip(g, g[1:])]
+    return {'defs': len(ids), 'mean cosine, random pairs': pe.mean(),
+            'mean cosine, pairs with identical source': np.mean(twins), 'pairs with identical source': len(twins),
+            'spearman with text similarity': spearmanr(pe, pt).correlation,
+            'spearman with graph hops': spearmanr(pe[ok], ph[ok]).correlation,
+            'mean cosine by hops': {h: float(np.mean(v)) for h, v in by_hop.items()}}
+
+
+EMB = {r: emb_stats(LATEST[r], np.random.default_rng(0)) for r in ('fastapi', 'rich', 'requests')}
+for k in list(EMB['fastapi'])[:-1]:
+    print(f'{k:42s}', *(f'{r}={round(EMB[r][k], 2)}' for r in EMB))
+for r in EMB:
+    print(f'  {r:9s} mean cosine by hops:', {h: round(v, 2) for h, v in sorted(EMB[r]['mean cosine by hops'].items(), key=lambda x: str(x[0]))})
+
+# CELL 13 markdown
+## 5. Checking the graphs against real calls
+
+`trace_calls.py` (in the attached dataset) is a small pytest plugin that records every caller-to-callee pair
+between functions defined in the repository while its own test suite runs. Those are real calls, found without
+any static analysis, at the latest base commit of fastapi, rich and requests and the only one of httpx. Recall is
+the share of recorded pairs that appear as an edge: in either direction for the released graph (it stores both),
+caller to callee for the rebuilt one. "Dispatch" means library code calling user code through a stored callable
+(a route handler, a dependency), which no static graph can see. Precision is a lower bound (tests do not take
+every branch). The released graph stores every edge both ways, so its precision is also given counting a recorded
+call in either direction, and again without def-member pairs (a class and its method).
+
+For each call the rebuilt graph misses, a rough reason is read from the caller's source: the callee is a protocol
+method (`__enter__`, `__eq__` and so on, called by Python itself), the caller names it through the package top
+level (a re-export), the caller reaches it as an attribute the builder could not tie to a class, or other.
+
+# CELL 14 code
+KINDS = ['all', 'all except dispatch', 'method to sibling method', 'to a method of another class',
+         'to a function or class', 'async caller or callee', 'library dispatch to user code']
+
+
+def trace_recall(path):
+    repo, sha = re.match(r'trace_(\w+?)_([0-9a-f]{40})\.json$', path.name).groups()
+    obs = {tuple(e) for e in json.load(open(path))}
+    rn, rel = load(DATA / 'graphs' / f'{repo}_{sha}.json')
+    fn, reb = load(REBUILT / f'{repo}_{sha}.json')
+    Re, Fe = {(a, b) for a, b, _ in rel}, {(a, b) for a, b, k in reb if k == 'calls'}
+    parent = lambda i: i.rsplit('.', 1)[0]
+    is_class = lambda i: fn.get(i, '').lstrip().startswith('class ')
+
+    def kind(a, b):
+        if a.startswith(repo + '.') and not b.startswith(repo + '.'):
+            return 'library dispatch to user code'
+        if fn[a].lstrip().startswith('async ') or fn[b].lstrip().startswith('async '):
+            return 'async caller or callee'
+        if parent(a) == parent(b) and is_class(parent(a)):
+            return 'method to sibling method'
+        return 'to a method of another class' if is_class(parent(b)) else 'to a function or class'
+
+    c = Counter()
+    for a, b in sorted(obs):  # fixed order, so the printed miss reasons match run to run
+        if a not in fn or b not in fn:
+            c['skipped'] += 1
+            continue
+        k = kind(a, b)
+        for key in {k, 'all'} | ({'all except dispatch'} if k != 'library dispatch to user code' else set()):
+            c[key, 'n'] += 1
+            c[key, 'released'] += (a, b) in Re or (b, a) in Re
+            c[key, 'rebuilt'] += (a, b) in Fe
+            c[key, 'both ends in released'] += a in rn and b in rn
+        if k != 'library dispatch to user code':
+            name, src = b.rsplit('.', 1)[1], fn[a]
+            proto = bool(re.fullmatch(r'__\w+__', name))
+            c['callee is a protocol method'] += proto
+            if (a, b) not in Fe:
+                c['rebuilt miss', 'protocol method' if proto else
+                  're-export' if f'{repo}.{name}' in src and b != f'{repo}.{name}' else
+                  'attribute call the builder could not resolve' if f'.{name}' in src else 'other'] += 1
+    ran = {a for a, _ in obs}  # defs that made at least one recorded call
+    for g, edges in (('released', Re), ('rebuilt', Fe)):
+        live = [e for e in edges if e[0] in ran]  # a lower bound on precision: tests do not take every branch
+        c['edges from defs that ran', g] = len(live)
+        c['edges from defs that ran, recorded', g] = sum(e in obs for e in live)
+        c['edges from defs that ran, recorded either way', g] = sum(e in obs or e[::-1] in obs for e in live)
+        live = [(a, b) for a, b in live if parent(a) != b and parent(b) != a]  # drop def-member pairs
+        c['edges from defs that ran, no def-member pairs', g] = len(live)
+        c['edges from defs that ran, no def-member pairs, recorded either way', g] = sum(
+            e in obs or e[::-1] in obs for e in live)
+    return repo, c
+
+
+TRACE = dict(trace_recall(p) for p in sorted(TRACES.glob('trace_*_*.json')))
+for repo, c in TRACE.items():
+    print(f"{repo}: {c['all', 'n'] + c['skipped']} recorded pairs, {c['skipped']} with an end outside any def")
+    for k in KINDS:
+        if c[k, 'n']:
+            print(f"  {k:32s} n={c[k, 'n']:5d}  released {c[k, 'released'] / c[k, 'n']:.2f}  rebuilt "
+                  f"{c[k, 'rebuilt'] / c[k, 'n']:.2f}  (both ends in released graph {c[k, 'both ends in released'] / c[k, 'n']:.2f})")
+    print('  of the stored edges leaving a def that ran, share recorded:', '  '.join(
+        f"{g} {c['edges from defs that ran, recorded', g] / c['edges from defs that ran', g]:.2f} "
+        f"of {c['edges from defs that ran', g]:,}" for g in ('released', 'rebuilt')))
+    for k, d in (('recorded either way', 'edges from defs that ran'),
+                 ('no def-member pairs, recorded either way', 'edges from defs that ran, no def-member pairs')):
+        print(f'  same, {k}:', '  '.join(
+            f"{g} {c[f'edges from defs that ran, {k}', g] / c[d, g]:.2f}" for g in ('released', 'rebuilt')))
+    print(f"  callee is a protocol method in {c['callee is a protocol method']} of {c['all except dispatch', 'n']}"
+          ' pairs outside dispatch; rebuilt misses:', {k[1]: v for k, v in c.items() if k[0] == 'rebuilt miss'})
+
+# CELL 15 markdown
+The httpx trace caught a gap in an earlier version of the builder. httpx exports its classes from `__init__.py`
+with `from ._client import *` and the like, and that version did not follow star imports. Turning them off again
+at each traced commit shows what it cost (recall over pairs outside dispatch).
+
+# CELL 16 code
+class NoStars(Graph):
+    def star(self, mod, x, depth=0):
+        return None
+
+
+STARS = {}
+for p in sorted(TRACES.glob('trace_*_*.json')):
+    repo, sha = re.match(r'trace_(\w+?)_([0-9a-f]{40})\.json$', p.name).groups()
+    d, rev = (extract(BY_GRAPH[f'{repo}_{sha}'][0]), 'HEAD') if KAGGLE else (f'repos/{repo}', sha)
+    try:
+        starless = {(a, b) for a, b, k in NoStars(read_commit(d, rev)).edges if k == 'calls'}
+    finally:
+        if KAGGLE:
+            shutil.rmtree(d, ignore_errors=True)
+    fn, reb = load(REBUILT / f'{repo}_{sha}.json')
+    obs = {(a, b) for a, b in json.load(open(p))
+           if a in fn and b in fn and not (a.startswith(repo + '.') and not b.startswith(repo + '.'))}
+    STARS[repo] = {k: sum(e in E for e in obs) / len(obs) for k, E in (
+        ('recall without star imports', starless),
+        ('recall with star imports', {(a, b) for a, b, k in reb if k == 'calls'}))}
+    print(f'{repo:9s}', '  '.join(f'{k} {v:.2f}' for k, v in STARS[repo].items()))
+
+# CELL 17 markdown
+## 6. What the agent's tools return
+
+The agent never reads a graph file. It calls `get_code_neighbors` and `search_similar_code`, which run
+`get_neighbor` and `embed` from the harness package (swegemma 0.2.7, in the competition's wheelhouse dataset).
+This loads that code straight from the wheel, without installing the package or its agent stack, prints the part
+of `get_neighbor` that does the lookup and the argument help the model is given, tries the inputs that help
+suggests, and replays every recorded call outside dispatch: does the tool's list for the callee contain the caller?
+
+# CELL 18 code
+import hashlib, inspect, sys, zipfile
+
+WHEEL = (next(Path('/kaggle/input').rglob('swegemma-0.2.7-py3-none-any.whl')) if KAGGLE
+         else Path('exp/wheelhouse/swegemma-0.2.7-py3-none-any.whl'))
+SG = Path('/tmp/swegemma_wheel')
+with zipfile.ZipFile(WHEEL) as z:
+    z.extractall(SG, [n for n in z.namelist() if n.startswith('swegemma/graph/')])
+    tool_help = z.read('swegemma/tools/graph.py').decode()
+(SG / 'swegemma' / '__init__.py').write_text('')  # the real one imports the agent stack; graph code needs numpy, networkx, cachetools
+sys.path.insert(0, str(SG))
+from swegemma.graph import embedding_utils, graph_utils
+
+print(WHEEL.name, 'sha256', hashlib.sha256(WHEEL.read_bytes()).hexdigest())
+src = inspect.getsource(graph_utils.get_neighbor)
+print(src[src.index('    if not graph.has_node(target_node)'):])
+print(*sorted({l.strip() for l in tool_help.splitlines()
+               if l.strip().startswith(('node: Name', 'edge_type: Optional', 'query: Function'))}), sep='\n')
+
+# CELL 19 code
+name = LATEST['fastapi']
+G = graph_utils.load_graph_from_json(str(DATA / 'graphs' / f'{name}.json'))
+route, gone = 'fastapi.routing.APIRoute', 'fastapi.exception_handlers.http_exception_handler'
+assert route in G and gone not in G and gone in load(REBUILT / f'{name}.json')[0]
+TOOLS = {f'get_neighbor {k}': len(graph_utils.get_neighbor(q, graph=G, edge_type=t)) for k, q, t in (
+    ('exact id', route, None), ('exact id, edge_type="calls"', route, 'calls'),
+    ('exact id, edge_type="CALLS"', route, 'CALLS'), ('short name "APIRoute"', 'APIRoute', None),
+    ('id in lower case', route.lower(), None), ('missing async def ' + gone, gone, None))}
+TOOLS.update({f'embed {k} returns a vector': embedding_utils.embed(
+    q, name, embeddings_dir=str(DATA / 'embeddings'), graph_dir=str(DATA / 'graphs')) is not None for k, q in (
+    ('exact id', route), ('exact source of that def', G.nodes[route]['text']),
+    ('short name "APIRoute"', 'APIRoute'), ('free text', 'route class that runs the endpoint'))})
+for k, v in TOOLS.items():
+    print(f'{k:72s} {v}')
+
+# CELL 20 code
+def caller_shown(G, obs, cap):
+    """Share of recorded (caller, callee) pairs where the tool's list for the callee contains the caller."""
+    lists = {b: {n.split(';', 1)[-1] for n in graph_utils.get_neighbor(b, graph=G, max_neighbors=cap)}
+             for b in {b for _, b in obs}}
+    return sum(a in lists[b] for a, b in obs) / len(obs)
+
+
+REPLAY = {}
+for p in sorted(TRACES.glob('trace_*_*.json')):
+    repo, sha = re.match(r'trace_(\w+?)_([0-9a-f]{40})\.json$', p.name).groups()
+    fn, _ = load(REBUILT / f'{repo}_{sha}.json')
+    obs = {(a, b) for a, b in json.load(open(p))
+           if a in fn and b in fn and not (a.startswith(repo + '.') and not b.startswith(repo + '.'))}
+    for g, d in (('released', DATA / 'graphs'), ('rebuilt', REBUILT)):
+        G = graph_utils.load_graph_from_json(str(d / f'{repo}_{sha}.json'))
+        r = REPLAY[f'{repo} {g}'] = {
+            'pairs': len(obs), 'caller shown, max_neighbors=50': caller_shown(G, obs, 50),
+            'caller shown, no cap': caller_shown(G, obs, 10 ** 6),
+            'traced callees with over 50 neighbours': sum(
+                len(graph_utils.get_neighbor(b, graph=G, max_neighbors=10 ** 6)) > 50 for b in {b for _, b in obs})}
+        print(f'{repo:9s} {g:8s}', '  '.join(f'{k} {v:.2f}' if isinstance(v, float) else f'{k} {v}' for k, v in r.items()))
+
+# CELL 21 markdown
+## 7. Finding the code to change
+
+For each task, rank every non-test def by how likely the fix edits it, using only the issue text (problem
+statement plus hints, as in the agent prompt) and the graph. Scorers: TF-IDF over identifiers and code; the
+released embeddings (query = weighted sum of the vectors of defs the issue names, which is what
+`search_similar_code` does with a symbol); personalized PageRank from the defs the issue names; and reciprocal
+rank fusion of TF-IDF with each. A task counts as a hit at k when any gold def ranks in the top k. Gold defs the
+released graph does not contain count as misses for it.
+
+# CELL 22 code
+TOK = re.compile(r'[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*')
+MISS = 1e9  # rank when no gold def is among the candidates
+
+
+def seeds(text, last):
+    """Defs named in the issue text, weighted 1/(number of defs with that name)."""
+    w = defaultdict(float)
+    for tok in set(TOK.findall(text)):
+        if len(tok) < 3:
+            continue
+        m = [i for i in last.get(tok.rsplit('.', 1)[-1], []) if '.' not in tok or i.endswith('.' + tok)]
+        if 0 < len(m) <= 20:
+            for i in m:
+                w[i] += 1 / len(m)
+    return dict(w)
+
+
+def rank_of(scores, cand, gold):
+    """Best 1-based rank of any gold def; ties count as half (expected rank under random tie-breaking)."""
+    s = np.array([scores.get(i, 0.0) for i in cand])
+    best = MISS
+    for g in gold:
+        v = scores.get(g, 0.0)
+        best = min(best, 1 + (s > v).sum() + ((s == v).sum() - 1) / 2)
+    return best
+
+
+def rrf(*score_dicts, cand):
+    out = defaultdict(float)
+    for sd in score_dicts:
+        for r, i in enumerate(sorted(cand, key=lambda i: -sd.get(i, 0.0))):
+            out[i] += 1 / (60 + r)
+    return out
+
+
+class Index:
+    """TF-IDF matrix and undirected graph over one graph's non-test defs."""
+
+    def __init__(self, nodes, edges, cand):
+        self.cand, self.last = cand, by_last(cand)
+        self.vec = TfidfVectorizer(token_pattern=r'[a-z][a-z0-9]+', sublinear_tf=True)
+        self.X = self.vec.fit_transform([words(i) + ' ' + words(nodes[i]) for i in cand])
+        self.G = nx.Graph()
+        self.G.add_nodes_from(nodes)
+        self.G.add_edges_from((a, b) for a, b in edges if a != b)
+
+    def tfidf(self, q):
+        return dict(zip(self.cand, (self.X @ self.vec.transform([words(q)]).T).toarray().ravel()))
+
+    def ppr(self, q):
+        s = seeds(q, self.last)
+        return nx.pagerank(self.G, alpha=0.85, personalization=s) if s else {}
+
+
+ROWS = []
+for name in sorted(BY_GRAPH):
+    labs = [l for l in LABELS if l['graph'] == name and l['gold_full']]
+    if not labs:
+        continue
+    R = Repo(name)
+    fn, fe = load(REBUILT / f'{name}.json')
+    Ir = Index(R.nodes, R.edges, R.cand)
+    If = Index(fn, {(a, b) for a, b, _ in fe}, [i for i in fn if not TEST.match(i)])
+    Z = np.load(DATA / 'embeddings' / f'{name}.npz')
+    E = np.stack([Z[i] for i in R.cand])
+    E /= np.linalg.norm(E, axis=1, keepdims=True) + 1e-9
+    pos = {i: k for k, i in enumerate(R.cand)}
+    for l in labs:
+        t = TASKS[l['id']]
+        q = t['problem_statement'] + '\n' + (t['hints_text'] or '')
+        gold_f = [g for g in l['gold_full'] if not TEST.match(g)]
+        gold_r = [g for g in gold_f if g in pos]
+        if not gold_f:
+            continue
+        sr = seeds(q, Ir.last)
+        e = sum(w * E[pos[i]] for i, w in sr.items()) if sr else None
+        emb = {} if e is None else dict(zip(R.cand, E @ (e / (np.linalg.norm(e) + 1e-9))))
+        tr, pr, tf, pf = Ir.tfidf(q), Ir.ppr(q), If.tfidf(q), If.ppr(q)
+        ranks = {f'released {k}': rank_of(v, R.cand, gold_r) for k, v in {
+            'tfidf': tr, 'embedding': emb, 'ppr': pr, 'tfidf+ppr': rrf(tr, pr, cand=R.cand),
+            'tfidf+embedding': rrf(tr, emb, cand=R.cand)}.items()}
+        ranks.update({f'rebuilt {k}': rank_of(v, If.cand, gold_f) for k, v in {
+            'tfidf': tf, 'ppr': pf, 'tfidf+ppr': rrf(tf, pf, cand=If.cand)}.items()})
+        ROWS.append({'id': l['id'], 'repo': l['repo'], 'gold_in_released': len(gold_r) / len(gold_f),
+                     'names_a_def': bool(sr), 'ranks': ranks})
+
+
+def hits(rows):
+    return {k: {m: float(np.mean([f(r['ranks'][k]) for r in rows])) for m, f in
+                (('hit@1', lambda x: x <= 1), ('hit@5', lambda x: x <= 5), ('hit@10', lambda x: x <= 10),
+                 ('MRR', lambda x: 1 / x))} for k in rows[0]['ranks']}
+
+
+LOC = {'all': hits(ROWS), **{r: hits([x for x in ROWS if x['repo'] == r]) for r in ('fastapi', 'rich', 'requests')}}
+print(len(ROWS), 'tasks;', sum(r['names_a_def'] for r in ROWS), 'name at least one def;',
+      sum(r['gold_in_released'] < 1 for r in ROWS), 'edit a def the released graph lacks;',
+      sum(r['gold_in_released'] == 0 for r in ROWS), 'edit only such defs')
+for k, v in LOC['all'].items():
+    print(f'{k:26s}' + '  '.join(f'{m}={x:.2f}' for m, x in v.items()))
+
+# CELL 23 markdown
+How sure are the differences between graphs? A paired bootstrap over tasks (10,000 resamples) gives a 95 percent
+interval for each rebuilt-minus-released difference, and an exact sign test counts the tasks that moved.
+
+# CELL 24 code
+from scipy.stats import binomtest
+
+idx = np.random.default_rng(0).integers(0, len(ROWS), (10000, len(ROWS)))
+BOOT = {}
+for s in ('tfidf', 'ppr', 'tfidf+ppr'):
+    a, b = (np.array([r['ranks'][f'{g} {s}'] for r in ROWS]) for g in ('released', 'rebuilt'))
+    for m, f in (('hit@1', lambda x: x <= 1), ('hit@5', lambda x: x <= 5), ('hit@10', lambda x: x <= 10),
+                 ('MRR', lambda x: 1 / x)):
+        d = f(b).astype(float) - f(a)
+        lo, hi = np.percentile(d[idx].mean(1), [2.5, 97.5])
+        up, down = int((d > 0).sum()), int((d < 0).sum())
+        p = binomtest(up, up + down).pvalue if up + down else 1.0
+        BOOT[f'{s} {m}'] = {'difference': d.mean(), '95% interval': [lo, hi], 'tasks up': up, 'tasks down': down,
+                            'sign test p': p}
+        print(f'rebuilt minus released, {s:9s} {m:6s} {d.mean():+.3f}  [{lo:+.3f}, {hi:+.3f}]  '
+              f'{up} tasks up, {down} down, sign test p={p:.3f}')
+
+# CELL 25 markdown
+## 8. Figures and saved results
+
+# CELL 26 code
+main = ('fastapi', 'rich', 'requests')
+kinds = ['method to sibling method', 'to a method of another class', 'to a function or class', 'async caller or callee',
+         'all except dispatch']
+n = [sum(TRACE[r][k, 'n'] for r in main) for k in kinds]
+fig, ax = plt.subplots(figsize=(8, 4.2))
+x = np.arange(len(kinds))
+for j, (g, color) in enumerate((('released', '#c44e52'), ('rebuilt', '#4c72b0'))):
+    v = [sum(TRACE[r][k, g] for r in main) / nk for k, nk in zip(kinds, n)]
+    ax.bar_label(ax.bar(x + (j - 0.5) * 0.38, v, 0.38, label=f'{g} graph', color=color), [f'{y:.2f}' for y in v],
+                 fontsize=8)
+ax.set_xticks(x, [f'{l}\nn={k:,}' for l, k in zip(['method to\nsibling method', 'method of\nanother class',
+                                                     'function\nor class', 'async caller\nor callee',
+                                                     'all except\ndispatch'], n)], fontsize=9)
+ax.set_ylim(0, 1)
+ax.set_ylabel('share of recorded calls found')
+ax.set_title('Calls recorded while fastapi, rich and requests ran their tests: how many each graph holds', fontsize=10)
+ax.legend(frameon=False, loc='upper left')
+ax.spines[['top', 'right']].set_visible(False)
+plt.tight_layout()
+plt.savefig(OUT / 'figure1.png', dpi=150)
+
+# CELL 27 code
+fig, ax = plt.subplots(1, 2, figsize=(12, 4.2))
+hop_keys = [1, 2, 3, 4, 5, 6, 'not connected']
+for r in EMB:
+    ax[0].plot(range(len(hop_keys)), [EMB[r]['mean cosine by hops'].get(h, np.nan) for h in hop_keys], 'o-', label=r)
+ax[0].set_xticks(range(len(hop_keys)), [str(h) for h in hop_keys[:-1]] + ['not\nconnected'])
+ax[0].set_xlabel('graph distance (hops)')
+ax[0].set_ylabel('mean embedding cosine')
+ax[0].set_title('Embedding similarity follows graph distance')
+ax[0].legend()
+names = ['released tfidf', 'released embedding', 'released ppr', 'rebuilt ppr', 'released tfidf+ppr', 'rebuilt tfidf+ppr']
+for j, m in enumerate(('hit@1', 'hit@5', 'hit@10')):
+    ax[1].bar(np.arange(len(names)) + (j - 1) * 0.27, [LOC['all'][n][m] for n in names], 0.27, label=m)
+ax[1].set_xticks(np.arange(len(names)), [n.replace(' ', '\n') for n in names])
+ax[1].set_title(f'Finding the code to change ({len(ROWS)} public tasks)')
+ax[1].legend()
+plt.tight_layout()
+plt.savefig(OUT / 'figures.png', dpi=150)
+json.dump({'audit': dict(A), 'embeddings': EMB, 'localization': LOC, 'bootstrap': BOOT, 'rows': ROWS,
+           'tools': TOOLS, 'tool replay': REPLAY, 'star imports': STARS,
+           'traces': {r: {' | '.join(k) if isinstance(k, tuple) else k: v for k, v in c.items()} for r, c in TRACE.items()}},
+          open(OUT / 'results.json', 'w'), indent=1, default=float)

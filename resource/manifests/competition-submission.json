@@ -1,0 +1,31 @@
+{
+  "checked_at": "2026-10-05T06:08:13.906331+00:00",
+  "competition": "gemma-4-developer-agent",
+  "run_dir": "/scratch/jwj/kaggle_gemma4_agent/runs/hpc-smoke-20261005-r4",
+  "archive": "/scratch/jwj/kaggle_gemma4_agent/runs/hpc-smoke-20261005-r4/inputs/submission.zip",
+  "sha256": "02bb939095ded0c970088fc9d19634e203e2d3119a36a5feff20bad55c9343fc",
+  "bytes": 3695,
+  "smoke": {
+    "checked_at": "2026-10-05T06:08:13.896012+00:00",
+    "task_id": "rich_3454",
+    "checks": {
+      "empty_patch_fails_tests": true,
+      "gold_patch_passes_tests": true,
+      "official_compiler_passed": true,
+      "real_nonempty_prediction": true,
+      "llm_was_called": true,
+      "agent_tests_executed": true
+    },
+    "controls_valid": true,
+    "agent_resolved": true,
+    "inference_seconds": 83.85255151498131,
+    "pipeline_executed": true,
+    "scope": "One public task. Not a benchmark score, training validation, L4 timing result, or Kaggle submission."
+  },
+  "scope": "One public-task H100 smoke. Full hidden scoring and L4 timing are determined by Kaggle.",
+  "description": "Baseline v1 no LoRA. Official compiler and rich_3454 smoke passed. ZIP 02bb939095de.",
+  "status": "accepted",
+  "submission_ref": 56844353,
+  "response_message": "Successfully submitted to Google - The Gemma 4 Developer Agent Competition",
+  "response_at": "2026-10-05T06:08:17.304638+00:00"
+}

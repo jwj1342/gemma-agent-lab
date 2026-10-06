@@ -1,0 +1,58 @@
+% Practical Kaggle workflow. A proposed training path, not an executed training recipe.
+\section{Training with Kaggle resources}
+\sectionframe{04}{Planning our first\\training experiment}
+
+\begin{frame}{A training workspace your team can open in Kaggle}
+\begin{columns}[T,onlytextwidth]
+\column{.47\textwidth}\eyebrow[teal]{PREPARE THE NOTEBOOK}
+\begin{enumerate}\setlength\itemsep{3mm}\small
+\item Keep the working starter for evaluation.
+\item Create a training notebook for this competition.
+\item Choose L4 $\times$ 4 and Internet off.
+\end{enumerate}
+\column{.48\textwidth}\eyebrow{ADD INPUT BEFORE STARTING}
+\softpanel{orange}{Bring three ingredients}{Checked training examples\par Compatible Gemma weights\par Offline training packages}
+\end{columns}
+\vspace{4mm}
+\takeaway{First check model and package compatibility, then complete one small training update.}
+% Sources: official Upgraded Accelerators and Model Selection/Budget rules, archived via Kaggle API; official starter; PEFT quantization documentation.
+\note{Kaggle provides competition-attached L4 x4 notebooks with Internet disabled. Use Add Input to attach the competition and required datasets/models before starting the GPU session. Keep the tested evaluation notebook intact and build a separate training environment. The official evaluation wheelhouse is not a verified SFT environment. The submitted agent must still use gemma-4-31b-it-qat-w4a16-ct. Do not assume that this compressed inference checkpoint can be trained directly; first verify the training loader, Gemma architecture, adapter target layers, and export compatibility. Four GPUs require an appropriate distributed training setup; seeing four devices does not automatically pool their memory. Preparing files can be done before GPU time is spent.}
+\end{frame}
+
+\begin{frame}{What does one training example look like?}
+\tagline{Teach the next useful action from a checked repair trace.}
+\begin{columns}[T,onlytextwidth]
+\column{.48\textwidth}\eyebrow[teal]{CONTEXT}
+\softpanel{teal}{Issue + earlier tool output}{
+URL highlighting breaks at @.\par\vspace{2mm}
+File search returned:\par
+\pathcode{rich/highlighter.py}}
+\column{.48\textwidth}\eyebrow{NEXT ACTION}
+\softpanel{orange}{The training target}{
+Call \pathcode{read_file}\par\vspace{2mm}
+with \pathcode{filepath} set to\par
+\pathcode{rich/highlighter.py}}
+\end{columns}
+\vspace{2mm}
+\small SFT uses tool results as context and trains on checked assistant actions.\par\vspace{2mm}
+\small With LoRA, training updates a small adapter while the base model stays fixed.
+% Sources: official Data description; https://huggingface.co/docs/trl/en/sft_trainer (dataset formats and tool calling).
+\note{The public package supplies issues, code snapshots, reference patches, and tests, but not a ready-made corpus of complete successful agent trajectories. Collect traces from the training split and check their patches with valid controls. A trace records the messages, tool requests, observations, and final changes. TRL supports conversational messages with tool calls and tool-role responses, plus a tools schema column. Verify the Gemma chat template and loss masking: labels should target the intended assistant outputs, not train the model to invent tool results. Reference patches can supervise training examples; held-out answers must never become inference inputs. A direct issue-to-patch dataset is a simpler experiment, but it does not teach the whole tool loop by itself.}
+\end{frame}
+
+\begin{frame}{Planned: our first small training run}
+\tagline{TRL handles training; PEFT trains and exports the LoRA adapter.}
+\input{figures/kaggle-training-flow}
+\vspace{2mm}
+\small\textbf{Loss} measures fit to training examples. Test repair success on fresh tasks.\par
+\vspace{3mm}
+\begin{columns}[T,onlytextwidth]
+\column{.48\textwidth}\eyebrow{SAVE}
+\small Write to \pathcode{/kaggle/working/}.\par
+Save Version with outputs before stopping.
+\column{.48\textwidth}\eyebrow[teal]{RE-EVALUATE}
+\small Attach the adapter to the official starter.\par Compare the same held-out tasks.
+\end{columns}
+% Sources: official starter for Kaggle paths and packaging; official model/adapter rules; https://huggingface.co/docs/trl/en/sft_trainer and https://huggingface.co/docs/peft/en/developer_guides/quantization.
+\note{First verify one forward/backward update with a small batch and short context; inspect gradients and GPU memory. A proposed initial pilot is only 10--20 optimizer steps, not a full training run. Save both recovery state and an exported PEFT adapter, then reload the export in a fresh evaluation session. Store inputs under /kaggle/input (read-only) and outputs under /kaggle/working. Save a notebook version with its outputs or download/persist the artifact before ending the session; the live working directory is not a permanent team backup. A valid adapter directory needs adapter_config.json and adapter_model.safetensors. Reattach that artifact to the official evaluator, verify it really loads on the required quantized base, and compare adapter off/on using the same held-out tasks and budget. Only then package submission.zip with agent.yaml at its root; the unpacked package must remain below 3 GiB. Check GPU quota before each run and stop the GPU session after saving; L4 quota currently costs twice the older reference rate. These steps describe planned work, not a claim that a training notebook has already passed.}
+\end{frame}

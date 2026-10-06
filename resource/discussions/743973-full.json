@@ -1,0 +1,188 @@
+{
+  "forumTopic": {
+    "authorId": 1694182,
+    "authorThumbnailName": "default-thumb.png",
+    "authorUserDisplayName": "wrath333*",
+    "authorUserName": "shashanka319",
+    "comments": [
+      {
+        "id": 3529432,
+        "postDate": "2026-09-28T08:41:18.483Z",
+        "rawMarkdown": "Same. I pulled everything directly from the data tab. \n\nHere's everything I found, sorted:\n\nThese are definite dataset bugs, and gold patch cannot pass on py3.13\n\n8× requests tasks — `6589, 6592, 6629, 6757, 7328, 7433, 7502, 7505`\n - Python 3.13 enables `VERIFY_X509_STRICT` by default; pytest-httpbin's bundled cert has no Authority Key Identifier → every https test fails with `SSLCertVerificationError: Missing Authority Key Identifier`. Since resolution requires the whole touched test file to exit 0, these are unresolvable for everyone. (Verified: gold patches produce 315+ passed but the same 7–10 inherent SSL/timeout failures.)\n\n3× version-gated required tests — `fastapi_14186`, `fastapi_15745`, `rich_3486`\n - The `test_patch` adds tests decorated `@needs_py_lt_314` (which is `skipif(sys.version_info > (3,13))` → **skips on every 3.13.x**, including 3.13.0, because `(3,13,0) > (3,13)` tuple-compares True) and `skip if(minor >= 11)`. On the 3.13 runtime they can never run — only skip. If the scorer counts extracted test names as required-and must-pass, these are unresolvable; if it precomputed FAIL_TO_PASS on the same env, they're excluded and just noise.\n\n1× Python-behavior drift — `rich_3472`\n - `test_attrs_broken_310` expects `'Foo' object has no attribute 'bar'`; on 3.13 CPython emits the full `__qualname__` (`'tests.test_pretty.<locals>.Foo'`). No patch can fix a Python-version difference in the error string. Dead task.\n\n",
+        "content": "<p>Same. I pulled everything directly from the data tab. </p>\n<p>Here's everything I found, sorted:</p>\n<p>These are definite dataset bugs, and gold patch cannot pass on py3.13</p>\n<p>8× requests tasks — <code>6589, 6592, 6629, 6757, 7328, 7433, 7502, 7505</code></p>\n<ul>\n<li>Python 3.13 enables <code>VERIFY_X509_STRICT</code> by default; pytest-httpbin's bundled cert has no Authority Key Identifier → every https test fails with <code>SSLCertVerificationError: Missing Authority Key Identifier</code>. Since resolution requires the whole touched test file to exit 0, these are unresolvable for everyone. (Verified: gold patches produce 315+ passed but the same 7–10 inherent SSL/timeout failures.)</li>\n</ul>\n<p>3× version-gated required tests — <code>fastapi_14186</code>, <code>fastapi_15745</code>, <code>rich_3486</code></p>\n<ul>\n<li>The <code>test_patch</code> adds tests decorated <code>@needs_py_lt_314</code> (which is <code>skipif(sys.version_info &gt; (3,13))</code> → <strong>skips on every 3.13.x</strong>, including 3.13.0, because <code>(3,13,0) &gt; (3,13)</code> tuple-compares True) and <code>skip if(minor &gt;= 11)</code>. On the 3.13 runtime they can never run — only skip. If the scorer counts extracted test names as required-and must-pass, these are unresolvable; if it precomputed FAIL_TO_PASS on the same env, they're excluded and just noise.</li>\n</ul>\n<p>1× Python-behavior drift — <code>rich_3472</code></p>\n<ul>\n<li><code>test_attrs_broken_310</code> expects <code>'Foo' object has no attribute 'bar'</code>; on 3.13 CPython emits the full <code>__qualname__</code> (<code>'tests.test_pretty.&lt;locals&gt;.Foo'</code>). No patch can fix a Python-version difference in the error string. Dead task.</li>\n</ul>",
+        "parent": {},
+        "author": {
+          "displayName": "JohnParkerson",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/johnparkerson",
+          "tier": "CONTRIBUTOR",
+          "id": 36840669,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "totalVotes": 2,
+          "canUpvote": true,
+          "totalUpvotes": 2
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 533,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "JohnParkerson",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+            "url": "/johnparkerson",
+            "userName": "johnparkerson",
+            "tier": "CONTRIBUTOR",
+            "id": 36840669,
+            "profileUrl": "/johnparkerson",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 36840669,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3529829,
+        "postDate": "2026-09-29T02:58:27.980Z",
+        "rawMarkdown": "I think there are two problems:\n\n1. Missing wheels (pytest collection fails for every fastapi task, gold patch included)\n\nWith swegemma 0.2.7, the published `sandbox/wheels/` and the image from `docker/Dockerfile.sandbox`, every fastapi task exits pytest with code 2 at collection:\n\n```\nE   ModuleNotFoundError: No module named 'typing_inspection'\n```\n\nCause: the wheelhouse ships `pydantic-2.13.4`, whose METADATA declares `Requires-Dist: typing-inspection>=0.4.2` (every pydantic >= 2.11 needs it), but no `typing_inspection` wheel is included. The offline install in `container_setup.py` silently skips it, so `import fastapi -> import pydantic` fails regardless of the patch. Also absent from the wheelhouse but imported directly by the tests: `inline-snapshot` (+ `asttokens`, `executing`) – needed by 22 of the 67 public fastapi tasks; `dirty-equals` – 9 tasks; `ujson`/`orjson` – 2; `python-multipart` – 1.\n\n2. Starlette version selection\n\nAfter adding those wheels locally, a gold-patch control over the 67 non-dev public fastapi tasks resolves only 13/67. The wheelhouse contains 60 starlette versions (0.19.0 … 0.52.1, 1.3.1, 1.6.0), but `container_setup._deduplicate_wheels` keeps the *highest* version per package and `_ensure_container_site_packages` unpacks that set into site-packages before `sandbox/setup.py` runs; `setup.py` is called with `--fast-path`, which installs nothing (its slow path also strips version constraints). So every fastapi commit runs against **starlette 1.6.0**. Starlette 1.0 removed `Router(on_startup=...)`, hence 48 tasks fail with:\n\n```\nTypeError: Router.__init__() got an unexpected keyword argument 'on_startup'\n```\n\nOnly commits that happen to be compatible with starlette 1.x can pass. As such, 54/67 public fastapi tasks are automatically failed with the shipped harness, gold patch or not.",
+        "content": "<p>I think there are two problems:</p>\n<ol>\n<li>Missing wheels (pytest collection fails for every fastapi task, gold patch included)</li>\n</ol>\n<p>With swegemma 0.2.7, the published <code>sandbox/wheels/</code> and the image from <code>docker/Dockerfile.sandbox</code>, every fastapi task exits pytest with code 2 at collection:</p>\n<pre><code>E   ModuleNotFoundError: No module named 'typing_inspection'\n</code></pre>\n<p>Cause: the wheelhouse ships <code>pydantic-2.13.4</code>, whose METADATA declares <code>Requires-Dist: typing-inspection&gt;=0.4.2</code> (every pydantic &gt;= 2.11 needs it), but no <code>typing_inspection</code> wheel is included. The offline install in <code>container_setup.py</code> silently skips it, so <code>import fastapi -&gt; import pydantic</code> fails regardless of the patch. Also absent from the wheelhouse but imported directly by the tests: <code>inline-snapshot</code> (+ <code>asttokens</code>, <code>executing</code>) – needed by 22 of the 67 public fastapi tasks; <code>dirty-equals</code> – 9 tasks; <code>ujson</code>/<code>orjson</code> – 2; <code>python-multipart</code> – 1.</p>\n<ol>\n<li>Starlette version selection</li>\n</ol>\n<p>After adding those wheels locally, a gold-patch control over the 67 non-dev public fastapi tasks resolves only 13/67. The wheelhouse contains 60 starlette versions (0.19.0 … 0.52.1, 1.3.1, 1.6.0), but <code>container_setup._deduplicate_wheels</code> keeps the <em>highest</em> version per package and <code>_ensure_container_site_packages</code> unpacks that set into site-packages before <code>sandbox/setup.py</code> runs; <code>setup.py</code> is called with <code>--fast-path</code>, which installs nothing (its slow path also strips version constraints). So every fastapi commit runs against <strong>starlette 1.6.0</strong>. Starlette 1.0 removed <code>Router(on_startup=...)</code>, hence 48 tasks fail with:</p>\n<pre><code>TypeError: Router.__init__() got an unexpected keyword argument 'on_startup'\n</code></pre>\n<p>Only commits that happen to be compatible with starlette 1.x can pass. As such, 54/67 public fastapi tasks are automatically failed with the shipped harness, gold patch or not.</p>",
+        "parent": {},
+        "author": {
+          "displayName": "Claire Bedecarre",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/clairebedecarre",
+          "tier": "CONTRIBUTOR",
+          "id": 36943872,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Claire Bedecarre",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+            "url": "/clairebedecarre",
+            "userName": "clairebedecarre",
+            "tier": "CONTRIBUTOR",
+            "id": 36943872,
+            "profileUrl": "/clairebedecarre",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 36943872,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3529396,
+        "postDate": "2026-09-28T06:06:32.027Z",
+        "rawMarkdown": "I'm also facing the same, I've reproduced it using the getting started kernel. I've patched the Evaluator to bypass the model call and return the ground truth directly.\nhttps://www.kaggle.com/code/bharat0/eval-errors-gemma-4-developer-agent\n\n",
+        "content": "<p>I'm also facing the same, I've reproduced it using the getting started kernel. I've patched the Evaluator to bypass the model call and return the ground truth directly.\n<a href=\"https://www.kaggle.com/code/bharat0/eval-errors-gemma-4-developer-agent\" target=\"_blank\">https://www.kaggle.com/code/bharat0/eval-errors-gemma-4-developer-agent</a></p>",
+        "parent": {},
+        "author": {
+          "displayName": "Bharat",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2411334-kg.jpg",
+          "url": "/bharat0",
+          "tier": "CONTRIBUTOR",
+          "id": 2411334,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 1388,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Bharat",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2411334-kg.jpg",
+            "url": "/bharat0",
+            "userName": "bharat0",
+            "tier": "CONTRIBUTOR",
+            "id": 2411334,
+            "profileUrl": "/bharat0",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 2411334,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3529370,
+      "postDate": "2026-09-28T04:02:52.477Z",
+      "rawMarkdown": "Evidence notebook for a forum report to the organisers. Everything here is produced by the organisers' own code from the official wheelhouse (swegemma 0.2.7, adk_submission 0.2.11) with the competition's wheels/ directory and the swebench-sandbox image, network off. No model is involved: each task is graded with its reference (gold) patch and with no patch.\n\nKindly adress the questions in the notebook",
+      "content": "<p>Evidence notebook for a forum report to the organisers. Everything here is produced by the organisers' own code from the official wheelhouse (swegemma 0.2.7, adk_submission 0.2.11) with the competition's wheels/ directory and the swebench-sandbox image, network off. No model is involved: each task is graded with its reference (gold) patch and with no patch.</p>\n<p>Kindly adress the questions in the notebook</p>",
+      "attachments": [
+        {
+          "fileType": ".ipynb",
+          "id": 51672,
+          "name": "gradability_audit_20260928T033124Z.ipynb",
+          "totalBytes": 48570,
+          "url": "https://storage.googleapis.com/kaggle-forum-message-attachments/3529370/51672/gradability_audit_20260928T033124Z.ipynb"
+        }
+      ],
+      "parent": {},
+      "author": {
+        "displayName": "wrath333*",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+        "url": "/shashanka319",
+        "tier": "CONTRIBUTOR",
+        "id": 1694182,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 6,
+        "canUpvote": true,
+        "totalUpvotes": 6
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 1190,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "wrath333*",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/shashanka319",
+          "userName": "shashanka319",
+          "tier": "CONTRIBUTOR",
+          "id": 1694182,
+          "profileUrl": "/shashanka319",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 1694182,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3529370,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 743973,
+    "name": "Gold patches fail offline for most FastAPI and requests tasks (missing test dependencies in the grading environment?",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-28T04:02:52.478140Z",
+    "totalVotes": 6,
+    "url": "/competitions/gemma-4-developer-agent/discussion/743973",
+    "totalMessages": 3,
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

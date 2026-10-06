@@ -1,0 +1,5 @@
+# Missing python-multipart dependency in the FastAPI task environment
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/745249
+
+## 3531910 /atomstack001 TOPIC
+Is omitting python-multipart from the provided wheels intentional or an oversight? FastAPI task fastapi_14616 uses Form(), but the offline sandbox has no python-multipart wheel, so the reproduction fails.

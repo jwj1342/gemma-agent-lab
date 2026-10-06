@@ -1,0 +1,277 @@
+{
+  "forumTopic": {
+    "authorId": 5927283,
+    "authorThumbnailName": "5927283-kg.jpg?t=2023-10-25-03-24-26",
+    "authorUserDisplayName": "ISAKA Tsuyoshi",
+    "authorUserName": "isakatsuyoshi",
+    "comments": [
+      {
+        "id": 3530602,
+        "postDate": "2026-09-30T14:38:39.473Z",
+        "rawMarkdown": "I'm seeing a similar mismatch: in my small set of experiments, the configuration with the highest CV score actually had the lowest public LB score.\n\n**Dataset**\n- 38 tasks from the Rich repository (not the full public dataset)\n- Only tasks where the none/gold controls behave as expected\n- Limited to Rich for now, since I couldn't get reliable controls for other repositories in my local grading environment\n\n**Setup**\n- Generation: Kaggle Notebook with 4× L4 GPUs\n- Grading: official verifier in Docker (ARM64), run locally\n\n**Scores**\n\n| CV | Public LB |\n|---|---|\n| 0.211 | 0.10 |\n| 0.237 | 0.08 |\n| 0.316 | 0.03 |\n| 0.289 | 0.05 |",
+        "content": "<p>I'm seeing a similar mismatch: in my small set of experiments, the configuration with the highest CV score actually had the lowest public LB score.</p>\n<p><strong>Dataset</strong></p>\n<ul>\n<li>38 tasks from the Rich repository (not the full public dataset)</li>\n<li>Only tasks where the none/gold controls behave as expected</li>\n<li>Limited to Rich for now, since I couldn't get reliable controls for other repositories in my local grading environment</li>\n</ul>\n<p><strong>Setup</strong></p>\n<ul>\n<li>Generation: Kaggle Notebook with 4× L4 GPUs</li>\n<li>Grading: official verifier in Docker (ARM64), run locally</li>\n</ul>\n<p><strong>Scores</strong></p>\n<table>\n<thead>\n<tr>\n<th>CV</th>\n<th>Public LB</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>0.211</td>\n<td>0.10</td>\n</tr>\n<tr>\n<td>0.237</td>\n<td>0.08</td>\n</tr>\n<tr>\n<td>0.316</td>\n<td>0.03</td>\n</tr>\n<tr>\n<td>0.289</td>\n<td>0.05</td>\n</tr>\n</tbody>\n</table>",
+        "parent": {},
+        "author": {
+          "displayName": "508shuto",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/4224096-kg.jpg?t=2024-10-13-07-07-14",
+          "url": "/goyashuto",
+          "tier": "EXPERT",
+          "id": 4224096,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "totalVotes": 1,
+          "canUpvote": true,
+          "totalUpvotes": 1
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 534,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "reactions": [
+          {
+            "emoji": "THANK_YOU",
+            "featuredUserNames": [
+              "isakatsuyoshi"
+            ],
+            "userCount": 1
+          }
+        ],
+        "teamUpInfo": {
+          "enabled": true,
+          "teamLeader": {
+            "displayName": "508shuto",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/4224096-kg.jpg?t=2024-10-13-07-07-14",
+            "url": "/goyashuto",
+            "userName": "goyashuto",
+            "tier": "EXPERT",
+            "id": 4224096,
+            "profileUrl": "/goyashuto",
+            "performanceTier": "EXPERT",
+            "userId": 4224096,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3530352,
+        "postDate": "2026-09-30T02:34:45.340Z",
+        "rawMarkdown": "My agent reached ~0.2 in the local validation, but when it came to LB, it dropped to < 0.12. Haven't made any progress for a week.",
+        "content": "<p>My agent reached ~0.2 in the local validation, but when it came to LB, it dropped to &lt; 0.12. Haven't made any progress for a week.</p>",
+        "parent": {},
+        "author": {
+          "displayName": "daoviet",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/25318955-kg.jpg?t=2025-12-09-03-48-46",
+          "url": "/daoviet",
+          "tier": "EXPERT",
+          "id": 25318955,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "totalVotes": 1,
+          "canUpvote": true,
+          "totalUpvotes": 1
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 189,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "reactions": [
+          {
+            "emoji": "THANK_YOU",
+            "featuredUserNames": [
+              "isakatsuyoshi"
+            ],
+            "userCount": 1
+          }
+        ],
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "daoviet",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/25318955-kg.jpg?t=2025-12-09-03-48-46",
+            "url": "/daoviet",
+            "userName": "daoviet",
+            "tier": "EXPERT",
+            "id": 25318955,
+            "profileUrl": "/daoviet",
+            "performanceTier": "EXPERT",
+            "userId": 25318955,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3530038,
+        "postDate": "2026-09-29T12:22:30.460Z",
+        "rawMarkdown": "Congrats to your good correlation!\nWhich data did you use to calculate CV?",
+        "content": "<p>Congrats to your good correlation!\nWhich data did you use to calculate CV?</p>",
+        "replies": [
+          {
+            "id": 3530041,
+            "postDate": "2026-09-29T12:26:41.770Z",
+            "rawMarkdown": "Thanks! Just the official dataset.",
+            "content": "<p>Thanks! Just the official dataset.</p>",
+            "parent": {},
+            "author": {
+              "displayName": "ISAKA Tsuyoshi",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/5927283-kg.jpg?t=2023-10-25-03-24-26",
+              "url": "/isakatsuyoshi",
+              "tier": "MASTER",
+              "id": 5927283,
+              "progressionOptOut": false
+            },
+            "authorType": "TOPIC",
+            "votes": {
+              "totalVotes": 2,
+              "canUpvote": true,
+              "totalUpvotes": 2
+            },
+            "kernelVersion": 0,
+            "competitionRanking": 228,
+            "feedbackTrackingData": {},
+            "isThankYou": false,
+            "reactions": [
+              {
+                "emoji": "THANK_YOU",
+                "featuredUserNames": [
+                  "cuongduc",
+                  "cnumber"
+                ],
+                "userCount": 2
+              }
+            ],
+            "teamUpInfo": {
+              "teamLeader": {
+                "displayName": "ISAKA Tsuyoshi",
+                "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/5927283-kg.jpg?t=2023-10-25-03-24-26",
+                "url": "/isakatsuyoshi",
+                "userName": "isakatsuyoshi",
+                "tier": "MASTER",
+                "id": 5927283,
+                "profileUrl": "/isakatsuyoshi",
+                "performanceTier": "MASTER",
+                "userId": 5927283,
+                "progressionOptOut": false
+              },
+              "intro": "Aiming for the gold medal!"
+            }
+          }
+        ],
+        "parent": {},
+        "author": {
+          "displayName": "c-number",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/6624777-kg.jpg",
+          "url": "/cnumber",
+          "tier": "GRANDMASTER",
+          "id": 6624777,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "totalVotes": 2,
+          "canUpvote": true,
+          "totalUpvotes": 2
+        },
+        "kernelVersion": 0,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "reactions": [
+          {
+            "emoji": "THANK_YOU",
+            "featuredUserNames": [
+              "isakatsuyoshi"
+            ],
+            "userCount": 1
+          }
+        ],
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "c-number",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/6624777-kg.jpg",
+            "url": "/cnumber",
+            "userName": "cnumber",
+            "tier": "GRANDMASTER",
+            "id": 6624777,
+            "profileUrl": "/cnumber",
+            "performanceTier": "GRANDMASTER",
+            "userId": 6624777,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3530015,
+      "postDate": "2026-09-29T11:32:01.507Z",
+      "rawMarkdown": "I plotted my CV against the public LB.\n\n![](https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F5927283%2Fc28f1df91e7bc0d065076a6698da889b%2Fcv_lb_public.png?generation=1790681365420102&alt=media)\n\n| CV | LB |\n|---|---|\n| 0.18 | 0.05 |\n| 0.19 | 0.06 |\n| 0.23 | 0.12 |\n| 0.24 | 0.10 |\n\nHigher CV does not seem to translate into a higher LB. How well do your CV and LB correlate?",
+      "content": "<p>I plotted my CV against the public LB.</p>\n<p><img src=\"https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F5927283%2Fc28f1df91e7bc0d065076a6698da889b%2Fcv_lb_public.png?generation=1790681365420102&amp;alt=media\" alt=\"\"></p>\n<table>\n<thead>\n<tr>\n<th>CV</th>\n<th>LB</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>0.18</td>\n<td>0.05</td>\n</tr>\n<tr>\n<td>0.19</td>\n<td>0.06</td>\n</tr>\n<tr>\n<td>0.23</td>\n<td>0.12</td>\n</tr>\n<tr>\n<td>0.24</td>\n<td>0.10</td>\n</tr>\n</tbody>\n</table>\n<p>Higher CV does not seem to translate into a higher LB. How well do your CV and LB correlate?</p>",
+      "parent": {},
+      "author": {
+        "displayName": "ISAKA Tsuyoshi",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/5927283-kg.jpg?t=2023-10-25-03-24-26",
+        "url": "/isakatsuyoshi",
+        "tier": "MASTER",
+        "id": 5927283,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 10,
+        "canUpvote": true,
+        "totalUpvotes": 10
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 228,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "reactions": [
+        {
+          "emoji": "LOVE",
+          "featuredUserNames": [
+            "pinocchio",
+            "whitelily",
+            "connortynan",
+            "ffsscf",
+            "adaluvu",
+            "tk256ailab"
+          ],
+          "userCount": 6
+        }
+      ],
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "ISAKA Tsuyoshi",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/5927283-kg.jpg?t=2023-10-25-03-24-26",
+          "url": "/isakatsuyoshi",
+          "userName": "isakatsuyoshi",
+          "tier": "MASTER",
+          "id": 5927283,
+          "profileUrl": "/isakatsuyoshi",
+          "performanceTier": "MASTER",
+          "userId": 5927283,
+          "progressionOptOut": false
+        },
+        "intro": "Aiming for the gold medal!"
+      }
+    },
+    "firstMessageId": 3530015,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 744319,
+    "name": "How well do your CV and LB correlate?",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-29T11:32:01.507054300Z",
+    "totalVotes": 10,
+    "url": "/competitions/gemma-4-developer-agent/discussion/744319",
+    "totalMessages": 4,
+    "authorPerformanceTier": "MASTER",
+    "authorProgressionOptOut": false
+  }
+}

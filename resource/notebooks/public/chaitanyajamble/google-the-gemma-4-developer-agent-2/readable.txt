@@ -1,0 +1,995 @@
+# CELL 0 code
+#!/usr/bin/env python3
+"""
+Gemma 4 Developer Agent Competition - baseline solution.
+
+The competition is scored by running the submitted *agent configuration*
+(YAML + prompts + optional LoRA adapters) against hidden SWE-Bench-style
+tasks, so the deliverable is `submission.zip`, not a table of predictions.
+
+This script:
+  1. Locates and safely loads the task metadata (tasks.jsonl).
+  2. Runs lightweight EDA and derives per-repository navigation priors
+     (aggregated statistics only; no per-task gold patches are ever copied
+     into the submission).
+  3. Builds the agent bundle (agent.yaml, prompts, configs, sub_agents,
+     skills, optional adapters) in the layout required by the competition.
+  4. Validates the bundle, packages it, and re-validates the final zip.
+  5. Optionally (off by default, needs a large GPU) trains a LoRA adapter.
+
+Runtime on CPU: seconds. No network access or pip installs are needed.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import logging
+import os
+import re
+import shutil
+import struct
+import sys
+import tempfile
+import zipfile
+from collections import Counter
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
+
+import matplotlib
+
+matplotlib.use("Agg")  # headless backend: safe on Kaggle and CI
+import matplotlib.pyplot as plt  # noqa: E402
+import numpy as np  # noqa: E402
+import pandas as pd  # noqa: E402
+
+try:  # PyYAML ships with Kaggle images; validation degrades gracefully without it
+    import yaml
+except ImportError:  # pragma: no cover
+    yaml = None
+
+LOG = logging.getLogger("gemma4_agent")
+
+# --------------------------------------------------------------------------- #
+# Constants
+# --------------------------------------------------------------------------- #
+MODEL_ALIAS = "gemma-4-31b-it-qat-w4a16-ct"  # the only permitted base model
+BUILTIN_TOOLS = {
+    "run_command", "submit_patch", "get_status", "read_file", "edit_file",
+    "write_file", "search_similar_code", "get_code_neighbors", "get_code_subgraph",
+}
+ALLOWED_EXTS = {".yaml", ".yml", ".md", ".txt", ".py", ".json", ".safetensors"}
+MAX_BUNDLE_BYTES = 3 * 1024 ** 3  # 3 GiB uncompressed ceiling
+MAX_LORA_RANK = 16  # vLLM's default --max-lora-rank; higher ranks may fail to load
+DATA_CANDIDATES = [
+    "/kaggle/input/competitions/gemma-4-developer-agent",
+    "/kaggle/input/gemma-4-developer-agent",
+    "./competition_data",
+    "../competition_data",
+]
+TASK_COLUMNS = [
+    "instance_id", "repo", "base_commit", "problem_statement",
+    "hints_text", "patch", "test_patch", "created_at",
+]
+MAX_GRAPH_FILE_BYTES = 50 * 1024 * 1024  # skip oversized graph files during EDA
+PLACEHOLDER_PATCH = "NO_PATCH"  # documented placeholder for "no patch submitted"
+
+
+@dataclass
+class Config:
+    data_dir: Path | None
+    work_dir: Path
+    main_adapter: Path | None
+    tool_adapter: Path | None
+    run_eda: bool
+    max_output_tokens: int
+    thinking_budget: int
+    bundle_dir: Path
+    with_skills: bool = False
+
+    @property
+    def zip_path(self) -> Path:
+        return self.work_dir / "submission.zip"
+
+    @property
+    def eda_dir(self) -> Path:
+        return self.work_dir / "eda"
+
+
+# --------------------------------------------------------------------------- #
+# Data loading
+# --------------------------------------------------------------------------- #
+def find_data_dir(explicit: str | None) -> Path | None:
+    """Return the first directory that exists and contains tasks.jsonl."""
+    candidates = ([explicit] if explicit else []) + DATA_CANDIDATES
+    for cand in candidates:
+        path = Path(cand)
+        if (path / "tasks.jsonl").is_file():
+            return path
+    root = Path("/kaggle/input")
+    if root.is_dir():  # last resort: shallow search for tasks.jsonl
+        for pattern in ("*/tasks.jsonl", "*/*/tasks.jsonl"):
+            for hit in root.glob(pattern):
+                return hit.parent
+    return None
+
+
+def load_tasks(data_dir: Path | None) -> pd.DataFrame | None:
+    """Stream tasks.jsonl, tolerating blank/corrupt lines and missing fields."""
+    if data_dir is None:
+        LOG.warning("Dataset directory not found; continuing without task data.")
+        return None
+    path = data_dir / "tasks.jsonl"
+    if not path.is_file():
+        LOG.warning("tasks.jsonl not found in %s.", data_dir)
+        return None
+
+    records: list[dict[str, Any]] = []
+    bad_lines = 0
+    with path.open("r", encoding="utf-8", errors="replace") as handle:
+        for line in handle:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                obj = json.loads(line)
+            except json.JSONDecodeError:
+                bad_lines += 1
+                continue
+            if not isinstance(obj, dict):
+                bad_lines += 1
+                continue
+            records.append({col: obj.get(col) for col in TASK_COLUMNS})
+
+    if not records:
+        LOG.warning("tasks.jsonl contained no usable records.")
+        return None
+
+    df = pd.DataFrame.from_records(records, columns=TASK_COLUMNS)
+    for col in ("instance_id", "repo", "base_commit", "problem_statement",
+                "hints_text", "patch", "test_patch"):
+        df[col] = df[col].fillna("").astype(str)
+    df["created_at"] = pd.to_datetime(df["created_at"], errors="coerce", utc=True, format="mixed")
+
+    before = len(df)
+    df = df[df["instance_id"].str.strip() != ""].drop_duplicates("instance_id")
+    df = df.reset_index(drop=True)
+    df["repo"] = df["repo"].replace("", "unknown").astype("category")
+    LOG.info("Loaded %d tasks (%d dropped as invalid/duplicate, %d unreadable lines).",
+             len(df), before - len(df), bad_lines)
+    return df
+
+
+# --------------------------------------------------------------------------- #
+# Feature engineering
+# --------------------------------------------------------------------------- #
+_GIT_HEADER_RE = re.compile(r"^\s*diff --git a/(.+?) b/(.+?)\s*$")
+_OLD_FILE_RE = re.compile(r"^--- (?:a/)?([^\t\r\n]+)")
+_NEW_FILE_RE = re.compile(r"^\+\+\+ (?:b/)?([^\t\r\n]+)")
+_TEST_PATH_RE = re.compile(r"(^|/)(tests?|testing)(/|$)|(^|/)test_[^/]*\.py$|_test\.py$")
+_TRACEBACK_RE = re.compile(r"Traceback \(most recent call last\)|\b\w+(?:Error|Exception)\b")
+
+
+def diff_files(diff: str) -> list[str]:
+    """
+    Changed file paths in first-seen order. Handles `diff --git` headers as well as
+    plain unified diffs that only carry `--- a/x` / `+++ b/x` lines.
+    """
+    files: list[str] = []
+    seen: set[str] = set()
+
+    def add(path: str) -> None:
+        path = path.strip().strip('"')
+        if path and path != "/dev/null" and path not in seen:
+            seen.add(path)
+            files.append(path)
+
+    pending_old: str | None = None
+    for line in (diff or "").splitlines():
+        match = _GIT_HEADER_RE.match(line)
+        if match:
+            add(match.group(2))
+            pending_old = None
+            continue
+        match = _OLD_FILE_RE.match(line)
+        if match:
+            pending_old = match.group(1)
+            continue
+        match = _NEW_FILE_RE.match(line)
+        if match and pending_old is not None:
+            new = match.group(1).strip()
+            add(pending_old if new == "/dev/null" else new)  # deleted files use the old path
+            pending_old = None
+    return files
+
+
+def is_test_path(path: str) -> bool:
+    return bool(_TEST_PATH_RE.search(path))
+
+
+def diff_line_counts(diff: str) -> tuple[int, int]:
+    added = deleted = 0
+    for line in (diff or "").splitlines():
+        if line.startswith("+") and not line.startswith("+++"):
+            added += 1
+        elif line.startswith("-") and not line.startswith("---"):
+            deleted += 1
+    return added, deleted
+
+
+def add_features(df: pd.DataFrame) -> pd.DataFrame:
+    """Add numeric/boolean descriptors used for EDA and prompt priors."""
+    out = df.copy()
+    out["issue_chars"] = out["problem_statement"].str.len()
+    out["issue_words"] = out["problem_statement"].str.split().str.len().fillna(0).astype(int)
+    out["has_hints"] = out["hints_text"].str.strip().str.len() > 0
+    out["issue_has_traceback"] = out["problem_statement"].str.contains(_TRACEBACK_RE)
+    out["issue_has_code_block"] = out["problem_statement"].str.contains("```", regex=False)
+
+    counts = out["patch"].apply(diff_line_counts)
+    out["patch_added"] = [c[0] for c in counts]
+    out["patch_deleted"] = [c[1] for c in counts]
+    out["patch_lines"] = out["patch_added"] + out["patch_deleted"]
+    files = out["patch"].apply(diff_files)
+    out["patch_files"] = files.apply(len)
+    out["patch_src_files"] = files.apply(lambda fs: [f for f in fs if not is_test_path(f)])
+    out["n_src_files"] = out["patch_src_files"].apply(len)
+    out["test_files"] = out["test_patch"].apply(diff_files)
+    has_patch = out["patch"].str.strip() != ""
+    if has_patch.any() and int(out["patch_files"].sum()) == 0:
+        LOG.warning("No file paths could be parsed from patches; first patch begins with: %r",
+                    out.loc[has_patch, "patch"].iloc[0][:120])
+    return out
+
+
+# --------------------------------------------------------------------------- #
+# EDA
+# --------------------------------------------------------------------------- #
+def run_eda(df: pd.DataFrame, eda_dir: Path) -> None:
+    """Write summary statistics and figures. Never raises into the caller."""
+    eda_dir.mkdir(parents=True, exist_ok=True)
+    num_cols = ["issue_words", "patch_added", "patch_deleted", "patch_lines",
+                "patch_files", "n_src_files"]
+
+    summary = df[num_cols].describe(percentiles=[0.5, 0.9]).T
+    LOG.info("Numeric summary:\n%s", summary.round(1).to_string())
+
+    per_repo = df.groupby("repo", observed=True).agg(
+        tasks=("instance_id", "count"),
+        median_patch_lines=("patch_lines", "median"),
+        median_issue_words=("issue_words", "median"),
+        pct_traceback=("issue_has_traceback", "mean"),
+        pct_hints=("has_hints", "mean"),
+    ).round(2)
+    LOG.info("Per-repository profile:\n%s", per_repo.to_string())
+
+    small = float((df["patch_lines"] <= 30).mean())
+    single = float((df["n_src_files"] <= 1).mean())
+    LOG.info("Share of reference patches with <=30 changed lines: %.1f%%; "
+             "touching <=1 source file: %.1f%%.", 100 * small, 100 * single)
+
+    corr = df[num_cols + ["issue_has_traceback", "has_hints"]].astype(float).corr(method="spearman")
+
+    stats = {
+        "n_tasks": int(len(df)),
+        "pct_patch_le_30_lines": round(100 * small, 1),
+        "pct_patch_le_1_src_file": round(100 * single, 1),
+        "per_repo": per_repo.reset_index().to_dict(orient="records"),
+    }
+    (eda_dir / "eda_summary.json").write_text(json.dumps(stats, indent=2, default=str))
+
+    fig, axes = plt.subplots(2, 3, figsize=(17, 9))
+    counts = df["repo"].value_counts()
+    axes[0, 0].barh(counts.index.astype(str), counts.values, color="#4e79a7")
+    axes[0, 0].set_title("Tasks per repository")
+    axes[0, 1].hist(df["issue_words"], bins=25, color="#59a14f")
+    axes[0, 1].set_title("Issue length (words)")
+    axes[0, 2].hist(np.log1p(df["patch_lines"]), bins=25, color="#f28e2b")
+    axes[0, 2].set_title("Reference patch size (log1p changed lines)")
+    files_hist = df["patch_files"].value_counts().sort_index()
+    axes[1, 0].bar(range(len(files_hist)), files_hist.values,
+                   tick_label=[str(int(i)) for i in files_hist.index], color="#e15759")
+    axes[1, 0].set_title("Files changed per reference patch")
+    groups = [g["patch_lines"].values for _, g in df.groupby("issue_has_traceback")]
+    labels = [f"traceback={k}" for k, _ in df.groupby("issue_has_traceback")]
+    try:
+        axes[1, 1].boxplot(groups, tick_labels=labels, showfliers=False)
+    except TypeError:  # matplotlib < 3.9
+        axes[1, 1].boxplot(groups, labels=labels, showfliers=False)
+    axes[1, 1].set_title("Patch size vs traceback in issue")
+    im = axes[1, 2].imshow(corr.values, cmap="coolwarm", vmin=-1, vmax=1)
+    axes[1, 2].set_xticks(range(len(corr)), corr.columns, rotation=60, ha="right", fontsize=7)
+    axes[1, 2].set_yticks(range(len(corr)), corr.index, fontsize=7)
+    axes[1, 2].set_title("Spearman correlation")
+    fig.colorbar(im, ax=axes[1, 2], shrink=0.7)
+    fig.tight_layout()
+    fig.savefig(eda_dir / "eda_overview.png", dpi=110)
+    plt.close(fig)
+
+
+def inspect_code_intel(data_dir: Path | None, sample: int = 3) -> None:
+    """Report the shape of the pre-computed AST graphs and embeddings (best effort)."""
+    if data_dir is None:
+        return
+    graphs_dir, emb_dir = data_dir / "graphs", data_dir / "embeddings"
+    graph_files = sorted(graphs_dir.glob("*.json")) if graphs_dir.is_dir() else []
+    emb_files = sorted(emb_dir.glob("*.npz")) if emb_dir.is_dir() else []
+    empty_graphs = sum(1 for p in graph_files if p.stat().st_size == 0)
+    empty_embs = sum(1 for p in emb_files if p.stat().st_size == 0)
+    LOG.info("Code intelligence files: %d graphs (%d empty), %d embedding archives (%d empty).",
+             len(graph_files), empty_graphs, len(emb_files), empty_embs)
+
+    shown = 0
+    for path in graph_files:
+        if shown >= sample:
+            break
+        try:
+            size = path.stat().st_size
+            if size == 0 or size > MAX_GRAPH_FILE_BYTES:
+                continue
+            data = json.loads(path.read_text(encoding="utf-8"))
+            edge_types = Counter(e.get("type", "unknown") for e in data.get("edges", []))
+            LOG.info("Graph %s: %d nodes, %d edges, edge types %s.", path.stem[:24],
+                     len(data.get("nodes", [])), len(data.get("edges", [])), dict(edge_types))
+            shown += 1
+        except Exception as exc:  # corrupt/odd files must not stop the run
+            LOG.debug("Skipping graph %s: %s", path.name, exc)
+
+    shown = 0
+    for path in emb_files:
+        if shown >= sample:
+            break
+        try:
+            if path.stat().st_size == 0:
+                continue
+            with np.load(path, allow_pickle=False) as npz:
+                keys = list(npz.files)
+                if keys:
+                    LOG.info("Embeddings %s: %d symbols, vector shape %s.", path.stem[:24],
+                             len(keys), npz[keys[0]].shape)
+                    shown += 1
+        except Exception as exc:  # EOFError, BadZipFile, ValueError, ...
+            LOG.debug("Skipping embeddings %s: %s", path.name, exc)
+
+
+# --------------------------------------------------------------------------- #
+# Repository priors (aggregated statistics only)
+# --------------------------------------------------------------------------- #
+def derive_repo_priors(df: pd.DataFrame | None, top_files: int = 5) -> dict[str, dict[str, Any]]:
+    """Per-repo patch-size and frequently-edited-file statistics."""
+    priors: dict[str, dict[str, Any]] = {}
+    if df is None or df.empty:
+        return priors
+    for repo, grp in df.groupby("repo", observed=True):
+        if str(repo) == "unknown":
+            continue
+        file_counts = Counter(f for fs in grp["patch_src_files"] for f in fs)
+        test_dirs = Counter(str(Path(f).parent) for fs in grp["test_files"] for f in fs)
+        priors[str(repo)] = {
+            "tasks": int(len(grp)),
+            "median_patch_lines": int(grp["patch_lines"].median()),
+            "p90_patch_lines": int(grp["patch_lines"].quantile(0.9)),
+            "top_files": [f for f, _ in file_counts.most_common(top_files)],
+            "test_dirs": [d for d, _ in test_dirs.most_common(2)],
+        }
+    return priors
+
+
+def priors_markdown(priors: dict[str, dict[str, Any]]) -> str:
+    if not priors:
+        return ""
+    lines = []
+    for repo, p in sorted(priors.items()):
+        files = ", ".join(p["top_files"]) or "n/a"
+        tests = ", ".join(p["test_dirs"]) or "n/a"
+        lines.append(f"- {repo}: median fix is {p['median_patch_lines']} changed lines "
+                     f"(90th percentile {p['p90_patch_lines']}). Source files most often "
+                     f"edited: {files}. Tests live in: {tests}.")
+    return "\n".join(lines).replace("{", "(").replace("}", ")")
+
+
+# --------------------------------------------------------------------------- #
+# Kaggle rerun compatibility: scoring-side file and environment diagnostics
+# --------------------------------------------------------------------------- #
+def describe_data_dir(data_dir: Path | None) -> None:
+    """Log the top-level contents once so scorer-side surprises are visible in the run log."""
+    if data_dir is None or not data_dir.is_dir():
+        return
+    try:
+        names = sorted(p.name + ("/" if p.is_dir() else "") for p in data_dir.iterdir())
+    except OSError as exc:
+        LOG.warning("Could not list %s: %s", data_dir, exc)
+        return
+    LOG.info("Dataset top level (%d entries): %s", len(names), ", ".join(names[:15]))
+    if any(n.startswith("kaggle_evaluation") for n in names):
+        LOG.warning("A kaggle_evaluation entry exists: the competition may require an inference server.")
+
+
+def find_sample_submission(data_dir: Path | None) -> Path | None:
+    if data_dir is None or not data_dir.is_dir():
+        return None
+    for pattern in ("sample_submission.parquet", "sample_submission.csv", "sample_submission.*"):
+        for hit in sorted(data_dir.glob(pattern)):
+            if hit.suffix.lower() in (".parquet", ".csv"):
+                return hit
+    return None
+
+
+def read_task_ids(data_dir: Path | None) -> list[str]:
+    """Unique instance ids from tasks.jsonl, independent of feature engineering."""
+    path = (data_dir / "tasks.jsonl") if data_dir else None
+    if path is None or not path.is_file():
+        return []
+    ids: list[str] = []
+    seen: set[str] = set()
+    with path.open("r", encoding="utf-8", errors="replace") as handle:
+        for line in handle:
+            try:
+                obj = json.loads(line)
+            except ValueError:
+                continue
+            iid = str(obj.get("instance_id", "")).strip() if isinstance(obj, dict) else ""
+            if iid and iid not in seen:
+                seen.add(iid)
+                ids.append(iid)
+    return ids
+
+
+def write_placeholder_parquet(data_dir: Path | None, out_path: Path) -> bool:
+    """
+    Write submission.parquet (columns: id, prediction) with one row per task. The real
+    patches are produced by the agent in the evaluation harness, so every row carries the
+    documented NO_PATCH placeholder; reference patches are never copied. A sample
+    submission, if the dataset ships one, is used as the template so ids and columns match.
+    """
+    sample_path = find_sample_submission(data_dir)
+    if sample_path is not None:
+        sample = (pd.read_parquet(sample_path) if sample_path.suffix.lower() == ".parquet"
+                  else pd.read_csv(sample_path))
+        cols = list(sample.columns)
+        if len(cols) >= 2:
+            out = sample.copy()
+            out[cols[1]] = PLACEHOLDER_PATCH
+            out.to_parquet(out_path, index=False)
+            LOG.info("Wrote %s from %s (%d rows).", out_path, sample_path.name, len(out))
+            return True
+    ids = read_task_ids(data_dir)
+    if not ids:
+        LOG.warning("No task ids available; submission.parquet was not written.")
+        return False
+    pd.DataFrame({"id": ids, "prediction": PLACEHOLDER_PATCH}).to_parquet(out_path, index=False)
+    LOG.info("Wrote %s (%d rows, placeholder predictions).", out_path, len(ids))
+    return True
+
+
+def log_outputs(work_dir: Path) -> None:
+    try:
+        items = [f"{p.name} ({p.stat().st_size} B)" if p.is_file() else f"{p.name}/"
+                 for p in sorted(work_dir.iterdir())]
+        LOG.info("Output directory %s: %s", work_dir, ", ".join(items))
+    except OSError:
+        pass
+
+
+# --------------------------------------------------------------------------- #
+# Bundle content
+# --------------------------------------------------------------------------- #
+def system_prompt(priors_md: str) -> str:
+    base = """You are an autonomous software engineer fixing one real issue in the Python repository checked out in /workspace. Your patch is applied to a fresh copy of the repository and hidden tests decide PASS or FAIL. Correct, minimal, targeted patches win.
+
+## Budget discipline
+- Call get_status first, then again roughly every 10 tool calls. It is free.
+- Your context window is small. Keep every command output short: use `| head -40`, grep with -n and a narrow path, and read_file with ranges of at most 100 lines.
+- When remaining turns or time drop below about 20 percent, stop exploring and finalize.
+- Always finish by calling submit_patch, even if you are unsure. A task without a submitted patch scores zero and a wrong patch costs nothing extra.
+
+## Workflow
+1. Understand: extract the failing behavior, the expected behavior, and any function, class, or error names from the issue.
+2. Locate: delegate navigation to the code_analyzer tool when the location is unclear. Otherwise use `grep -rn "<symbol>" <package_dir> | head -30` and read_file on the top candidates.
+3. Reproduce: write a tiny script in /tmp/repro.py that shows the bug, and run it. Skip this only if the bug cannot be exercised directly.
+4. Fix: use edit_file with an old_string that is an exact, unique snippet copied from read_file output (include neighbouring lines if it matched more than once). Change as little as possible, follow the surrounding code style, and fix the root cause rather than the symptom. Handle the edge cases the issue mentions.
+5. Verify: rerun /tmp/repro.py, then run the most relevant existing tests with `python3 -m pytest <test_path> -x -q 2>&1 | tail -25`. If the fix breaks unrelated tests, revise it.
+6. Clean up: never edit or add tests, conftest.py, or pytest.ini. Keep scratch files in /tmp. Run `git status --short` and `git diff --stat` and confirm only intended source files changed.
+7. Submit: call submit_patch.
+
+## Failure handling
+- If edit_file reports no match or multiple matches, re-read the exact lines and retry with more context. Do not rewrite whole files.
+- If a command times out, narrow it (single test file, single test name).
+- Do not repeat an identical failing command. Change the approach after two failures."""
+    if priors_md:
+        base += ("\n\n## Repository notes derived from training tasks\n"
+                 "Use these as hints for where to look first, not as facts about the current issue.\n"
+                 + priors_md)
+    return base + "\n"
+
+
+ANALYZER_PROMPT = """You are a code comprehension specialist. Locate the root cause of the issue you are given. You must never modify files.
+
+Method:
+1. Pull identifiers (functions, classes, parameters, error messages) from the issue.
+2. Call search_similar_code with those identifiers, then confirm candidates with grep through read_file or get_code_neighbors (callers and callees).
+3. Read only the relevant line ranges, at most 100 lines per call.
+4. Stop as soon as the responsible code is identified.
+
+Reply in under 200 words using exactly this format:
+- Files and lines: <path>:<start>-<end> for each relevant location
+- Root cause: one or two sentences
+- Suggested fix: the smallest change that resolves it, described in words or a short snippet
+- Tests to run: the most relevant existing test file or test name
+"""
+
+SKILL_MD = """---
+name: repo-navigation
+description: Playbook for locating the code responsible for an issue in Python library repositories using grep, call-graph tools, and targeted pytest runs.
+---
+
+# Repository navigation
+
+Read `resources/navigation_playbook.md` for the step-by-step search strategy and
+`resources/repo_priors.md` for statistics about where fixes usually land.
+"""
+
+PLAYBOOK_MD = """# Navigation playbook
+
+1. Search by exact error text or symbol names first; fall back to semantic search.
+2. From a candidate function, list callers and callees before editing to avoid breaking users of the function.
+3. Prefer editing the lowest-level function that contains the faulty logic.
+4. Check for sibling code paths (sync and async variants, similar helpers) that share the bug.
+5. Run only the tests in the module you touched; full suites exceed the command timeout.
+"""
+
+
+def sampling_yaml(cfg: Config) -> str:
+    return (
+        "# Generation limits sized for a 32k-token context on the evaluation GPUs.\n"
+        "temperature: 0.2\n"
+        "top_p: 0.95\n"
+        "top_k: 40\n"
+        f"max_output_tokens: {cfg.max_output_tokens}\n"
+        "thinking_config:\n"
+        f"  thinking_budget: {cfg.thinking_budget}\n"
+        "  include_thoughts: false\n"
+    )
+
+
+def analyzer_yaml(with_adapter: bool) -> str:
+    adapter = "adapter: tool_lora\n" if with_adapter else ""
+    return (
+        "name: code_analyzer\n"
+        f"model: {MODEL_ALIAS}\n"
+        "description: Read-only analyzer that locates the root cause using code graphs and file reads.\n"
+        "instruction: !include ../prompts/analyzer.md\n"
+        "generate_content_config: !include ../configs/sampling.yaml\n"
+        f"{adapter}"
+        "tools:\n"
+        "  - read_file\n"
+        "  - search_similar_code\n"
+        "  - get_code_neighbors\n"
+        "  - get_code_subgraph\n"
+    )
+
+
+def root_yaml(with_adapter: bool) -> str:
+    adapter = "adapter: main_lora\n" if with_adapter else ""
+    return (
+        "name: root_coder_agent\n"
+        f"model: {MODEL_ALIAS}\n"
+        "description: Autonomous software engineering agent that drafts minimal bug-fix patches.\n"
+        "instruction: !include prompts/system.md\n"
+        "generate_content_config: !include configs/sampling.yaml\n"
+        f"{adapter}"
+        "tools:\n"
+        "  - run_command\n"
+        "  - read_file\n"
+        "  - edit_file\n"
+        "  - write_file\n"
+        "  - submit_patch\n"
+        "  - get_status\n"
+        "  - agent_tool:\n"
+        "      config_path: sub_agents/code_analyzer.yaml\n"
+        "      skip_summarization: true\n"
+    )
+
+
+# --------------------------------------------------------------------------- #
+# LoRA adapter handling
+# --------------------------------------------------------------------------- #
+def validate_adapter_dir(path: Path) -> list[str]:
+    """Return a list of problems that would make the adapter unusable at serving time."""
+    errors: list[str] = []
+    cfg_path, weights = path / "adapter_config.json", path / "adapter_model.safetensors"
+    if not cfg_path.is_file():
+        errors.append(f"{path}: adapter_config.json missing")
+    if not weights.is_file() or weights.stat().st_size == 0:
+        errors.append(f"{path}: adapter_model.safetensors missing or empty")
+    if errors:
+        return errors
+
+    try:
+        cfg = json.loads(cfg_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        return [f"{cfg_path}: unreadable ({exc})"]
+    if str(cfg.get("peft_type", "LORA")).upper() != "LORA":
+        errors.append(f"{cfg_path}: peft_type must be LORA")
+    rank = cfg.get("r")
+    if isinstance(rank, int) and rank > MAX_LORA_RANK:
+        errors.append(f"{cfg_path}: rank r={rank} exceeds {MAX_LORA_RANK}; the server may refuse to load it")
+    if cfg.get("modules_to_save"):
+        errors.append(f"{cfg_path}: modules_to_save is not supported for serving LoRA adapters")
+
+    try:  # safetensors layout: 8-byte little-endian header length + JSON header
+        with weights.open("rb") as fh:
+            (header_len,) = struct.unpack("<Q", fh.read(8))
+            if header_len <= 0 or header_len > weights.stat().st_size:
+                raise ValueError("invalid header length")
+            json.loads(fh.read(header_len))
+    except (OSError, ValueError, struct.error) as exc:
+        errors.append(f"{weights}: not a valid safetensors file ({exc})")
+    return errors
+
+
+def stage_adapter(src: Path | None, name: str, bundle_dir: Path) -> bool:
+    """Copy a validated adapter into adapters/<name>. Returns True if staged."""
+    if src is None:
+        return False
+    if not src.is_dir():
+        LOG.warning("Adapter path %s does not exist; building without '%s'.", src, name)
+        return False
+    problems = validate_adapter_dir(src)
+    if problems:
+        for msg in problems:
+            LOG.error(msg)
+        LOG.warning("Adapter '%s' rejected; building without it.", name)
+        return False
+    dest = bundle_dir / "adapters" / name
+    dest.mkdir(parents=True, exist_ok=True)
+    for fname in ("adapter_config.json", "adapter_model.safetensors"):
+        shutil.copy2(src / fname, dest / fname)
+    LOG.info("Staged adapter '%s' from %s.", name, src)
+    return True
+
+
+# --------------------------------------------------------------------------- #
+# Bundle build, validation, packaging
+# --------------------------------------------------------------------------- #
+def write_text(path: Path, text: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8", newline="\n")
+
+
+def build_bundle(cfg: Config, priors: dict[str, dict[str, Any]]) -> None:
+    bundle = cfg.bundle_dir
+    if bundle.exists():
+        shutil.rmtree(bundle)
+    bundle.mkdir(parents=True)
+
+    has_main = stage_adapter(cfg.main_adapter, "main_lora", bundle)
+    has_tool = stage_adapter(cfg.tool_adapter, "tool_lora", bundle)
+    priors_md = priors_markdown(priors)
+
+    write_text(bundle / "agent.yaml", root_yaml(has_main))
+    write_text(bundle / "configs" / "sampling.yaml", sampling_yaml(cfg))
+    write_text(bundle / "prompts" / "system.md", system_prompt(priors_md))
+    write_text(bundle / "prompts" / "analyzer.md", ANALYZER_PROMPT)
+    write_text(bundle / "sub_agents" / "code_analyzer.yaml", analyzer_yaml(has_tool))
+    if cfg.with_skills:  # optional; the same guidance is already in the system prompt
+        skill = bundle / "skills" / "repo-navigation"
+        write_text(skill / "SKILL.md", SKILL_MD)
+        write_text(skill / "resources" / "navigation_playbook.md", PLAYBOOK_MD)
+        write_text(skill / "resources" / "repo_priors.md",
+                   "# Where fixes usually land\n\n" + (priors_md or "No repository statistics available.") + "\n")
+
+
+def _yaml_loader():
+    """SafeLoader that resolves `!include` to a marker so paths can be checked."""
+    class Loader(yaml.SafeLoader):
+        pass
+
+    def include(loader: Loader, node: yaml.Node) -> dict[str, str]:
+        return {"__include__": loader.construct_scalar(node)}
+
+    Loader.add_constructor("!include", include)
+    return Loader
+
+
+def validate_bundle(bundle: Path) -> list[str]:
+    """Mirror the documented submission checks. Returns a list of errors."""
+    errors: list[str] = []
+    roots = [n for n in ("agent.yaml", "agent.yml", "root_agent.yaml", "root_agent.yml")
+             if (bundle / n).is_file()]
+    if len(roots) != 1:
+        errors.append(f"expected exactly one root config at archive root, found {roots}")
+
+    total = 0
+    for path in bundle.rglob("*"):
+        if not path.is_file():
+            continue
+        total += path.stat().st_size
+        if path.suffix.lower() not in ALLOWED_EXTS:
+            errors.append(f"disallowed file extension: {path.relative_to(bundle)}")
+    if total > MAX_BUNDLE_BYTES:
+        errors.append(f"bundle is {total} bytes, above the 3 GiB limit")
+
+    if yaml is None:
+        LOG.warning("PyYAML unavailable; skipping YAML structure checks.")
+        return errors
+
+    loader = _yaml_loader()
+    models: set[str] = set()
+    adapters_used: set[str] = set()
+    for yml in sorted(bundle.rglob("*.y*ml")):
+        try:
+            doc = yaml.load(yml.read_text(encoding="utf-8"), Loader=loader)
+        except yaml.YAMLError as exc:
+            errors.append(f"{yml.relative_to(bundle)}: invalid YAML ({exc})")
+            continue
+        if not isinstance(doc, dict):
+            continue
+        if "model" in doc:
+            models.add(str(doc["model"]))
+        if "adapter" in doc:
+            adapters_used.add(str(doc["adapter"]))
+        for key, value in doc.items():
+            if isinstance(value, dict) and "__include__" in value:
+                target = (yml.parent / value["__include__"]).resolve()
+                if not target.is_file():
+                    errors.append(f"{yml.relative_to(bundle)}: {key} includes missing file {value['__include__']}")
+        for tool in doc.get("tools", []) or []:
+            if isinstance(tool, str) and tool not in BUILTIN_TOOLS:
+                errors.append(f"{yml.relative_to(bundle)}: unknown tool '{tool}'")
+            elif isinstance(tool, dict) and "agent_tool" in tool:
+                cfg_rel = (tool["agent_tool"] or {}).get("config_path", "")
+                if not (yml.parent / cfg_rel).is_file():
+                    errors.append(f"{yml.relative_to(bundle)}: agent_tool config '{cfg_rel}' not found")
+
+    for md in sorted((bundle / "prompts").glob("*.md")) if (bundle / "prompts").is_dir() else []:
+        if re.search(r"[{}]", md.read_text(encoding="utf-8")):
+            errors.append(f"{md.relative_to(bundle)}: contains braces, which ADK treats as template variables")
+    skills_root = bundle / "skills"
+    for skill_dir in sorted(p for p in skills_root.iterdir() if p.is_dir()) if skills_root.is_dir() else []:
+        if not re.fullmatch(r"[a-z0-9]+(-[a-z0-9]+)*", skill_dir.name):
+            errors.append(f"skills/{skill_dir.name}: skill directory names must be kebab-case")
+        skill_md = skill_dir / "SKILL.md"
+        head = skill_md.read_text(encoding="utf-8").split("---")[1] if skill_md.is_file() and skill_md.read_text(encoding="utf-8").startswith("---") else ""
+        match = re.search(r"^name:\s*(\S+)\s*$", head, re.MULTILINE)
+        if not match or match.group(1) != skill_dir.name:
+            errors.append(f"skills/{skill_dir.name}: SKILL.md frontmatter name must equal the directory name")
+
+    if models != {MODEL_ALIAS}:
+        errors.append(f"agents must all use model '{MODEL_ALIAS}', found {sorted(models)}")
+    for name in adapters_used:
+        errors.extend(validate_adapter_dir(bundle / "adapters" / name))
+    return errors
+
+
+def package_zip(bundle: Path, zip_path: Path) -> None:
+    if zip_path.exists():
+        zip_path.unlink()
+    files = sorted(p for p in bundle.rglob("*") if p.is_file() and not p.name.startswith("."))
+    with zipfile.ZipFile(zip_path, "w") as zf:
+        for path in files:
+            method = zipfile.ZIP_STORED if path.suffix == ".safetensors" else zipfile.ZIP_DEFLATED
+            zf.write(path, path.relative_to(bundle).as_posix(), compress_type=method)
+
+
+def verify_zip(zip_path: Path) -> list[str]:
+    """Re-open the archive, check layout, extract to a temp dir, and re-validate."""
+    errors: list[str] = []
+    with zipfile.ZipFile(zip_path) as zf:
+        bad = zf.testzip()
+        if bad:
+            errors.append(f"corrupt member in zip: {bad}")
+        names = zf.namelist()
+        if "agent.yaml" not in names:
+            errors.append("agent.yaml is not at the archive root")
+        if any(n.startswith(("/", "..")) or "/../" in n for n in names):
+            errors.append("archive contains unsafe paths")
+        if not errors:
+            with tempfile.TemporaryDirectory() as tmp:
+                zf.extractall(tmp)
+                errors.extend(validate_bundle(Path(tmp)))
+    return errors
+
+
+# --------------------------------------------------------------------------- #
+# Optional LoRA training (experimental, off by default, needs a large GPU)
+# --------------------------------------------------------------------------- #
+def train_lora(df: pd.DataFrame, base_model_dir: str, out_dir: Path, epochs: int = 2,
+               max_len: int = 4096, lr: float = 1e-4, grad_accum: int = 8, seed: int = 0) -> Path:
+    """
+    Single-turn SFT: issue text -> reference diff. Attention-only LoRA, rank 16.
+    Heavy imports are local so the default path needs no GPU libraries.
+    """
+    import random
+
+    import torch
+    from peft import LoraConfig, get_peft_model
+    from transformers import AutoModelForCausalLM, AutoTokenizer
+
+    random.seed(seed)
+    torch.manual_seed(seed)
+    tok = AutoTokenizer.from_pretrained(base_model_dir)
+    model = AutoModelForCausalLM.from_pretrained(
+        base_model_dir, torch_dtype=torch.bfloat16, device_map="auto")
+    model.gradient_checkpointing_enable()
+    model.enable_input_require_grads()
+    model = get_peft_model(model, LoraConfig(
+        r=MAX_LORA_RANK, lora_alpha=32, lora_dropout=0.05, task_type="CAUSAL_LM",
+        target_modules=["q_proj", "k_proj", "v_proj", "o_proj"]))
+    model.print_trainable_parameters()
+
+    examples = []
+    for row in df.itertuples():
+        if not row.patch.strip():
+            continue
+        prompt = tok.apply_chat_template(
+            [{"role": "user", "content": f"Repository: {row.repo}\n\nIssue:\n{row.problem_statement[:6000]}\n\n"
+                                         "Write the minimal unified diff that fixes it."}],
+            add_generation_prompt=True, tokenize=False)
+        p_ids = tok(prompt, add_special_tokens=False)["input_ids"]
+        t_ids = tok(row.patch + tok.eos_token, add_special_tokens=False)["input_ids"]
+        if len(p_ids) + len(t_ids) > max_len:
+            continue  # skip rather than truncate, to avoid training on cut-off diffs
+        examples.append((p_ids, t_ids))
+    LOG.info("LoRA training on %d of %d tasks.", len(examples), len(df))
+    if not examples:
+        raise RuntimeError("no training examples fit within max_len")
+
+    params = [p for p in model.parameters() if p.requires_grad]
+    opt = torch.optim.AdamW(params, lr=lr, weight_decay=0.0)
+    device = next(model.parameters()).device
+    model.train()
+    step = 0
+    for epoch in range(epochs):
+        random.shuffle(examples)
+        for p_ids, t_ids in examples:
+            ids = torch.tensor([p_ids + t_ids], device=device)
+            labels = torch.tensor([[-100] * len(p_ids) + t_ids], device=device)  # loss on diff only
+            loss = model(input_ids=ids, labels=labels).loss / grad_accum
+            loss.backward()
+            step += 1
+            if step % grad_accum == 0:
+                torch.nn.utils.clip_grad_norm_(params, 1.0)
+                opt.step()
+                opt.zero_grad(set_to_none=True)
+        LOG.info("Epoch %d/%d finished, last loss %.4f.", epoch + 1, epochs, loss.item() * grad_accum)
+
+    out_dir.mkdir(parents=True, exist_ok=True)
+    model.save_pretrained(out_dir, safe_serialization=True)
+    return out_dir
+
+
+# --------------------------------------------------------------------------- #
+# Entry point
+# --------------------------------------------------------------------------- #
+def parse_args(argv: list[str] | None) -> argparse.Namespace:
+    ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    ap.add_argument("--data-dir", default=None, help="Directory containing tasks.jsonl")
+    default_work = "/kaggle/working" if Path("/kaggle/working").is_dir() else "."
+    ap.add_argument("--work-dir", default=default_work, help="Where submission.zip is written")
+    ap.add_argument("--main-adapter", default=None, help="PEFT LoRA dir for the root agent")
+    ap.add_argument("--tool-adapter", default=None, help="PEFT LoRA dir for the analyzer sub-agent")
+    ap.add_argument("--skip-eda", action="store_true", help="Skip EDA figures for the fastest run")
+    ap.add_argument("--with-skills", action="store_true",
+                    help="Also ship the optional skills/ folder (off by default)")
+    ap.add_argument("--with-parquet", action="store_true",
+                    help="Also write a placeholder submission.parquet (off by default)")
+    ap.add_argument("--keep-bundle", action="store_true",
+                    help="Keep the unzipped bundle in <work-dir>/submission_bundle for inspection")
+    ap.add_argument("--max-output-tokens", type=int, default=8192)
+    ap.add_argument("--thinking-budget", type=int, default=4096)
+    ap.add_argument("--train-lora", action="store_true", help="Experimental: train a LoRA first")
+    ap.add_argument("--base-model-dir", default=None, help="Local path of the base model (training only)")
+    ap.add_argument("--lora-epochs", type=int, default=2)
+    args, unknown = ap.parse_known_args(argv)  # tolerate Jupyter's extra kernel arguments
+    if unknown:
+        LOG.debug("Ignoring unrecognized arguments: %s", unknown)
+    return args
+
+
+def main(argv: list[str] | None = None) -> int:
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s",
+                        datefmt="%H:%M:%S", stream=sys.stdout, force=True)
+    args = parse_args(argv)
+    work_dir = Path(args.work_dir)
+    work_dir.mkdir(parents=True, exist_ok=True)
+    # Keep /kaggle/working clean: the unzipped bundle is built in a temp dir by default.
+    bundle_dir = (work_dir / "submission_bundle" if args.keep_bundle
+                  else Path(tempfile.mkdtemp(prefix="agent_bundle_")))
+    cfg = Config(
+        data_dir=find_data_dir(args.data_dir),
+        work_dir=work_dir,
+        main_adapter=Path(args.main_adapter) if args.main_adapter else None,
+        tool_adapter=Path(args.tool_adapter) if args.tool_adapter else None,
+        run_eda=not args.skip_eda and not os.environ.get("KAGGLE_IS_COMPETITION_RERUN"),
+        max_output_tokens=args.max_output_tokens,
+        thinking_budget=args.thinking_budget,
+        bundle_dir=bundle_dir,
+        with_skills=args.with_skills,
+    )
+    LOG.info("Data directory: %s", cfg.data_dir)
+    if os.environ.get("KAGGLE_IS_COMPETITION_RERUN"):
+        LOG.info("Competition rerun detected: EDA is skipped.")
+    describe_data_dir(cfg.data_dir)
+
+    # Data analysis is best effort: any failure here still yields a valid zip.
+    df: pd.DataFrame | None = None
+    try:
+        df = load_tasks(cfg.data_dir)
+        if df is not None:
+            df = add_features(df)
+    except Exception as exc:
+        LOG.warning("Task loading failed (%s); building without dataset statistics.", exc)
+        df = None
+
+    if df is not None and cfg.run_eda:
+        try:
+            run_eda(df, cfg.eda_dir)
+        except Exception as exc:
+            LOG.warning("EDA skipped: %s", exc)
+        try:
+            inspect_code_intel(cfg.data_dir)
+        except Exception as exc:
+            LOG.warning("Code-intelligence inspection skipped: %s", exc)
+
+    if args.train_lora:
+        if df is None or not args.base_model_dir:
+            LOG.error("--train-lora needs tasks.jsonl and --base-model-dir; skipping training.")
+        else:
+            try:
+                cfg.main_adapter = train_lora(df, args.base_model_dir,
+                                              cfg.work_dir / "adapters_out" / "main_lora",
+                                              epochs=args.lora_epochs)
+            except Exception as exc:  # fall back to a prompt-only submission
+                LOG.error("LoRA training failed (%s); continuing without an adapter.", exc)
+
+    try:
+        priors = derive_repo_priors(df)
+    except Exception as exc:
+        LOG.warning("Could not derive repository priors (%s).", exc)
+        priors = {}
+
+    def build_and_package() -> list[str]:
+        build_bundle(cfg, priors)
+        found = validate_bundle(cfg.bundle_dir)
+        if not found:
+            package_zip(cfg.bundle_dir, cfg.zip_path)
+            found = verify_zip(cfg.zip_path)
+        return found
+
+    try:
+        try:
+            problems = build_and_package()
+        except Exception as exc:  # retry once with the plainest configuration
+            LOG.error("Bundle build failed (%s); retrying without adapters or repo hints.", exc)
+            cfg.main_adapter = cfg.tool_adapter = None
+            priors = {}
+            problems = build_and_package()
+    finally:
+        if not args.keep_bundle:
+            shutil.rmtree(cfg.bundle_dir, ignore_errors=True)
+
+    if problems:
+        for msg in problems:
+            LOG.error("Validation: %s", msg)
+        return 1
+
+    with zipfile.ZipFile(cfg.zip_path) as zf:
+        listing = ", ".join(zf.namelist())
+    LOG.info("Wrote %s (%.1f KB): %s", cfg.zip_path, cfg.zip_path.stat().st_size / 1024, listing)
+
+    if args.with_parquet:
+        try:
+            write_placeholder_parquet(cfg.data_dir, cfg.work_dir / "submission.parquet")
+        except Exception as exc:  # the zip is the primary deliverable; never fail on this
+            LOG.warning("Placeholder submission.parquet skipped: %s", exc)
+    log_outputs(cfg.work_dir)
+    return 0
+
+
+if __name__ == "__main__":
+    # Never call sys.exit() on success: inside a notebook it raises SystemExit and the
+    # run is reported as failed. Exit non-zero only when the submission is invalid.
+    _rc = main()
+    if _rc:
+        sys.exit(_rc)

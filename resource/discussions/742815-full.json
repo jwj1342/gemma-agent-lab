@@ -1,0 +1,161 @@
+{
+  "forumTopic": {
+    "authorId": 8939556,
+    "authorThumbnailName": "8939556-kg.png?t=2025-08-22-16-55-54",
+    "authorUserDisplayName": "Ashley Oldacre",
+    "authorUserName": "ashleyoldacre",
+    "comments": [
+      {
+        "id": 3532685,
+        "postDate": "2026-10-04T12:01:26.573Z",
+        "rawMarkdown": "Please review this discussion https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/745775",
+        "content": "<p>Please review this discussion <a href=\"https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/745775\" target=\"_blank\">https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/745775</a></p>",
+        "parent": {},
+        "author": {
+          "displayName": "ming zhao99",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/mingzhao99",
+          "tier": "CONTRIBUTOR",
+          "id": 4182392,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "ming zhao99",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+            "url": "/mingzhao99",
+            "userName": "mingzhao99",
+            "tier": "CONTRIBUTOR",
+            "id": 4182392,
+            "profileUrl": "/mingzhao99",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 4182392,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3529586,
+        "postDate": "2026-09-28T15:13:10.203Z",
+        "rawMarkdown": "I get invalid invite error in discord, is it a problem in my side or others have the same problem as well?",
+        "content": "<p>I get invalid invite error in discord, is it a problem in my side or others have the same problem as well?</p>",
+        "parent": {},
+        "author": {
+          "displayName": "Rashid Khazeiynasab",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/36710367-kg.jpg?t=2026-09-21-14-59-06",
+          "url": "/rashidel1988",
+          "tier": "CONTRIBUTOR",
+          "id": 36710367,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 956,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Rashid Khazeiynasab",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/36710367-kg.jpg?t=2026-09-21-14-59-06",
+            "url": "/rashidel1988",
+            "userName": "rashidel1988",
+            "tier": "CONTRIBUTOR",
+            "id": 36710367,
+            "profileUrl": "/rashidel1988",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 36710367,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3527365,
+      "postDate": "2026-09-23T16:34:50.717Z",
+      "rawMarkdown": "### Information for newbies\n\nWelcome! \n**New to machine learning and data science?** No question is too basic or too simple. Feel free to start your own thread, or use this thread as a place to post any first-timer clarifying questions for the Kaggle community to help you with!\n\n**New to Kaggle?** Take a look at a few videos to learn a bit more about [site etiquette](https://www.youtube.com/watch?v=aIus8si_Et0), [Kaggle lingo](https://www.youtube.com/watch?v=sEJHyuWKd-s), and [how to enter a competition using Kaggle Notebooks](https://www.youtube.com/watch?&v=GJBOMWpLpTQ). Publish and share your [models on Kaggle Models](https://www.kaggle.com/docs/models#publishing-a-model)!\n\n**Participants under 18 years old:** If you are under 18 years old and want to participate in this competition, you need to submit a couple of forms:\n- Form #1: [Parent/Guardian consent for minor's use of kaggle.com](https://www.kaggle.com/guardian-consent-minor-use). You only have to fill this out once, and it is valid for any competitions on Kaggle. If you already filled this out in the past, you can move on to the next form. \n- Form #2: [Parent/Guardian consent for minor's participation in Kaggle competition](https://www.kaggle.com/consent-minors-process). You have to fill out form #2 for this and any future competitions you want to join. \nKids under 13 years of age are not allowed to participate on Kaggle. If you have any questions, please leave a comment and we'll follow up with you!\n\n**Looking for a team?** Express your interest in joining a team through our [Team Up](https://www.kaggle.com/discussions/product-feedback/341195) feature.\n\n**Remember**: Kaggle is for everyone. Whether you're teaming up or sharing tips in the competition forum, we expect everyone to follow our Kaggle community guidelines.\n\n### Competition's Official Discord\nIn addition to this competition forum, you can continue the discussion in our official Kaggle Discord Server here:\n# [discord.gg/kaggle](http://discord.gg/kaggle)\n \nThe Discord is a great place to ask getting started questions, chat about the nuances of this competition, and connect with potential team mates. Learn more about Discord at our [announcement here](https://www.kaggle.com/discussions/general/429933). Here are a few things to keep in mind though:\n\n**1. Discord Competition Channels are 'Public' - Don't Share Private Information**\n\nDiscord channels for specific competitions are considered 'public' spaces where you are allowed to talk about competition details. Please remember that private sharing of competition code or data outside of your team is, as always, not permitted. Code sharing must always be done publicly through the Kaggle forums/notebooks.\n\n**2. Discord Competition Channels are Not Monitored by Staff - Keep Important Information on the Kaggle Forums**\n\nKaggle Staff and Hosts running competitions will not monitor Discord or be available to answer questions in Discord. This is intended to be a more casual space to discuss competitions and help each other. Please keep important questions, insights, writeups, and other valuable conversation on the Kaggle forums. \n\nHappy modeling! ",
+      "content": "<h3>Information for newbies</h3>\n<p>Welcome! \n<strong>New to machine learning and data science?</strong> No question is too basic or too simple. Feel free to start your own thread, or use this thread as a place to post any first-timer clarifying questions for the Kaggle community to help you with!</p>\n<p><strong>New to Kaggle?</strong> Take a look at a few videos to learn a bit more about <a href=\"https://www.youtube.com/watch?v=aIus8si_Et0\" target=\"_blank\">site etiquette</a>, <a href=\"https://www.youtube.com/watch?v=sEJHyuWKd-s\" target=\"_blank\">Kaggle lingo</a>, and <a href=\"https://www.youtube.com/watch?&amp;v=GJBOMWpLpTQ\" target=\"_blank\">how to enter a competition using Kaggle Notebooks</a>. Publish and share your <a href=\"https://www.kaggle.com/docs/models#publishing-a-model\" target=\"_blank\">models on Kaggle Models</a>!</p>\n<p><strong>Participants under 18 years old:</strong> If you are under 18 years old and want to participate in this competition, you need to submit a couple of forms:</p>\n<ul>\n<li>Form #1: <a href=\"https://www.kaggle.com/guardian-consent-minor-use\" target=\"_blank\">Parent/Guardian consent for minor's use of kaggle.com</a>. You only have to fill this out once, and it is valid for any competitions on Kaggle. If you already filled this out in the past, you can move on to the next form. </li>\n<li>Form #2: <a href=\"https://www.kaggle.com/consent-minors-process\" target=\"_blank\">Parent/Guardian consent for minor's participation in Kaggle competition</a>. You have to fill out form #2 for this and any future competitions you want to join. \nKids under 13 years of age are not allowed to participate on Kaggle. If you have any questions, please leave a comment and we'll follow up with you!</li>\n</ul>\n<p><strong>Looking for a team?</strong> Express your interest in joining a team through our <a href=\"https://www.kaggle.com/discussions/product-feedback/341195\" target=\"_blank\">Team Up</a> feature.</p>\n<p><strong>Remember</strong>: Kaggle is for everyone. Whether you're teaming up or sharing tips in the competition forum, we expect everyone to follow our Kaggle community guidelines.</p>\n<h3>Competition's Official Discord</h3>\n<p>In addition to this competition forum, you can continue the discussion in our official Kaggle Discord Server here:</p>\n<h1><a href=\"http://discord.gg/kaggle\" target=\"_blank\">discord.gg/kaggle</a></h1>\n<p>The Discord is a great place to ask getting started questions, chat about the nuances of this competition, and connect with potential team mates. Learn more about Discord at our <a href=\"https://www.kaggle.com/discussions/general/429933\" target=\"_blank\">announcement here</a>. Here are a few things to keep in mind though:</p>\n<p><strong>1. Discord Competition Channels are 'Public' - Don't Share Private Information</strong></p>\n<p>Discord channels for specific competitions are considered 'public' spaces where you are allowed to talk about competition details. Please remember that private sharing of competition code or data outside of your team is, as always, not permitted. Code sharing must always be done publicly through the Kaggle forums/notebooks.</p>\n<p><strong>2. Discord Competition Channels are Not Monitored by Staff - Keep Important Information on the Kaggle Forums</strong></p>\n<p>Kaggle Staff and Hosts running competitions will not monitor Discord or be available to answer questions in Discord. This is intended to be a more casual space to discuss competitions and help each other. Please keep important questions, insights, writeups, and other valuable conversation on the Kaggle forums. </p>\n<p>Happy modeling! </p>",
+      "parent": {},
+      "author": {
+        "displayName": "Ashley Oldacre",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/8939556-kg.png?t=2025-08-22-16-55-54",
+        "url": "/ashleyoldacre",
+        "tier": "STAFF",
+        "id": 8939556,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "totalVotes": 5,
+        "canUpvote": true,
+        "totalUpvotes": 6
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "reactions": [
+        {
+          "emoji": "LOVE",
+          "featuredUserNames": [
+            "yashraj2308",
+            "cuongduc",
+            "carsonrodrigues",
+            "senku04",
+            "philgear",
+            "ambr1942",
+            "ahmedalmarwani",
+            "danielolajide",
+            "i1ravenov",
+            "ivaniam",
+            "johnnydougherty",
+            "theayankhan",
+            "mehraty12",
+            "iamjgarciao"
+          ],
+          "userCount": 14
+        }
+      ],
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ashley Oldacre",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/8939556-kg.png?t=2025-08-22-16-55-54",
+          "url": "/ashleyoldacre",
+          "userName": "ashleyoldacre",
+          "tier": "STAFF",
+          "id": 8939556,
+          "profileUrl": "/ashleyoldacre",
+          "performanceTier": "STAFF",
+          "userId": 8939556,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3527365,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 742815,
+    "isStickied": true,
+    "name": "How to get started + Competition's Official Discord",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-23T16:34:50.717019200Z",
+    "totalVotes": 5,
+    "url": "/competitions/gemma-4-developer-agent/discussion/742815",
+    "totalMessages": 2,
+    "authorPerformanceTier": "STAFF",
+    "authorProgressionOptOut": false
+  }
+}

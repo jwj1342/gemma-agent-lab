@@ -1,0 +1,57 @@
+{
+  "forumTopic": {
+    "authorId": 33335299,
+    "authorThumbnailName": "default-thumb.png",
+    "authorUserDisplayName": "Dron Adhikari",
+    "authorUserName": "dronadhikari",
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3532834,
+      "postDate": "2026-10-04T21:27:50.287Z",
+      "rawMarkdown": "In the starter notebook, tests that import inline_snapshot fail at collection with ModuleNotFoundError (e.g. fastapi tasks where tests/ use from inline_snapshot import snapshot). The wheels/ folder has no inline-snapshot wheel. Is this expected in the scoring environment too, or does the scorer env have it installed?",
+      "content": "<p>In the starter notebook, tests that import inline_snapshot fail at collection with ModuleNotFoundError (e.g. fastapi tasks where tests/ use from inline_snapshot import snapshot). The wheels/ folder has no inline-snapshot wheel. Is this expected in the scoring environment too, or does the scorer env have it installed?</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Dron Adhikari",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+        "url": "/dronadhikari",
+        "tier": "CONTRIBUTOR",
+        "id": 33335299,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "canUpvote": true
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Dron Adhikari",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/dronadhikari",
+          "userName": "dronadhikari",
+          "tier": "CONTRIBUTOR",
+          "id": 33335299,
+          "profileUrl": "/dronadhikari",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 33335299,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3532834,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 745850,
+    "name": "inline_snapshot wheel missing for notebook environment but required by tasks",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-10-04T21:27:50.285237900Z",
+    "url": "/competitions/gemma-4-developer-agent/discussion/745850",
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

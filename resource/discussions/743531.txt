@@ -1,0 +1,29 @@
+# Local Models (E4B/E2B) possible? Separate LB likely?
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743531
+
+## 3528536 /chonkymfer TOPIC
+Hello, since the 31B model is too chonky to likely run on most local machines out there, and since there does seem to be a big interest in the smaller more efficient models...
+
+It might be possible to have 2 LBs, although idk how prize money split will work lmao
+
+## 3531014 /aelhajj COMMENT
+Not ideal, but since many seem to struggle locally (as did I), you can use it via HuggingFace Inference, I have been able to run a lot of tests with the exact model, less than 10$. 
+
+## 3531091 /chonkymfer TOPIC
+My original comment was not about GPU cost (indeed Kaggle gives a decent quota there) but more about the utility of the coding agent that is the final outcome of the competition.
+
+## 3529027 /chonkymfer TOPIC
+lmao all the losers from the shitty small seed funded AI labs downvoting this... tell me... what justification do you have? A good coding agent that runs locally on almost every laptop is literally the pinnacle of local AI. Why not have a fair competition with actual tangible benefits for the environment and independent developers instead of focusing on a model that basically only runs on a server or needs a minimum 5k euro investment to run locally?
+
+## 3528580 /amjadehakt COMMENT
+I think having a separate leaderboard for E2B/E4B would be a great idea.
+
+The 31B model is quite demanding for many participants, especially those working with local hardware. A smaller-model track could make the competition more accessible and encourage more developers to experiment with local/edge deployment.
+
+It would also be interesting to compare the trade-off between model size, agent performance, inference speed, and hardware requirements.
+
+Hopefully the organizers can consider a separate E2B/E4B leaderboard if the competition rules allow it.
+
+
+## 3529053 /doaimabt COMMENT
+Yeah ... I can't run it in my PC (8GB VRAM only) so I can't check my model first ...

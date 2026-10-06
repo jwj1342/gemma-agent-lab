@@ -1,0 +1,1452 @@
+# CELL 0 markdown
+# GraphLoc end to end: does a localization skill help the Gemma 4 agent resolve issues?
+
+Companion notebook to the Paper Track writeup *Where Does the Graph Help? A Localization Audit of Gemma 4 Agent Code Graphs* (GraphLoc). The earlier notebooks measured localization; this one measures **resolved issues**.
+
+* **Pipeline.** The official `swegemma` harness from the competition wheelhouse, used as in the Getting Started notebook: Phase 1 runs the agent in a sandbox copy of the repository, Phase 2 applies its patch to a fresh copy, adds the task's `test_patch` and runs the tests. Kaggle has no Docker, so both phases use the harness's subprocess sandbox (Python 3.12). The model is `gemma-4-31b-it-qat-w4a16-ct`, served with vLLM on 4 x L4 as in the Getting Started notebook.
+* **Sandbox check.** Four test packages that the Kaggle image lacks are installed offline (wheels from the notebook `graphloc-e2e-test-deps`) and IPython's extra Pygments lexers are hidden. Every reference patch then goes through Phase 2, and the agents are compared on the tasks whose reference patch passes here.
+* **Agents.** `base` = the competition's sample-submission prompt with all nine tools (without its placeholder LoRA adapters and analyzer sub-agent); `skill` = `base` + the `graph-localize` ADK skill (BM25 + personalized PageRank over a code graph rebuilt from source, run inside the sandbox with `run_skill_script`) + one workflow step telling the agent to run it first. Same sampling (temperature 0.2, thinking budget 4,096) and the same per-task budget (40 tool calls, 25 minutes); both agents' runs of a task are scheduled side by side, 12 runs at a time.
+* **Outputs.** `e2e/records/*.jsonl` (one line per run, with the agent's patch), harness traces and logs under `e2e/results/`, and `e2e/e2e_summary.json`.
+
+# CELL 1 markdown
+## Setup
+
+# CELL 2 code
+import glob
+import importlib
+import os
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+# Configure environment variables for offline vLLM serving and LiteLLM routing
+os.environ['LITELLM_LOCAL_MODEL_COST_MAP'] = 'True'
+os.environ['TRANSFORMERS_NO_TF'] = '1'
+os.environ['VLLM_WORKER_MULTIPROC_METHOD'] = 'spawn'
+os.environ['VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS'] = '1'
+os.environ['VLLM_ENGINE_READY_TIMEOUT_S'] = '1200'
+os.environ['VLLM_NO_USAGE_STATS'] = '1'
+os.environ['OTEL_SDK_DISABLED'] = 'true'
+os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
+
+WHEELHOUSE_DIR = Path('/kaggle/input/datasets/metric/gemma-4-developer-agent-wheelhouse')
+
+# Remove broken cutlass .pth hooks if present
+for pth_pattern in (
+    '/usr/local/lib/python*/dist-packages/*cutlass*.pth',
+    '/usr/local/lib/python*/site-packages/*cutlass*.pth',
+):
+    for pth in glob.glob(pth_pattern):
+        try:
+            os.unlink(pth)
+        except OSError:
+            pass
+
+# Restore PEP 440 '+cu128' wheel filenames stripped by Kaggle dataset uploads
+tmp_whl = Path('/tmp/wheelhouse')
+tmp_whl.mkdir(parents=True, exist_ok=True)
+for w in WHEELHOUSE_DIR.glob('*.whl'):
+    if 'cutlass' in w.name.lower():
+        continue
+    target_name = (
+        w.name.replace('cu128', '+cu128')
+        if ('cu128' in w.name and '+' not in w.name)
+        else w.name
+    )
+    target = tmp_whl / target_name
+    if not target.exists():
+        os.symlink(w, target)
+
+wheels = sorted(str(w) for w in tmp_whl.glob('*.whl'))
+print(f'Installing {len(wheels)} wheels from {WHEELHOUSE_DIR}...')
+subprocess.run(
+    [sys.executable, '-m', 'pip', 'install', '-q', '--no-deps', '--force-reinstall', *wheels],
+    check=True,
+)
+importlib.invalidate_caches()
+print('Wheelhouse installation complete.')
+
+# CELL 3 code
+import os
+os.makedirs('/kaggle/working/e2e/skill_src/scripts', exist_ok=True)
+
+# CELL 4 code
+# The Kaggle image lacks packages that the public tasks' test suites import (the competition's Docker image has them),
+# and IPython registers extra Pygments lexers that change rich's lexer guessing. Fix both before any sandbox is built.
+# The wheels come from the companion notebook graphloc-e2e-test-deps (the GPU session has no internet).
+import glob, re, subprocess, sys
+deps = sorted(glob.glob('/kaggle/input/notebooks/*/graphloc-e2e-test-deps/testdeps')
+              or glob.glob('/kaggle/input/notebooks/**/testdeps', recursive=True))
+print('test dependency wheels:', deps)
+r = subprocess.run([sys.executable, '-m', 'pip', 'install', '-q', '--no-index', f'--find-links={deps[0]}',
+                    'inline-snapshot', 'dirty-equals', 'pytest-httpbin', 'trustme'], capture_output=True, text=True)
+print('pip', r.returncode, r.stderr[-800:])
+for ep in glob.glob('/usr/local/lib/python3*/dist-packages/ipython*.dist-info/entry_points.txt'):
+    txt = open(ep).read()
+    new = re.sub(r'\[pygments\.lexers\][^\[]*', '', txt)
+    if new != txt:
+        open(ep, 'w').write(new)
+        print('removed the Pygments lexer entry points of', ep.split('/')[-2])
+
+# CELL 5 code
+%%writefile /kaggle/working/e2e/skill_src/SKILL.md
+---
+name: graph-localize
+description: Rank the functions, methods and classes (including async ones) most likely to need a change for the current issue. Offline BM25 plus personalized PageRank over a code graph rebuilt from the repository source. Run it before reading files.
+---
+# graph-localize
+
+Offline, standard-library-only localizer for Python repositories (about 2 seconds on a repository with 1,000 files).
+
+## How to run
+
+Call `run_skill_script` with:
+
+- `skill_name`: `graph-localize`
+- `file_path`: `scripts/localize.py`
+- `args`: `{"issue": "<problem statement: its key sentences, identifiers, file names and error messages>", "k": 15}`
+
+The script finds the repository by itself (`/workspace`, or the directory the command runs in).
+
+## Output
+
+One line per candidate, most likely first: `rank  score  path:line  qualified.name`.
+
+## How to use the output
+
+1. Read the top 3 to 5 candidates with `read_file`, starting at the printed line.
+2. If none of them fits, read further down this list before expanding graph neighbours; in our study, reading deeper in the lexical ranking beat one-hop graph expansion at the same inspection budget.
+3. `get_code_neighbors` and `search_similar_code` do not know any `async def`; do not conclude that an async function does not exist because those tools cannot find it.
+
+# CELL 6 code
+%%writefile /kaggle/working/e2e/skill_src/scripts/localize.py
+#!/usr/bin/env python3
+"""graph-localize: stdlib-only, offline issue -> code localizer for SWE agents.
+
+Ranks functions/methods/classes (sync AND async) of a Python repository for a natural
+language issue: BM25 over definition source + personalized PageRank over a repaired
+code graph (containment + imports + name-resolved references), fused by reciprocal rank.
+
+Usage inside an agent sandbox (or as an ADK skill script via run_skill_script):
+    python localize.py --issue "text ..." --k 15          # root: --root, else /workspace, else $PWD
+    python localize.py --issue-file /tmp/issue.txt --root /workspace
+Prints `rank  score  path:line  qualified.name` lines. No third-party packages needed.
+"""
+import argparse, ast, collections, math, os, re, sys
+
+TEST_RE = re.compile(r'(^|/)(tests?|testing)/|(^|/)test_[^/]*\.py$|_test\.py$|(^|/)conftest\.py$')
+SKIP_DIRS = {'.git', '.hg', '.tox', '.venv', 'venv', 'env', 'node_modules', 'build', 'dist', '__pycache__', 'site-packages'}
+STOP = set('''a an the and or not is are was were be been being to of in on for with as at by from into that this these those it its
+if else elif then than so such but can could should would will may might must do does did done have has had having we you i he she they
+them our your their my me us there here when where which who whom what why how all any some no nor only own same too very just also
+def class return import self cls none true false pass raise try except finally while lambda yield async await global nonlocal assert del
+use used using get set new like one two need needs want wants issue bug fix fixes fixed error errors problem example code python
+please thanks thank hi hello following see e g eg etc via make makes made would'''.split())
+CAMEL = re.compile(r'[A-Z]+(?=[A-Z][a-z])|[A-Z]?[a-z]+|[A-Z]+|\d+')
+WORD = re.compile(r'[A-Za-z_][A-Za-z0-9_]*')
+
+
+def tokenize(text):
+    out = []
+    for w in WORD.findall(text):
+        lw = w.lower().strip('_')
+        if len(lw) > 1 and lw not in STOP:
+            out.append(lw)
+        subs = [s.lower() for part in w.split('_') if part for s in CAMEL.findall(part)]
+        if len(subs) > 1:
+            out.extend(s for s in subs if len(s) > 1 and s not in STOP)
+    return out
+
+
+def module_name(path):
+    parts = path[:-3].split('/')
+    if parts[-1] == '__init__':
+        parts = parts[:-1]
+    if len(parts) > 1 and parts[0] in ('src', 'lib'):
+        parts = parts[1:]
+    return '.'.join(parts)
+
+
+def read_repo(root):
+    files = {}
+    for d, dirs, fs in os.walk(root):
+        dirs[:] = [x for x in dirs if x not in SKIP_DIRS and not x.startswith('.')]
+        for f in fs:
+            if f.endswith('.py'):
+                p = os.path.relpath(os.path.join(d, f), root).replace(os.sep, '/')
+                try:
+                    with open(os.path.join(d, f), encoding='utf-8', errors='replace') as fh:
+                        files[p] = fh.read()
+                except OSError:
+                    pass
+    return files
+
+
+def build(files):
+    """Nodes: module + non-nested defs (sync+async). Edges: contains, imports, references."""
+    nodes, meta = [], {}
+    edges = []
+    per = []
+    for path, src in files.items():
+        try:
+            tree = ast.parse(src)
+        except (SyntaxError, ValueError):
+            continue
+        mod = module_name(path)
+        lines = src.split('\n')
+        nodes.append(mod); meta[mod] = (path, 1, 'module', '\n'.join(lines[:40]))
+        defs = []
+
+        def visit(node, prefix):
+            for ch in ast.iter_child_nodes(node):
+                if isinstance(ch, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                    q = prefix + [ch.name]
+                    nid = mod + '.' + '.'.join(q)
+                    start = min([d.lineno for d in ch.decorator_list] + [ch.lineno])
+                    kind = 'class' if isinstance(ch, ast.ClassDef) else 'def'
+                    nodes.append(nid); meta[nid] = (path, start, kind, '\n'.join(lines[start - 1:ch.end_lineno]))
+                    edges.append((nid.rpartition('.')[0], nid))
+                    defs.append((nid, ch, kind))
+                    if kind == 'class':
+                        visit(ch, q)
+                elif not isinstance(ch, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)):
+                    visit(ch, prefix)
+        visit(tree, [])
+        per.append((path, mod, tree, defs))
+    idset = set(nodes)
+    by_name = collections.defaultdict(list)
+    for n in nodes:
+        if meta[n][2] != 'module':
+            by_name[n.rpartition('.')[2]].append(n)
+    for path, mod, tree, defs in per:
+        imp = {}
+        pkg = mod if path.endswith('__init__.py') else mod.rpartition('.')[0]
+        for st in ast.walk(tree):
+            if isinstance(st, ast.Import):
+                for a in st.names:
+                    imp[a.asname or a.name.split('.')[0]] = a.name if a.asname else a.name.split('.')[0]
+            elif isinstance(st, ast.ImportFrom):
+                base = st.module or ''
+                if st.level:
+                    p = pkg.split('.') if pkg else []
+                    p = p[:len(p) - (st.level - 1)] if st.level > 1 else p
+                    base = '.'.join([x for x in p if x] + ([base] if base else []))
+                for a in st.names:
+                    if a.name != '*':
+                        imp[a.asname or a.name] = (base + '.' + a.name) if base else a.name
+        for alias, tgt in imp.items():
+            t = tgt
+            while t and t not in idset:
+                t = t.rpartition('.')[0]
+            if t and t != mod:
+                edges.append((mod, t))
+        local = {n.rpartition('.')[2]: n for n, _, _ in defs if n.count('.') == mod.count('.') + 1}
+        for nid, node, kind in defs:
+            cls = nid.rpartition('.')[0] if kind != 'class' else nid
+            body = node.body if kind != 'class' else [s for s in node.body if not isinstance(s, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))] + list(node.bases)
+            tg = set()
+            for st in body + list(node.decorator_list):
+                for x in ast.walk(st):
+                    if isinstance(x, ast.Name) and isinstance(x.ctx, ast.Load):
+                        if x.id in local:
+                            tg.add(local[x.id])
+                        elif x.id in imp and imp[x.id] in idset:
+                            tg.add(imp[x.id])
+                    elif isinstance(x, ast.Attribute) and isinstance(x.value, ast.Name):
+                        if x.value.id in ('self', 'cls') and cls + '.' + x.attr in idset:
+                            tg.add(cls + '.' + x.attr)
+                        elif x.value.id in imp and imp[x.value.id] + '.' + x.attr in idset:
+                            tg.add(imp[x.value.id] + '.' + x.attr)
+                        elif not x.attr.startswith('__') and 1 <= len(by_name.get(x.attr, ())) <= 2:
+                            tg.update(by_name[x.attr])
+            edges.extend((nid, t) for t in tg if t != nid)
+    return nodes, meta, edges
+
+
+def bm25(docs, query, k1=1.2, b=0.75):
+    N = len(docs)
+    if not N:
+        return []
+    avg = sum(len(d) for d in docs) / N
+    df = collections.Counter(t for d in docs for t in set(d))
+    q = set(query)
+    out = []
+    for d in docs:
+        tf = collections.Counter(t for t in d if t in q)
+        s = 0.0
+        for t, c in tf.items():
+            idf = math.log(1 + (N - df[t] + 0.5) / (df[t] + 0.5))
+            s += idf * c * (k1 + 1) / (c + k1 * (1 - b + b * len(d) / avg))
+        out.append(s)
+    return out
+
+
+def mentions(text):
+    ms = set(re.findall(r'\b[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)+\b', text))
+    for code in re.findall(r'`{1,3}([^`]{1,400}?)`{1,3}', text, flags=re.S):
+        ms.update(w for w in re.findall(r'[A-Za-z_][\w]*(?:\.[A-Za-z_]\w*)*', code) if len(w) >= 3 and w.lower() not in STOP)
+    ms.update(w for w in WORD.findall(text) if len(w) >= 4 and ('_' in w.strip('_') or re.search(r'[a-z][A-Z]', w) or re.match(r'^[A-Z][a-z]+[A-Z]', w)))
+    ms.update(re.findall(r'\bin ([A-Za-z_]\w+)\s*$', text, flags=re.M))  # traceback frames
+    return {m.strip('.') for m in ms if not re.fullmatch(r'[\d.]+', m)}
+
+
+def rank(files, issue, k=15, alpha=0.3, iters=30, include_tests=False):
+    issue = re.sub(r'<!--.*?-->', ' ', issue, flags=re.S)
+    issue = re.sub(r'https?://\S+', ' ', issue)  # links add noise tokens (github, com, ...)
+    nodes, meta, edges = build(files)
+    idx = {n: i for i, n in enumerate(nodes)}
+    cand = [i for i, n in enumerate(nodes) if meta[n][2] != 'module' and (include_tests or not TEST_RE.search(meta[n][0]))]
+    q = tokenize(issue)
+    sc = bm25([tokenize(nodes[i].replace('.', ' ') + ' ' + meta[nodes[i]][3]) for i in cand], q)
+    s_bm = {i: s for i, s in zip(cand, sc) if s > 0}
+    r_bm = sorted(s_bm, key=lambda i: -s_bm[i])
+    # seeds: symbols named in the issue (exact / suffix / case-insensitive match, <=5 matches) + BM25 top-5
+    seeds = collections.Counter()
+    lower = collections.defaultdict(list)
+    for n in nodes:
+        lower[n.rpartition('.')[2].lower()].append(n)
+    anchors = set()
+    for m in mentions(issue):
+        hits = [m] if m in idx else [n for n in nodes if n.endswith('.' + m)] or lower.get(m.lower(), [])
+        if 1 <= len(hits) <= 5:
+            anchors.update(hits)
+    for a in anchors:
+        seeds[idx[a]] += 0.5 / len(anchors)
+    top = r_bm[:5]
+    mass = 0.5 if anchors else 1.0
+    z = sum(1.0 / (r + 1) for r in range(len(top)))
+    for r, i in enumerate(top):
+        seeds[i] += mass * (1.0 / (r + 1)) / z
+    adj = collections.defaultdict(set)
+    for s, t in edges:
+        if s in idx and t in idx and s != t:
+            adj[idx[s]].add(idx[t]); adj[idx[t]].add(idx[s])
+    x = dict(seeds)
+    for _ in range(iters if seeds else 0):
+        nx = collections.defaultdict(float)
+        for i, v in x.items():
+            nb = adj.get(i)
+            if nb:
+                share = (1 - alpha) * v / len(nb)
+                for j in nb:
+                    nx[j] += share
+        for i, v in seeds.items():
+            nx[i] += alpha * v
+        x = nx
+    candset = set(cand)
+    r_ppr = sorted((i for i in x if i in candset and x[i] > 0), key=lambda i: -x[i])
+    fused = collections.defaultdict(float)
+    for rk in (r_bm, r_ppr):
+        for r, i in enumerate(rk):
+            fused[i] += 1.0 / (61 + r)
+    order = sorted(fused, key=lambda i: -fused[i])[:k]
+    return [(nodes[i], meta[nodes[i]][0], meta[nodes[i]][1], round(fused[i], 5)) for i in order]
+
+
+def find_root(given):
+    """The agent sandbox runs skill scripts from a temporary copy of the skill, so '.' is not the
+    repository: use --root if it exists, else /workspace, else the directory the command started in."""
+    for c in (given, '/workspace', os.environ.get('PWD'), os.getcwd()):
+        if c and os.path.isdir(c) and (os.path.isdir(os.path.join(c, '.git')) or c == given):
+            return c
+    return given or '.'
+
+
+def main(argv=None):
+    argv = list(sys.argv[1:] if argv is None else argv)
+    for i, a in enumerate(argv[:-1]):  # keep issue text that starts with '-' as a value
+        if a in ('--issue', '--query'):
+            argv[i:i + 2] = [a + '=' + argv[i + 1]]
+            break
+    ap = argparse.ArgumentParser(description=__doc__.split('\n')[0])
+    ap.add_argument('--root', default=None)
+    ap.add_argument('--issue', '--query', dest='issue')
+    ap.add_argument('--issue-file')
+    ap.add_argument('--k', type=int, default=15)
+    ap.add_argument('--include-tests', action='store_true')
+    ap.add_argument('text', nargs='*')
+    a = ap.parse_args(argv)
+    issue = a.issue or ' '.join(a.text) or (open(a.issue_file, encoding='utf-8', errors='replace').read() if a.issue_file else sys.stdin.read())
+    root = find_root(a.root)
+    res = rank(read_repo(root), issue, k=a.k, include_tests=a.include_tests)
+    print(f'# graph-localize: top {len(res)} definitions for the issue in {root} (rank score path:line name)')
+    for r, (nid, path, line, s) in enumerate(res, 1):
+        print(f'{r:>2}  {s:.4f}  {path}:{line}  {nid}')
+
+
+if __name__ == '__main__':
+    main()
+
+# CELL 7 code
+%%writefile /kaggle/working/e2e/graphloc.py
+"""graphloc: gold localization labels, retrieval baselines and a repaired code
+graph (G+) for the Gemma 4 Developer Agent tasks.  Stdlib + numpy + scipy only.
+"""
+import ast, collections, gzip, json, math, os, pickle, re, tarfile
+import numpy as np
+import scipy.sparse as sp
+
+D = os.environ.get('GL_DATA', '/kaggle/input/competitions/gemma-4-developer-agent')
+
+# --------------------------------------------------------------------------- paths
+TEST_RE = re.compile(r'(^|/)(tests?|testing)/|(^|/)test_[^/]*\.py$|_test\.py$|(^|/)conftest\.py$')
+
+
+def is_test_path(p):
+    return bool(TEST_RE.search(p))
+
+
+def is_test_id(i):
+    parts = i.split('.')
+    return any(x in ('tests', 'test', 'testing', 'conftest') or x.startswith('test_') for x in parts[:3])
+
+
+# --------------------------------------------------------------------------- patches
+HUNK_RE = re.compile(r'^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@')
+
+
+def _strip_path(s):
+    s = s.split('\t')[0].strip()
+    if s == '/dev/null':
+        return None
+    if s[:2] in ('a/', 'b/'):
+        s = s[2:]
+    return s
+
+
+def parse_patch(patch):
+    """Return list of dicts: old, new, removed (old line numbers), added (new line numbers)."""
+    files, cur = [], None
+    lines = patch.splitlines()
+    rem_old = rem_new = 0
+    old_ln = new_ln = 0
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        if rem_old <= 0 and rem_new <= 0:
+            if line.startswith('--- ') and i + 1 < len(lines) and lines[i + 1].startswith('+++ '):
+                cur = {'old': _strip_path(line[4:]), 'new': _strip_path(lines[i + 1][4:]),
+                       'removed': set(), 'added': set()}
+                files.append(cur)
+                i += 2
+                continue
+            m = HUNK_RE.match(line)
+            if m and cur is not None:
+                old_ln, new_ln = int(m.group(1)), int(m.group(3))
+                rem_old = int(m.group(2)) if m.group(2) is not None else 1
+                rem_new = int(m.group(4)) if m.group(4) is not None else 1
+            i += 1
+            continue
+        if line.startswith('\\'):
+            i += 1
+            continue
+        if line.startswith('-'):
+            cur['removed'].add(old_ln); old_ln += 1; rem_old -= 1
+        elif line.startswith('+'):
+            cur['added'].add(new_ln); new_ln += 1; rem_new -= 1
+        else:  # context (' ' or empty line)
+            old_ln += 1; new_ln += 1; rem_old -= 1; rem_new -= 1
+        i += 1
+    return files
+
+
+def apply_patch_to_files(files_src, patch):
+    """Tiny unified-diff applier (exact line positions) -> dict path->new source.
+    Only used to reconstruct post-patch versions of the edited files."""
+    out = {}
+    lines = patch.splitlines()
+    i = 0
+    while i < len(lines):
+        if lines[i].startswith('--- ') and i + 1 < len(lines) and lines[i + 1].startswith('+++ '):
+            old, new = _strip_path(lines[i][4:]), _strip_path(lines[i + 1][4:])
+            src = files_src.get(old, '') if old else ''
+            olines = src.split('\n')
+            res, pos = [], 0  # pos: index into olines (0-based)
+            i += 2
+            while i < len(lines) and not (lines[i].startswith('--- ') and i + 1 < len(lines) and lines[i + 1].startswith('+++ ')):
+                m = HUNK_RE.match(lines[i])
+                if not m:
+                    i += 1
+                    continue
+                ostart = int(m.group(1))
+                ocnt = int(m.group(2)) if m.group(2) is not None else 1
+                ncnt = int(m.group(4)) if m.group(4) is not None else 1
+                start_idx = ostart - 1 if ocnt > 0 else ostart
+                res.extend(olines[pos:start_idx]); pos = start_idx
+                i += 1
+                ro, rn = ocnt, ncnt
+                while i < len(lines) and (ro > 0 or rn > 0):
+                    l = lines[i]
+                    if l.startswith('\\'):
+                        i += 1; continue
+                    if l.startswith('-'):
+                        pos += 1; ro -= 1
+                    elif l.startswith('+'):
+                        res.append(l[1:]); rn -= 1
+                    else:
+                        res.append(olines[pos] if pos < len(olines) else l[1:]); pos += 1; ro -= 1; rn -= 1
+                    i += 1
+            res.extend(olines[pos:])
+            if new:
+                out[new] = '\n'.join(res)
+            continue
+        i += 1
+    return out
+
+
+# --------------------------------------------------------------------------- AST definitions
+def extract_defs(src):
+    """All class/function definitions with qualified names relative to the module.
+    Each def: qual, kind (class|func|async), start, end, nested (inside a function), async_chain."""
+    try:
+        tree = ast.parse(src)
+    except (SyntaxError, ValueError):
+        return None, set(), None
+    out = []
+
+    def visit(node, prefix, in_func, async_chain):
+        for ch in ast.iter_child_nodes(node):
+            if isinstance(ch, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                q = prefix + [ch.name]
+                kind = 'class' if isinstance(ch, ast.ClassDef) else ('async' if isinstance(ch, ast.AsyncFunctionDef) else 'func')
+                ac = async_chain or kind == 'async'
+                start = min([d.lineno for d in ch.decorator_list] + [ch.lineno])
+                out.append({'qual': '.'.join(q), 'name': ch.name, 'kind': kind, 'start': start,
+                            'end': ch.end_lineno, 'nested': in_func, 'async_chain': ac, 'node': ch})
+                visit(ch, q, in_func or kind != 'class', ac)
+            else:
+                visit(ch, prefix, in_func, async_chain)
+
+    visit(tree, [], False, False)
+    imports = set()
+    for st in tree.body:
+        if isinstance(st, (ast.Import, ast.ImportFrom)):
+            imports.update(range(st.lineno, (st.end_lineno or st.lineno) + 1))
+    return out, imports, tree
+
+
+def enclosing_def(defs, line):
+    """Innermost non-nested definition containing `line` (1-based) or None."""
+    best = None
+    for d in defs:
+        if d['nested']:
+            continue
+        if d['start'] <= line <= d['end']:
+            if best is None or (d['end'] - d['start']) < (best['end'] - best['start']):
+                best = d
+    return best
+
+
+# --------------------------------------------------------------------------- module naming
+def module_candidates(path):
+    parts = path[:-3].split('/')
+    if parts[-1] == '__init__':
+        parts = parts[:-1]
+    return ['.'.join(parts[k:]) for k in range(0, max(1, min(3, len(parts))))] if parts else ['']
+
+
+def assign_modules(files_defs, graph_ids):
+    """Map each .py file to the module prefix that best matches graph node ids."""
+    modmap, strip_votes = {}, collections.defaultdict(collections.Counter)
+    for path, defs in files_defs.items():
+        if not defs:
+            continue
+        tops = [d['qual'] for d in defs if not d['nested'] and '.' not in d['qual']]
+        best, best_k, best_score = None, None, 0
+        for k, m in enumerate(module_candidates(path)):
+            sc = sum((m + '.' + q) in graph_ids for q in tops) if m else 0
+            if sc > best_score:
+                best, best_k, best_score = m, k, sc
+        if best is not None:
+            modmap[path] = best
+            strip_votes[path.split('/')[0]][best_k] += 1
+    for path in files_defs:
+        if path in modmap:
+            continue
+        votes = strip_votes.get(path.split('/')[0])
+        k = votes.most_common(1)[0][0] if votes else 0
+        c = module_candidates(path)
+        modmap[path] = c[min(k, len(c) - 1)]
+    return modmap
+
+
+# --------------------------------------------------------------------------- data loading
+def load_tasks():
+    return [json.loads(l) for l in open(f'{D}/tasks.jsonl')]
+
+
+def resource_path(task, tasks, kind):
+    ext = 'json' if kind == 'graphs' else 'npz'
+    short = task['instance_id'].split('_')[0]
+    names = [task['instance_id'], f"{short}_{task['base_commit']}"]
+    names += [t['instance_id'] for t in tasks if t['base_commit'] == task['base_commit']]
+    for n in names:
+        p = f'{D}/{kind}/{n}.{ext}'
+        if os.path.exists(p) and os.path.getsize(p) > 100:
+            return p
+    return None
+
+
+def load_snapshot_py(task_id, cache_dir='/kaggle/working/snapcache'):
+    os.makedirs(cache_dir, exist_ok=True)
+    cp = f'{cache_dir}/{task_id}.pkl.gz'
+    if os.path.exists(cp):
+        with gzip.open(cp, 'rb') as f:
+            return pickle.load(f)
+    files = {}
+    with tarfile.open(f'{D}/snapshots/{task_id}.tgz', 'r:gz') as tf:
+        for m in tf:
+            if not (m.isfile() and m.name.endswith('.py')):
+                continue
+            name = m.name[2:] if m.name.startswith('./') else m.name
+            if name.startswith('.git/') or '/.git/' in name:
+                continue
+            files[name] = tf.extractfile(m).read().decode('utf-8', 'replace')
+    with gzip.open(cp, 'wb') as f:
+        pickle.dump(files, f)
+    return files
+
+
+class Graph:
+    """Undirected view of a code graph + node texts."""
+
+    def __init__(self, ids, texts, edges):
+        self.ids = list(ids)
+        self.idx = {n: i for i, n in enumerate(self.ids)}
+        self.texts = list(texts)
+        rows, cols = [], []
+        for s, t in edges:
+            a, b = self.idx.get(s), self.idx.get(t)
+            if a is None or b is None or a == b:
+                continue
+            rows += [a, b]; cols += [b, a]
+        n = len(self.ids)
+        A = sp.csr_matrix((np.ones(len(rows), dtype=np.float32), (rows, cols)), shape=(n, n))
+        A.data[:] = 1.0
+        A.sum_duplicates(); A.data[:] = 1.0
+        self.A = A
+        self.deg = np.asarray(A.sum(1)).ravel()
+        self.n_edges = int(A.nnz // 2)
+
+    @classmethod
+    def from_json(cls, path):
+        g = json.load(open(path))
+        return cls([n['id'] for n in g['nodes']], [n.get('text') or '' for n in g['nodes']],
+                   [(e['source'], e['target']) for e in g['edges']])
+
+    def hops_from(self, seeds, max_hops=6):
+        dist = np.full(len(self.ids), np.inf)
+        frontier = [s for s in seeds]
+        for s in frontier:
+            dist[s] = 0
+        h = 0
+        indptr, indices = self.A.indptr, self.A.indices
+        while frontier and h < max_hops:
+            h += 1
+            nxt = []
+            for u in frontier:
+                for v in indices[indptr[u]:indptr[u + 1]]:
+                    if dist[v] == np.inf:
+                        dist[v] = h; nxt.append(v)
+            frontier = nxt
+        return dist
+
+    def ppr(self, seed_weights, alpha=0.3, iters=30):
+        n = len(self.ids)
+        p0 = np.zeros(n, dtype=np.float64)
+        for i, w in seed_weights.items():
+            p0[i] += w
+        if p0.sum() <= 0:
+            return p0
+        p0 /= p0.sum()
+        dinv = np.where(self.deg > 0, 1.0 / np.maximum(self.deg, 1), 0.0)
+        P = self.A.T.multiply(dinv).tocsr()  # column-normalised transition (x -> P x)
+        x = p0.copy()
+        for _ in range(iters):
+            x = alpha * p0 + (1 - alpha) * (P @ x)
+        return x
+
+
+# --------------------------------------------------------------------------- text & BM25
+STOP = set('''a an the and or not is are was were be been being to of in on for with as at by from into that this these those it its
+if else elif then than so such but can could should would will may might must do does did done have has had having we you i he she they
+them our your their my me us there here when where which who whom what why how all any some no nor only own same too very just also
+def class return import self cls none true false pass raise try except finally while lambda yield async await global nonlocal assert del
+use used using get set new like one two need needs want wants issue bug fix fixes fixed error errors problem example code python
+please thanks thank hi hello following see e g eg etc via make makes made would'''.split())
+CAMEL = re.compile(r'[A-Z]+(?=[A-Z][a-z])|[A-Z]?[a-z]+|[A-Z]+|\d+')
+WORD = re.compile(r'[A-Za-z_][A-Za-z0-9_]*')
+
+
+def tokenize(text):
+    toks = []
+    for w in WORD.findall(text):
+        lw = w.lower().strip('_')
+        if len(lw) > 1 and lw not in STOP:
+            toks.append(lw)
+        subs = [s.lower() for part in w.split('_') if part for s in CAMEL.findall(part)]
+        if len(subs) > 1:
+            toks.extend(s for s in subs if len(s) > 1 and s not in STOP)
+    return toks
+
+
+class BM25:
+    def __init__(self, docs, k1=1.2, b=0.75):
+        self.k1, self.b = k1, b
+        self.N = len(docs)
+        self.len = np.array([len(d) for d in docs], dtype=np.float64)
+        self.avg = self.len.mean() if self.N else 0.0
+        post = collections.defaultdict(list)
+        for i, d in enumerate(docs):
+            for t, c in collections.Counter(d).items():
+                post[t].append((i, c))
+        self.post = {t: (np.array([i for i, _ in v]), np.array([c for _, c in v], dtype=np.float64)) for t, v in post.items()}
+
+    def score(self, query):
+        s = np.zeros(self.N)
+        if not self.N:
+            return s
+        for t in set(query):
+            if t not in self.post:
+                continue
+            ids, tf = self.post[t]
+            idf = math.log(1 + (self.N - len(ids) + 0.5) / (len(ids) + 0.5))
+            s[ids] += idf * tf * (self.k1 + 1) / (tf + self.k1 * (1 - self.b + self.b * self.len[ids] / max(self.avg, 1e-9)))
+        return s
+
+
+def clean_issue(text):
+    text = re.sub(r'<!--.*?-->', ' ', text, flags=re.S)
+    text = re.sub(r'https?://\S+', ' ', text)
+    return text
+
+
+# --------------------------------------------------------------------------- anchors (symbol mentions)
+def extract_mentions(text):
+    text = clean_issue(text)
+    ms = set()
+    for code in re.findall(r'`{1,3}([^`]{1,400}?)`{1,3}', text, flags=re.S):
+        for w in re.findall(r'[A-Za-z_][\w]*(?:\.[A-Za-z_]\w*)*', code):
+            if len(w) >= 3 and w.lower() not in STOP:
+                ms.add(w)
+    ms.update(re.findall(r'\b[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)+\b', text))
+    for w in WORD.findall(text):
+        if len(w) >= 4 and ('_' in w.strip('_') or re.search(r'[a-z][A-Z]', w) or re.match(r'^[A-Z][a-z]+[A-Z]', w)):
+            ms.add(w)
+    ms.update(re.findall(r'\bin ([A-Za-z_]\w+)\s*$', text, flags=re.M))  # traceback frames
+    return {m.strip('.') for m in ms if not re.fullmatch(r'[\d.]+', m)}
+
+
+def resolve_symbol(q, ids, lower_map=None):
+    """Emulates the harness 4-tier resolution: exact -> '.'/'/' suffix -> case-insensitive -> substring.
+    Returns (tier, sorted matches)."""
+    if q in ids:
+        return 1, [q]
+    suf = [i for i in ids if i.endswith('.' + q) or i.endswith('/' + q)]
+    if suf:
+        return 2, sorted(suf, key=lambda s: (len(s), s))
+    ql = q.lower()
+    ci = [i for i in ids if i.lower() == ql or i.lower().endswith('.' + ql)]
+    if ci:
+        return 3, sorted(ci, key=lambda s: (len(s), s))
+    sub = [i for i in ids if q in i]
+    if sub:
+        return 4, sorted(sub, key=lambda s: (len(s), s))
+    return 0, []
+
+
+# --------------------------------------------------------------------------- G+ (repaired graph)
+def _import_table(tree, module, is_pkg):
+    tab = {}
+    pkg = module if is_pkg else module.rpartition('.')[0]
+    for st in ast.walk(tree):
+        if isinstance(st, ast.Import):
+            for a in st.names:
+                tab[a.asname or a.name.split('.')[0]] = a.name if a.asname else a.name.split('.')[0]
+        elif isinstance(st, ast.ImportFrom):
+            base = st.module or ''
+            if st.level:
+                p = pkg.split('.') if pkg else []
+                if st.level > 1:
+                    p = p[:len(p) - (st.level - 1)]
+                base = '.'.join([x for x in p if x] + ([base] if base else []))
+            for a in st.names:
+                if a.name == '*':
+                    continue
+                tab[a.asname or a.name] = (base + '.' + a.name) if base else a.name
+    return tab
+
+
+def build_gplus(files, modmap, include_tests=True):
+    """Build a repaired graph from source files: module/class/function (sync+async) nodes,
+    contains + imports + calls/references edges resolved by lightweight name analysis."""
+    nodes, texts, node_file, kinds = [], [], {}, {}
+    edges = []
+    per_file = {}
+    for path, src in files.items():
+        if not include_tests and is_test_path(path):
+            continue
+        res = extract_defs(src)
+        if res[0] is None:
+            continue
+        defs, _, tree = res
+        mod = modmap.get(path) or module_candidates(path)[0]
+        per_file[path] = (mod, defs, tree)
+        lines = src.split('\n')
+        nodes.append(mod); texts.append('\n'.join(lines[:60])); node_file[mod] = path; kinds[mod] = 'module'
+        for d in defs:
+            if d['nested']:
+                continue
+            nid = mod + '.' + d['qual']
+            nodes.append(nid); texts.append('\n'.join(lines[d['start'] - 1:d['end']])); node_file[nid] = path; kinds[nid] = d['kind']
+            parent = nid.rpartition('.')[0]
+            edges.append((parent, nid, 'contains'))
+    idset = set(nodes)
+    by_name = collections.defaultdict(list)
+    for n in nodes:
+        if kinds[n] != 'module':
+            by_name[n.rpartition('.')[2]].append(n)
+    modules = {n for n in nodes if kinds[n] == 'module'}
+    for path, (mod, defs, tree) in per_file.items():
+        imp = _import_table(tree, mod, path.endswith('__init__.py'))
+        for alias, tgt in imp.items():
+            t = tgt
+            while t and t not in idset:
+                t = t.rpartition('.')[0]
+            if t and t != mod:
+                edges.append((mod, t, 'imports'))
+        local_top = {d['qual'] for d in defs if not d['nested'] and '.' not in d['qual']}
+
+        def resolve_name(name):
+            if name in local_top:
+                return [mod + '.' + name]
+            if name in imp:
+                t = imp[name]
+                if t in idset:
+                    return [t]
+                cand = by_name.get(name, [])
+                return cand if len(cand) == 1 else []
+            return []
+
+        for d in defs:
+            if d['nested']:
+                continue
+            src_id = mod + '.' + d['qual']
+            cls_prefix = src_id.rpartition('.')[0] if d['kind'] != 'class' else src_id
+            targets = set()
+            body = d['node'].body if d['kind'] != 'class' else [s for s in d['node'].body if not isinstance(s, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))] + list(d['node'].bases) + list(d['node'].decorator_list)
+            for st in body:
+                for x in ast.walk(st):
+                    if isinstance(x, ast.Name) and isinstance(x.ctx, ast.Load):
+                        targets.update(resolve_name(x.id))
+                    elif isinstance(x, ast.Attribute):
+                        v = x.value
+                        if isinstance(v, ast.Name):
+                            if v.id in ('self', 'cls'):
+                                t = cls_prefix + '.' + x.attr
+                                if t in idset:
+                                    targets.add(t)
+                                    continue
+                            elif v.id in imp:
+                                t = imp[v.id] + '.' + x.attr
+                                if t in idset:
+                                    targets.add(t)
+                                    continue
+                        if isinstance(x.ctx, ast.Load):
+                            cand = by_name.get(x.attr, [])
+                            if 1 <= len(cand) <= 2 and not x.attr.startswith('__'):
+                                targets.update(cand)
+            if d['kind'] != 'class':
+                for dec in d['node'].decorator_list:
+                    for x in ast.walk(dec):
+                        if isinstance(x, ast.Name):
+                            targets.update(resolve_name(x.id))
+            for t in targets:
+                if t != src_id:
+                    edges.append((src_id, t, 'calls'))
+    return nodes, texts, edges, node_file, kinds
+
+
+# --------------------------------------------------------------------------- gold labels
+def gold_labels(task, files, modmap):
+    """Function-level and file-level gold for one task.
+    Returns dict with gold_files (existing non-test .py edited), symbols {id: category}, etc."""
+    pf = parse_patch(task['patch'])
+    new_src = apply_patch_to_files(files, task['patch'])
+    out = {'gold_files': [], 'new_files': [], 'symbols': {}, 'module_level_lines': 0, 'import_only_lines': 0,
+           'nonpy_files': []}
+    for f in pf:
+        old, new = f['old'], f['new']
+        path = old or new
+        if not path.endswith('.py'):
+            out['nonpy_files'].append(path)
+            continue
+        if is_test_path(path):
+            continue
+        if old is None:
+            out['new_files'].append(new)
+            continue
+        out['gold_files'].append(old)
+        mod = modmap.get(old) or module_candidates(old)[0]
+        res_old = extract_defs(files.get(old, ''))
+        odefs, oimps = (res_old[0] or []), res_old[1]
+        old_quals = {d['qual']: d for d in odefs if not d['nested']}
+        for ln in sorted(f['removed']):
+            d = enclosing_def(odefs, ln)
+            if d is None:
+                out['module_level_lines'] += 1
+                out['import_only_lines'] += ln in oimps
+                continue
+            out['symbols'].setdefault(mod + '.' + d['qual'], 'async' if d['async_chain'] else d['kind'])
+        if new and new in new_src:
+            res_new = extract_defs(new_src[new])
+            ndefs, nimps = (res_new[0] or []), res_new[1]
+            for ln in sorted(f['added']):
+                d = enclosing_def(ndefs, ln)
+                if d is None:
+                    out['module_level_lines'] += 1
+                    out['import_only_lines'] += ln in nimps
+                    continue
+                if d['qual'] in old_quals:
+                    od = old_quals[d['qual']]
+                    out['symbols'].setdefault(mod + '.' + d['qual'], 'async' if od['async_chain'] else od['kind'])
+                else:
+                    # new symbol: attribute the edit to its closest existing ancestor (class) if any
+                    q = d['qual']
+                    anc = q.rpartition('.')[0]
+                    while anc and anc not in old_quals:
+                        anc = anc.rpartition('.')[0]
+                    out.setdefault('new_symbols', []).append(mod + '.' + q)
+                    if anc:
+                        od = old_quals[anc]
+                        out['symbols'].setdefault(mod + '.' + anc, 'async' if od['async_chain'] else od['kind'])
+    return out
+
+
+# --------------------------------------------------------------------------- evaluation helpers
+def first_hit_rank(ranked, gold):
+    for r, x in enumerate(ranked):
+        if x in gold:
+            return r + 1
+    return None
+
+
+def rrf(rankings, k=60):
+    sc = collections.defaultdict(float)
+    for rk in rankings:
+        for r, x in enumerate(rk):
+            sc[x] += 1.0 / (k + r + 1)
+    return [x for x, _ in sorted(sc.items(), key=lambda kv: -kv[1])]
+
+
+def files_from_nodes(ranked_nodes, node_file):
+    seen, out = set(), []
+    for n in ranked_nodes:
+        f = node_file.get(n)
+        if f and f not in seen:
+            seen.add(f); out.append(f)
+    return out
+
+
+def node_file_map(ids, modmap):
+    """Map graph node ids to files through the longest module prefix."""
+    mod2file = {}
+    for f, m in modmap.items():
+        mod2file.setdefault(m, f)
+    out = {}
+    for i in ids:
+        p = i
+        while p:
+            if p in mod2file:
+                out[i] = mod2file[p]
+                break
+            p = p.rpartition('.')[0]
+    return out
+
+# CELL 8 code
+%%writefile /kaggle/working/e2e/make_agents.py
+"""Build the two agent submissions compared in the end-to-end study.
+
+base : the competition's sample_submission prompt and tools (no LoRA adapters, no analyzer sub-agent)
+skill: base + the graph-localize ADK skill + one workflow step telling the agent to run it first
+Both use the Getting Started sampling settings and the same eval budget (budget.json)."""
+import json, os, shutil, sys
+
+DATA = '/kaggle/input/competitions/gemma-4-developer-agent'
+E2E = os.environ.get('E2E', '/kaggle/working/e2e')
+BUDGET = json.load(open(f'{E2E}/budget.json'))
+
+SAMPLING = """temperature: 0.2
+top_p: 0.95
+max_output_tokens: 16384
+thinking_config:
+  thinking_budget: 4096
+  include_thoughts: true
+"""
+TOOLS = ['run_command', 'read_file', 'edit_file', 'write_file', 'get_status', 'submit_patch',
+         'get_code_neighbors', 'search_similar_code', 'get_code_subgraph']
+STEP0 = """### 0. Localize First with the `graph-localize` Skill
+- Your first action: call `run_skill_script` with `skill_name="graph-localize"`, `file_path="scripts/localize.py"` and `args={"issue": "<key sentences, identifiers, file names and error messages from the problem statement>", "k": 15}`.
+- It prints the 15 functions, methods and classes most likely to need a change as `rank score path:line qualified.name`. Read the top candidates with `read_file` starting at the printed line, then continue with the workflow below.
+- If the top candidates do not fit, read further down the list before searching elsewhere. The graph tools do not know async functions.
+
+"""
+ANCHOR = '### 1. Identify Target Files Immediately'
+
+
+def write(path, text):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, 'w') as f:
+        f.write(text)
+
+
+def build(arm):
+    d = f'{E2E}/agents/{arm}'
+    shutil.rmtree(d, ignore_errors=True)
+    system = open(f'{DATA}/sample_submission/prompts/system.md').read()
+    if arm == 'skill':
+        assert system.count(ANCHOR) == 1
+        system = system.replace(ANCHOR, STEP0 + ANCHOR)
+        for rel in ('SKILL.md', 'scripts/localize.py'):
+            write(f'{d}/skills/graph-localize/{rel}', open(f'{E2E}/skill_src/{rel}').read())
+    write(f'{d}/prompts/system.md', system)
+    write(f'{d}/configs/sampling.yaml', SAMPLING)
+    agent = ['name: swe_agent', 'model: gemma-4-31b-it-qat-w4a16-ct', 'instruction: !include prompts/system.md', 'tools:']
+    agent += [f'  - {t}' for t in TOOLS]
+    if arm == 'skill':
+        agent += ['skills:', '  - skills/graph-localize']
+    agent += ['generate_content_config: !include configs/sampling.yaml']
+    write(f'{d}/agent.yaml', '\n'.join(agent) + '\n')
+    write(f'{d}/eval_config.yaml', 'evaluation:\n' + ''.join(f'  {k}: {v}\n' for k, v in BUDGET.items()))
+    return d
+
+
+if __name__ == '__main__':
+    for arm in ('base', 'skill'):
+        d = build(arm)
+        print('==', d)
+        for root, _, fs in sorted(os.walk(d)):
+            for f in sorted(fs):
+                p = os.path.join(root, f)
+                print(os.path.relpath(p, d), os.path.getsize(p))
+    sys.stdout.flush()
+
+# CELL 9 code
+%%writefile /kaggle/working/e2e/run_e2e.py
+"""End-to-end worker: runs the official swegemma two-phase pipeline (agent in sandbox A, hidden-test
+verification in sandbox B) for a slice of (arm, task) jobs against a running local vLLM server.
+
+  python run_e2e.py --jobs jobs.json --worker 0 --nworkers 8
+arms: base | skill (agent submissions under $E2E/agents/<arm>) | gold (verify the reference patch only)
+Resumable: jobs already recorded in $E2E/records/*.jsonl are skipped."""
+import argparse, asyncio, glob, json, os, sys, time, traceback
+from pathlib import Path
+
+for k, v in (('LITELLM_LOCAL_MODEL_COST_MAP', 'True'), ('OTEL_SDK_DISABLED', 'true'), ('TRANSFORMERS_NO_TF', '1'),
+             ('LITELLM_LOG', 'ERROR')):
+    os.environ.setdefault(k, v)
+import litellm
+from adk_submission import ModelRegistry, VllmConfig, VllmServer
+from google.adk.agents.context_cache_config import ContextCacheConfig
+from google.adk.apps._configs import EventsCompactionConfig
+from swegemma.config import EvalConfig, build_submission_limits
+from swegemma.deduplication import resolve_task_snapshot_paths
+from swegemma.evaluate import Evaluator
+from swegemma.harness.verification import verify_task
+from swegemma.models import load_tasks
+
+litellm.drop_params = True
+DATA = Path('/kaggle/input/competitions/gemma-4-developer-agent')
+E2E = Path(os.environ.get('E2E', '/kaggle/working/e2e'))
+TARGET = 'gemma-4-31b-it-qat-w4a16-ct'
+MODEL_PATH = os.environ.get('MODEL_PATH', '/kaggle/input/models/google/gemma-4/other/gemma-4-31b-it-qat-w4a16-ct/2')
+
+
+def served_model_id():
+    """The id under which the notebook's vLLM server serves the model (falls back to the model path)."""
+    import urllib.request
+    try:
+        with urllib.request.urlopen('http://127.0.0.1:8000/v1/models', timeout=10) as r:
+            return json.load(r)['data'][0]['id']
+    except Exception as e:
+        print('could not query /v1/models:', repr(e), flush=True)
+        return MODEL_PATH
+
+
+def model_registry():
+    if os.environ.get('NO_LLM'):
+        return ModelRegistry()
+    cfg = VllmConfig(model=MODEL_PATH, port=8000, host='127.0.0.1', tool_call_parser='gemma4', reasoning_parser='gemma4',
+                     default_chat_template_kwargs={'enable_thinking': True}, max_model_len=32768,
+                     tensor_parallel_size=4)
+    served = served_model_id()
+    print('served model id', served, flush=True)
+    return VllmServer(cfg).create_model_registry(aliases={TARGET: served}, model_prefix='openai/', api_key='EMPTY')
+
+
+def make_evaluator(arm, worker, models, budget):
+    limits, gen = build_submission_limits()
+    cfg = EvalConfig(
+        tasks_path=DATA / 'tasks.jsonl', snapshots_dir=DATA / 'snapshots',
+        results_dir=E2E / 'results' / arm / f'w{worker}',
+        submission_dir=E2E / 'agents' / ('base' if arm == 'gold' else arm), models=models, sandbox='subprocess',
+        timeout_seconds=budget['timeout_seconds'], max_time_minutes=budget['max_time_minutes'],
+        max_tool_calls=budget['max_tool_calls'], max_turns=budget['max_turns'],
+        limits=limits, generation_constraints=gen, adapter_manifest=None,
+        context_cache_config=ContextCacheConfig(min_tokens=2048, ttl_seconds=1800, cache_intervals=10),
+        # the values of the competition's scoring script (HARNESS_README section 7.2)
+        events_compaction_config=EventsCompactionConfig(compaction_interval=5, overlap_size=2, token_threshold=14336,
+                                                        event_retention_size=5),
+        graph_dir=str(DATA / 'graphs'), embeddings_dir=str(DATA / 'embeddings'), wheels_dir=DATA / 'wheels',
+        verbose=False, display_mode='quiet')
+    return Evaluator(cfg)
+
+
+def done_jobs():
+    done = set()
+    for p in glob.glob(str(E2E / 'records' / '*.jsonl')):
+        for line in open(p):
+            try:
+                r = json.loads(line)
+            except ValueError:
+                continue
+            if not r.get('crash'):
+                done.add((r['arm'], r['id']))
+    return done
+
+
+async def run_job(ev, arm, task):
+    if arm != 'gold':
+        return await ev.evaluate_task(task=task, task_index=1, total_tasks=1)
+    snap, base_snap, patch_path = resolve_task_snapshot_paths(ev.config.snapshots_dir, task.instance_id, task.repo)
+    return await verify_task(ev.docker, ev.config, task, snap, base_snapshot_path=base_snap, patch_path=patch_path,
+                             agent_patch=task.patch, start_time=time.perf_counter())
+
+
+async def main(a):
+    budget = json.load(open(E2E / 'budget.json'))
+    jobs = [tuple(j) for j in json.load(open(a.jobs))][a.worker::a.nworkers]
+    tasks = {t.instance_id: t for t in load_tasks(DATA / 'tasks.jsonl')}
+    done = done_jobs()
+    todo = [j for j in jobs if j not in done][:a.limit or None]
+    print(f'worker {a.worker}: {len(jobs)} jobs, {len(todo)} to do', flush=True)
+    models = model_registry()
+    evs = {}
+    os.makedirs(E2E / 'records', exist_ok=True)
+    out = open(E2E / 'records' / f'rec_w{a.worker}.jsonl', 'a')
+    guard = budget['max_time_minutes'] * 60 + 1200
+    for n, (arm, tid) in enumerate(todo, 1):
+        ev = evs.get(arm) or evs.setdefault(arm, make_evaluator(arm, a.worker, models, budget))
+        t0 = time.time()
+        rec = {'arm': arm, 'id': tid, 'worker': a.worker, 'start': t0}
+        try:
+            res = await asyncio.wait_for(run_job(ev, arm, tasks[tid]), timeout=guard)
+            rec.update(resolved=bool(res.resolved), test_exit_code=res.test_exit_code, patch=res.agent_patch or '',
+                       tool_calls=getattr(res, 'tool_calls', None), llm_calls=getattr(res, 'total_llm_calls', None),
+                       total_tokens=getattr(res, 'total_tokens', None), duration=res.duration_seconds,
+                       error=(res.error or '')[:2000], trace=str(getattr(res, 'trace_json_path', '') or ''),
+                       test_tail=(res.test_output or '')[-2500:])
+        except asyncio.TimeoutError:
+            rec.update(resolved=False, patch='', error=f'guard timeout {guard}s', guard_timeout=True)
+        except Exception:
+            rec.update(resolved=False, patch='', crash=traceback.format_exc()[-3000:])
+        rec['wall'] = round(time.time() - t0, 1)
+        out.write(json.dumps(rec) + '\n'); out.flush()
+        print(f'[w{a.worker} {n}/{len(todo)}] {arm:5s} {tid:15s} resolved={rec["resolved"]} tools={rec.get("tool_calls")} '
+              f'patch={len(rec["patch"])} wall={rec["wall"]}s {("CRASH " + rec["crash"][-200:]) if rec.get("crash") else rec.get("error", "")[:120]}',
+              flush=True)
+
+
+if __name__ == '__main__':
+    ap = argparse.ArgumentParser()
+    ap.add_argument('--jobs', required=True)
+    ap.add_argument('--worker', type=int, default=0)
+    ap.add_argument('--nworkers', type=int, default=1)
+    ap.add_argument('--limit', type=int, default=0)
+    asyncio.run(main(ap.parse_args()))
+
+# CELL 10 code
+%%writefile /kaggle/working/e2e/agg_e2e.py
+"""Summarise the end-to-end study: resolution, paired tests, where the agents edited, tool use."""
+import collections, glob, json, math, os, re, sys
+import numpy as np
+
+E2E = os.environ.get('E2E', '/kaggle/working/e2e')
+sys.path.insert(0, os.environ.get('GL_CODE', E2E))
+ARMS = ('base', 'skill')
+
+
+def load_records():
+    recs = {}
+    for p in sorted(glob.glob(f'{E2E}/records/*.jsonl')):
+        for line in open(p):
+            try:
+                r = json.loads(line)
+            except ValueError:
+                continue
+            key = (r['arm'], r['id'])
+            if key not in recs or recs[key].get('crash') or not r.get('crash'):
+                recs[key] = r
+    return recs
+
+
+def exact_mcnemar(b, c):
+    """Two-sided exact binomial test on the discordant pairs."""
+    n = b + c
+    if n == 0:
+        return 1.0
+    k = min(b, c)
+    p = sum(math.comb(n, i) for i in range(k + 1)) / 2 ** n
+    return min(1.0, 2 * p)
+
+
+def paired_boot(a, b, n=2000, seed=0):
+    a, b = np.asarray(a, float), np.asarray(b, float)
+    d = b - a
+    rng = np.random.default_rng(seed)
+    m = d[rng.integers(0, len(d), size=(n, len(d)))].mean(1)
+    return [round(float(d.mean()), 3), round(float(np.percentile(m, 2.5)), 3), round(float(np.percentile(m, 97.5)), 3)]
+
+
+def walk(o):
+    if isinstance(o, dict):
+        yield o
+        for v in o.values():
+            yield from walk(v)
+    elif isinstance(o, list):
+        for v in o:
+            yield from walk(v)
+
+
+TOOL_NAMES = {'run_command', 'read_file', 'edit_file', 'write_file', 'get_status', 'submit_patch', 'get_code_neighbors',
+              'search_similar_code', 'get_code_subgraph', 'run_skill_script', 'load_skill', 'load_skill_resource',
+              'list_skills', 'search_skills'}
+
+
+def trace_tools(path):
+    """Ordered tool calls [(name, args, output_text)] from a swegemma SessionTrace (ATIF) JSON."""
+    try:
+        tr = json.load(open(path))
+    except (OSError, ValueError):
+        return None
+    calls = []
+    for d in walk(tr):
+        name = d.get('function_name') or d.get('tool_name') or (d.get('name') if 'arguments' in d or 'args' in d else None)
+        if name in TOOL_NAMES:
+            args = d.get('arguments', d.get('args', {}))
+            calls.append((name, args, d.get('tool_call_id') or d.get('id')))
+    # observation texts keyed by call id (used to read the skill's output)
+    obs = {}
+    for d in walk(tr):
+        cid = d.get('source_call_id') or d.get('tool_call_id')
+        if cid and ('content' in d or 'output' in d or 'result' in d):
+            obs[cid] = json.dumps(d.get('content', d.get('output', d.get('result'))))
+    seen, out = set(), []
+    for name, args, cid in calls:
+        key = (name, json.dumps(args, sort_keys=True, default=str), cid)
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append((name, args, obs.get(cid, '')))
+    return out
+
+
+def edit_locations(G, tid, patch, cache):
+    files = cache.get(tid)
+    if files is None:
+        files = cache[tid] = G.load_snapshot_py(tid, cache_dir=os.environ.get('GL_CACHE', '/kaggle/tmp/snapcache'))
+    lab = G.gold_labels({'patch': patch}, files, {})
+    touched = {f['old'] or f['new'] for f in G.parse_patch(patch)}
+    return set(lab['symbols']), set(lab['gold_files']), touched
+
+
+def main():
+    import graphloc as G
+    tasks = {t['instance_id']: t for t in G.load_tasks()}
+    recs = load_records()
+    ids = sorted(tasks)
+    gold_ok = {t for t in ids if recs.get(('gold', t), {}).get('resolved')}
+    cache, rows = {}, {}
+    gold_sym, gold_files = {}, {}
+    for t in ids:
+        s, f, _ = edit_locations(G, t, tasks[t]['patch'], cache)
+        gold_sym[t], gold_files[t] = s, f
+    for arm in ARMS:
+        for t in ids:
+            r = recs.get((arm, t))
+            if r is None:
+                continue
+            patch = r.get('patch') or ''
+            s, f, touched = edit_locations(G, t, patch, cache) if patch else (set(), set(), set())
+            tools = trace_tools(r['trace']) if r.get('trace') else None
+            names = [c[0] for c in tools] if tools else []
+            skill_out = next((c[2] for c in (tools or []) if c[0] == 'run_skill_script'), '')
+            listed = set(re.findall(r'\d+\s+[\d.]+\s+\S+:\d+\s+([\w.]+)', skill_out.replace('\\n', '\n')))
+            rows[(arm, t)] = {
+                'resolved': int(bool(r.get('resolved'))), 'patch': int(bool(patch.strip())),
+                'file_hit': int(bool(f & gold_files[t])), 'func_hit': int(bool(s & gold_sym[t])),
+                'touch_tests': int(any(G.is_test_path(p or '') for p in touched)),
+                'tool_calls': r.get('tool_calls') or 0, 'llm_calls': r.get('llm_calls') or 0,
+                'tokens': r.get('total_tokens') or 0, 'wall': r.get('wall') or 0, 'crash': int(bool(r.get('crash'))),
+                'trace_ok': int(tools is not None), 'tools': collections.Counter(names),
+                'first_tool': names[0] if names else '', 'skill_ran': int('run_skill_script' in names),
+                'skill_listed_gold': int(bool(listed & gold_sym[t])) if listed else None,
+            }
+    both = [t for t in ids if ('base', t) in rows and ('skill', t) in rows]
+    summ = {'n_tasks': len(ids), 'n_paired': len(both), 'gold_resolved': len(gold_ok),
+            'gold_checked': sum(1 for t in ids if ('gold', t) in recs)}
+    for arm in ARMS:
+        rs = [rows[(arm, t)] for t in both]
+        agg = {k: round(float(np.mean([r[k] for r in rs])), 3) for k in
+               ('resolved', 'patch', 'file_hit', 'func_hit', 'touch_tests', 'tool_calls', 'llm_calls', 'wall', 'crash', 'trace_ok', 'skill_ran')}
+        agg['resolved_n'] = sum(r['resolved'] for r in rs)
+        agg['resolved_on_gold_ok'] = round(float(np.mean([rows[(arm, t)]['resolved'] for t in both if t in gold_ok])), 3) if gold_ok else None
+        fg = [t for t in both if gold_sym[t]]
+        agg['func_hit_on_func_gold'] = round(float(np.mean([rows[(arm, t)]['func_hit'] for t in fg])), 3)
+        agg['resolved_if_func_hit'] = round(float(np.mean([rows[(arm, t)]['resolved'] for t in fg if rows[(arm, t)]['func_hit']] or [0])), 3)
+        agg['resolved_if_no_func_hit'] = round(float(np.mean([rows[(arm, t)]['resolved'] for t in fg if not rows[(arm, t)]['func_hit']] or [0])), 3)
+        tc = collections.Counter()
+        for r in rs:
+            tc.update(r['tools'])
+        agg['tool_counts_per_task'] = {k: round(v / len(rs), 2) for k, v in tc.most_common()}
+        agg['first_tool'] = dict(collections.Counter(r['first_tool'] for r in rs).most_common(6))
+        if arm == 'skill':
+            sl = [r['skill_listed_gold'] for r in rs if r['skill_listed_gold'] is not None]
+            agg['skill_list_has_gold'] = round(float(np.mean(sl)), 3) if sl else None
+            agg['skill_list_n'] = len(sl)
+        summ[arm] = agg
+    tests = {}
+    for k in ('resolved', 'patch', 'file_hit', 'func_hit'):
+        a = [rows[('base', t)][k] for t in both]
+        b = [rows[('skill', t)][k] for t in both]
+        n10 = sum(1 for x, y in zip(a, b) if x and not y)
+        n01 = sum(1 for x, y in zip(a, b) if y and not x)
+        tests[k] = {'skill_minus_base': paired_boot(a, b), 'base_only': n10, 'skill_only': n01,
+                    'mcnemar_p': round(exact_mcnemar(n10, n01), 3)}
+    summ['tests'] = tests
+    summ['by_repo'] = {}
+    for repo in sorted({t.split('_')[0] for t in both}):
+        ts = [t for t in both if t.startswith(repo + '_')]
+        summ['by_repo'][repo] = {'n': len(ts), **{arm: sum(rows[(arm, t)]['resolved'] for t in ts) for arm in ARMS},
+                                 'gold': sum(t in gold_ok for t in ts)}
+    summ['resolved_ids'] = {arm: sorted(t for t in both if rows[(arm, t)]['resolved']) for arm in ARMS}
+    json.dump(summ, open(f'{E2E}/e2e_summary.json', 'w'), indent=1)
+    print(json.dumps(summ, indent=1))
+    return summ
+
+
+if __name__ == '__main__':
+    main()
+
+# CELL 11 code
+import collections, glob, hashlib, json, os, random, subprocess, sys, time
+E2E = '/kaggle/working/e2e'
+os.makedirs(f'{E2E}/logs', exist_ok=True)
+# the same per-task budget for both agents (the competition's defaults are 100 tool calls and 60 minutes)
+BUDGET = {'timeout_seconds': 120, 'max_tool_calls': 40, 'max_time_minutes': 25, 'max_turns': 60}
+json.dump(BUDGET, open(f'{E2E}/budget.json', 'w'))
+EXPECTED = {
+ "skill_src/SKILL.md": "cccd0089dacdacfe5471ace82b14722c",
+ "skill_src/scripts/localize.py": "ea63fa126064c04b467aefe9cd3d384a",
+ "graphloc.py": "ca4733abd4990ebadbf0a039a0e566f3",
+ "make_agents.py": "eb2c7b62726765a9ac7aa7649eac2da7",
+ "run_e2e.py": "7dd6d4099c72d3c505cce08e0923e210",
+ "agg_e2e.py": "927d5bfc9ec7de4f80e74529c4606ec0"
+}
+for f, h in EXPECTED.items():
+    got = hashlib.md5((open(f'{E2E}/{f}').read().rstrip('\n') + '\n').encode()).hexdigest()
+    print(got, f, 'OK' if got == h else 'MISMATCH')
+    assert got == h, f
+print(subprocess.run([sys.executable, f'{E2E}/make_agents.py'], capture_output=True, text=True, env=dict(os.environ, E2E=E2E)).stdout)
+ids = sorted(json.loads(l)['instance_id'] for l in open('/kaggle/input/competitions/gemma-4-developer-agent/tasks.jsonl'))
+random.Random(0).shuffle(ids)
+# both agents' runs of the same task are adjacent, so they run side by side under the same load
+jobs = [[arm, t] for i, t in enumerate(ids) for arm in (('base', 'skill') if i % 2 == 0 else ('skill', 'base'))]
+json.dump(jobs, open(f'{E2E}/jobs_main.json', 'w'))
+json.dump([['gold', t] for t in ids], open(f'{E2E}/jobs_gold.json', 'w'))
+print(len(ids), 'tasks,', len(jobs), 'agent jobs; cpus', os.cpu_count())
+
+
+def launch(jobs_file, n, tag, extra_env=None, limit=0):
+    ps = []
+    for w in range(n):
+        cmd = [sys.executable, f'{E2E}/run_e2e.py', '--jobs', jobs_file, '--worker', str(w), '--nworkers', str(n)]
+        ps.append(subprocess.Popen(cmd + (['--limit', str(limit)] if limit else []), stdout=open(f'{E2E}/logs/{tag}_w{w}.log', 'a'),
+                                   stderr=subprocess.STDOUT, env=dict(os.environ, E2E=E2E, **(extra_env or {}))))
+    return ps
+
+
+def status():
+    by = collections.defaultdict(collections.Counter)
+    for p in glob.glob(f'{E2E}/records/*.jsonl'):
+        for line in open(p):
+            r = json.loads(line)
+            by[r['arm']].update(done=1, resolved=bool(r.get('resolved')), crash=bool(r.get('crash')), patch=bool(r.get('patch')))
+    return {a: dict(c) for a, c in sorted(by.items())}
+
+
+def monitor(ps, every=300):
+    t0 = time.time()
+    while any(p.poll() is None for p in ps):
+        time.sleep(every)
+        gpu = subprocess.run('nvidia-smi --query-gpu=utilization.gpu --format=csv,noheader,nounits', shell=True,
+                             capture_output=True, text=True).stdout.split()
+        print(f'{(time.time() - t0) / 60:6.1f} min', status(), 'gpu%', gpu, 'load', round(os.getloadavg()[0], 1), flush=True)
+    print('workers finished', status(), flush=True)
+
+# CELL 12 markdown
+## Which tasks can be resolved in this sandbox? (reference patches through Phase 2)
+
+# CELL 13 code
+# Phase 2 of the harness applied to every reference patch: which tasks can be resolved at all in this sandbox?
+# It runs in the background while the model loads; the run cell waits for it.
+GOLD = launch(f'{E2E}/jobs_gold.json', min(8, os.cpu_count()), 'gold', {'NO_LLM': '1'})
+print('gold workers', [p.pid for p in GOLD])
+
+# CELL 14 markdown
+## Serve the competition model
+
+# CELL 15 code
+import litellm
+from adk_submission import VllmConfig, VllmServer
+litellm.drop_params = True
+MODEL_PATH = '/kaggle/input/models/google/gemma-4/other/gemma-4-31b-it-qat-w4a16-ct/2'
+# the Getting Started serving configuration (tool/reasoning parsers, thinking on, 32k context, TP=4)
+vllm_cfg = VllmConfig(model=MODEL_PATH, port=8000, host='127.0.0.1', tool_call_parser='gemma4', reasoning_parser='gemma4',
+                      default_chat_template_kwargs={'enable_thinking': True}, max_model_len=32768, dtype='bfloat16',
+                      gpu_memory_utilization=0.90, enable_auto_tool_choice=True, enable_lora=True, max_loras=8,
+                      max_lora_rank=128, tensor_parallel_size=4, startup_timeout=60 * 20)
+server = VllmServer(vllm_cfg, adapter_manifest=None)
+t0 = time.time()
+server.start()
+print('vLLM server', server.base_url, 'up after', round(time.time() - t0), 's')
+print(subprocess.run('curl -s http://127.0.0.1:8000/v1/models | head -c 400; nvidia-smi --query-gpu=memory.used --format=csv,noheader',
+                     shell=True, capture_output=True, text=True).stdout)
+
+# CELL 16 markdown
+## Run both agents on every task whose reference patch passes
+
+# CELL 17 code
+# Wait for the reference-patch check, keep the tasks whose reference patch passes here, and start both agents on them.
+# NW agent workers share the vLLM server; each runs its slice of the interleaved (agent, task) list one task at a time.
+NW = 12
+monitor(GOLD, every=30)
+gold_ok = sorted({r['id'] for p in glob.glob(f'{E2E}/records/*.jsonl') for r in map(json.loads, open(p))
+                  if r['arm'] == 'gold' and r['resolved']})
+run_jobs = [j for j in json.load(open(f'{E2E}/jobs_main.json')) if j[1] in set(gold_ok)]
+json.dump(run_jobs, open(f'{E2E}/jobs_run.json', 'w'))
+print(len(gold_ok), 'of', len(ids), 'reference patches pass in this sandbox ->', len(run_jobs), 'agent runs')
+MAIN = launch(f'{E2E}/jobs_run.json', NW, 'main')
+print('agent workers', [p.pid for p in MAIN])
+
+# CELL 18 code
+# Progress: one line every 10 minutes until every agent worker has finished
+monitor(MAIN, every=600)
+
+# CELL 19 markdown
+## Results
+
+# CELL 20 code
+r = subprocess.run([sys.executable, f'{E2E}/agg_e2e.py'], capture_output=True, text=True, env=dict(os.environ, E2E=E2E, GL_CODE=E2E))
+print(r.stdout[-12000:], r.stderr[-3000:])

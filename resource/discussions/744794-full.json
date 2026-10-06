@@ -1,0 +1,143 @@
+{
+  "forumTopic": {
+    "authorId": 34207569,
+    "authorThumbnailName": "default-thumb.png",
+    "authorUserDisplayName": "mahmoud al-ghraibeh",
+    "authorUserName": "mahmoudalghraibeh",
+    "comments": [
+      {
+        "id": 3531245,
+        "postDate": "2026-10-01T14:51:52.190Z",
+        "rawMarkdown": "- I'll look into the compaction issue.\n- The KV-cache drop with LoRA should be addressed. Now vLLM will set its LoRA params dynamically based on what you actually submit. Submitting fewer adapters with lower rank (or no adapters) leaves more memory for KV-cache.\n- KV-cache, double-encoded tool output, thoughts dropped, and thinking_budget / seed not sent are all fixed in the latest wheelhouse.\n- Hard to estimate as it depends on the tool and how the model responds. You could experiment in a notebook on the training set to try to get estimates.",
+        "content": "<ul>\n<li>I'll look into the compaction issue.</li>\n<li>The KV-cache drop with LoRA should be addressed. Now vLLM will set its LoRA params dynamically based on what you actually submit. Submitting fewer adapters with lower rank (or no adapters) leaves more memory for KV-cache.</li>\n<li>KV-cache, double-encoded tool output, thoughts dropped, and thinking_budget / seed not sent are all fixed in the latest wheelhouse.</li>\n<li>Hard to estimate as it depends on the tool and how the model responds. You could experiment in a notebook on the training set to try to get estimates.</li>\n</ul>",
+        "replies": [
+          {
+            "id": 3531692,
+            "postDate": "2026-10-02T12:38:05.897Z",
+            "rawMarkdown": "Hi Ryan, \nIs there a way to higher the compaction threshold ? like reduce max output. For now it's 14k on starter submission, I guess same setup on eval. \nThank you",
+            "content": "<p>Hi Ryan, \nIs there a way to higher the compaction threshold ? like reduce max output. For now it's 14k on starter submission, I guess same setup on eval. \nThank you</p>",
+            "parent": {},
+            "author": {
+              "displayName": "Dat LQ.",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/17180946-kg.jpeg?t=2023-10-22-08-20-33",
+              "url": "/nightfurylqd",
+              "tier": "CONTRIBUTOR",
+              "id": 17180946,
+              "progressionOptOut": false
+            },
+            "authorType": "COMMENT",
+            "votes": {
+              "canUpvote": true
+            },
+            "kernelVersion": 0,
+            "competitionRanking": 1386,
+            "feedbackTrackingData": {},
+            "isThankYou": false,
+            "teamUpInfo": {
+              "teamLeader": {
+                "displayName": "Dat LQ.",
+                "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/17180946-kg.jpeg?t=2023-10-22-08-20-33",
+                "url": "/nightfurylqd",
+                "userName": "nightfurylqd",
+                "tier": "CONTRIBUTOR",
+                "id": 17180946,
+                "profileUrl": "/nightfurylqd",
+                "performanceTier": "CONTRIBUTOR",
+                "userId": 17180946,
+                "progressionOptOut": false
+              },
+              "intro": ""
+            }
+          }
+        ],
+        "parent": {},
+        "author": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "progressionOptOut": false
+        },
+        "authorType": "ADMIN",
+        "votes": {
+          "totalVotes": 1,
+          "canUpvote": true,
+          "totalUpvotes": 1
+        },
+        "kernelVersion": 0,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Ryan Holbrook",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+            "url": "/ryanholbrook",
+            "userName": "ryanholbrook",
+            "tier": "STAFF",
+            "id": 2003505,
+            "profileUrl": "/ryanholbrook",
+            "performanceTier": "STAFF",
+            "userId": 2003505,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3530888,
+      "postDate": "2026-10-01T00:38:13.463Z",
+      "rawMarkdown": "Several harness issues make results hard to trust: request for fixes and a status update\n\nWhile testing locally with the official wheels, we ran into several problems that come from the scoring environment, not from the agent:\n\n1. Compaction loses tool results. The ADK summary keeps only text parts, and Gemma-4 rarely writes text next to its tool calls. So after compaction the model loses its context, and it often repeats its last call until it times out.\n2. LoRA on 4×L4. Enabling LoRA reduces the KV cache a lot, and long requests hang (#744331). This makes any adapter risky to submit.\n3. Double-encoded tool output (#744272). This makes many edit_file calls fail with \"old_string not found\".\n4. Thoughts dropped between tool calls (#744354), and thinking_budget / seed not sent (#744566).\n5. No way to measure speed. We cannot measure the scorer's real speed, so choosing max_time_minutes is a guess. A wrong guess either cuts solvable tasks or risks the 12-hour limit.\n\nWhat we are asking for:\n- Include tool calls and short tool results in the compaction summary, or keep the last few tool results as they are.\n- Fix the KV-cache drop with LoRA, or tell us it will stay as it is.\n- Confirm which of the fixes above are live in the scorer now, and whether earlier submissions will be re-scored.\n- Share the approximate time per model call on 4×L4, so we can set time limits safely.\n\nThanks for the work on the competition.",
+      "content": "<p>Several harness issues make results hard to trust: request for fixes and a status update</p>\n<p>While testing locally with the official wheels, we ran into several problems that come from the scoring environment, not from the agent:</p>\n<ol>\n<li>Compaction loses tool results. The ADK summary keeps only text parts, and Gemma-4 rarely writes text next to its tool calls. So after compaction the model loses its context, and it often repeats its last call until it times out.</li>\n<li>LoRA on 4×L4. Enabling LoRA reduces the KV cache a lot, and long requests hang (#744331). This makes any adapter risky to submit.</li>\n<li>Double-encoded tool output (#744272). This makes many edit_file calls fail with \"old_string not found\".</li>\n<li>Thoughts dropped between tool calls (#744354), and thinking_budget / seed not sent (#744566).</li>\n<li>No way to measure speed. We cannot measure the scorer's real speed, so choosing max_time_minutes is a guess. A wrong guess either cuts solvable tasks or risks the 12-hour limit.</li>\n</ol>\n<p>What we are asking for:</p>\n<ul>\n<li>Include tool calls and short tool results in the compaction summary, or keep the last few tool results as they are.</li>\n<li>Fix the KV-cache drop with LoRA, or tell us it will stay as it is.</li>\n<li>Confirm which of the fixes above are live in the scorer now, and whether earlier submissions will be re-scored.</li>\n<li>Share the approximate time per model call on 4×L4, so we can set time limits safely.</li>\n</ul>\n<p>Thanks for the work on the competition.</p>",
+      "parent": {},
+      "author": {
+        "displayName": "mahmoud al-ghraibeh",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+        "url": "/mahmoudalghraibeh",
+        "tier": "CONTRIBUTOR",
+        "id": 34207569,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 3,
+        "canUpvote": true,
+        "totalUpvotes": 3
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 179,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "mahmoud al-ghraibeh",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/mahmoudalghraibeh",
+          "userName": "mahmoudalghraibeh",
+          "tier": "CONTRIBUTOR",
+          "id": 34207569,
+          "profileUrl": "/mahmoudalghraibeh",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 34207569,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3530888,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 744794,
+    "name": "Several harness issues make results hard to trust: request for fixes and a status update",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-10-01T00:38:13.461823200Z",
+    "totalVotes": 3,
+    "url": "/competitions/gemma-4-developer-agent/discussion/744794",
+    "totalMessages": 2,
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

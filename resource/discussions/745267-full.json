@@ -1,0 +1,57 @@
+{
+  "forumTopic": {
+    "authorId": 36819459,
+    "authorThumbnailName": "default-thumb.png",
+    "authorUserDisplayName": "mike miller",
+    "authorUserName": "mikemiller19",
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3531933,
+      "postDate": "2026-10-02T20:48:13.193Z",
+      "rawMarkdown": "Thanks for clarifying that custom Python tools should be packaged as sandbox\nskill scripts. For adk-submission 0.2.12 and swegemma 0.2.7, is there a supported\nsubmission configuration for any of the following?\n\n1. A trusted approval check before each exact built-in tool or skill operation.\n2. Isolated Python startup for skills before workspace modules can be imported.\n3. Automatic patch recovery restricted to an explicitly selected candidate,\n   including on timeout.\n\nPlease point to the supported configuration/hooks, or confirm which items\nrequire an organizer runtime change. We want development and official scoring\nto use the same supported interface.",
+      "content": "<p>Thanks for clarifying that custom Python tools should be packaged as sandbox\nskill scripts. For adk-submission 0.2.12 and swegemma 0.2.7, is there a supported\nsubmission configuration for any of the following?</p>\n<ol>\n<li>A trusted approval check before each exact built-in tool or skill operation.</li>\n<li>Isolated Python startup for skills before workspace modules can be imported.</li>\n<li>Automatic patch recovery restricted to an explicitly selected candidate,\nincluding on timeout.</li>\n</ol>\n<p>Please point to the supported configuration/hooks, or confirm which items\nrequire an organizer runtime change. We want development and official scoring\nto use the same supported interface.</p>",
+      "parent": {},
+      "author": {
+        "displayName": "mike miller",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+        "url": "/mikemiller19",
+        "tier": "CONTRIBUTOR",
+        "id": 36819459,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "canUpvote": true
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "mike miller",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/mikemiller19",
+          "userName": "mikemiller19",
+          "tier": "CONTRIBUTOR",
+          "id": 36819459,
+          "profileUrl": "/mikemiller19",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 36819459,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3531933,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 745267,
+    "name": "Supported authorization, skill-startup and patch-recovery hooks",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-10-02T20:48:13.193416100Z",
+    "url": "/competitions/gemma-4-developer-agent/discussion/745267",
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

@@ -1,0 +1,235 @@
+{
+  "forumTopic": {
+    "authorId": 30981809,
+    "authorThumbnailName": "default-thumb.png",
+    "authorUserDisplayName": "Rising",
+    "authorUserName": "bouadoumohamedlouai",
+    "comments": [
+      {
+        "id": 3527837,
+        "postDate": "2026-09-24T20:27:21.040Z",
+        "rawMarkdown": "It says in www.kaggle.com/competitions/gemma-4-developer-agent/overview/model-selection-budget-and-harness-rules :\n>At present, we only support the gemma-4-31b-it-qat-w4a16-ct Gemma 4 model variant. You must choose this model for every agent and subagent.\n\nThe idea is not that you upload your own model/checkpoint. You must upload a LoRA that is applied to this model.",
+        "content": "<p>It says in <a href=\"http://www.kaggle.com/competitions/gemma-4-developer-agent/overview/model-selection-budget-and-harness-rules\" target=\"_blank\">www.kaggle.com/competitions/gemma-4-developer-agent/overview/model-selection-budget-and-harness-rules</a> :</p>\n<blockquote>\n  <p>At present, we only support the gemma-4-31b-it-qat-w4a16-ct Gemma 4 model variant. You must choose this model for every agent and subagent.</p>\n</blockquote>\n<p>The idea is not that you upload your own model/checkpoint. You must upload a LoRA that is applied to this model.</p>",
+        "replies": [
+          {
+            "id": 3528109,
+            "postDate": "2026-09-25T11:37:02.453Z",
+            "rawMarkdown": "Harness file says, any one of the below variants can be used. We can't use 2 different variants.\n\n\"All agents in a submission must declare at most ONE unique base model (len(models) == 1). Declaring two different base models (e.g., gemma-4-31b-it in the root agent and gemma-4-9b-it in a sub-agent) raises ParticipantVisibleError.\"\n\ngemma-4-31b-it-qat-w4a16-ct (Starter Kit default)\ngemma-4-31b-it, gemma-4-31b\ngemma-4-27b-it, gemma-4-27b\ngemma-4-26b-a4b-it, gemma-4-26b-a4b, diffusiongemma-26b-a4b-it\ngemma-4-12b-it, gemma-4-12b\ngemma-4-9b-it, gemma-4-9b\ngemma-4-e4b-it, gemma-4-e4b\ngemma-4-e2b-it, gemma-4-e2b",
+            "content": "<p>Harness file says, any one of the below variants can be used. We can't use 2 different variants.</p>\n<p>\"All agents in a submission must declare at most ONE unique base model (len(models) == 1). Declaring two different base models (e.g., gemma-4-31b-it in the root agent and gemma-4-9b-it in a sub-agent) raises ParticipantVisibleError.\"</p>\n<p>gemma-4-31b-it-qat-w4a16-ct (Starter Kit default)\ngemma-4-31b-it, gemma-4-31b\ngemma-4-27b-it, gemma-4-27b\ngemma-4-26b-a4b-it, gemma-4-26b-a4b, diffusiongemma-26b-a4b-it\ngemma-4-12b-it, gemma-4-12b\ngemma-4-9b-it, gemma-4-9b\ngemma-4-e4b-it, gemma-4-e4b\ngemma-4-e2b-it, gemma-4-e2b</p>",
+            "replies": [
+              {
+                "id": 3528110,
+                "postDate": "2026-09-25T11:39:41.150Z",
+                "rawMarkdown": "I'm also not sure now. Is the overview section correct or the Harness md file? @elanlearns ",
+                "content": "<p>I'm also not sure now. Is the overview section correct or the Harness md file? <a href=\"/elanlearns\" target=\"_blank\">@elanlearns</a> </p>",
+                "parent": {},
+                "author": {
+                  "displayName": "Bharat",
+                  "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2411334-kg.jpg",
+                  "url": "/bharat0",
+                  "tier": "CONTRIBUTOR",
+                  "id": 2411334,
+                  "progressionOptOut": false
+                },
+                "authorType": "COMMENT",
+                "votes": {
+                  "canUpvote": true
+                },
+                "kernelVersion": 0,
+                "competitionRanking": 1389,
+                "feedbackTrackingData": {},
+                "isThankYou": false,
+                "teamUpInfo": {
+                  "teamLeader": {
+                    "displayName": "Bharat",
+                    "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2411334-kg.jpg",
+                    "url": "/bharat0",
+                    "userName": "bharat0",
+                    "tier": "CONTRIBUTOR",
+                    "id": 2411334,
+                    "profileUrl": "/bharat0",
+                    "performanceTier": "CONTRIBUTOR",
+                    "userId": 2411334,
+                    "progressionOptOut": false
+                  },
+                  "intro": ""
+                }
+              },
+              {
+                "id": 3528134,
+                "postDate": "2026-09-25T13:37:58.260Z",
+                "rawMarkdown": "It's only the one model listed in the Overview. We're working on supporting others.",
+                "content": "<p>It's only the one model listed in the Overview. We're working on supporting others.</p>",
+                "parent": {},
+                "author": {
+                  "displayName": "Ryan Holbrook",
+                  "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+                  "url": "/ryanholbrook",
+                  "tier": "STAFF",
+                  "id": 2003505,
+                  "progressionOptOut": false
+                },
+                "authorType": "ADMIN",
+                "votes": {
+                  "totalVotes": 3,
+                  "canUpvote": true,
+                  "totalUpvotes": 3
+                },
+                "kernelVersion": 0,
+                "feedbackTrackingData": {},
+                "isThankYou": false,
+                "reactions": [
+                  {
+                    "emoji": "THANK_YOU",
+                    "featuredUserNames": [
+                      "bharat0"
+                    ],
+                    "userCount": 1
+                  },
+                  {
+                    "emoji": "LOVE",
+                    "featuredUserNames": [
+                      "bouadoumohamedlouai"
+                    ],
+                    "userCount": 1
+                  }
+                ],
+                "teamUpInfo": {
+                  "teamLeader": {
+                    "displayName": "Ryan Holbrook",
+                    "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+                    "url": "/ryanholbrook",
+                    "userName": "ryanholbrook",
+                    "tier": "STAFF",
+                    "id": 2003505,
+                    "profileUrl": "/ryanholbrook",
+                    "performanceTier": "STAFF",
+                    "userId": 2003505,
+                    "progressionOptOut": false
+                  },
+                  "intro": ""
+                }
+              }
+            ],
+            "parent": {},
+            "author": {
+              "displayName": "Bharat",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2411334-kg.jpg",
+              "url": "/bharat0",
+              "tier": "CONTRIBUTOR",
+              "id": 2411334,
+              "progressionOptOut": false
+            },
+            "authorType": "COMMENT",
+            "votes": {
+              "canUpvote": true
+            },
+            "kernelVersion": 0,
+            "competitionRanking": 1389,
+            "feedbackTrackingData": {},
+            "isThankYou": false,
+            "reactions": [
+              {
+                "emoji": "LOVE",
+                "featuredUserNames": [
+                  "bouadoumohamedlouai"
+                ],
+                "userCount": 1
+              }
+            ],
+            "teamUpInfo": {
+              "teamLeader": {
+                "displayName": "Bharat",
+                "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2411334-kg.jpg",
+                "url": "/bharat0",
+                "userName": "bharat0",
+                "tier": "CONTRIBUTOR",
+                "id": 2411334,
+                "profileUrl": "/bharat0",
+                "performanceTier": "CONTRIBUTOR",
+                "userId": 2411334,
+                "progressionOptOut": false
+              },
+              "intro": ""
+            }
+          }
+        ],
+        "parent": {},
+        "author": {
+          "displayName": "Fritz Cremer",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/6735218-kg.png?t=2023-11-05-17-01-45",
+          "url": "/fritzcremer",
+          "tier": "MASTER",
+          "id": 6735218,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "reactions": [
+          {
+            "emoji": "LOVE",
+            "featuredUserNames": [
+              "bouadoumohamedlouai"
+            ],
+            "userCount": 1
+          }
+        ]
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3527806,
+      "postDate": "2026-09-24T19:01:33.990Z",
+      "rawMarkdown": "Hello! Are all Gemma 4 variants allowed in this competition, including E2B and E4B, or must participants use a specific version?\nI have a laptop with an RTX 4050 and 16 GB of RAM. Does the competition provide any free GPU/TPU resources or training credits?\nAre quantized models and LoRA/QLoRA fine-tuning allowed?\nThank you!",
+      "content": "<p>Hello! Are all Gemma 4 variants allowed in this competition, including E2B and E4B, or must participants use a specific version?\nI have a laptop with an RTX 4050 and 16 GB of RAM. Does the competition provide any free GPU/TPU resources or training credits?\nAre quantized models and LoRA/QLoRA fine-tuning allowed?\nThank you!</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Rising",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+        "url": "/bouadoumohamedlouai",
+        "tier": "CONTRIBUTOR",
+        "id": 30981809,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "canUpvote": true
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Rising",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/bouadoumohamedlouai",
+          "userName": "bouadoumohamedlouai",
+          "tier": "CONTRIBUTOR",
+          "id": 30981809,
+          "profileUrl": "/bouadoumohamedlouai",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 30981809,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3527806,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 743056,
+    "name": "Gemma4 allowed variant",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-24T19:01:33.990482Z",
+    "url": "/competitions/gemma-4-developer-agent/discussion/743056",
+    "totalMessages": 4,
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

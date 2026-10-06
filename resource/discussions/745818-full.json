@@ -1,0 +1,57 @@
+{
+  "forumTopic": {
+    "authorId": 14281703,
+    "authorThumbnailName": "default-thumb.png",
+    "authorUserDisplayName": "Marian-Emanuel David",
+    "authorUserName": "marianemanueldavid",
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3532750,
+      "postDate": "2026-10-04T15:44:31.603Z",
+      "rawMarkdown": "The competition prompt poses a great question: \n> *\"What if every developer could rely on an autonomous agent equally capable offline, on consumer hardware?\"*\n\nWe took this challenge directly to bare-metal hardware and End User Computing (EUC) field diagnostics. \n\nMeet **CuriosIT** — an autonomous hardware-assisted diagnostic copilot that operates 100% offline with zero cloud data exfiltration.\n\n![](https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F14281703%2F8e9b618f9570f4f9498406e8645d6643%2FScreenshot_20261004-142322.png?generation=1791129424497129&alt=media)\n\n### 🛠️ The Architecture\n1. **Neural Core:** Google **Gemma 4B** running 100% locally on a mobile device (Google Pixel) using **Google LiteRT-LM** with INT4 quantization on the Tensor NPU/GPU.\n2. **Physical Hardware Bridge:** A compact **ESP32-S3** USB dongle running custom dual-mode firmware (simultaneous USB HID keystroke injection + CDC virtual serial loopback) with hardware SPI telemetry on an IPS LCD.\n3. **Air-Gap Compliance:** The target machine (which may be broken, offline, or in a restricted environment like healthcare/finance) has NO internet connection. All telemetry streams locally over an encrypted BLE NUS link to the phone.\n\n---\n\n### ⚡ Live Field Test Example\nDuring a live terminal troubleshooting session on a bare-metal Linux host:\n- The technician asked Gemma on the phone: *\"i need to find all attached usb\"*.\n- Gemma reasoned locally on GPU and prepared the diagnostic action: `[ ⚡ INJECT TO PC: lsusb ]`.\n- With a single tap, the dongle typed `(lsusb) 2>&1 | tee /dev/ttyACM0` into the host bash terminal and streamed the raw bus output back to the phone.\n- Next prompt from technician: *\"whats for keyboard?\"*\n![](https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F14281703%2F3ffc42fc48f8a99a8dc6a9b356affbb0%2FScreenshot_20261004-142734.png?generation=1791129469122347&alt=media)\n\n![![](https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F14281703%2F2263a14c1bc2e035f8caae31c1017d89%2FPXL_20261004_132746974.jpg?generation=1791129508420659&alt=media)](url to embed)\n- **Gemma on GPU response:**\n  > *\"Sorted mate, you've got a Corsair K55 CORE RGB Gaming Keyboard attached there.\"*\n\nNo cloud calls, no external API keys, sub-second reasoning, and accurate hardware identification at the physical terminal!\n\n---\n\n### 💡 Why This Matters for Autonomous Agents\n- **Democratizing Enterprise IT:** A $20 USB dongle and a consumer mobile phone replace a bulky $2,500 rugged technician workstation.\n- **Strict Air-Gap Safety:** Ideal for hospitals (NHS), defense, and banking where uploading system logs or internal network topologies to public cloud LLMs is strictly prohibited.\n- **Enterprise MCP Ready:** Architected to link with Active Directory (LAPS) and PDQ Deploy via Model Context Protocol.\n\nWe'd love to hear your thoughts, feedback, and ideas from the DeepMind team and the community!",
+      "content": "<p>The competition prompt poses a great question: </p>\n<blockquote>\n  <p><em>\"What if every developer could rely on an autonomous agent equally capable offline, on consumer hardware?\"</em></p>\n</blockquote>\n<p>We took this challenge directly to bare-metal hardware and End User Computing (EUC) field diagnostics. </p>\n<p>Meet <strong>CuriosIT</strong> — an autonomous hardware-assisted diagnostic copilot that operates 100% offline with zero cloud data exfiltration.</p>\n<p><img src=\"https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F14281703%2F8e9b618f9570f4f9498406e8645d6643%2FScreenshot_20261004-142322.png?generation=1791129424497129&amp;alt=media\" alt=\"\"></p>\n<h3>🛠️ The Architecture</h3>\n<ol>\n<li><strong>Neural Core:</strong> Google <strong>Gemma 4B</strong> running 100% locally on a mobile device (Google Pixel) using <strong>Google LiteRT-LM</strong> with INT4 quantization on the Tensor NPU/GPU.</li>\n<li><strong>Physical Hardware Bridge:</strong> A compact <strong>ESP32-S3</strong> USB dongle running custom dual-mode firmware (simultaneous USB HID keystroke injection + CDC virtual serial loopback) with hardware SPI telemetry on an IPS LCD.</li>\n<li><strong>Air-Gap Compliance:</strong> The target machine (which may be broken, offline, or in a restricted environment like healthcare/finance) has NO internet connection. All telemetry streams locally over an encrypted BLE NUS link to the phone.</li>\n</ol>\n<hr>\n<h3>⚡ Live Field Test Example</h3>\n<p>During a live terminal troubleshooting session on a bare-metal Linux host:</p>\n<ul>\n<li>The technician asked Gemma on the phone: <em>\"i need to find all attached usb\"</em>.</li>\n<li>Gemma reasoned locally on GPU and prepared the diagnostic action: <code>[ ⚡ INJECT TO PC: lsusb ]</code>.</li>\n<li>With a single tap, the dongle typed <code>(lsusb) 2&gt;&amp;1 | tee /dev/ttyACM0</code> into the host bash terminal and streamed the raw bus output back to the phone.</li>\n<li>Next prompt from technician: <em>\"whats for keyboard?\"</em>\n<img src=\"https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F14281703%2F3ffc42fc48f8a99a8dc6a9b356affbb0%2FScreenshot_20261004-142734.png?generation=1791129469122347&amp;alt=media\" alt=\"\"></li>\n</ul>\n<p><img src=\"https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F14281703%2F2263a14c1bc2e035f8caae31c1017d89%2FPXL_20261004_132746974.jpg?generation=1791129508420659&amp;alt=media\" alt=\"![\">](url to embed)</p>\n<ul>\n<li><strong>Gemma on GPU response:</strong></li>\n</ul>\n<blockquote>\n  <p><em>\"Sorted mate, you've got a Corsair K55 CORE RGB Gaming Keyboard attached there.\"</em></p>\n</blockquote>\n<p>No cloud calls, no external API keys, sub-second reasoning, and accurate hardware identification at the physical terminal!</p>\n<hr>\n<h3>💡 Why This Matters for Autonomous Agents</h3>\n<ul>\n<li><strong>Democratizing Enterprise IT:</strong> A $20 USB dongle and a consumer mobile phone replace a bulky $2,500 rugged technician workstation.</li>\n<li><strong>Strict Air-Gap Safety:</strong> Ideal for hospitals (NHS), defense, and banking where uploading system logs or internal network topologies to public cloud LLMs is strictly prohibited.</li>\n<li><strong>Enterprise MCP Ready:</strong> Architected to link with Active Directory (LAPS) and PDQ Deploy via Model Context Protocol.</li>\n</ul>\n<p>We'd love to hear your thoughts, feedback, and ideas from the DeepMind team and the community!</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Marian-Emanuel David",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+        "url": "/marianemanueldavid",
+        "tier": "CONTRIBUTOR",
+        "id": 14281703,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "canUpvote": true
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Marian-Emanuel David",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/marianemanueldavid",
+          "userName": "marianemanueldavid",
+          "tier": "CONTRIBUTOR",
+          "id": 14281703,
+          "profileUrl": "/marianemanueldavid",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 14281703,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3532750,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 745818,
+    "name": "CuriosIT: Autonomous Bare-Metal Diagnostics with Gemma 4 on Android (100% Offline & Air-Gapped)",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-10-04T15:44:31.602848100Z",
+    "url": "/competitions/gemma-4-developer-agent/discussion/745818",
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

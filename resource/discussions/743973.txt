@@ -1,0 +1,54 @@
+# Gold patches fail offline for most FastAPI and requests tasks (missing test dependencies in the grading environment?
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743973
+
+## 3529370 /shashanka319 TOPIC
+Evidence notebook for a forum report to the organisers. Everything here is produced by the organisers' own code from the official wheelhouse (swegemma 0.2.7, adk_submission 0.2.11) with the competition's wheels/ directory and the swebench-sandbox image, network off. No model is involved: each task is graded with its reference (gold) patch and with no patch.
+
+Kindly adress the questions in the notebook
+
+## 3529432 /johnparkerson COMMENT
+Same. I pulled everything directly from the data tab. 
+
+Here's everything I found, sorted:
+
+These are definite dataset bugs, and gold patch cannot pass on py3.13
+
+8× requests tasks — `6589, 6592, 6629, 6757, 7328, 7433, 7502, 7505`
+ - Python 3.13 enables `VERIFY_X509_STRICT` by default; pytest-httpbin's bundled cert has no Authority Key Identifier → every https test fails with `SSLCertVerificationError: Missing Authority Key Identifier`. Since resolution requires the whole touched test file to exit 0, these are unresolvable for everyone. (Verified: gold patches produce 315+ passed but the same 7–10 inherent SSL/timeout failures.)
+
+3× version-gated required tests — `fastapi_14186`, `fastapi_15745`, `rich_3486`
+ - The `test_patch` adds tests decorated `@needs_py_lt_314` (which is `skipif(sys.version_info > (3,13))` → **skips on every 3.13.x**, including 3.13.0, because `(3,13,0) > (3,13)` tuple-compares True) and `skip if(minor >= 11)`. On the 3.13 runtime they can never run — only skip. If the scorer counts extracted test names as required-and must-pass, these are unresolvable; if it precomputed FAIL_TO_PASS on the same env, they're excluded and just noise.
+
+1× Python-behavior drift — `rich_3472`
+ - `test_attrs_broken_310` expects `'Foo' object has no attribute 'bar'`; on 3.13 CPython emits the full `__qualname__` (`'tests.test_pretty.<locals>.Foo'`). No patch can fix a Python-version difference in the error string. Dead task.
+
+
+
+## 3529829 /clairebedecarre COMMENT
+I think there are two problems:
+
+1. Missing wheels (pytest collection fails for every fastapi task, gold patch included)
+
+With swegemma 0.2.7, the published `sandbox/wheels/` and the image from `docker/Dockerfile.sandbox`, every fastapi task exits pytest with code 2 at collection:
+
+```
+E   ModuleNotFoundError: No module named 'typing_inspection'
+```
+
+Cause: the wheelhouse ships `pydantic-2.13.4`, whose METADATA declares `Requires-Dist: typing-inspection>=0.4.2` (every pydantic >= 2.11 needs it), but no `typing_inspection` wheel is included. The offline install in `container_setup.py` silently skips it, so `import fastapi -> import pydantic` fails regardless of the patch. Also absent from the wheelhouse but imported directly by the tests: `inline-snapshot` (+ `asttokens`, `executing`) – needed by 22 of the 67 public fastapi tasks; `dirty-equals` – 9 tasks; `ujson`/`orjson` – 2; `python-multipart` – 1.
+
+2. Starlette version selection
+
+After adding those wheels locally, a gold-patch control over the 67 non-dev public fastapi tasks resolves only 13/67. The wheelhouse contains 60 starlette versions (0.19.0 … 0.52.1, 1.3.1, 1.6.0), but `container_setup._deduplicate_wheels` keeps the *highest* version per package and `_ensure_container_site_packages` unpacks that set into site-packages before `sandbox/setup.py` runs; `setup.py` is called with `--fast-path`, which installs nothing (its slow path also strips version constraints). So every fastapi commit runs against **starlette 1.6.0**. Starlette 1.0 removed `Router(on_startup=...)`, hence 48 tasks fail with:
+
+```
+TypeError: Router.__init__() got an unexpected keyword argument 'on_startup'
+```
+
+Only commits that happen to be compatible with starlette 1.x can pass. As such, 54/67 public fastapi tasks are automatically failed with the shipped harness, gold patch or not.
+
+## 3529396 /bharat0 COMMENT
+I'm also facing the same, I've reproduced it using the getting started kernel. I've patched the Evaluator to bypass the model call and return the ground truth directly.
+https://www.kaggle.com/code/bharat0/eval-errors-gemma-4-developer-agent
+
+

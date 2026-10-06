@@ -1,0 +1,309 @@
+{
+  "forumTopic": {
+    "authorId": 19641724,
+    "authorThumbnailName": "19641724-kg.png?t=2026-09-29-07-48-18",
+    "authorUserDisplayName": "Whisper Last",
+    "authorUserName": "whisperlast",
+    "comments": [
+      {
+        "id": 3531712,
+        "postDate": "2026-10-02T13:32:23.253Z",
+        "rawMarkdown": "Following up for anyone tracking this: the fix is live in the 09-30 wheelhouse. Tool results now reach the model as one level of JSON, and `edit_file` gained a fallback that retries the match with escapes removed.\n\nWe re-scored the replay from my earlier comment against that fallback. Edits that failed only because the model copied escaped text into `old_string` now succeed. What still fails is a call that loses an argument because a string was closed with a backtick: 4 of 45 edit calls with the old double encoding and 7 of 40 with a single level.\n\nThanks for turning this around quickly, @ryanholbrook.\n",
+        "content": "<p>Following up for anyone tracking this: the fix is live in the 09-30 wheelhouse. Tool results now reach the model as one level of JSON, and <code>edit_file</code> gained a fallback that retries the match with escapes removed.</p>\n<p>We re-scored the replay from my earlier comment against that fallback. Edits that failed only because the model copied escaped text into <code>old_string</code> now succeed. What still fails is a call that loses an argument because a string was closed with a backtick: 4 of 45 edit calls with the old double encoding and 7 of 40 with a single level.</p>\n<p>Thanks for turning this around quickly, <a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a>.</p>",
+        "parent": {},
+        "author": {
+          "displayName": "D A M",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/31027446-kg.jpg?t=2026-03-13-03-58-07",
+          "url": "/adesolanke",
+          "tier": "CONTRIBUTOR",
+          "id": 31027446,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "totalVotes": 1,
+          "canUpvote": true,
+          "totalUpvotes": 1
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 571,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "D A M",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/31027446-kg.jpg?t=2026-03-13-03-58-07",
+            "url": "/adesolanke",
+            "userName": "adesolanke",
+            "tier": "CONTRIBUTOR",
+            "id": 31027446,
+            "profileUrl": "/adesolanke",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 31027446,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3530351,
+        "postDate": "2026-09-30T02:31:45.007Z",
+        "rawMarkdown": "Thanks for addressing this. One data point that may help choose between the two fixes proposed above: we held 30 real edit contexts fixed (same system prompt, issue, analyzer answer and a read_file of the lines to change) and varied only how the read_file observation was encoded, sampling the next call three times per condition through the official chat template and vLLM's gemma4 parser at temperature 0.2:\n\n| Observation encoding | edit_file calls | failed (old_string not found or argument lost) |\n|---|---|---|\n| current harness (JSON inside JSON) | 45 | 22% |\n| one level of JSON | 40 | 62% |\n| raw text | 43 | 0% |\n\nA single level of escaping was worse than two in these contexts: sequences like a backslash followed by n look like ordinary Python escapes and get copied into old_string, while the doubled form was more often recognized as an artifact. Rendering the result as raw text (the second option in the post, a mapping reaching the chat template so the tool response block holds unescaped text) removed the failures entirely. So if only one change is possible, the raw-text path looks much safer than returning a dict that still arrives as one level of JSON.\n\nOne implementation detail we hit while testing the raw path: a dict passed as the content of a role \"tool\" message does not reach the mapping branch of format_tool_response_block. Jinja treats a dict as a sequence, so the template's content-parts branch iterates its keys and fails ('str object' has no attribute 'get'). The unescaped rendering needs the response to arrive through a path where the template sees a mapping (or the content-parts branch to check for a mapping first).",
+        "content": "<p>Thanks for addressing this. One data point that may help choose between the two fixes proposed above: we held 30 real edit contexts fixed (same system prompt, issue, analyzer answer and a read_file of the lines to change) and varied only how the read_file observation was encoded, sampling the next call three times per condition through the official chat template and vLLM's gemma4 parser at temperature 0.2:</p>\n<table>\n<thead>\n<tr>\n<th>Observation encoding</th>\n<th>edit_file calls</th>\n<th>failed (old_string not found or argument lost)</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>current harness (JSON inside JSON)</td>\n<td>45</td>\n<td>22%</td>\n</tr>\n<tr>\n<td>one level of JSON</td>\n<td>40</td>\n<td>62%</td>\n</tr>\n<tr>\n<td>raw text</td>\n<td>43</td>\n<td>0%</td>\n</tr>\n</tbody>\n</table>\n<p>A single level of escaping was worse than two in these contexts: sequences like a backslash followed by n look like ordinary Python escapes and get copied into old_string, while the doubled form was more often recognized as an artifact. Rendering the result as raw text (the second option in the post, a mapping reaching the chat template so the tool response block holds unescaped text) removed the failures entirely. So if only one change is possible, the raw-text path looks much safer than returning a dict that still arrives as one level of JSON.</p>\n<p>One implementation detail we hit while testing the raw path: a dict passed as the content of a role \"tool\" message does not reach the mapping branch of format_tool_response_block. Jinja treats a dict as a sequence, so the template's content-parts branch iterates its keys and fails ('str object' has no attribute 'get'). The unescaped rendering needs the response to arrive through a path where the template sees a mapping (or the content-parts branch to check for a mapping first).</p>",
+        "parent": {},
+        "author": {
+          "displayName": "D A M",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/31027446-kg.jpg?t=2026-03-13-03-58-07",
+          "url": "/adesolanke",
+          "tier": "CONTRIBUTOR",
+          "id": 31027446,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "totalVotes": 2,
+          "canUpvote": true,
+          "totalUpvotes": 2
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 571,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "D A M",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/31027446-kg.jpg?t=2026-03-13-03-58-07",
+            "url": "/adesolanke",
+            "userName": "adesolanke",
+            "tier": "CONTRIBUTOR",
+            "id": 31027446,
+            "profileUrl": "/adesolanke",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 31027446,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3530081,
+        "postDate": "2026-09-29T14:03:21.077Z",
+        "rawMarkdown": "Thanks for the report. Addressing now.",
+        "content": "<p>Thanks for the report. Addressing now.</p>",
+        "replies": [
+          {
+            "id": 3531043,
+            "postDate": "2026-10-01T07:41:15.560Z",
+            "rawMarkdown": "hi, what's the latest on this? this has a major influence on how training data is generated, it's important to address before people sink too much time into this competition ",
+            "content": "<p>hi, what's the latest on this? this has a major influence on how training data is generated, it's important to address before people sink too much time into this competition </p>",
+            "replies": [
+              {
+                "id": 3531343,
+                "postDate": "2026-10-01T17:53:47.807Z",
+                "rawMarkdown": "The latest wheelhouse should have this fixed.",
+                "content": "<p>The latest wheelhouse should have this fixed.</p>",
+                "parent": {},
+                "author": {
+                  "displayName": "Ryan Holbrook",
+                  "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+                  "url": "/ryanholbrook",
+                  "tier": "STAFF",
+                  "id": 2003505,
+                  "progressionOptOut": false
+                },
+                "authorType": "ADMIN",
+                "votes": {
+                  "canUpvote": true
+                },
+                "kernelVersion": 0,
+                "feedbackTrackingData": {},
+                "isThankYou": false,
+                "teamUpInfo": {
+                  "teamLeader": {
+                    "displayName": "Ryan Holbrook",
+                    "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+                    "url": "/ryanholbrook",
+                    "userName": "ryanholbrook",
+                    "tier": "STAFF",
+                    "id": 2003505,
+                    "profileUrl": "/ryanholbrook",
+                    "performanceTier": "STAFF",
+                    "userId": 2003505,
+                    "progressionOptOut": false
+                  },
+                  "intro": ""
+                }
+              }
+            ],
+            "parent": {},
+            "author": {
+              "displayName": "MrMadsheep",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/32895152-gr.jpg",
+              "url": "/marcinstecki",
+              "tier": "CONTRIBUTOR",
+              "id": 32895152,
+              "progressionOptOut": true
+            },
+            "authorType": "COMMENT",
+            "votes": {
+              "totalVotes": 1,
+              "canUpvote": true,
+              "totalUpvotes": 1
+            },
+            "kernelVersion": 0,
+            "competitionRanking": 89,
+            "feedbackTrackingData": {},
+            "isThankYou": false,
+            "teamUpInfo": {
+              "teamLeader": {
+                "displayName": "MrMadsheep",
+                "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/32895152-gr.jpg",
+                "url": "/marcinstecki",
+                "userName": "marcinstecki",
+                "tier": "CONTRIBUTOR",
+                "id": 32895152,
+                "profileUrl": "/marcinstecki",
+                "performanceTier": "CONTRIBUTOR",
+                "userId": 32895152,
+                "progressionOptOut": true
+              },
+              "intro": ""
+            }
+          }
+        ],
+        "parent": {},
+        "author": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "progressionOptOut": false
+        },
+        "authorType": "ADMIN",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Ryan Holbrook",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+            "url": "/ryanholbrook",
+            "userName": "ryanholbrook",
+            "tier": "STAFF",
+            "id": 2003505,
+            "profileUrl": "/ryanholbrook",
+            "performanceTier": "STAFF",
+            "userId": 2003505,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3529983,
+        "postDate": "2026-09-29T09:36:06.070Z",
+        "rawMarkdown": "I’ve encountered the same issue. In my view, the model is weak, and the harness environment and tools are also a bit problematic. However, I suspect this might be a \"feature\" (or you can call it a \"bug\"), and I am currently working around it. If the organizers fix it, we are happy to see it, but some participants might have to redo their work, given that the competition has already been started for several days.",
+        "content": "<p>I’ve encountered the same issue. In my view, the model is weak, and the harness environment and tools are also a bit problematic. However, I suspect this might be a \"feature\" (or you can call it a \"bug\"), and I am currently working around it. If the organizers fix it, we are happy to see it, but some participants might have to redo their work, given that the competition has already been started for several days.</p>",
+        "parent": {},
+        "author": {
+          "displayName": "Shengkai Su",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/13625226-gr.jpg",
+          "url": "/shengkaisu",
+          "tier": "CONTRIBUTOR",
+          "id": 13625226,
+          "progressionOptOut": true
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 114,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Shengkai Su",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/13625226-gr.jpg",
+            "url": "/shengkaisu",
+            "userName": "shengkaisu",
+            "tier": "CONTRIBUTOR",
+            "id": 13625226,
+            "profileUrl": "/shengkaisu",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 13625226,
+            "progressionOptOut": true
+          },
+          "intro": ""
+        }
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3529916,
+      "postDate": "2026-09-29T07:18:38.207Z",
+      "rawMarkdown": "While reading our local traces (official swegemma 0.2.7 + adk-submission 0.2.11 + the wheelhouse vLLM 0.19.1), we noticed that every tool result reaches the model JSON-encoded **twice**. For code with quotes or backslashes it becomes hard to read. Here is one real `read_file` result, `tabulate.py` lines 140-170.\n\n**The file:**\n\n```python\nLATEX_ESCAPE_RULES = {r\"&\": r\"\\&\", r\"%\": r\"\\%\", r\"$\": r\"\\$\", r\"#\": r\"\\#\",\n                      r\"_\": r\"\\_\", r\"^\": r\"\\^{}\", r\"{\": r\"\\{\", r\"}\": r\"\\}\",\n                      r\"~\": r\"\\textasciitilde{}\", \"\\\\\": r\"\\textbackslash{}\",\n                      r\"<\": r\"\\ensuremath{<}\", r\">\": r\"\\ensuremath{>}\"}\n```\n\n**What Gemma 4 actually sees in the tool message (same four lines):**\n\n```\nLATEX_ESCAPE_RULES = {r\\\\\\\"&\\\\\\\": r\\\\\\\"\\\\\\\\&\\\\\\\", r\\\\\\\"%\\\\\\\": r\\\\\\\"\\\\\\\\%\\\\\\\", r\\\\\\\"$\\\\\\\": r\\\\\\\"\\\\\\\\$\\\\\\\", r\\\\\\\"#\\\\\\\": r\\\\\\\"\\\\\\\\#\\\\\\\",\\\\n                      r\\\\\\\"_\\\\\\\": r\\\\\\\"\\\\\\\\_\\\\\\\", r\\\\\\\"^\\\\\\\": r\\\\\\\"\\\\\\\\^{}\\\\\\\", r\\\\\\\"{\\\\\\\": r\\\\\\\"\\\\\\\\{\\\\\\\", r\\\\\\\"}\\\\\\\": r\\\\\\\"\\\\\\\\}\\\\\\\",\\\\n                      r\\\\\\\"~\\\\\\\": r\\\\\\\"\\\\\\\\textasciitilde{}\\\\\\\", \\\\\\\"\\\\\\\\\\\\\\\\\\\\\\\": r\\\\\\\"\\\\\\\\textbackslash{}\\\\\\\",\\\\n                      r\\\\\\\"<\\\\\\\": r\\\\\\\"\\\\\\\\ensuremath{<}\\\\\\\", r\\\\\\\">\\\\\\\": r\\\\\\\"\\\\\\\\ensuremath{>}\\\\\\\"}\n```\n\nEach `\"` in the file becomes `\\\\\\\"`, each backslash becomes `\\\\\\\\`, and each newline becomes `\\\\n`.\n\n**Where it comes from.** \n- The swegemma tools return a JSON *string* (`{\"status\": \"ok\", \"content\": \"...\"}`). Because the return value is not a dict, ADK wraps it as `{\"result\": <that string>}` (Gemini function responses must be dicts): that is the first level. - LiteLLM then has to serialize the dict into the OpenAI `content` string, since OpenAI tool messages are strings: that is the second level. The Gemma 4 chat template finally puts the string verbatim into `<|tool_response>response:read_file{value:<|\"|>...<|\"|>}<tool_response|>`.\n\n**Why it matters.**\n- `edit_file` requires `old_string` to match the file byte for byte, but the model only ever sees the escaped form. In our runs it regularly copies escapes into `old_string` and gets `old_string not found`. For example, in `arrow/locales.py` it wrote `\"\\u064a\\u0648\\u0645\"` instead of the Arabic characters, twice in a row.\n- It costs extra tokens on every step, and on the 4xL4 scorer every step is precious.\n\n**A typical failure, and how often it happens.** `more_itertools/more.py`, the model wants to edit `chunked()`:\n\n- The file has: `\"\"\"Break *iterable* into lists of length *n*:`\n- `read_file` showed it (inside the tool message) as: `\\\\\\\"\\\\\\\"\\\\\\\"Break *iterable* into lists of length *n*:\\\\n\\\\n`\n- The model un-escaped one level, not two, and sent `old_string` starting with: `\\\"\\\"\\\"Break *iterable* ...`\n- Result: `Failed to replace: old_string not found. Ensure you're not escaping content incorrectly ...`. It sent the identical call again 43 s later and got the same error. The same task's edit to `more.pyi` (a line without quotes) went through on the first try.\n\nAcross our local runs, 62 of 299 `edit_file` calls failed with `old_string not found`. For 39 of them (in 18 different tasks) the cause is provably the escaping: un-escaping the model's `old_string` gives text that is present verbatim in what the model had just read. Python docstrings (`\"\"\"`) are the most common trigger; the Arabic-locale case above is another.\n\n**Possible fixes (organizer side; submissions can't touch this layer):**\n1. Cheapest: have the swegemma tools return a dict instead of a JSON string. ADK then passes it through without the `{\"result\": ...}` wrapper, and the model sees a single level of escaping (`\\n` instead of `\\\\n`).\n2. Cleanest: also let the dict reach the chat template as a mapping (e.g. parse JSON tool content back into a dict before templating in vLLM). Gemma 4's `format_tool_response_block` then renders raw text inside `<|\"|>` with no escaping at all.\n\nEach piece of this chain is reasonable on its own. But submissions have no way to touch this layer (no custom tools, no pre- or post-processing of tool output), so the only lever we have is to spend prompt and training effort teaching the model to cope with backslashes. **That feels somewhat removed from what this competition sets out to measure.**   @ryanholbrook I don't know whether this is a bug or a feature, or whether it should be fixed, but we're happy to share full traces if that helps.\n",
+      "content": "<p>While reading our local traces (official swegemma 0.2.7 + adk-submission 0.2.11 + the wheelhouse vLLM 0.19.1), we noticed that every tool result reaches the model JSON-encoded <strong>twice</strong>. For code with quotes or backslashes it becomes hard to read. Here is one real <code>read_file</code> result, <code>tabulate.py</code> lines 140-170.</p>\n<p><strong>The file:</strong></p>\n<pre><code>LATEX_ESCAPE_RULES = {r\"&amp;\": r\"\\&amp;\", r\"%\": r\"\\%\", r\"$\": r\"\\$\", r\"#\": r\"\\#\",\n                      r\"_\": r\"\\_\", r\"^\": r\"\\^{}\", r\"{\": r\"\\{\", r\"}\": r\"\\}\",\n                      r\"~\": r\"\\textasciitilde{}\", \"\\\\\": r\"\\textbackslash{}\",\n                      r\"&lt;\": r\"\\ensuremath{&lt;}\", r\"&gt;\": r\"\\ensuremath{&gt;}\"}\n</code></pre>\n<p><strong>What Gemma 4 actually sees in the tool message (same four lines):</strong></p>\n<pre><code>LATEX_ESCAPE_RULES = {r\\\\\\\"&amp;\\\\\\\": r\\\\\\\"\\\\\\\\&amp;\\\\\\\", r\\\\\\\"%\\\\\\\": r\\\\\\\"\\\\\\\\%\\\\\\\", r\\\\\\\"$\\\\\\\": r\\\\\\\"\\\\\\\\$\\\\\\\", r\\\\\\\"#\\\\\\\": r\\\\\\\"\\\\\\\\#\\\\\\\",\\\\n                      r\\\\\\\"_\\\\\\\": r\\\\\\\"\\\\\\\\_\\\\\\\", r\\\\\\\"^\\\\\\\": r\\\\\\\"\\\\\\\\^{}\\\\\\\", r\\\\\\\"{\\\\\\\": r\\\\\\\"\\\\\\\\{\\\\\\\", r\\\\\\\"}\\\\\\\": r\\\\\\\"\\\\\\\\}\\\\\\\",\\\\n                      r\\\\\\\"~\\\\\\\": r\\\\\\\"\\\\\\\\textasciitilde{}\\\\\\\", \\\\\\\"\\\\\\\\\\\\\\\\\\\\\\\": r\\\\\\\"\\\\\\\\textbackslash{}\\\\\\\",\\\\n                      r\\\\\\\"&lt;\\\\\\\": r\\\\\\\"\\\\\\\\ensuremath{&lt;}\\\\\\\", r\\\\\\\"&gt;\\\\\\\": r\\\\\\\"\\\\\\\\ensuremath{&gt;}\\\\\\\"}\n</code></pre>\n<p>Each <code>\"</code> in the file becomes <code>\\\\\\\"</code>, each backslash becomes <code>\\\\\\\\</code>, and each newline becomes <code>\\\\n</code>.</p>\n<p><strong>Where it comes from.</strong> </p>\n<ul>\n<li>The swegemma tools return a JSON <em>string</em> (<code>{\"status\": \"ok\", \"content\": \"...\"}</code>). Because the return value is not a dict, ADK wraps it as <code>{\"result\": &lt;that string&gt;}</code> (Gemini function responses must be dicts): that is the first level. - LiteLLM then has to serialize the dict into the OpenAI <code>content</code> string, since OpenAI tool messages are strings: that is the second level. The Gemma 4 chat template finally puts the string verbatim into <code>&lt;|tool_response&gt;response:read_file{value:&lt;|\"|&gt;...&lt;|\"|&gt;}&lt;tool_response|&gt;</code>.</li>\n</ul>\n<p><strong>Why it matters.</strong></p>\n<ul>\n<li><code>edit_file</code> requires <code>old_string</code> to match the file byte for byte, but the model only ever sees the escaped form. In our runs it regularly copies escapes into <code>old_string</code> and gets <code>old_string not found</code>. For example, in <code>arrow/locales.py</code> it wrote <code>\"\\u064a\\u0648\\u0645\"</code> instead of the Arabic characters, twice in a row.</li>\n<li>It costs extra tokens on every step, and on the 4xL4 scorer every step is precious.</li>\n</ul>\n<p><strong>A typical failure, and how often it happens.</strong> <code>more_itertools/more.py</code>, the model wants to edit <code>chunked()</code>:</p>\n<ul>\n<li>The file has: <code>\"\"\"Break *iterable* into lists of length *n*:</code></li>\n<li><code>read_file</code> showed it (inside the tool message) as: <code>\\\\\\\"\\\\\\\"\\\\\\\"Break *iterable* into lists of length *n*:\\\\n\\\\n</code></li>\n<li>The model un-escaped one level, not two, and sent <code>old_string</code> starting with: <code>\\\"\\\"\\\"Break *iterable* ...</code></li>\n<li>Result: <code>Failed to replace: old_string not found. Ensure you're not escaping content incorrectly ...</code>. It sent the identical call again 43 s later and got the same error. The same task's edit to <code>more.pyi</code> (a line without quotes) went through on the first try.</li>\n</ul>\n<p>Across our local runs, 62 of 299 <code>edit_file</code> calls failed with <code>old_string not found</code>. For 39 of them (in 18 different tasks) the cause is provably the escaping: un-escaping the model's <code>old_string</code> gives text that is present verbatim in what the model had just read. Python docstrings (<code>\"\"\"</code>) are the most common trigger; the Arabic-locale case above is another.</p>\n<p><strong>Possible fixes (organizer side; submissions can't touch this layer):</strong></p>\n<ol>\n<li>Cheapest: have the swegemma tools return a dict instead of a JSON string. ADK then passes it through without the <code>{\"result\": ...}</code> wrapper, and the model sees a single level of escaping (<code>\\n</code> instead of <code>\\\\n</code>).</li>\n<li>Cleanest: also let the dict reach the chat template as a mapping (e.g. parse JSON tool content back into a dict before templating in vLLM). Gemma 4's <code>format_tool_response_block</code> then renders raw text inside <code>&lt;|\"|&gt;</code> with no escaping at all.</li>\n</ol>\n<p>Each piece of this chain is reasonable on its own. But submissions have no way to touch this layer (no custom tools, no pre- or post-processing of tool output), so the only lever we have is to spend prompt and training effort teaching the model to cope with backslashes. <strong>That feels somewhat removed from what this competition sets out to measure.</strong>   <a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a> I don't know whether this is a bug or a feature, or whether it should be fixed, but we're happy to share full traces if that helps.</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Whisper Last",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/19641724-kg.png?t=2026-09-29-07-48-18",
+        "url": "/whisperlast",
+        "tier": "CONTRIBUTOR",
+        "id": 19641724,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 7,
+        "canUpvote": true,
+        "totalUpvotes": 7
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 194,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "reactions": [
+        {
+          "emoji": "THANK_YOU",
+          "featuredUserNames": [
+            "ffsscf"
+          ],
+          "userCount": 1
+        }
+      ],
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Whisper Last",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/19641724-kg.png?t=2026-09-29-07-48-18",
+          "url": "/whisperlast",
+          "userName": "whisperlast",
+          "tier": "CONTRIBUTOR",
+          "id": 19641724,
+          "profileUrl": "/whisperlast",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 19641724,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3529916,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 744272,
+    "name": "Tool results reach the model double-JSON-encoded: a line of code with quotes turns into a wall of backslashes",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-29T07:18:38.207599700Z",
+    "totalVotes": 7,
+    "url": "/competitions/gemma-4-developer-agent/discussion/744272",
+    "totalMessages": 6,
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

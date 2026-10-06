@@ -1,0 +1,730 @@
+# CELL 0 code
+from pathlib import Path
+import collections, json, os, shutil, subprocess, zipfile
+
+WORK = Path('/kaggle/working') if Path('/kaggle/working').is_dir() else Path.cwd()
+OUT = WORK / 'gemma4_agent_submission_detailed'
+OUT.mkdir(parents=True, exist_ok=True)
+ZIP = WORK / 'submission.zip'
+MODEL = 'gemma-4-31b-it-qat-w4a16-ct'  # pre-registered harness alias
+print('Output directory:', OUT)
+
+# CELL 1 markdown
+## Public data inventory
+
+Inspect metadata only. The 129 example fixes and test patches are local development labels. Their repository frequency may differ sharply from the hidden test; avoid repository-specific rules or answer lookup. Set `TASKS_PATH` explicitly if auto-discovery misses your mount.
+
+# CELL 2 code
+TASKS_PATH =  Path('/kaggle/input/competitions/gemma-4-developer-agent/tasks.jsonl')
+if TASKS_PATH is None:
+    candidates = [WORK / 'upload/tasks.jsonl']
+    if Path('/kaggle/input').is_dir():
+        candidates += sorted(Path('/kaggle/input').glob('**/tasks.jsonl'))
+    TASKS_PATH = next((p for p in candidates if p.is_file()), None)
+if TASKS_PATH is not None:
+    with Path(TASKS_PATH).open(encoding='utf-8') as f:
+        metadata = [dict((k, row[k]) for k in ('instance_id','repo','created_at'))
+                    for line in f if (row := json.loads(line))]
+    print('Public development tasks:', len(metadata))
+    print('Repositories:', dict(collections.Counter(x['repo'] for x in metadata)))
+else:
+    print('No optional public tasks.jsonl found; submission generation proceeds.')
+
+# CELL 3 markdown
+## Repository snapshots and safe development inputs
+
+The attached files contain `tasks.jsonl` but no `snapshots/` directory. When the full dataset is mounted, each public issue has a `<instance_id>.tgz` Git snapshot. The helper below refuses path traversal and archive links and extracts only into a new temporary directory. It reads the issue text and hints, **not** `patch` or `test_patch`. Keep the temporary directory alive while passing its `repo` path to the optional candidate selector. Extraction is never part of the scored archive.
+
+# CELL 4 code
+import tarfile
+import tempfile
+from contextlib import contextmanager
+
+@contextmanager
+def open_public_snapshot(tasks_path, snapshots_dir, instance_id):
+    """Yield (problem statement, extracted Git checkout) for one public issue.
+
+    Requirements:
+      * an instance with this ID exists in the public JSONL;
+      * its snapshot tar exists under snapshots_dir;
+      * the archive contains only regular files and directories with safe paths.
+    The ground-truth fix and test patch are deliberately never returned.
+    """
+    issue = None
+    with Path(tasks_path).open(encoding='utf-8') as stream:
+        for line in stream:
+            row = json.loads(line)
+            if row['instance_id'] == instance_id:
+                issue = row['problem_statement'] + ('\n\nHints:\n' + row['hints_text'] if row['hints_text'] else '')
+                break
+    if issue is None:
+        raise KeyError('Unknown public instance_id')
+    archive = Path(snapshots_dir) / (instance_id + '.tgz')
+    if not archive.is_file():
+        raise FileNotFoundError(archive)
+    with tempfile.TemporaryDirectory(prefix='gemma_snapshot_') as temp:
+        dest = Path(temp) / 'repo'
+        dest.mkdir()
+        with tarfile.open(archive, 'r:gz') as tar:
+            members = tar.getmembers()
+            for item in members:
+                target = (dest / item.name).resolve()
+                if not target.is_relative_to(dest.resolve()) or not (item.isfile() or item.isdir()):
+                    raise ValueError('Unsafe snapshot entry: ' + item.name)
+            tar.extractall(dest, members=members)  # all entries validated above
+        git_roots = [dest] if (dest / '.git').exists() else [p for p in dest.iterdir() if (p / '.git').exists()]
+        if len(git_roots) != 1:
+            raise ValueError('Expected exactly one extracted Git working tree')
+        yield issue, git_roots[0]
+
+print('Snapshot helper defined; no full dataset is attached here.')
+
+# CELL 5 markdown
+## Executable local candidate pipeline
+
+The following Python runs **during development**, against a local repository snapshot and an already-running OpenAI-compatible Gemma 4 server. It performs model-guided file selection, extracts bounded line-numbered code, samples several exact search/replace proposals, applies each to an isolated copy, checks syntax and diff validity, runs explicitly chosen existing tests, and picks the best patch by fail-to-pass repairs while penalizing regressions. The returned `winner.patch` is a normal git diff. It does not mutate the original repository. Supply test node IDs that are already present in the snapshot; hidden `test_patch` is never available to the scored agent.
+
+The competition **does not execute this cell at scoring**. It rejects arbitrary Python entrypoints in `submission.zip`; only the ADK YAML and prompts below are submitted. This makes the notebook useful for local selection experiments without claiming that the notebook's Python controls the grader's agent.
+
+
+# CELL 6 code
+"""Local development pipeline; not an ADK submission entrypoint."""
+import ast
+import json
+import re
+import shutil
+import subprocess
+import tempfile
+import urllib.request
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Callable
+
+
+@dataclass
+class CandidateResult:
+    index: int
+    accepted: bool
+    reason: str
+    score: tuple
+    patch: str = ''
+    outcomes: tuple = ()
+
+
+def command(argv, cwd, timeout=60):
+    try:
+        return subprocess.run(argv, cwd=cwd, text=True, capture_output=True,
+                              timeout=timeout, check=False)
+    except subprocess.TimeoutExpired:
+        return None
+
+
+def local_chat(base_url: str, model: str) -> Callable[[str, float], str]:
+    """Connect to an already-running OpenAI-compatible local model server."""
+    url = base_url.rstrip('/') + '/chat/completions'
+    def ask(prompt: str, temperature: float = 0.0) -> str:
+        payload = json.dumps({'model': model, 'messages': [{'role': 'user', 'content': prompt}],
+                              'temperature': temperature, 'max_tokens': 4096}).encode()
+        req = urllib.request.Request(url, payload, {'Content-Type': 'application/json'})
+        with urllib.request.urlopen(req, timeout=180) as response:
+            data = json.load(response)
+        return data['choices'][0]['message']['content']
+    return ask
+
+
+def json_reply(text):
+    """Accept plain JSON and fenced JSON; reject ambiguous responses."""
+    text = text.strip()
+    if text.startswith('```'):
+        text = re.sub(r'^```(?:json)?\s*', '', text)
+        text = re.sub(r'\s*```$', '', text)
+    return json.loads(text)
+
+
+def source_files(repo: Path):
+    return [p.relative_to(repo).as_posix() for p in repo.rglob('*.py')
+            if not any(part in {'.git', '.venv', 'venv', 'build', 'dist'} for part in p.parts)
+            and p.is_file() and not p.is_symlink()]
+
+
+def safe_source(repo: Path, rel: str, *, must_exist=True) -> Path:
+    path = Path(rel)
+    if path.is_absolute() or '..' in path.parts or path.suffix != '.py':
+        raise ValueError('Unsafe or non-Python file path')
+    if any(part == 'tests' or part.startswith('test_') or part.endswith('_test.py')
+           for part in path.parts):
+        raise ValueError('Test modifications are excluded')
+    dest = repo / path
+    if dest.is_symlink() or not dest.resolve().is_relative_to(repo.resolve()):
+        raise ValueError('Path escapes repository')
+    if must_exist and not dest.is_file():
+        raise ValueError('Source file not found')
+    return dest
+
+
+def select_context(repo: Path, problem: str, ask: Callable, max_files=5) -> tuple[list[str], str]:
+    """Select files with a model, then supply bounded, line-numbered local context."""
+    files = source_files(repo)
+    listing = '\n'.join(files[:1500])[:24000]
+    prompt = ('Select up to five existing Python source files relevant to this issue. '
+              'Return only JSON {"files":["relative/path.py",...]}.\n'
+              f'Issue:\n{problem[:10000]}\nFiles:\n{listing}')
+    try:
+        selection = json_reply(ask(prompt, 0.0))['files']
+    except (ValueError, KeyError, TypeError):
+        selection = []
+    selected = [f for f in selection if isinstance(f, str) and f in files][:max_files]
+    if not selected:
+        words = set(re.findall(r'[a-zA-Z_]\w{3,}', problem.lower()))
+        selected = sorted(files, key=lambda f: sum(w in f.lower() for w in words), reverse=True)[:max_files]
+    contexts = []
+    words = set(re.findall(r'[a-zA-Z_]\w{4,}', problem.lower()))
+    for rel in selected:
+        lines = (repo / rel).read_text(encoding='utf-8', errors='replace').splitlines()
+        hits = [i for i, line in enumerate(lines) if any(w in line.lower() for w in words)]
+        indices = set(range(min(45, len(lines))))
+        for i in hits[:10]:
+            indices.update(range(max(0, i-8), min(len(lines), i+9)))
+        snippet = '\n'.join(f'{i+1:4d} | {lines[i]}' for i in sorted(indices))[:14000]
+        contexts.append(f'FILE {rel}\n{snippet}')
+    return selected, '\n\n'.join(contexts)[:36000]
+
+
+def apply_edits(repo: Path, edits: list[dict]) -> list[str]:
+    if not edits or len(edits) > 8:
+        raise ValueError('Expected one to eight edits')
+    staged = {}
+    for edit in edits:
+        if not isinstance(edit, dict):
+            raise ValueError('Malformed edit')
+        path = safe_source(repo, edit['path'])
+        before, after = edit['search'], edit['replace']
+        if not isinstance(before, str) or not before or not isinstance(after, str):
+            raise ValueError('Invalid search/replace text')
+        old = staged.get(path, path.read_text(encoding='utf-8'))
+        if old.count(before) != 1:
+            raise ValueError('Search text must match exactly once')
+        staged[path] = old.replace(before, after, 1)
+    for path, content in staged.items():
+        ast.parse(content, filename=str(path))
+    for path, content in staged.items():
+        path.write_text(content, encoding='utf-8')
+    return [p.relative_to(repo).as_posix() for p in staged]
+
+
+def run_tests(repo: Path, test_targets: list[str], timeout=75, runner="pytest") -> tuple[int | None, ...]:
+    codes = []
+    for target in test_targets:
+        test_file = target.split('::', 1)[0] if runner == 'pytest' else target.split('.', 1)[0] + '.py'
+        path = Path(test_file)
+        if path.is_absolute() or '..' in path.parts or not (repo / path).is_file():
+            raise ValueError(f'Invalid existing test target: {target}')
+        argv = (['python', '-m', 'pytest', '-q', target, '-p', 'no:anyio', '-o', 'timeout=0']
+                if runner == 'pytest' else ['python', '-m', 'unittest', '-q', target])
+        result = command(argv, repo, timeout)
+        codes.append(None if result is None else result.returncode)
+    return tuple(codes)
+
+
+def generate_candidates(ask: Callable, problem: str, context: str, count=4) -> list[list[dict]]:
+    prompt = ("Fix the issue using exact SEARCH/REPLACE edits to the existing source. "
+              'Return only JSON {"edits":[{"path":"relative/source.py",'
+              '"search":"exact contiguous existing code","replace":"new code"}]}. '
+              'Preserve indentation; do not edit tests.\n'
+              f'ISSUE:\n{problem[:10000]}\nCONTEXT:\n{context}')
+    candidates = []
+    for i in range(count):
+        try:
+            obj = json_reply(ask(prompt, 0.0 if i == 0 else 0.45))
+            candidates.append(obj['edits'] if isinstance(obj['edits'], list) else [])
+        except (ValueError, KeyError, TypeError):
+            candidates.append([])
+    return candidates
+
+
+def select_patch(repo: Path, candidates: list[list[dict]], test_targets: list[str],
+                 *, timeout=75, runner="pytest") -> tuple[CandidateResult | None, list[CandidateResult]]:
+    """Apply each candidate to an isolated copy; prioritize fail-to-pass and preserve passing tests."""
+    repo = Path(repo).resolve()
+    if not (repo / '.git').exists():
+        raise ValueError('Expected a git repository snapshot')
+    baseline = run_tests(repo, test_targets, timeout, runner) if test_targets else ()
+    results = []
+    with tempfile.TemporaryDirectory(prefix='gemma_candidates_') as temp:
+        for i, edits in enumerate(candidates):
+            trial = Path(temp) / f'trial_{i}'
+            shutil.copytree(repo, trial, symlinks=True,
+                            ignore=shutil.ignore_patterns('__pycache__', '.pytest_cache', '*.pyc'))
+            try:
+                changed = apply_edits(trial, edits)
+                check = command(['git', 'diff', '--check'], trial, 15)
+                if check is None or check.returncode:
+                    raise ValueError('git diff --check failed')
+                diff = command(['git', 'diff', 'HEAD', '--', *changed], trial, 15)
+                if diff is None or not diff.stdout.strip():
+                    raise ValueError('No patch')
+                outcomes = run_tests(trial, test_targets, timeout, runner) if test_targets else ()
+                regressions = sum(b == 0 and a != 0 for b, a in zip(baseline, outcomes))
+                repaired = sum(b not in (None, 0) and a == 0 for b, a in zip(baseline, outcomes))
+                passing = sum(a == 0 for a in outcomes)
+                # Never rank a regression above a candidate that preserves passing tests.
+                score = (regressions == 0, repaired, passing, -len(diff.stdout))
+                results.append(CandidateResult(i, True, 'evaluated', score, diff.stdout, outcomes))
+            except (ValueError, KeyError, SyntaxError, UnicodeError) as exc:
+                results.append(CandidateResult(i, False, str(exc), (False, -1, -1, 0)))
+    valid = [r for r in results if r.accepted and r.score[0]]
+    return max(valid, key=lambda r: r.score, default=None), results
+
+
+def develop_patch(repo: Path, problem: str, ask: Callable, test_targets: list[str],
+                  candidates_count=4):
+    selected, context = select_context(repo, problem, ask)
+    candidates = generate_candidates(ask, problem, context, candidates_count)
+    winner, diagnostics = select_patch(repo, candidates, test_targets)
+    return {'selected_files': selected, 'winner': winner, 'candidates': diagnostics}
+
+
+# CELL 7 markdown
+## Optional live model invocation
+
+Run this only after mounting a snapshot, starting a local model endpoint, and selecting public development test nodes. For example, set `REPO` to an extracted task snapshot and `TEST_TARGETS` to existing tests. `local_chat` accepts an already-running OpenAI-compatible server; no server is started in this cell. This workflow is not the competition rerun interface.
+
+
+# CELL 8 code
+RUN_CANDIDATE_SEARCH = False
+REPO = Path('/kaggle/input/competitions/gemma-4-developer-agent/snapshots')
+TEST_TARGETS = []              # e.g. ['tests/test_feature.py::test_case']
+ISSUE = None                   # public problem statement; do not include reference patch
+MODEL_ENDPOINT = 'http://127.0.0.1:8000/v1'
+if RUN_CANDIDATE_SEARCH:
+    assert REPO and ISSUE and Path(REPO).is_dir() and TEST_TARGETS
+    ask = local_chat(MODEL_ENDPOINT, MODEL)
+    search_result = develop_patch(Path(REPO), ISSUE, ask, TEST_TARGETS, candidates_count=4)
+    print('Selected files:', search_result['selected_files'])
+    print('Results:', [(x.index, x.reason, x.score) for x in search_result['candidates']])
+    print('Selected patch:', search_result['winner'].patch if search_result['winner'] else 'No valid candidate')
+else:
+    print('Live candidate search skipped; run the deterministic smoke test below.')
+
+
+# CELL 9 markdown
+## Deterministic pipeline smoke test
+
+This synthetic repository has one failing test and one passing regression guard. A candidate that fixes one and breaks the other loses to a candidate that fixes the issue and keeps the guard green. A proposal to modify a test is rejected.
+
+
+# CELL 10 code
+# Run a complete local select → generate → test → choose cycle without a model.
+import tempfile
+with tempfile.TemporaryDirectory(prefix='candidate_smoke_') as folder:
+    sample_repo = Path(folder)
+    (sample_repo / 'calc.py').write_text('def double(value):\n    return value + value + 1\n\ndef triple(value):\n    return value * 3\n')
+    (sample_repo / 'test_calc.py').write_text('import unittest\nfrom calc import double, triple\n\nclass TestCalc(unittest.TestCase):\n    def test_double(self): self.assertEqual(double(2), 4)\n    def test_triple(self): self.assertEqual(triple(2), 6)\n')
+    subprocess.run(['git', 'init', '-q'], cwd=sample_repo, check=True)
+    subprocess.run(['git', '-c', 'user.name=Tester', '-c', 'user.email=test@example.com',
+                    'add', '.'], cwd=sample_repo, check=True)
+    subprocess.run(['git', '-c', 'user.name=Tester', '-c', 'user.email=test@example.com',
+                    'commit', '-qm', 'baseline'], cwd=sample_repo, check=True)
+    baseline = run_tests(sample_repo, ['test_calc.TestCalc.test_double', 'test_calc.TestCalc.test_triple'], runner='unittest')
+    assert baseline == (1, 0), baseline
+    proposals = [
+        [{'path':'calc.py', 'search':'return value + value + 1', 'replace':'return value * 2'},
+         {'path':'calc.py', 'search':'return value * 3', 'replace':'return value * 4'}],
+        [{'path':'calc.py', 'search':'return value + value + 1', 'replace':'return value * 2'}],
+        [{'path':'test_calc.py', 'search':'assert double(2) == 4', 'replace':'assert double(2) == 5'}],
+    ]
+    winner, diagnostics = select_patch(sample_repo, proposals,
+        ['test_calc.TestCalc.test_double', 'test_calc.TestCalc.test_triple'], runner='unittest')
+    assert winner and winner.index == 1 and winner.outcomes == (0, 0), diagnostics
+    assert not diagnostics[2].accepted
+    assert 'return value * 2' in winner.patch
+    assert (sample_repo/'calc.py').read_text().find('value + value + 1') != -1  # source untouched
+    print('Baseline:', baseline, '| Candidate results:', [(r.index, r.reason, r.outcomes) for r in diagnostics])
+    print('Selected candidate:', winner.index)
+
+
+# CELL 11 markdown
+## Scored ADK implementation
+
+The cells above are a local development tool. The scored submission can only declare built-in tools and ADK agents. The default lean root agent uses exact grep and targeted tests. Two optional variants add a read-only verifier and then a read-only localizer under the same model alias. It cannot call this notebook's candidate selector, so measure its score separately with `swegemma eval`.
+
+
+# CELL 12 code
+SYSTEM_PROMPT = r"""You are a Python repository repair agent working in /workspace. Your output is the workspace source-code diff captured by submit_patch(). Complete an issue, do focused checks, and call submit_patch() as the final tool action. Budget is shared by all subagents; minimize calls and time. Never spend the last available time exploring.
+
+1. LOCALIZE BY EXACT TEXT. Extract filenames, API/symbol names, literal errors and keywords from the issue and hints. Start with one bounded run_command using `rg -n -F 'exact_symbol_or_error' --glob '*.py' . | head -80` (or read a specifically named file). If the exact search fails, list candidate files with `rg --files | head -80`, then search alternate terms. Check the matching test files for imports, fixtures and expected behavior. Prefer exact `rg` evidence over fuzzy retrieval. Use search_similar_code ONLY when an actual symbol name is known and exact grep did not find its implementation; it resolves stored node keys, not arbitrary issue prose. Use code_localizer only if the issue is vague, the first bounded searches fail, and at least 15 tool calls and 2 minutes remain. Ask it for paths and lines, not a general essay. Read narrow source ranges if a file is truncated.
+
+2. REPRODUCE WHEN FEASIBLE. Identify a targeted existing test node or make a tiny issue-specific check in /tmp (never /workspace). Run it once BEFORE editing and record whether it fails for the stated behavior. A test that already passes is a regression guard, not a reproducer. Feature requests and unavailable tests may need a reasoned expected result instead. Do not debug unrelated baseline failures or install packages in the offline sandbox. Keep this step short: reserve calls for editing and verification.
+
+3. EDIT THE IMPLEMENTATION. Form one precise hypothesis covering all requirements and edge cases. Use edit_file with a short, unique old_string copied from source and a minimal new_string; do not hand-author unified diffs. If a replacement fails or is ambiguous, reread and retry. Only edit source implementation (including executable docs_src examples where relevant); do not modify test files, pytest.ini, conftest.py, benchmark labels, dependencies, or scratch files. If the first attempt fails a real reproducer, revise the same source change instead of stacking guesses.
+
+4. COMPILE → TEST → REVIEW. After editing, run one compact command such as `python -m py_compile path/to/changed.py && git diff --check && python -m pytest -q tests/test_target.py::test_case -p no:anyio -o timeout=0` when a relevant test node exists. Use exact paths, not a full repository sweep. If no runnable test exists, at least compile every changed Python file, run the /tmp reproducer when available, and inspect the diff. A reproduced failure that turns into a pass is stronger evidence than a plausible patch; if a formerly passing focused test breaks, fix the regression before submitting. Run `git status --short` and a bounded `git diff HEAD -- <changed paths>` to remove accidental generated or test changes. Existing tests need not cover newly requested behavior; reason through stated edge cases after checking results.
+
+5. OPTIONAL REVIEW. If the change spans modules, tests cannot run, or a subtle compatibility concern remains AND there is enough wall time (>90 seconds) and at least 8 budgeted calls left, ask code_verifier ONCE to inspect the current diff, the issue, and actual test results. Fix concrete issues it identifies. Do not use the verifier to replace a test or to delay submission near a budget deadline.
+
+Call submit_patch() after the source edit even if tests are unavailable. It is free; report a zero-sized patch only after trying to correct it. Finish with a short factual summary of the change and checks. Never finish with only a plan or an unverified assertion that tests pass.
+"""
+SAMPLING = """temperature: 0.15
+top_p: 0.95
+max_output_tokens: 8192
+thinking_config:
+  thinking_budget: 3072
+  include_thoughts: false
+"""
+AGENT = f"""name: gemma_repo_engineer
+model: {MODEL}
+instruction: !include prompts/system.md
+tools:
+  - run_command
+  - read_file
+  - edit_file
+  - write_file
+  - get_status
+  - submit_patch
+  - get_code_neighbors
+  - search_similar_code
+  - get_code_subgraph
+  - agent_tool:
+      config_path: sub_agents/code_localizer.yaml
+      skip_summarization: true
+  - agent_tool:
+      config_path: sub_agents/code_verifier.yaml
+      skip_summarization: true
+generate_content_config: !include configs/sampling.yaml
+"""
+VERIFIER_AGENT = f"""name: code_verifier
+model: {MODEL}
+description: Read-only patch review for uncertain edits; use once when time permits.
+instruction: |-
+  Inspect the current git diff and issue requirements. Do not edit or submit a patch.
+  Check the exact changed source, edge cases and compatibility. Distinguish tested
+  results from conjecture. Return PASS, CONCERN or UNCERTAIN, then file:line
+  evidence and a concise actionable correction if needed.
+tools:
+  - run_command
+  - read_file
+  - get_code_neighbors
+generate_content_config:
+  temperature: 0.0
+  max_output_tokens: 2048
+  thinking_config:
+    thinking_budget: 768
+    include_thoughts: false
+"""
+LOCALIZER_PROMPT = r"""You are a read-only code localizer. Given the issue, use at most two bounded searches and a narrow file read or code graph lookup to identify the most relevant existing implementation files and matching tests. Return at most five exact relative paths, the precise symbol/line ranges, and one sentence on likely behavior for each. Do not edit files, run a full suite, or use free-form prose in search_similar_code (it expects a symbol). Stop when the target is clear."""
+LOCALIZER_AGENT = f"""name: code_localizer
+model: {MODEL}
+description: Read-only symbol and file selection for vague issues after exact grep fails.
+instruction: |-
+  Use at most two bounded source searches and one narrow file read. Return at most
+  five exact relative implementation or test paths with line ranges and the likely
+  relevant symbol. Prefer rg for identifiers. Use graph retrieval only for a known
+  symbol when exact searches fail. Do not edit, run a suite or write an essay.
+tools:
+  - run_command
+  - read_file
+  - search_similar_code
+  - get_code_neighbors
+generate_content_config:
+  temperature: 0.0
+  max_output_tokens: 2048
+  thinking_config:
+    thinking_budget: 768
+    include_thoughts: false
+"""
+for d in ('prompts', 'configs', 'sub_agents'):
+    (OUT / d).mkdir(exist_ok=True)
+(OUT / 'agent.yaml').write_text(AGENT, encoding='utf-8')
+(OUT / 'sub_agents/code_verifier.yaml').write_text(VERIFIER_AGENT, encoding='utf-8')
+(OUT / 'sub_agents/code_localizer.yaml').write_text(LOCALIZER_AGENT, encoding='utf-8')
+(OUT / 'prompts/system.md').write_text(SYSTEM_PROMPT, encoding='utf-8')
+(OUT / 'configs/sampling.yaml').write_text(SAMPLING, encoding='utf-8')
+for obsolete in ('prompts/verifier.md', 'prompts/localizer.md', 'configs/verifier_sampling.yaml'):
+    (OUT / obsolete).unlink(missing_ok=True)
+print('Wrote:', *(p.relative_to(OUT) for p in sorted(OUT.rglob('*')) if p.is_file()))
+
+# CELL 13 markdown
+## Validate and package
+
+Check the selected variant’s model declaration, includes, file types, size and absence of an imaginary adapter. Sub-agent prompts and sampling values are inline to avoid invalid relative includes. A full authoritative `adk-submission` validation and actual scoring require the installed competition packages and model runtime.
+
+# CELL 14 code
+from copy import deepcopy
+VARIANTS_DIR = WORK / 'gemma4_variants_detailed'
+DEFAULT_VARIANT = 'lean'  # Change only after a same-task benchmark comparison.
+LEAN_PROMPT = r"""You fix Python issues in /workspace. Make a minimal working source patch and call submit_patch() last. The total competition time is limited; reserve time to edit, check and submit. Use get_status when close to the limit.
+
+LOCALIZE: Extract exact file, symbol and error strings from the issue. Start with a bounded `rg -n -F 'literal' --glob '*.py' . | head -80` or read the named file directly. Inspect nearby existing tests for imports, fixtures and expected results. If grep misses and a symbol is known, use a graph tool with that symbol name, not prose. Read narrow, relevant source ranges; do not dump files or trees.
+
+REPRODUCE: If you can create a tiny relevant check promptly, run an existing target test or a /tmp reproducer before editing. Distinguish a baseline failure that reflects the issue from unrelated setup failures. A passing test is a regression guard. Never edit tests or put scratch files in /workspace. If reproducing the new behavior is expensive, inspect adjacent tests and proceed.
+
+REPAIR: Identify the precise behavior and edge cases. Use edit_file with a short, unique old_string and correctly indented new_string. Prefer one coherent, small source change; inspect a rejected edit and retry with an exact unique match. Include executable docs_src example code if the issue requires it. Do not change tests, dependency files, pytest.ini or conftest.py.
+
+VERIFY: After editing, run one bounded command combining `python -m py_compile <changed.py>`, `git diff --check` and the relevant `python -m pytest -q <test_file_or_node> -p no:anyio -o timeout=0` when such a test exists. Rerun the same issue reproducer. Inspect `git status --short` and the changed source diff. If the reproducer still fails, use its traceback to revise once and recheck if budget permits. Do not run a full suite. A failed old test that did not reproduce the issue is not proof of a bad fix. Prefer passing issue-specific behavior plus preserved regression tests over a model's opinion.
+
+If time runs low, submit the best nonempty source diff instead of exploring. Call submit_patch() as the final tool action. Briefly state the fix and actual checks; never assert a test passed unless you ran it.
+"""
+EVAL_CONFIG = """evaluation:
+  timeout_seconds: 60
+  max_tool_calls: 40
+  max_time_minutes: 4.5
+  max_turns: 100
+"""
+# The existing OUT contains the full prompt and both optional read-only subagents.
+VARIANT_SPECS = {'lean': (), 'reviewer': ('code_verifier',),
+                 'full': ('code_localizer', 'code_verifier')}
+for name, chosen in VARIANT_SPECS.items():
+    dest = VARIANTS_DIR / name
+    if dest.exists(): shutil.rmtree(dest)
+    shutil.copytree(OUT, dest)
+    root = (dest / 'agent.yaml').read_text()
+    for tool_name in ('code_localizer', 'code_verifier'):
+        if tool_name not in chosen:
+            block = (f'  - agent_tool:\n      config_path: sub_agents/{tool_name}.yaml\n'
+                     '      skip_summarization: true\n')
+            assert block in root, (name, tool_name)
+            root = root.replace(block, '')
+            (dest / f'sub_agents/{tool_name}.yaml').unlink()
+    if name == 'lean':
+        (dest / 'prompts/system.md').write_text(LEAN_PROMPT)
+    elif name == 'reviewer':
+        prompt = (dest / 'prompts/system.md').read_text()
+        prompt = prompt.replace('Use code_localizer only if the issue is vague, the first bounded searches fail, and at least 15 tool calls and 2 minutes remain. Ask it for paths and lines, not a general essay. ', '')
+        (dest / 'prompts/system.md').write_text(prompt)
+    (dest / 'agent.yaml').write_text(root)
+    (dest / 'eval_config.yaml').write_text(EVAL_CONFIG)
+assert DEFAULT_VARIANT in VARIANT_SPECS
+OUT = VARIANTS_DIR / DEFAULT_VARIANT
+AGENT = (OUT / 'agent.yaml').read_text()
+SYSTEM_PROMPT = (OUT / 'prompts/system.md').read_text()
+print('Selected variant:', DEFAULT_VARIANT, 'from', list(VARIANT_SPECS))
+
+
+# CELL 15 code
+allowed_suffixes = {'.yaml', '.yml', '.md', '.txt', '.py', '.json', '.safetensors'}
+files = sorted(p for p in OUT.rglob('*') if p.is_file())
+expected = {'agent.yaml', 'configs/sampling.yaml', 'prompts/system.md', 'eval_config.yaml'}
+expected.update('sub_agents/' + x + '.yaml' for x in VARIANT_SPECS[DEFAULT_VARIANT])
+assert {p.relative_to(OUT).as_posix() for p in files} == expected
+assert all(p.suffix in allowed_suffixes and not p.is_symlink() for p in files)
+assert sum(p.stat().st_size for p in files) < 3 * 1024 ** 3
+import yaml
+class IncludeLoader(yaml.SafeLoader): pass
+IncludeLoader.add_constructor('!include', lambda loader, node: loader.construct_scalar(node))
+main = yaml.load((OUT / 'agent.yaml').read_text(), Loader=IncludeLoader)
+assert main['model'] == MODEL and main['instruction'] == 'prompts/system.md'
+assert all(t['agent_tool']['config_path'] in expected for t in main['tools'] if isinstance(t, dict))
+for name in VARIANT_SPECS[DEFAULT_VARIANT]:
+    agent = yaml.load((OUT / 'sub_agents' / (name + '.yaml')).read_text(), Loader=IncludeLoader)
+    assert agent['model'] == MODEL
+    assert 'edit_file' not in agent['tools'] and 'submit_patch' not in agent['tools']
+assert yaml.safe_load((OUT / 'eval_config.yaml').read_text())['evaluation']['max_time_minutes'] == 4.5
+assert yaml.safe_load((OUT / 'configs/sampling.yaml').read_text())['thinking_config']['thinking_budget'] <= 32768
+if ZIP.exists(): ZIP.unlink()
+with zipfile.ZipFile(ZIP, 'w', compression=zipfile.ZIP_DEFLATED) as z:
+    for file in files: z.write(file, file.relative_to(OUT).as_posix())
+with zipfile.ZipFile(ZIP) as z:
+    assert z.testzip() is None
+    assert set(z.namelist()) == expected
+print('Ready:', ZIP, ZIP.stat().st_size, 'bytes; contents:', sorted(expected))
+
+
+# CELL 16 code
+import hashlib
+from datetime import datetime, timezone
+EXPERIMENT_CARD = WORK / 'experiment_card_detailed.json'
+experiment = {
+    'experiment_id': 'v2_winner_informed_' + DEFAULT_VARIANT,
+    'created_at_utc': datetime.now(timezone.utc).isoformat(),
+    'artifact': str(ZIP),
+    'artifact_sha256': hashlib.sha256(ZIP.read_bytes()).hexdigest(),
+    'previous_user_reported_score': 0.10,
+    'previous_score_split_known': False,
+    'primary_hypothesis': 'A lean select/reproduce/search-replace/verify agent with a bounded time cap spends more time on repairs and fewer calls on low-value subagents.',
+    'necessary_packaging_fix': 'Subagent includes replaced with inline instructions/config to avoid invalid relative resolution.',
+    'model': MODEL,
+    'variant': DEFAULT_VARIANT,
+    'max_time_minutes': 4.5,
+    'root_sampling': __import__('yaml').safe_load(SAMPLING) if __import__('importlib').util.find_spec('yaml') else SAMPLING,
+    'validation_task_ids': [],
+    'measured_resolution_rate': None,
+    'measured_elapsed_seconds': None,
+    'status': 'not_evaluated',
+}
+EXPERIMENT_CARD.write_text(json.dumps(experiment, indent=2) + '\n', encoding='utf-8')
+print('Wrote experiment card:', EXPERIMENT_CARD)
+
+
+# CELL 17 markdown
+## Deterministic, repository-aware public holdout
+
+A small public holdout makes quick ablations feasible. This function groups tasks by `repo` and `base_commit`, hashes groups for a stable order, and selects approximately 12 issues without consuming reference patches. A single task from HTTPX is available in the supplied public data, so this is a practical debugging sample, not a statistically reliable estimate of private performance. Freeze `ABLATION_TASK_IDS` before comparing variants and reserve additional public tasks for final confirmation.
+
+# CELL 18 code
+import hashlib
+
+def choose_public_holdout(tasks_path: Path, limit: int = 12) -> list[str]:
+    """Choose stable issue IDs from distinct repository/commit groups."""
+    groups = {}
+    with Path(tasks_path).open(encoding='utf-8') as stream:
+        for line in stream:
+            row = json.loads(line)
+            groups.setdefault((row['repo'], row['base_commit']), []).append(row['instance_id'])
+    by_repo = {}
+    for (repo, commit), ids in groups.items():
+        priority = hashlib.sha256((repo + ':' + commit).encode()).hexdigest()
+        by_repo.setdefault(repo, []).append((priority, sorted(ids)[0]))
+    for entries in by_repo.values(): entries.sort()
+    selected = []
+    while len(selected) < limit and any(by_repo.values()):
+        for repo in sorted(by_repo):
+            if by_repo[repo] and len(selected) < limit:
+                selected.append(by_repo[repo].pop(0)[1])
+    return selected
+
+SUGGESTED_HOLDOUT = choose_public_holdout(TASKS_PATH) if TASKS_PATH else []
+print('Suggested fixed public IDs:', SUGGESTED_HOLDOUT)
+
+# CELL 19 markdown
+## Paired ADK ablation: choose by actual resolution and runtime
+
+Set the following cell's `RUN_ABLATIONS=True` only with the full public snapshots, a working Gemma model runtime, and official harness CLI. Each variant is evaluated on the same held-out task IDs under the same 4.5-minute cap. The notebook records resolved fraction and elapsed time, selects the top measured variant (faster wins ties), replaces `submission.zip`, and updates `experiment_card.json`. Until that run, `lean` remains the proposed default and all scores are pending. This validation is separate from the development-only Python candidate selector.
+
+
+# CELL 20 code
+RUN_ABLATIONS = False
+SNAPSHOTS_DIR = Path('/kaggle/input/competitions/gemma-4-developer-agent/snapshots')
+ABLATION_TASK_IDS = SUGGESTED_HOLDOUT  # Freeze these IDs across variants before tuning
+if RUN_ABLATIONS:
+    import time
+    assert TASKS_PATH and Path(TASKS_PATH).is_file()
+    assert SNAPSHOTS_DIR and Path(SNAPSHOTS_DIR).is_dir()
+    assert ABLATION_TASK_IDS and shutil.which('swegemma')
+    measured = []
+    for variant in ('lean', 'reviewer', 'full'):
+        variant_dir = VARIANTS_DIR / variant
+        results_dir = WORK / 'ablations' / variant
+        cmd = ['swegemma', 'eval', '--tasks', str(TASKS_PATH),
+               '--snapshots-dir', str(SNAPSHOTS_DIR), '--submission-dir', str(variant_dir),
+               '--results-dir', str(results_dir), '--sandbox', 'docker',
+               '--task-ids', *ABLATION_TASK_IDS, '--max-tool-calls', '40',
+               '--max-time-minutes', '4.5', '--concurrency', '1']
+        start = time.monotonic()
+        subprocess.run(cmd, check=True)
+        elapsed = time.monotonic() - start
+        summary = json.loads((results_dir / 'summary.json').read_text())
+        rate = summary.get('resolution_rate')
+        assert isinstance(rate, (float, int)), (variant, summary)
+        measured.append({'variant': variant, 'resolution_rate': float(rate),
+                         'elapsed_seconds': round(elapsed, 2)})
+    chosen = max(measured, key=lambda row:(row['resolution_rate'], -row['elapsed_seconds']))
+    OUT = VARIANTS_DIR / chosen['variant']
+    ZIP.unlink(missing_ok=True)
+    with zipfile.ZipFile(ZIP, 'w', zipfile.ZIP_DEFLATED) as z:
+        for f in sorted(OUT.rglob('*')):
+            if f.is_file(): z.write(f, f.relative_to(OUT).as_posix())
+    experiment.update({'status': 'evaluated', 'variant': chosen['variant'],
+                       'artifact_sha256': hashlib.sha256(ZIP.read_bytes()).hexdigest(),
+                       'validation_task_ids': ABLATION_TASK_IDS,
+                       'measured_resolution_rate': chosen['resolution_rate'],
+                       'measured_elapsed_seconds': chosen['elapsed_seconds'],
+                       'ablations': measured})
+    EXPERIMENT_CARD.write_text(json.dumps(experiment, indent=2) + '\n')
+    print('Selected:', chosen, '| all variants:', measured)
+else:
+    print('Ablations skipped; lean archive and unmeasured experiment card remain available.')
+
+
+# CELL 21 markdown
+## Diagnose stages, not just aggregate score
+
+After `swegemma eval`, each variant has a `task_results.jsonl`, patches, test logs and agent traces. The helper counts rows, empty patches, resolved tasks and reported errors without depending on secret test content. Use it to decide whether localization, patch generation, syntax, or time control needs work. Stage metrics do not replace the held-out pass rate.
+
+# CELL 22 code
+def summarize_local_run(results_dir: Path) -> dict:
+    path = Path(results_dir) / 'task_results.jsonl'
+    if not path.is_file():
+        return {'status': 'no_local_run', 'results_dir': str(results_dir)}
+    rows = [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
+    patches = Path(results_dir) / 'patches'
+    empty = sum(not (patches / (row.get('instance_id', row.get('id', '')) + '.patch')).exists()
+                or not (patches / (row.get('instance_id', row.get('id', '')) + '.patch')).read_text().strip()
+                for row in rows)
+    return {
+        'issues': len(rows),
+        'resolved': sum(bool(row.get('resolved')) for row in rows),
+        'empty_patch_files': empty,
+        'errors': collections.Counter(str(row.get('error')) for row in rows if row.get('error')),
+    }
+
+if RUN_ABLATIONS:
+    for variant in VARIANT_SPECS:
+        print(variant, summarize_local_run(WORK / 'ablations' / variant))
+else:
+    print('No harness traces are available; stage diagnosis is pending.')
+
+# CELL 23 markdown
+## Optional local evaluation on separate development IDs
+
+Requires the full competition dataset (including snapshots), a model runtime, the `swegemma` CLI and a sandbox backend. Disabled by default. The attached notebook was from a different competition: its inference server cannot be reused here. Use this competition's `swegemma eval` to compare the original archive and the revised one on the **same held-out** public tasks. Review `summary.json`, the per-task patch and trajectory, and do not expose the public reference fixes to the agent. The example command matches the selected archive’s 40-call/4.5-minute cap. This is a throughput hypothesis to test, not a proven optimum. Test gains must outweigh the extra verifier call and its wall-time cost.
+
+# CELL 24 code
+RUN_LOCAL_EVAL = False
+# SNAPSHOTS_DIR was set in the ablation cell above; set it there before evaluating.
+EVAL_TASK_IDS = []    # Fill with instance IDs reserved for validation
+if RUN_LOCAL_EVAL:
+    assert TASKS_PATH and Path(TASKS_PATH).is_file(), 'Set TASKS_PATH'
+    assert SNAPSHOTS_DIR and Path(SNAPSHOTS_DIR).is_dir(), 'Set SNAPSHOTS_DIR'
+    assert EVAL_TASK_IDS, 'Choose a small held-out set of public task IDs'
+    assert shutil.which('swegemma'), 'Install the official harness in the local development environment'
+    cmd = ['swegemma', 'eval', '--tasks', str(TASKS_PATH),
+           '--snapshots-dir', str(SNAPSHOTS_DIR), '--submission-dir', str(OUT),
+           '--results-dir', str(WORK / 'agent_eval'), '--sandbox', 'docker',
+           '--task-ids', *EVAL_TASK_IDS, '--max-tool-calls', '40',
+           '--max-time-minutes', '4.5', '--concurrency', '1']
+    from time import monotonic
+    start = monotonic()
+    subprocess.run(cmd, check=True)
+    report = json.loads((WORK / 'agent_eval/summary.json').read_text())
+    experiment['validation_task_ids'] = list(EVAL_TASK_IDS)
+    experiment['measured_resolution_rate'] = report.get('resolution_rate')
+    experiment['measured_elapsed_seconds'] = round(monotonic() - start, 2)
+    experiment['status'] = 'evaluated'
+    EXPERIMENT_CARD.write_text(json.dumps(experiment, indent=2) + '\n')
+    print(report)
+else:
+    print('Local benchmark skipped. Submit the produced submission.zip after verification.')
+
+# CELL 25 code
+def audit_trajectory_jsonl(path: Path) -> dict:
+    """Perform cheap structural checks before any optional supervised training."""
+    required = {'source_repo', 'issue', 'tool_steps', 'patch', 'resolved'}
+    accepted, rejected = [], collections.Counter()
+    with Path(path).open(encoding='utf-8') as stream:
+        for number, line in enumerate(stream, 1):
+            try:
+                sample = json.loads(line)
+                if not required <= sample.keys():
+                    raise ValueError('missing fields')
+                if not sample['source_repo'] or not sample['issue']:
+                    raise ValueError('missing provenance or issue')
+                if not sample['resolved'] or not str(sample['patch']).startswith('diff --git '):
+                    raise ValueError('no successful source patch')
+                steps = sample['tool_steps']
+                if not steps or any(not {'tool', 'request', 'result'} <= x.keys() for x in steps):
+                    raise ValueError('ungrounded tool steps')
+                if 'test_patch' in sample or 'secret/solution' in json.dumps(sample):
+                    raise ValueError('verification label leakage')
+                accepted.append((number, sample['source_repo']))
+            except (ValueError, TypeError, AttributeError) as error:
+                rejected[str(error)] += 1
+    return {'accepted': len(accepted), 'rejected': dict(rejected),
+            'repositories': dict(collections.Counter(repo for _, repo in accepted))}
+
+TRAJECTORY_PATH = None  # Path('/kaggle/input/<independent-authorized-data>/trajectories.jsonl')
+if TRAJECTORY_PATH:
+    print(audit_trajectory_jsonl(Path(TRAJECTORY_PATH)))
+else:
+    print('No independent training trajectories supplied; LoRA work is deferred.')
+
+# CELL 26 code

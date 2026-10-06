@@ -1,0 +1,522 @@
+# CELL 0 markdown
+# Kaggle — 5 phương pháp LCTA (resize) với mBERT và mT5
+
+**Input (Kaggle Dataset):** `/kaggle/input/datasets/tuyennguyen21pt/dataset-apc/converted_apc/{train,dev,test}.apc`
+(nếu Kaggle mount ở đường dẫn khác, cell 4 tự dò tìm trong `/kaggle/input`).
+
+**Pipeline:** ATE huấn luyện 1 lần với `google/mt5-small` → APC chạy đúng **5 method** × **2 backbone** (mBERT, mT5) = **10 run**.
+
+**5 method (đúng config trong `common/run_multiseed.py`):**
+
+| config_id | display | LCF | CDM/CDW | ToMe merge | resize |
+|---|---|---|---|---|---|
+| `lcf_bip_cdm` | BiToMe+CDM | ✔ | CDM | bipartite | ✔ |
+| `lcf_seq_cdm` | SLM+CDM | ✔ | CDM | sequential_local | ✔ |
+| `lcf_seq_cdw` | SLM+CDW | ✔ | CDW | sequential_local | ✔ |
+| `lcf_scm_cdm` | SCM+CDM | ✔ | CDM | sequential_cosine | ✔ |
+| `lcf_scm_cdw` | SCM+CDW | ✔ | CDW | sequential_cosine | ✔ |
+
+**Output (tất cả nằm trong `/kaggle/working/outputs/`):**
+
+```
+/kaggle/working/outputs/
+├── 00_dataset/              train.apc, dev.apc, test.apc (+ dataset_apc.zip)
+├── 01_ate/        seed_42/test_predictions.csv, ate_summary.* , checkpoints/
+└── 02_apc_5_methods/        results_raw.csv, results_aggregated.csv,
+                             results_summary.txt, thesis_tables.txt,
+                             evaluation_precision_recall_f1.csv,
+                             <backbone>/<config_id>/seed_42/best_model.pt
+```
+
+
+# CELL 1 code
+import os
+import sys
+import subprocess
+import zipfile
+from pathlib import Path
+
+ON_KAGGLE = Path('/kaggle').exists()
+WORK_ROOT = Path('/kaggle/working') if ON_KAGGLE else Path.cwd()
+
+# Source code phải được attach sẵn như Kaggle Dataset; không dùng GitHub.
+REPO_CANDIDATES = [
+    Path('/kaggle/input/datasets/tuyennguyen21pt/token-merging/KLTN-Token-Merging'),
+    Path('/kaggle/input/token-merging/KLTN-Token-Merging'),
+    WORK_ROOT / 'KLTN-Token-Merging',
+    WORK_ROOT,
+]
+REPO_DIR = next((path for path in REPO_CANDIDATES if (path / 'common').is_dir()), None)
+if REPO_DIR is None:
+    raise FileNotFoundError(
+        'Không tìm thấy source code local. Hãy attach repository như Kaggle Dataset '
+        'hoặc đặt thư mục KLTN-Token-Merging trong /kaggle/working.'
+    )
+
+# ── INPUT ────────────────────────────────────────────────────────────────────
+DATA_INPUT_DIR = '/kaggle/input/datasets/tuyennguyen21pt/dataset-apc/converted_apc'
+DATA_INPUT_FALLBACKS = [
+    '/kaggle/input/dataset-apc/converted_apc',
+    '/kaggle/input/dataset-apc',
+    '/kaggle/input/converted_apc',
+]
+CLEAN_DATA = True
+DATA_INPUT_ZIP = None
+ATE_INPUT_CSV = None
+
+# ── MODEL LOCAL TRÊN KAGGLE ─────────────────────────────────────────────────
+MODEL_INPUT_DIRS = {
+    'mbert': Path('/kaggle/input/models/muhammadukasha09/bert-base-multilingual-cased/transformers/default/1'),
+    'mt5': Path('/kaggle/input/models/mousumiroy250/mt5-base/transformers/default/1'),
+}
+ATE_MODEL_NAME = str(MODEL_INPUT_DIRS['mt5'])
+APC_MODELS = {
+    'mbert': str(MODEL_INPUT_DIRS['mbert']),
+    'mt5': str(MODEL_INPUT_DIRS['mt5']),
+}
+
+# ── OUTPUT ───────────────────────────────────────────────────────────────────
+OUTPUT_ROOT = WORK_ROOT / 'outputs'
+DATA_OUTPUT_DIR = OUTPUT_ROOT / '00_dataset'
+ATE_RUNS_DIR = OUTPUT_ROOT / '01_ate'
+ATE_CKPT_DIR = ATE_RUNS_DIR / 'checkpoints'
+RUNS_DIR = OUTPUT_ROOT / '02_apc_5_methods'
+for _dir in (OUTPUT_ROOT, DATA_OUTPUT_DIR, ATE_RUNS_DIR, ATE_CKPT_DIR, RUNS_DIR):
+    _dir.mkdir(parents=True, exist_ok=True)
+
+# ── HYPERPARAMETERS ──────────────────────────────────────────────────────────
+SEED = 42
+MAX_EPOCHS = 15
+ATE_EPOCHS = 20
+ATE_BATCH_SIZE = 8
+
+# ── EXACTLY 5 METHODS ────────────────────────────────────────────────────────
+METHOD_CONFIGS = [
+    (True, True,  True, True, 'bipartite',         False, 'BiToMe+CDM', 'lcf_bip_cdm'),
+    (True, True,  True, True, 'sequential_local',  False, 'SLM+CDM',    'lcf_seq_cdm'),
+    (True, False, True, True, 'sequential_local',  False, 'SLM+CDW',    'lcf_seq_cdw'),
+    (True, True,  True, True, 'sequential_cosine', False, 'SCM+CDM',    'lcf_scm_cdm'),
+    (True, False, True, True, 'sequential_cosine', False, 'SCM+CDW',    'lcf_scm_cdw'),
+]
+assert len(METHOD_CONFIGS) == 5, 'Phải đúng 5 method'
+METHODS = {cfg[7]: cfg[6] for cfg in METHOD_CONFIGS}
+assert len(METHODS) == 5, 'config_id bị trùng'
+
+CACHE_DIR = Path('/kaggle/temp/hf') if ON_KAGGLE else WORK_ROOT / '.hf'
+CACHE_DIR.mkdir(parents=True, exist_ok=True)
+os.environ['HF_HOME'] = str(CACHE_DIR)
+os.environ['TRANSFORMERS_CACHE'] = str(CACHE_DIR)
+os.environ['HF_HUB_OFFLINE'] = '1'
+os.environ['TRANSFORMERS_OFFLINE'] = '1'
+os.environ['TOKENIZERS_PARALLELISM'] = 'false'
+os.environ['MPLBACKEND'] = 'Agg'
+os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
+os.environ['PYTORCH_ALLOC_CONF'] = 'expandable_segments:True'
+
+print('Source    :', REPO_DIR)
+print('Input dir :', DATA_INPUT_DIR or '(none)')
+print('Output    :', OUTPUT_ROOT)
+print('ATE model :', ATE_MODEL_NAME)
+print('APC models:', APC_MODELS)
+print('Tổng số run APC:', len(METHODS) * len(APC_MODELS))
+
+os.chdir(REPO_DIR)
+if str(REPO_DIR) in sys.path:
+    sys.path.remove(str(REPO_DIR))
+sys.path.insert(0, str(REPO_DIR))
+
+# CELL 2 code
+# Source code đã được mount local từ Kaggle Input ở cell trước.
+# Không fetch, clone, checkout, reset GitHub hoặc cài package từ Internet.
+import gc
+
+for _name in [m for m in sys.modules
+              if m.split('.')[0] in ('common', 'src', 'models', 'gas')]:
+    del sys.modules[_name]
+
+os.chdir(REPO_DIR)
+if str(REPO_DIR) in sys.path:
+    sys.path.remove(str(REPO_DIR))
+sys.path.insert(0, str(REPO_DIR))
+
+print('Using local source:', REPO_DIR)
+print('Levenshtein: dùng hàm local trong src.normalization.py')
+
+
+# CELL 3 code
+# Chẩn đoán VRAM. Chạy cell này TRƯỚC khi tải model.
+#
+# Nếu ở đây đã thấy vài GB "allocated" thì kernel vẫn đang giữ model của lần
+# chạy trước: khi một cell ném OutOfMemoryError, IPython lưu traceback vào
+# sys.last_traceback, mà traceback giữ tham chiếu tới toàn bộ stack frame —
+# trong đó có model và optimizer. Bộ nhớ đó KHÔNG phải cache rảnh nên
+# torch.cuda.empty_cache() không giải phóng được. Cách duy nhất là Restart
+# kernel (Run > Restart & Clear Cell Outputs).
+import gc
+
+import torch
+
+
+def gpu_report(tag=''):
+    if not torch.cuda.is_available():
+        print('Không có GPU — sẽ chạy CPU (rất chậm).')
+        return
+    for i in range(torch.cuda.device_count()):
+        free_b, total_b = torch.cuda.mem_get_info(i)
+        print(f'[GPU {i}] {torch.cuda.get_device_name(i)}  '
+              f'trống {free_b / 2**30:5.2f} / {total_b / 2**30:5.2f} GB  '
+              f'allocated {torch.cuda.memory_allocated(i) / 2**30:5.2f} GB  '
+              f'reserved {torch.cuda.memory_reserved(i) / 2**30:5.2f} GB  {tag}')
+
+
+def free_vram(tag=''):
+    # Xoá traceback cũ trước: chính nó giữ model của lần OOM trước.
+    sys.last_traceback = None
+    sys.last_value = None
+    sys.last_type = None
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+        torch.cuda.reset_peak_memory_stats()
+    gpu_report(tag)
+
+
+free_vram('trước khi bắt đầu')
+
+_used = torch.cuda.memory_allocated() / 2**30 if torch.cuda.is_available() else 0.0
+if _used > 0.5:
+    raise RuntimeError(
+        f'Đang có {_used:.2f} GB bị chiếm trên GPU trước khi train. '
+        'Kernel còn giữ model của lần chạy trước — hãy Restart kernel '
+        '(Run > Restart & Clear Cell Outputs) rồi chạy lại từ cell 1.'
+    )
+
+
+# CELL 4 code
+# Use model snapshots already mounted by Kaggle; do not access Hugging Face.
+# Paths are configured in MODEL_INPUT_DIRS in the first code cell.
+_REQUIRED_MODEL_FILES = {
+    'config': 'config.json',
+    'tokenizer': ('tokenizer.json', 'tokenizer_config.json'),
+    'weights': ('model.safetensors', 'pytorch_model.bin', 'pytorch_model.bin.index.json'),
+}
+
+
+def _check_local_model(model_key, model_dir):
+    model_dir = Path(model_dir)
+    if not model_dir.is_dir():
+        raise FileNotFoundError(
+            'Model ' + repr(model_key) + ' không tồn tại: ' + str(model_dir) + '\n'
+            'Hãy thêm đúng Kaggle model dataset vào notebook.'
+        )
+    missing = []
+    if not (model_dir / _REQUIRED_MODEL_FILES['config']).is_file():
+        missing.append('config.json')
+    if not any((model_dir / name).is_file() for name in _REQUIRED_MODEL_FILES['tokenizer']):
+        missing.append('tokenizer.json hoặc tokenizer_config.json')
+    if not any((model_dir / name).is_file() for name in _REQUIRED_MODEL_FILES['weights']):
+        missing.append('model.safetensors hoặc pytorch_model.bin')
+    if missing:
+        raise FileNotFoundError(
+            'Model ' + repr(model_key) + ' thiếu file: ' + ', '.join(missing) + '\n'
+            'Thư mục đang kiểm tra: ' + str(model_dir)
+        )
+    print('Ready local model [' + str(model_key) + ']: ' + str(model_dir))
+
+
+for _model_key, _model_dir in MODEL_INPUT_DIRS.items():
+    _check_local_model(_model_key, _model_dir)
+
+print('All required local model files are available.')
+
+# CELL 5 code
+# Tìm thư mục chứa đủ train.apc / dev.apc / test.apc.
+REQUIRED_FILES = ('train.apc', 'dev.apc', 'test.apc')
+
+
+def _has_all_apc(directory):
+    return all((Path(directory) / name).is_file() for name in REQUIRED_FILES)
+
+
+def _resolve_data_dir():
+    # 1) Zip do người dùng chỉ định.
+    if DATA_INPUT_ZIP:
+        zip_path = Path(DATA_INPUT_ZIP)
+        if not zip_path.is_file():
+            raise FileNotFoundError(f'DATA_INPUT_ZIP không tồn tại: {zip_path}')
+        extracted_root = WORK_ROOT / 'dataset_apc_extracted'
+        extracted_root.mkdir(parents=True, exist_ok=True)
+        with zipfile.ZipFile(zip_path) as archive:
+            archive.extractall(extracted_root)
+        found = [p.parent for p in extracted_root.rglob('train.apc') if _has_all_apc(p.parent)]
+        if not found:
+            raise FileNotFoundError(f'Zip phải chứa {REQUIRED_FILES} trong cùng một thư mục.')
+        return found[0], f'zip: {zip_path}'
+
+    # 2) Đường dẫn chính + các đường dẫn dự phòng.
+    for candidate in [DATA_INPUT_DIR, *DATA_INPUT_FALLBACKS]:
+        if candidate and _has_all_apc(candidate):
+            return Path(candidate), 'đường dẫn cấu hình'
+
+    # 3) Tự dò trong /kaggle/input (phòng khi Kaggle mount ở slug khác).
+    input_root = Path('/kaggle/input')
+    if input_root.is_dir():
+        found = sorted(p.parent for p in input_root.rglob('train.apc') if _has_all_apc(p.parent))
+        if found:
+            return found[0], 'tự dò trong /kaggle/input'
+
+    # 4) Dataset đi kèm repo.
+    if _has_all_apc(REPO_DIR / 'dataset'):
+        return REPO_DIR / 'dataset', 'dataset trong repo'
+
+    searched = [DATA_INPUT_DIR, *DATA_INPUT_FALLBACKS, str(input_root), str(REPO_DIR / 'dataset')]
+    raise FileNotFoundError(
+        'Không tìm thấy đủ train.apc / dev.apc / test.apc. Đã tìm ở:\n  '
+        + '\n  '.join(str(s) for s in searched if s)
+        + '\nHãy Add Data cho notebook rồi chỉnh lại DATA_INPUT_DIR ở cell 1.'
+    )
+
+
+DATA_DIR, DATA_SOURCE = _resolve_data_dir()
+print(f'Dataset ({DATA_SOURCE}): {DATA_DIR}')
+for name in REQUIRED_FILES:
+    f = DATA_DIR / name
+    print(f'  {name:<10} {f.stat().st_size / 1024:10.1f} KB  {f}')
+
+SUPPLEMENT_DIR = DATA_DIR / 'supplement'
+print('Supplement:', SUPPLEMENT_DIR if SUPPLEMENT_DIR.is_dir() else '(không có — không dùng)')
+
+ATE_CSV = Path(ATE_INPUT_CSV) if ATE_INPUT_CSV else ATE_RUNS_DIR / f'seed_{SEED}' / 'test_predictions.csv'
+print('ATE CSV   :', ATE_CSV if ATE_CSV.is_file() else f'{ATE_CSV} (chưa có — cell ATE sẽ tạo)')
+
+# CELL 6 code
+# Khảo sát và làm sạch .apc: emoji, ký tự điều khiển, zero-width.
+#
+# Hai điều kiện bắt buộc:
+#   1. KHÔNG xoá dấu tiếng Việt. Vì vậy chỉ loại các category Unicode
+#      So/Sk/Me (emoji, ☆, ♥, modifier da), Cc/Cf/Co/Cs (điều khiển,
+#      zero-width) và variation selector U+FE00..FE0F. Tuyệt đối không
+#      loại 'Mn' vì dấu tiếng Việt ở dạng NFD nằm trong đó.
+#   2. KHÔNG làm hỏng '$T$'. Ký tự '$' thuộc category Sc nên không bị loại.
+#      Câu và aspect term được làm sạch bằng cùng một hàm, và vì text cuối
+#      cùng là sentence.replace('$T$', term) nên term luôn khớp nguyên văn.
+import re
+import unicodedata
+
+_NOISE_CATEGORIES = {'So', 'Sk', 'Me', 'Cc', 'Cf', 'Co', 'Cs'}
+
+
+def _is_noise(ch):
+    if 0xFE00 <= ord(ch) <= 0xFE0F:      # variation selector (đuôi của emoji)
+        return True
+    return unicodedata.category(ch) in _NOISE_CATEGORIES
+
+
+def clean_line(text):
+    text = unicodedata.normalize('NFC', text)
+    # Thay bằng dấu cách chứ không xoá hẳn, tránh dán hai từ vào nhau.
+    text = ''.join(' ' if _is_noise(ch) else ch for ch in text)
+    return re.sub(r'\s+', ' ', text).strip()
+
+
+def read_apc_blocks(path):
+    lines = Path(path).read_text(encoding='utf-8').splitlines()
+    blocks, i = [], 0
+    while i + 3 < len(lines):
+        blocks.append(lines[i:i + 4])
+        i += 4
+    return blocks, len(lines) - i
+
+
+# ── Khảo sát trước ───────────────────────────────────────────────────────────
+print('KHẢO SÁT')
+print('=' * 74)
+stats = {}
+for name in REQUIRED_FILES:
+    blocks, leftover = read_apc_blocks(DATA_DIR / name)
+    dirty_sent = dirty_term = no_marker = 0
+    samples = []
+    for sent, term, cat, sen in blocks:
+        cs, ct = clean_line(sent), clean_line(term)
+        if cs != sent.strip():
+            dirty_sent += 1
+            if len(samples) < 5:
+                samples.append((sent, cs))
+        if ct != term.strip():
+            dirty_term += 1
+        if '$T$' not in sent:
+            no_marker += 1
+    stats[name] = (len(blocks), dirty_sent, dirty_term, no_marker, leftover)
+    print(f'{name:<10} {len(blocks):5d} mẫu | câu bẩn {dirty_sent:5d} '
+          f'({dirty_sent / max(len(blocks), 1) * 100:5.1f}%) | term bẩn {dirty_term:4d} '
+          f'| thiếu $T$ {no_marker:4d} | dòng lẻ cuối file {leftover}')
+    for before, after in samples:
+        print(f'    trước: {before[:88]}')
+        print(f'    sau  : {after[:88]}')
+
+total_dirty = sum(v[1] + v[2] for v in stats.values())
+print()
+if total_dirty == 0:
+    print('=> Dữ liệu sạch, không có emoji / ký tự điều khiển. F1 thấp KHÔNG do nguyên nhân này.')
+else:
+    print(f'=> Có {total_dirty} dòng chứa emoji / ký tự điều khiển.')
+
+# ── Làm sạch ─────────────────────────────────────────────────────────────────
+if CLEAN_DATA and total_dirty > 0:
+    CLEAN_DIR = WORK_ROOT / 'dataset_clean'
+    CLEAN_DIR.mkdir(parents=True, exist_ok=True)
+    print()
+    print('LÀM SẠCH ->', CLEAN_DIR)
+    print('=' * 74)
+    for name in REQUIRED_FILES:
+        blocks, _ = read_apc_blocks(DATA_DIR / name)
+        out, dropped = [], 0
+        for sent, term, cat, sen in blocks:
+            cs, ct = clean_line(sent), clean_line(term)
+            # Bỏ cả block nếu câu hoặc nhãn rỗng sau khi làm sạch.
+            if not cs or not sen.strip():
+                dropped += 1
+                continue
+            out.extend([cs, ct, cat.strip(), sen.strip().lower()])
+        (CLEAN_DIR / name).write_text('\n'.join(out) + '\n', encoding='utf-8')
+        print(f'{name:<10} {len(out) // 4:5d} mẫu giữ lại, {dropped} bị bỏ')
+    DATA_DIR = CLEAN_DIR
+    print()
+    print('DATA_DIR ->', DATA_DIR)
+else:
+    print()
+    print('Giữ nguyên DATA_DIR:', DATA_DIR)
+
+
+# CELL 7 code
+# Sao chép đúng 3 file .apc đã dùng sang output để lưu vết (00_dataset).
+import shutil
+
+for name in REQUIRED_FILES:
+    shutil.copy2(DATA_DIR / name, DATA_OUTPUT_DIR / name)
+
+dataset_zip = DATA_OUTPUT_DIR / 'dataset_apc.zip'
+with zipfile.ZipFile(dataset_zip, 'w', zipfile.ZIP_DEFLATED) as archive:
+    for name in REQUIRED_FILES:
+        archive.write(DATA_OUTPUT_DIR / name, name)
+
+(DATA_OUTPUT_DIR / 'SOURCE.txt').write_text(
+    f'source_dir: {DATA_DIR}\nresolved_by: {DATA_SOURCE}\nseed: {SEED}\n',
+    encoding='utf-8',
+)
+
+print('Dataset output ->', DATA_OUTPUT_DIR)
+for name in (*REQUIRED_FILES, 'dataset_apc.zip', 'SOURCE.txt'):
+    f = DATA_OUTPUT_DIR / name
+    print(f'  {name:<18} {f.stat().st_size / 1024:10.1f} KB')
+
+# CELL 8 code
+# Giai đoạn 1: huấn luyện ATE mT5-small một lần và dự đoán aspect term trên test.
+# Output -> outputs/01_ate/seed_<SEED>/test_predictions.csv
+import common.run_multiseed_ate as ate_runner
+
+USE_SEED_PAIRED_ATE = False
+
+if ATE_INPUT_CSV:
+    ATE_CSV = Path(ATE_INPUT_CSV)
+    if not ATE_CSV.is_file():
+        raise FileNotFoundError(f'ATE_INPUT_CSV không tồn tại: {ATE_CSV}')
+else:
+    ate_args = [
+        '--seeds', str(SEED),
+        '--model-name', ATE_MODEL_NAME,
+        '--epochs', str(ATE_EPOCHS),
+        '--lr', '3e-4',
+        '--batch-size', str(ATE_BATCH_SIZE),
+        '--data-dir', str(DATA_DIR),
+        '--runs-ate-dir', str(ATE_RUNS_DIR),
+        '--ckpt-dir', str(ATE_CKPT_DIR),
+        '--resume',
+    ]
+    print('ATE command: python common/run_multiseed_ate.py ' + ' '.join(ate_args))
+    sys.argv = ['run_multiseed_ate.py', *ate_args]
+    ate_runner.main()
+    ATE_CSV = ATE_RUNS_DIR / f'seed_{SEED}' / 'test_predictions.csv'
+    USE_SEED_PAIRED_ATE = True
+
+# Trả toàn bộ VRAM của mô hình ATE trước khi sang giai đoạn APC.
+free_vram('sau ATE')
+
+if not ATE_CSV.is_file():
+    raise FileNotFoundError(f'Không tạo được dự đoán ATE: {ATE_CSV}')
+print('ATE mT5-small sẵn sàng:', ATE_CSV)
+
+# CELL 9 code
+# Phân tích lỗi của ATE: model sai KIỂU gì?
+#
+# Trả lời câu hỏi "F1 thấp do model nhỏ hay do span/metric": nếu phần lớn
+# lỗi là lệch biên (predicted nằm trong gold hoặc ngược lại) thì vấn đề là
+# quy ước span và độ khắt khe của exact match. Nếu phần lớn là bỏ trống
+# hoặc không liên quan thì mới là dung lượng model / train chưa đủ.
+import csv as _csv
+from collections import Counter, defaultdict
+
+_pred_csv = ATE_RUNS_DIR / f'seed_{SEED}' / 'test_predictions.csv'
+if not _pred_csv.is_file():
+    print('Chưa có', _pred_csv)
+else:
+    _pred, _gold = defaultdict(set), {}
+    with open(_pred_csv, newline='', encoding='utf-8') as f:
+        for row in _csv.DictReader(f):
+            sent = row['sentence']
+            _gold[sent] = {g for g in row['gold_terms'].split('|') if g.strip()}
+            if row['predicted_term'].strip():
+                _pred[sent].add(row['predicted_term'].strip())
+
+    kinds = Counter()
+    empty_sents = 0
+    examples = defaultdict(list)
+
+    for sent, golds in _gold.items():
+        preds = _pred.get(sent, set())
+        if not preds:
+            empty_sents += 1
+        for p in preds:
+            if p in golds:
+                kinds['đúng hoàn toàn'] += 1
+            elif any(p.lower() == g.lower() for g in golds):
+                kinds['chỉ khác chữ hoa/thường'] += 1
+                examples['chỉ khác chữ hoa/thường'].append((sent, p, golds))
+            elif any(p in g or g in p for g in golds):
+                kinds['lệch biên (chứa nhau)'] += 1
+                examples['lệch biên (chứa nhau)'].append((sent, p, golds))
+            elif any(set(p.lower().split()) & set(g.lower().split()) for g in golds):
+                kinds['trùng một phần từ'] += 1
+                examples['trùng một phần từ'].append((sent, p, golds))
+            else:
+                kinds['không liên quan'] += 1
+                examples['không liên quan'].append((sent, p, golds))
+
+    n_sent = len(_gold)
+    n_pred = sum(kinds.values())
+    print(f'Số câu test           : {n_sent}')
+    print(f'Số aspect gold        : {sum(len(g) for g in _gold.values())}')
+    print(f'Số aspect dự đoán     : {n_pred}')
+    print(f'Câu không đoán gì     : {empty_sents} ({empty_sents / n_sent * 100:.1f}%)'
+          '   <- cao = sinh thiếu (recall thấp)')
+    print(f'Số gold aspect/câu    : {dict(sorted(Counter(len(g) for g in _gold.values()).items()))}')
+    print()
+    print('Phân loại từng dự đoán:')
+    for kind, cnt in kinds.most_common():
+        print(f'  {kind:<28} {cnt:6d}  ({cnt / max(n_pred, 1) * 100:5.1f}%)')
+
+    near = kinds['lệch biên (chứa nhau)'] + kinds['chỉ khác chữ hoa/thường'] + kinds['trùng một phần từ']
+    print()
+    print(f'=> Lỗi "gần đúng" (biên/hoa thường/trùng từ): {near} '
+          f'({near / max(n_pred, 1) * 100:.1f}% số dự đoán)')
+    print('   Tỉ lệ này CAO  -> vấn đề ở quy ước span + exact match, không phải model nhỏ.')
+    print('   Tỉ lệ này THẤP và "không liên quan" cao -> model thiếu dung lượng / train chưa đủ.')
+
+    for kind in ('lệch biên (chứa nhau)', 'không liên quan', 'trùng một phần từ'):
+        if examples[kind]:
+            print()
+            print(f'--- ví dụ: {kind} ---')
+            for sent, p, golds in examples[kind][:6]:
+                print(f'  câu   : {sent[:90]}')
+                print(f'  đoán  : {p!r}')
+                print(f'  gold  : {sorted(golds)}')

@@ -1,0 +1,71 @@
+# CELL 0 markdown
+# Gemma 4 Developer Agent — organizer exact submit-only control
+
+Copies the **current official `sample_submission` without modifying any file** and packages it with the same `shutil.make_archive` method used by the current organizer notebook. No GPU, vLLM, wheelhouse, local evaluator, or custom agent changes.
+
+
+# CELL 1 code
+from pathlib import Path
+import os, shutil, zipfile, hashlib
+
+WORK = Path("/kaggle/working")
+WORK.mkdir(parents=True, exist_ok=True)
+
+# Resolve current competition data. Prefer the native Kaggle competition mount.
+DATA = Path("/kaggle/input/competitions/gemma-4-developer-agent")
+if not (DATA / "sample_submission").is_dir():
+    import kagglehub
+    downloaded = Path(kagglehub.competition_download("gemma-4-developer-agent"))
+    candidates = [downloaded, *[p.parent for p in downloaded.rglob("sample_submission") if p.is_dir()]]
+    DATA = next((p for p in candidates if (p / "sample_submission").is_dir()), None)
+    if DATA is None:
+        raise RuntimeError(f"Could not locate current sample_submission under {downloaded}")
+
+SRC = DATA / "sample_submission"
+AGENT = WORK / "sample_submission"
+ZIP_BASE = WORK / "submission"
+ZIP = WORK / "submission.zip"
+
+def sha_bytes(b):
+    return hashlib.sha256(b).hexdigest()
+
+def sha_file(p):
+    return sha_bytes(Path(p).read_bytes())
+
+# Copy today's official sample byte-for-byte. No prompt/YAML/budget/adapter changes.
+shutil.rmtree(AGENT, ignore_errors=True)
+shutil.copytree(SRC, AGENT)
+
+source = {
+    str(p.relative_to(SRC)).replace(os.sep, "/"): sha_file(p)
+    for p in sorted(SRC.rglob("*")) if p.is_file()
+}
+copied = {
+    str(p.relative_to(AGENT)).replace(os.sep, "/"): sha_file(p)
+    for p in sorted(AGENT.rglob("*")) if p.is_file()
+}
+assert copied == source, "Copied bundle differs from official sample_submission"
+assert "agent.yaml" in copied, "agent.yaml missing at archive root"
+
+# IMPORTANT: package exactly the way the current organizer notebook does.
+ZIP.unlink(missing_ok=True)
+zip_path = Path(shutil.make_archive(str(ZIP_BASE), "zip", root_dir=AGENT))
+assert zip_path == ZIP
+
+with zipfile.ZipFile(ZIP, "r") as zf:
+    members = [i.filename for i in zf.infolist() if not i.is_dir()]
+    archived = {name: sha_bytes(zf.read(name)) for name in members}
+
+assert archived == source, "Archive contents differ from current official sample"
+assert "agent.yaml" in members
+assert not any(name.startswith("sample_submission/") for name in members), "Wrong ZIP root"
+
+print("READY TO SUBMIT ✅")
+print("CURRENT OFFICIAL SAMPLE: byte-identical ✅")
+print("PACKAGING: organizer shutil.make_archive ✅")
+print("submission.zip:", ZIP)
+print("bytes:", ZIP.stat().st_size)
+print("sha256:", sha_file(ZIP))
+print("files:", len(members))
+for name in members:
+    print(" -", name)

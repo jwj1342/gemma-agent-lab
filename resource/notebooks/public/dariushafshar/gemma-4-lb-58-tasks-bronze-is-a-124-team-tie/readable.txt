@@ -1,0 +1,889 @@
+# CELL 0 markdown
+# Gemma 4 LB: 58 Tasks, Bronze Is a 124-Team Tie
+
+
+**The unit.** The Data page says the hidden test set is "about 120 tasks, evenly
+divided between the public and private splits", so it is natural to read this board in sixtieths.
+It is not sixtieths. The board shows scores truncated to 2 decimals, and the only
+public task count between 30 and 130 that produces exactly the 10 scores on it (under
+Kaggle's truncation; under rounding, no count reproduces the set exactly) is **58**. One task is worth 0.0172; 0.12 is 7 tasks (seven sixtieths would
+show as 0.11); the step above 0.13 is 0.15. Meta Kaggle records the two facts this rests on: the public
+board is 50% of the test set, and scores are truncated to 2 decimals.
+
+**The board** (863 teams, day 6 of 70). The bronze cut,
+rank 100, is 6 tasks, and **124 teams share that
+score** (ranks 88-211). Only the 13
+who got there first are inside the band: within a tie, rank is submission time.
+
+**The noise.** One submission's binomial standard deviation at the bronze cut is 2.32
+tasks, and 525 teams (60.8% of the board) sit within one of it. The
+nonzero scores spread with a standard deviation of 1.72 tasks, which is what a single
+agent would show if every team had re-submitted it (1.74, 90% range
+1.66-1.81). Teams do differ (the shape rejects "one agent", p =
+5.6e-11), but their differences add almost nothing to the spread the draw alone makes.
+
+**What survives to private** (modelled on 58 private tasks). For two submissions near
+the cut whose true pass rates differ by one task, the private split keeps their public order
+0.473 of the time if their outcomes are unrelated, and 0.486 at the
+agreement level of AIMO teams' two final picks (kappa 0.42). Three tasks apart:
+0.651 and 0.813. If the board froze today, a public top-10 team would
+finish outside the top 100 with probability 0.638 to 0.831.
+
+**What to do with it.** Read scores in tasks and gaps in standard deviations. Use both final
+picks, and spend the second on a *different* agent rather than a near-copy of your best: a
+near-copy tied with your best adds 0.80 expected private tasks, an unrelated agent two
+tasks lower on public adds 1.02. Count the 129 development tasks on which
+your two agents disagree; that number moves the answer more than any decimal on the board.
+
+Sections: 1 what the competition says, 2 the board in tasks, 3 how much of it is the draw, 4 two
+submissions, 5 the frozen-board simulation, 6 the selection rule and a calculator for your own
+scores, 7 what this does not know.
+
+# CELL 1 markdown
+## 0. Setup and knobs
+
+Nothing here runs a model. The notebook reads the stored board snapshot, the competition's own
+data, and Meta Kaggle, and it needs no internet and no accelerator. The knobs:
+
+* `BOARD_CSV`: point it at a fresh board download (Leaderboard tab, Download) to redo every
+  count on today's board instead of the stored snapshot.
+* `MY_PUBLIC_SCORES`: swap in the public scores of your own submissions; section 6 turns them
+  into tasks and says which gaps are real.
+* `MY_DISCORDANT_DEV_TASKS`: change the `None` to the number of the 129 development tasks on which
+  exactly one of your two best agents passed. That is the one number about your agents that this
+  notebook cannot see, and it moves the answer more than anything else.
+
+# CELL 2 code
+import base64, gzip, hashlib, io, json, math, os, re, time
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+import pyarrow as pa
+import pyarrow.csv as pacsv
+import pyarrow.compute as pc
+from scipy.stats import binom, norm
+import matplotlib.pyplot as plt
+
+INPUT = Path(os.environ.get("SMOKE_ROOT", "/kaggle/input"))
+WORK = Path(os.environ.get("SMOKE_WORK", "/kaggle/working"))
+WORK.mkdir(parents=True, exist_ok=True)
+T0 = time.time()
+
+# ---- knobs ---------------------------------------------------------------------------------
+BOARD_CSV = None            # a fresh board CSV (Leaderboard > Download); None = the stored snapshot
+N_PUBLIC = None             # public task count; None = identify it from the displayed scores
+N_PRIVATE = None            # private task count; None = N_PUBLIC ("evenly divided")
+MY_PUBLIC_SCORES = {"sub_A": 0.13333, "sub_B": 0.11666, "sub_C": 0.10000}
+MY_DISCORDANT_DEV_TASKS = None   # of the 129 dev tasks, how many did exactly one of your two agents pass
+N_BOARDS = 4000             # simulated private boards per scenario
+SEED = 2026
+DEV_TASKS = 129             # public development tasks (Data page); checked against tasks.jsonl below
+
+HL = {}                     # every number the prose quotes is recorded here, as printed
+
+
+def rec(key, value):
+    HL[key] = value
+    return value
+
+
+def find(name, required=True):
+    hits = sorted(p for p in INPUT.rglob(name) if p.is_file())
+    if not hits and required:
+        raise FileNotFoundError(f"{name} not found under {INPUT}")
+    return hits[0] if hits else None
+
+
+def scan(name, cols, key, keep, newlines=False):
+    """Stream one Meta Kaggle CSV; keep only `cols`, and rows whose `key` is in `keep`."""
+    ro = pacsv.ReadOptions(block_size=64 << 20)
+    po = pacsv.ParseOptions(newlines_in_values=newlines)
+    co = pacsv.ConvertOptions(include_columns=cols, column_types={c: pa.string() for c in cols})
+    vs = pa.array(sorted({str(v) for v in keep}))
+    parts = []
+    for b in pacsv.open_csv(find(name), read_options=ro, parse_options=po, convert_options=co):
+        b = b.filter(pc.is_in(b.column(key), value_set=vs))
+        if b.num_rows:
+            parts.append(b)
+    return pa.Table.from_batches(parts).to_pandas() if parts else pd.DataFrame(columns=cols)
+
+
+print("inputs found:")
+for name in ("tasks.jsonl", "Competitions.csv", "Teams.csv", "Submissions.csv"):
+    p = find(name, required=False)
+    print(f"  {name:<17} {'missing' if p is None else f'{p.stat().st_size / 1e6:9.1f} MB  input/' + str(p.relative_to(INPUT).parent)}")
+
+# CELL 3 markdown
+## 1. What the competition says, at source
+
+Every structural number below is parsed out of a sentence the competition published, so if the
+host edits a page, this cell is where the notebook breaks. The page text was read through the
+Kaggle API on 2026-09-29.
+
+# CELL 4 code
+SOURCE = {
+    "Data page": ("https://www.kaggle.com/competitions/gemma-4-developer-agent/data",
+                  "There are about 120 tasks in the test set, evenly divided between the public "
+                  "and private splits. The test set was curated from a set of private repositories."),
+    "Evaluation page": ("https://www.kaggle.com/competitions/gemma-4-developer-agent/overview/evaluation",
+                        "Your submission's overall score is the percentage of patched repositories "
+                        "that pass the validation tests."),
+    "Rules 2.2a": ("https://www.kaggle.com/competitions/gemma-4-developer-agent/rules",
+                   "You may submit a maximum of one (1) Submission per day."),
+    "Rules 2.2b": ("https://www.kaggle.com/competitions/gemma-4-developer-agent/rules",
+                   "You may select up to two (2) Final Submissions for judging."),
+    "Timeline": ("https://www.kaggle.com/competitions/gemma-4-developer-agent/overview/timeline",
+                 "September 23, 2026 - Start Date. ... December 2, 2026 - Final Submission Deadline."),
+}
+for k, (url, q) in SOURCE.items():
+    print(f'{k:<16} "{q}"\n{"":<16} {url}')
+
+TEST_ABOUT = int(re.search(r"about (\d+) tasks in the test set", SOURCE["Data page"][1]).group(1))
+EVEN = "evenly divided" in SOURCE["Data page"][1]
+STATED_PUBLIC = TEST_ABOUT // 2 if EVEN else None
+DAILY = int(re.search(r"maximum of \w+ \((\d+)\) Submission per day", SOURCE["Rules 2.2a"][1]).group(1))
+FINALS = int(re.search(r"up to \w+ \((\d+)\) Final Submissions", SOURCE["Rules 2.2b"][1]).group(1))
+print(f"\nhidden test set: about {rec('test_about', TEST_ABOUT)} tasks; evenly divided -> about "
+      f"{rec('stated_public', STATED_PUBLIC)} public + about {TEST_ABOUT - STATED_PUBLIC} private")
+print(f"score = share of tasks whose tests pass, so one task moves a {STATED_PUBLIC}-task score by "
+      f"{rec('one_task_stated', f'{1 / STATED_PUBLIC:.4f}')}")
+print(f"submissions per day: {rec('daily', DAILY)}; final selections: {rec('finals', FINALS)}")
+_d = re.findall(r"(\w+ \d+, \d{4}) - ", SOURCE["Timeline"][1])
+START, FINAL = (pd.Timestamp(x) for x in _d)
+print(f"competition runs {START.date()} to {FINAL.date()}: {rec('days_total', (FINAL - START).days)} days")
+
+# CELL 5 code
+tp = find("tasks.jsonl", required=False)
+if tp is None:
+    print("tasks.jsonl not mounted: add the competition as an input to check the development set")
+else:
+    tasks = pd.read_json(tp, lines=True)
+    DEV_TASKS = len(tasks)
+    print(f"{tp.name}: {rec('dev_tasks', DEV_TASKS)} public development tasks (with reference patches); "
+          f"repositories:")
+    print(tasks["repo"].value_counts().to_string())
+    print("\nThese are NOT the scored tasks: the scored ~120 come from private repositories, so a local "
+          "score on these is a different instrument from the board.")
+
+TRUNC_DEC, LB_PCT = None, None
+cp = find("Competitions.csv", required=False)
+if cp is None:
+    print("\nMeta Kaggle not mounted")
+else:
+    comp = scan("Competitions.csv", ["Id", "Slug", "EnabledDate", "LeaderboardPercentage",
+                                     "ScoreTruncationNumDecimals", "MaxDailySubmissions",
+                                     "NumScoredSubmissions", "TotalTeams"],
+                "Id", [149921], newlines=True)
+    if len(comp):
+        print("\nMeta Kaggle Competitions.csv, row 149921:")
+        print(comp.T.to_string(header=False))
+        TRUNC_DEC = int(comp["ScoreTruncationNumDecimals"].iloc[0])
+        LB_PCT = int(comp["LeaderboardPercentage"].iloc[0])
+        rec("lb_pct", LB_PCT)
+        rec("trunc_dec", TRUNC_DEC)
+        print(f"-> the public board is {LB_PCT}% of the test set; displayed scores are truncated to "
+              f"{TRUNC_DEC} decimals")
+    else:
+        print("\nMeta Kaggle Competitions.csv in this dump has no row for competition 149921 yet")
+
+# CELL 6 markdown
+## 2. The board, in tasks
+
+The public board was downloaded once through the Kaggle API and is stored in the next cell
+(rank, score, time of the team's last submission, submission count; team names and ids are
+dropped). A score on this board is a count of solved tasks divided by the public task count, so
+the first job is to find that count from the scores themselves rather than trust "about 120".
+
+# CELL 7 code
+BOARD_PULLED_UTC = "2026-09-29 04:45:09"
+BOARD_SHA256 = "92e63daaa2daa07920e19b88857fccfe733278df3c1b9f2676c478ec0040add0"
+BOARD_BLOB = "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"
+
+if BOARD_CSV:
+    raw = pd.read_csv(BOARD_CSV, dtype=str)
+    board = raw[["Rank", "Score", "LastSubmissionDate", "SubmissionCount"]].copy()
+    print(f"board: {BOARD_CSV} ({len(board)} teams)")
+else:
+    blob = gzip.decompress(base64.b64decode(BOARD_BLOB))
+    assert hashlib.sha256(blob).hexdigest() == BOARD_SHA256, "stored board does not match its hash"
+    board = pd.read_csv(io.BytesIO(blob), dtype=str)
+    print(f"board: stored snapshot pulled {BOARD_PULLED_UTC} UTC, sha256 {BOARD_SHA256[:16]}...")
+board["Rank"] = board["Rank"].astype(int)
+board["SubmissionCount"] = board["SubmissionCount"].astype(int)
+board["score"] = board["Score"].astype(float)
+board = board.sort_values("Rank").reset_index(drop=True)
+assert board["Rank"].is_unique, "the board file repeats a rank"
+assert board["score"].is_monotonic_decreasing, "rank order and score order disagree"
+board["Rank"] = np.arange(1, len(board) + 1)   # position on the board, 1 = best
+N_TEAMS = rec("n_teams", len(board))
+print(f"snapshot taken on day {rec('days_elapsed', (pd.Timestamp(BOARD_PULLED_UTC) - START).days)} "
+      f"of {HL['days_total']}")
+DEC = rec("decimals", max(len(s.split(".")[1]) if "." in s else 0 for s in board["Score"]))
+print(f"{N_TEAMS} teams on the board; scores shown with {DEC} decimals; "
+      f"{board['score'].nunique()} distinct scores")
+print(f"submissions per team: median {int(board['SubmissionCount'].median())}, "
+      f"max {board['SubmissionCount'].max()}, total {board['SubmissionCount'].sum()}")
+
+# CELL 8 code
+# Which public task counts n reproduce the displayed scores? Exact integer arithmetic. A displayed
+# value v (in units of 10^-DEC) comes from k solved tasks if v == floor(k * 10^DEC / n) (Kaggle
+# truncates displayed scores) or v == round-half-up(k * 10^DEC / n) (checked as the alternative).
+#   consistent: every displayed value is reachable from some k
+#   exact:      and every reachable value up to the top displayed score is actually held by a team,
+#               i.e. no count k between 0 and the leader is unoccupied on a board this size
+S = 10 ** DEC
+shown = sorted({int(round(float(s) * S)) for s in board["Score"]})
+fits, exact = {}, {}
+for mode in ("truncate", "round"):
+    fits[mode], exact[mode] = [], []
+    for n in range(30, 131):
+        vals = [(k * S) // n if mode == "truncate" else (2 * k * S + n) // (2 * n) for k in range(n + 1)]
+        if all(v in set(vals) for v in shown):
+            fits[mode].append(n)
+            if sorted({v for v in vals if v <= max(shown)}) == shown:
+                exact[mode].append(n)
+    print(f"{mode:<9} consistent task counts between 30 and 130: {len(fits[mode]):>3} values "
+          f"({', '.join(map(str, fits[mode][:6]))}{', ...' if len(fits[mode]) > 6 else ''}); "
+          f"exact fits: {exact[mode] if exact[mode] else 'none'}")
+print(f"the Data page's implied {STATED_PUBLIC}: consistent under truncation? {STATED_PUBLIC in fits['truncate']}; "
+      f"under rounding? {STATED_PUBLIC in fits['round']}")
+
+if TRUNC_DEC is not None:
+    print(f"Meta Kaggle says scores are truncated to {TRUNC_DEC} decimals; this file shows {DEC}: "
+          f"{'match' if TRUNC_DEC == DEC else 'MISMATCH'}")
+if N_PUBLIC is None:
+    if len(exact["truncate"]) == 1:
+        N_PUBLIC = exact["truncate"][0]
+    else:
+        cands = sorted(set(fits["truncate"]) | set(fits["round"]))
+        if not cands:
+            raise SystemExit("no task count reproduces the displayed scores: the score is not k/n here")
+        N_PUBLIC = min(cands, key=lambda n: abs(n - STATED_PUBLIC))
+N_PRIVATE = N_PUBLIC if N_PRIVATE is None else N_PRIVATE
+if LB_PCT is not None:
+    print(f"public = {LB_PCT}% of the test set -> about {round(100 * N_PUBLIC / LB_PCT)} test tasks, "
+          f"{N_PRIVATE} private (assumed equal to public)")
+rec("n_public", N_PUBLIC)
+rec("n_exact", len(exact["truncate"]) + len(exact["round"]))
+rec("one_task", f"{1 / N_PUBLIC:.4f}")
+print(f"\nusing N_PUBLIC = {N_PUBLIC}, N_PRIVATE = {N_PRIVATE}: one task = {1 / N_PUBLIC:.4f} of score")
+
+# invert the display rule exactly: displayed value -> the task count that produces it
+trunc_rule = N_PUBLIC in fits["truncate"]
+disp = (lambda k: (k * S) // N_PUBLIC) if trunc_rule else (lambda k: (2 * k * S + N_PUBLIC) // (2 * N_PUBLIC))
+v2k = {}
+for k in range(N_PUBLIC + 1):
+    v2k.setdefault(disp(k), []).append(k)
+ambiguous = [v for v in shown if len(v2k[v]) > 1]
+board["tasks"] = [v2k[int(round(float(x) * S))][0] for x in board["Score"]]
+bad = int(sum(disp(k) != int(round(float(x) * S)) for k, x in zip(board["tasks"], board["Score"])))
+print(f"display rule: {'truncation' if trunc_rule else 'rounding'} to {DEC} decimals; displayed values "
+      f"that two task counts could share: {len(ambiguous)}; round-trip mismatches: {bad} of {N_TEAMS}")
+tab = pd.DataFrame({"tasks": range(0, int(board["tasks"].max()) + 1)})
+tab["displayed"] = [f"{((k * S) // N_PUBLIC) / S:.{DEC}f}" for k in tab["tasks"]]
+tab["exact score"] = (tab["tasks"] / N_PUBLIC).round(4)
+tab[f"if it were {STATED_PUBLIC} tasks"] = [f"{((k * S) // STATED_PUBLIC) / S:.{DEC}f}" for k in tab["tasks"]]
+print("\nwhat each displayed score is, in tasks:")
+print(tab.to_string(index=False))
+
+# CELL 9 code
+blocks = (board.groupby("tasks")
+               .agg(score=("Score", "first"), teams=("Rank", "size"),
+                    best_rank=("Rank", "min"), worst_rank=("Rank", "max"),
+                    single_sub=("SubmissionCount", lambda s: int((s == 1).sum())))
+               .sort_index(ascending=False))
+blocks["share_%"] = (100 * blocks["teams"] / N_TEAMS).round(1)
+print("teams per public task count (top of the board first):")
+print(blocks.to_string())
+
+TOP_TASKS = rec("top_tasks", int(board["tasks"].max()))
+mode_k = int(blocks.loc[blocks.index > 0, "teams"].idxmax())
+rec("mode_tasks", mode_k)
+rec("mode_teams", int(blocks.loc[mode_k, "teams"]))
+rec("mode_share", f"{100 * blocks.loc[mode_k, 'teams'] / N_TEAMS:.1f}")
+rec("zero_teams", int(blocks.loc[0, "teams"]) if 0 in blocks.index else 0)
+rec("n_distinct", int(len(blocks)))
+print(f"\nleader: {TOP_TASKS} of {N_PUBLIC} tasks; largest nonzero block: {mode_k} tasks "
+      f"({HL['mode_teams']} teams, {HL['mode_share']}% of the board); {HL['zero_teams']} teams at 0")
+
+# CELL 10 markdown
+### Where the medal cuts sit, and how many teams are within one standard deviation of them
+
+Kaggle's medal table for 250 to 999 teams: gold to the top 10 plus one per 500 teams, silver to
+the top 50, bronze to the top 100 (from 1,000 teams on, bronze becomes the top 10% and silver the
+top 5%). One submission's public score is a count out of the public task count, so its binomial
+standard deviation in tasks is sqrt(n p (1 - p)) at pass rate p. The table counts the teams whose
+displayed task count is within one and two such deviations of each cut.
+
+# CELL 11 code
+def medal_ranks(n_teams):
+    gold = 10 + n_teams // 500
+    if n_teams >= 1000:
+        return {"gold": gold, "silver": n_teams * 5 // 100, "bronze": n_teams // 10}
+    if n_teams >= 250:
+        return {"gold": gold, "silver": 50, "bronze": 100}
+    if n_teams >= 100:
+        return {"gold": 10, "silver": int(0.2 * n_teams), "bronze": int(0.4 * n_teams)}
+    return {"gold": int(0.1 * n_teams), "silver": int(0.2 * n_teams), "bronze": int(0.4 * n_teams)}
+
+
+print("Kaggle medal table: 250-999 teams -> gold top 10 + 1 per 500 teams, silver top 50, bronze top 100;\n"
+      "                    1,000+ teams -> gold top 10 + 1 per 500 teams, silver top 5%, bronze top 10%")
+MEDAL = medal_ranks(N_TEAMS)
+BRONZE = MEDAL["bronze"]
+cuts = {"top 10": 10, **{f"{k} (top {v})": v for k, v in MEDAL.items()}}
+rows = []
+for name, r in cuts.items():
+    k = int(board["tasks"].iloc[r - 1])          # board is sorted by rank; ranks are 1..N
+    p = k / N_PUBLIC
+    sd = math.sqrt(N_PUBLIC * p * (1 - p))
+    d = (board["tasks"] - k).abs()
+    rows.append({"cut": name, "rank": r, "score": board["Score"].iloc[r - 1],
+                 "tasks": k, "teams_on_that_score": int((board["tasks"] == k).sum()),
+                 "sd_tasks": round(sd, 2),
+                 "within_1sd": int((d <= sd).sum()), "within_2sd": int((d <= 2 * sd).sum()),
+                 "within_1sd_%": round(100 * (d <= sd).mean(), 1),
+                 "within_2sd_%": round(100 * (d <= 2 * sd).mean(), 1)})
+cut_tab = pd.DataFrame(rows).set_index("cut")
+print(f"{N_TEAMS} teams -> medal ranks {MEDAL}")
+print(cut_tab.to_string())
+
+b = cut_tab.loc[f"bronze (top {BRONZE})"]
+t10 = cut_tab.loc["top 10"]
+BRONZE_K = int(b["tasks"])
+rec("bronze_rank", BRONZE)
+rec("bronze_tasks", BRONZE_K)
+rec("bronze_score", b["score"])
+rec("bronze_block", int(b["teams_on_that_score"]))
+rec("bronze_sd", f"{b['sd_tasks']:.2f}")
+rec("bronze_1sd", int(b["within_1sd"]))
+rec("bronze_1sd_pct", f"{b['within_1sd_%']:.1f}")
+rec("bronze_2sd", int(b["within_2sd"]))
+rec("bronze_2sd_pct", f"{b['within_2sd_%']:.1f}")
+rec("top10_tasks", int(t10["tasks"]))
+rec("top10_1sd", int(t10["within_1sd"]))
+blk = board[board["tasks"] == BRONZE_K]
+rec("bronze_block_best", int(blk["Rank"].min()))
+rec("bronze_block_worst", int(blk["Rank"].max()))
+rec("bronze_block_inside", int((blk["Rank"] <= BRONZE).sum()))
+print(f"\nthe bronze cut (rank {BRONZE}) is {BRONZE_K} tasks; that score is shared by {HL['bronze_block']} "
+      f"teams at ranks {HL['bronze_block_best']}-{HL['bronze_block_worst']}, of whom "
+      f"{HL['bronze_block_inside']} are inside the band. Inside a block, rank is submission time.")
+print(f"one SD at the bronze cut = {HL['bronze_sd']} tasks; {HL['bronze_1sd']} teams "
+      f"({HL['bronze_1sd_pct']}%) are within 1 SD of it and {HL['bronze_2sd']} ({HL['bronze_2sd_pct']}%) within 2 SD")
+
+# CELL 12 code
+fig, ax = plt.subplots(figsize=(10, 4.2), facecolor="#fcfcfb")
+ax.set_facecolor("#fcfcfb")
+ks = np.arange(0, TOP_TASKS + 1)
+cnt = board["tasks"].value_counts().reindex(ks, fill_value=0)
+inside = board[board["Rank"] <= BRONZE]["tasks"].value_counts().reindex(ks, fill_value=0)
+outside = cnt - inside
+ax.bar(ks, inside.values, width=0.8, color="#2a78d6", label=f"inside the top {BRONZE} (bronze band)")
+ax.bar(ks, outside.values, bottom=inside.values, width=0.8, color="#c9dcf4",
+       edgecolor="#fcfcfb", linewidth=1, label=f"outside the top {BRONZE}")
+sd = float(HL["bronze_sd"])
+top = cnt.max()
+ax.axvspan(BRONZE_K - sd, BRONZE_K + sd, color="#52514e", alpha=0.07, lw=0)
+ax.text(BRONZE_K, top * 1.13, f"bronze cut: {BRONZE_K} tasks (shaded: +/-1 SD = {sd:.2f} tasks)",
+        ha="center", va="bottom", color="#52514e", fontsize=9)
+for k in ks:
+    if cnt[k] and (len(ks) <= 12 or cnt[k] >= 0.02 * N_TEAMS or k == BRONZE_K):
+        ax.text(k, cnt[k] + top * 0.01, str(int(cnt[k])), ha="center", va="bottom", fontsize=8,
+                color="#0b0b0b")
+ax.set_xticks(ks)
+ax.set_xlabel(f"public tasks solved (of {N_PUBLIC})", color="#0b0b0b")
+ax.set_ylabel("teams", color="#0b0b0b")
+ax.set_title(f"Gemma 4 Developer Agent public board, {BOARD_PULLED_UTC[:10]}: {N_TEAMS} teams",
+             loc="left", color="#0b0b0b", fontsize=11)
+for s_ in ("top", "right"):
+    ax.spines[s_].set_visible(False)
+ax.grid(axis="y", color="#e6e5e0", lw=0.8)
+ax.set_axisbelow(True)
+ax.set_ylim(0, top * 1.25)
+ax.legend(frameon=False, loc="upper left", fontsize=9)
+plt.tight_layout()
+plt.show()
+
+# CELL 13 markdown
+**Read-out.** The whole race is 10 displayed scores wide. The bronze band ends
+inside a tie: 124 teams at 6 tasks, 13 of
+them in. Within one standard deviation of the cut (2.32 tasks) sit 525
+teams, and within two sit 680 (78.8% of the board).
+
+# CELL 14 markdown
+## 3. How much of the board is the draw?
+
+Two tests, both on the stored board. They were added after the board was downloaded (the
+pre-registered version was the copy test alone), and they say so here.
+
+**Spread.** If every team re-submitted one and the same agent, with each team's actual number of
+submissions and the board showing each team's best, how wide would the board be? Fitting that one
+agent's pass rate to the nonzero teams and re-rolling the board gives the answer to compare with
+the real spread.
+
+**Copies.** If every team's score were its own independent draw around its own pass rate, the
+number of teams at a count k could exceed the average of its two neighbours only by a small
+factor (the exact bound is printed, allowing for the best of several submissions). A block well
+above it is made of teams that share the same outcomes, i.e. run the same agent, and would land
+on the same private score together.
+
+# CELL 15 code
+nz = board.loc[board["tasks"] > 0, ["tasks", "SubmissionCount"]]
+ks = np.arange(N_PUBLIC + 1)
+
+
+def best_of_m_pmf(p, m):
+    F = binom.cdf(ks, N_PUBLIC, p)
+    return F ** m - np.concatenate([[0.0], F[:-1]]) ** m
+
+
+def one_agent_nll(p):
+    """Zero-truncated likelihood: every nonzero team shows the best of its m re-rolls of one agent."""
+    tot = 0.0
+    for m, g in nz.groupby("SubmissionCount"):
+        pm = best_of_m_pmf(p, m)
+        tot -= np.log(pm[g["tasks"].values] / (1 - pm[0])).sum()
+    return tot
+
+
+grid1 = np.linspace(0.02, 0.2, 1801)
+P_ONE = float(grid1[np.argmin([one_agent_nll(p) for p in grid1])])
+rs = np.random.RandomState(SEED)
+sim_sd = []
+for _ in range(2000):
+    parts = [rs.binomial(N_PUBLIC, P_ONE, size=(len(g), m)).max(1) for m, g in nz.groupby("SubmissionCount")]
+    sim = np.concatenate(parts)
+    sim_sd.append(sim[sim > 0].std())
+sim_sd = np.array(sim_sd)
+mean_nz, sd_nz = nz["tasks"].mean(), nz["tasks"].std(ddof=0)
+p_bar = mean_nz / N_PUBLIC
+sd_one = math.sqrt(N_PUBLIC * p_bar * (1 - p_bar))
+exp = np.zeros(N_PUBLIC + 1)
+for m, g in nz.groupby("SubmissionCount"):
+    pm = best_of_m_pmf(P_ONE, m)
+    exp += len(g) * pm / (1 - pm[0])
+obs = np.bincount(nz["tasks"], minlength=N_PUBLIC + 1)
+top = int(nz["tasks"].max())
+o = np.append(obs[1:top], obs[top:].sum())
+e = np.append(exp[1:top], exp[top:].sum())
+chi = float(((o - e) ** 2 / e).sum())
+from scipy.stats import chi2 as _chi2
+p_shape = float(_chi2.sf(chi, len(o) - 2))
+print(f"nonzero teams: {rec('nz_teams', len(nz))}; mean {mean_nz:.2f} tasks; spread (SD) "
+      f"{rec('sd_board', f'{sd_nz:.2f}')} tasks")
+print(f"one submission's own binomial SD at that mean: {rec('sd_one', f'{sd_one:.2f}')} tasks")
+print(f"one agent re-rolled (pass rate {P_ONE:.4f} = {P_ONE * N_PUBLIC:.2f} tasks per run), each team showing "
+      f"the best of its own submission count, 2000 boards: spread SD median "
+      f"{rec('sd_sim', f'{np.median(sim_sd):.2f}')}, 90% range {rec('sd_sim_lo', f'{np.percentile(sim_sd, 5):.2f}')}-"
+      f"{rec('sd_sim_hi', f'{np.percentile(sim_sd, 95):.2f}')}")
+print(pd.DataFrame({"teams on the board": obs[1:top + 2], "one agent re-rolled": exp[1:top + 2].round(1)},
+                   index=pd.Index(range(1, top + 2), name="tasks")).T.to_string())
+print(f"shape test (chi-square, {len(o) - 2} df): {chi:.1f}, p = {p_shape:.1e}")
+rec("p_shape", f"{p_shape:.1e}")
+
+# CELL 16 code
+PGRID = np.linspace(1e-4, 0.999, 4000)
+
+
+def spike_bound(n, k, m):
+    """Max over p of pmf(k) / mean(pmf(k-1), pmf(k+1)) for the best of m Binomial(n, p) draws."""
+    F = lambda x: binom.cdf(x, n, PGRID)
+    pm = lambda x: F(x) ** m - F(x - 1) ** m
+    den = (pm(k - 1) + pm(k + 1)) / 2
+    r = np.where(den > 1e-300, pm(k) / np.maximum(den, 1e-300), 0.0)
+    return float(r.max())
+
+
+def block_scan(sub, label):
+    c = sub["tasks"].value_counts().reindex(range(0, TOP_TASKS + 1), fill_value=0)
+    m = int(sub["SubmissionCount"].max())
+    rows = []
+    for k in range(2, TOP_TASKS):       # k = 1 is skipped: its neighbour 0 holds failed runs
+        nb = (c[k - 1] + c[k + 1]) / 2
+        if nb == 0:
+            continue
+        bnd = spike_bound(N_PUBLIC, k, m)
+        rows.append({"tasks": k, "teams": int(c[k]), "neighbour mean": nb, "ratio": round(c[k] / nb, 2),
+                     "bound": round(bnd, 2), "teams above the bound": round(c[k] - bnd * nb, 1)})
+    t = pd.DataFrame(rows).set_index("tasks")
+    print(f"{label} ({len(sub)} teams; bound allows the best of up to {m} submissions):")
+    print(t.to_string(), "\n")
+    return t
+
+
+scan_all = block_scan(board, "all teams")
+scan_one = block_scan(board[board["SubmissionCount"] == 1], "single-submission teams")
+over_all = scan_all[scan_all["teams above the bound"] > 0]
+over_one = scan_one[scan_one["teams above the bound"] > 0]
+rec("wall_ratio", f"{scan_all.loc[7, 'ratio']:.2f}" if 7 in scan_all.index else "n/a")
+rec("wall_bound", f"{scan_all.loc[7, 'bound']:.2f}" if 7 in scan_all.index else "n/a")
+rec("copy_blocks_all", len(over_all))
+if len(over_one):
+    k1 = int(over_one["teams above the bound"].idxmax())
+    rec("copy1_tasks", k1)
+    rec("copy1_ratio", f"{over_one.loc[k1, 'ratio']:.2f}")
+    rec("copy1_bound", f"{over_one.loc[k1, 'bound']:.2f}")
+    rec("copy1_excess", int(round(over_one.loc[k1, "teams above the bound"])))
+print(f"blocks above the independent-draw bound: all teams {len(over_all)}, single-submission teams {len(over_one)}")
+COPY_BLOCK = int(over_all["teams above the bound"].idxmax()) if len(over_all) else None
+print("copy block used in section 5:", COPY_BLOCK)
+
+# CELL 17 markdown
+**Read-out.** The board spreads (SD 1.72 tasks) about as one re-rolled agent would
+(1.74). No block near the medal band is a pile of copies: the 0.12 block (7 tasks) sits
+at 1.07 times its neighbours against an independent-draw bound of 1.26.
+The one block above its bound is among single-submission teams at 3 tasks (0.05):
+1.79 against 1.17, about 18 teams more than
+independent draws allow, far from the medals.
+
+# CELL 18 markdown
+## 4. Two submissions, 1 to 3 tasks apart: does the public order survive?
+
+Take two submissions whose true pass rates differ by 1, 2 or 3 tasks, both near the bronze cut.
+Their public and private scores come from disjoint task sets. What decides whether the public
+order survives is how many tasks the two agents disagree on: if they fail and pass the same tasks,
+their difference is nearly noiseless; if their outcomes are unrelated, it is as noisy as it gets.
+The exact calculation below enumerates every split outcome (no sampling).
+
+The agreement level cannot be read off the board, so it is calibrated on the closest closed
+competitions with the same shape: the AIMO Progress Prize 1 and 2, where each team's final
+submissions were rerun on the same 50 private problems, pass or fail each. How far apart one
+team's two picks landed, relative to two independent submissions, is the calibration (called
+kappa below: 1 = unrelated outcomes, 0 = identical outcomes).
+
+# CELL 19 code
+AIMO = {73231: "ai-mathematical-olympiad-prize", 86023: "ai-mathematical-olympiad-progress-prize-2"}
+if find("Teams.csv", required=False) is None:
+    raise SystemExit("attach kaggle/meta-kaggle for the AIMO calibration")
+aimo_text = scan("Competitions.csv", ["Id", "DatasetDescription"], "Id", list(AIMO), newlines=True)
+for _, r in aimo_text.iterrows():
+    s = re.search(r"The public test set comprises exactly 50 problems[^.]*\.", r["DatasetDescription"])
+    print(f"{AIMO[int(r['Id'])]}: \"{s.group(0) if s else 'sentence not found'}\"")
+
+teams = scan("Teams.csv", ["Id", "CompetitionId"], "CompetitionId", list(AIMO), newlines=True)
+subs = scan("Submissions.csv", ["Id", "TeamId", "IsAfterDeadline", "PrivateScoreFullPrecision"],
+            "TeamId", teams["Id"].tolist())
+subs = subs.merge(teams.rename(columns={"Id": "TeamId"}), on="TeamId")
+subs = subs[subs["IsAfterDeadline"] == "False"].copy()
+subs["priv"] = pd.to_numeric(subs["PrivateScoreFullPrecision"], errors="coerce")
+per_team = subs.groupby("TeamId").size()
+pairs = (subs[subs["TeamId"].isin(per_team[per_team == 2].index)]
+         .groupby(["CompetitionId", "TeamId"])["priv"].agg(["min", "max"]).reset_index())
+pairs["d"] = pairs["max"] - pairs["min"]
+pairs["mean"] = (pairs["max"] + pairs["min"]) / 2
+AIMO_N = 50
+CRASH = 5    # a pick under 5 of 50 is a run that failed outright, not task-level noise
+mid = pairs[pairs["mean"].between(10, 35)]
+band = mid[mid["min"] >= CRASH].copy()
+print(f"two-pick teams with a pair mean of 10-35 of 50: {len(mid)}; dropped because one pick scored "
+      f"under {CRASH} (a crashed run): {len(mid) - len(band)}")
+band["p"] = band["mean"] / AIMO_N
+band["indep_var"] = 2 * AIMO_N * band["p"] * (1 - band["p"])
+out = []
+for (cid, lo), g in band.groupby(["CompetitionId", pd.cut(band["mean"], [10, 15, 20, 25, 35], right=False)],
+                                observed=True):
+    out.append({"competition": "AIMO 1" if int(cid) == 73231 else "AIMO 2", "pair mean": str(lo), "teams": len(g),
+                "rms gap": round(float(np.sqrt((g["d"] ** 2).mean())), 2),
+                "independent sd": round(float(np.sqrt(g["indep_var"].mean())), 2),
+                "kappa": round(float((g["d"] ** 2).sum() / g["indep_var"].sum()), 3)})
+print(pd.DataFrame(out).to_string(index=False))
+KAPPA = float((band["d"] ** 2).sum() / band["indep_var"].sum())
+mid_p = mid["mean"] / AIMO_N
+KAPPA_ALL = float((mid["d"] ** 2).sum() / (2 * AIMO_N * mid_p * (1 - mid_p)).sum())
+rec("kappa_all", f"{KAPPA_ALL:.2f}")
+print(f"with the crashed pairs kept, kappa would be {KAPPA_ALL:.2f}: one failed run looks like a huge gap")
+rec("aimo_pairs", len(band))
+rec("kappa", f"{KAPPA:.2f}")
+rec("aimo_same", f"{100 * (band['d'] == 0).mean():.0f}")
+print(f"\npooled over {len(band)} two-pick teams (pair mean 10-35 of 50, no crashed pick): kappa = {KAPPA:.2f}")
+print(f"{HL['aimo_same']}% of those teams' two picks scored exactly the same")
+print("kappa includes any real gap between the two picks, so it overstates their disagreement. "
+      "Two different teams' agents are usually less alike than one team's two picks, so for them "
+      "kappa should sit between this value and 1 (an assumption, not a measurement).")
+
+# CELL 20 code
+def diff_pmf(n, a, b):
+    """Exact pmf of (#tasks only A passes) - (#tasks only B passes) over n tasks."""
+    lf = np.array([math.lgamma(i + 1) for i in range(n + 1)])
+    la = math.log(a) if a > 0 else -np.inf
+    lb = math.log(b) if b > 0 else -np.inf
+    lc = math.log(1 - a - b) if a + b < 1 else -np.inf
+    out = np.zeros(2 * n + 1)
+    for i in range(n + 1):
+        for j in range(n + 1 - i):
+            k = n - i - j
+            t = lf[n] - lf[i] - lf[j] - lf[k] + (i * la if i else 0.0) + (j * lb if j else 0.0) \
+                + (k * lc if k else 0.0)
+            if np.isfinite(t):
+                out[i - j + n] += math.exp(t)
+    return out
+
+
+def pair_rates(p_hi, p_lo, kappa):
+    """Per-task rates of 'only the better passes' (a) and 'only the worse passes' (b)."""
+    indep = p_hi * (1 - p_lo) + p_lo * (1 - p_hi)
+    disc = max(kappa * indep, p_hi - p_lo)            # cannot disagree on fewer tasks than the gap
+    return (disc + (p_hi - p_lo)) / 2, (disc - (p_hi - p_lo)) / 2, disc
+
+
+def order_survival(p_hi, p_lo, kappa, n_pub=None, n_priv=None):
+    n_pub, n_priv = n_pub or N_PUBLIC, n_priv or N_PRIVATE
+    a, b, disc = pair_rates(p_hi, p_lo, kappa)
+    fp, fv = diff_pmf(n_pub, a, b), diff_pmf(n_priv, a, b)
+    xp, xv = np.arange(-n_pub, n_pub + 1), np.arange(-n_priv, n_priv + 1)
+    up, dn, tie_p = fp[xp > 0].sum(), fp[xp < 0].sum(), fp[xp == 0].sum()
+    uv, dv, tie_v = fv[xv > 0].sum(), fv[xv < 0].sum(), fv[xv == 0].sum()
+    strict = up + dn
+    return {"discordant tasks per split": round(disc * n_priv, 2),
+            "public shows the better one ahead": round(up, 3), "public tie": round(tie_p, 3),
+            "private keeps the public order": round((up * uv + dn * dv) / strict, 3),
+            "private tie": round(tie_v, 3),
+            "private reverses it": round((up * dv + dn * uv) / strict, 3)}
+
+
+p0 = BRONZE_K / N_PUBLIC
+rows = []
+for tag, label, kap in (("ind", "independent outcomes (kappa 1)", 1.0),
+                        ("aimo", f"AIMO-calibrated (kappa {KAPPA:.2f})", KAPPA)):
+    for gap in (1, 2, 3):
+        r = order_survival(p0 + gap / N_PUBLIC, p0, kap)
+        rows.append({"outcome model": label, "true gap (tasks)": gap, **r})
+        rec(f"keep_{tag}_{gap}", f"{r['private keeps the public order']:.3f}")
+        rec(f"rev_{tag}_{gap}", f"{r['private reverses it']:.3f}")
+        rec(f"tie_{tag}_{gap}", f"{r['private tie']:.3f}")
+        rec(f"right_{tag}_{gap}", f"{r['public shows the better one ahead']:.3f}")
+        rec(f"disc_{tag}_{gap}", f"{r['discordant tasks per split']:.2f}")
+surv = pd.DataFrame(rows)
+print(f"two submissions near the bronze cut ({BRONZE_K} and {BRONZE_K}+gap of {N_PUBLIC} tasks), "
+      f"{N_PUBLIC} public / {N_PRIVATE} private tasks:")
+with pd.option_context("display.width", 250, "display.max_columns", 20):
+    print(surv.to_string(index=False))
+surv.to_csv(WORK / "gemma4_order_survival.csv", index=False)
+
+# CELL 21 markdown
+**Read-out.** A one-task true lead, near the cut, is more likely to be tied or reversed on
+private than kept: kept 0.473 (unrelated outcomes) or 0.486 (AIMO kappa),
+reversed 0.414 or 0.346. Three tasks is still not safe: 0.651
+or 0.813.
+
+# CELL 22 markdown
+## 5. If the board froze today, who keeps a medal?
+
+This is a model of the private board, not a measurement of it. Each team's true pass rate is
+estimated from its public count with an empirical-Bayes prior fitted to the whole board (a grid
+prior, fitted by EM), then a private count is drawn for every team on the private split, and teams
+are re-ranked with private ties broken by public rank (which flatters persistence). It runs with
+independent outcomes (kappa 1), and with the teams' noise shrunk to the AIMO kappa, as if every
+pair of teams were as alike as one team's two picks; the truth for different teams should sit
+between the two. When section 3 finds a copy block, a third run treats that whole block as one
+agent that lands on one private score. The legacy NumPy generator is used so the draws are
+identical on every NumPy version.
+
+# CELL 23 code
+def thinned_lik(n, kappa, grid):
+    """P(count k | p) when outcomes carry a share kappa of the binomial variance:
+    count = round(Binomial(m, p) * n / m) with m = round(n / kappa). kappa = 1 is the binomial."""
+    m = max(n, int(round(n / kappa)))
+    j = np.arange(m + 1)
+    kk = np.floor(j * n / m + 0.5).astype(int)
+    pj = binom.pmf(j[:, None], m, grid[None, :])
+    L = np.zeros((n + 1, len(grid)))
+    np.add.at(L, kk, pj)
+    return L, m
+
+
+def fit_prior(counts, L, iters=3000):
+    """Nonparametric maximum-likelihood prior on the grid (EM)."""
+    hist = np.bincount(counts, minlength=L.shape[0]).astype(float)
+    w = np.full(L.shape[1], 1.0 / L.shape[1])
+    for _ in range(iters):
+        post = L * w[None, :]
+        post /= np.maximum(post.sum(1, keepdims=True), 1e-300)
+        w = (hist[:, None] * post).sum(0) / hist.sum()
+    return w
+
+
+def simulate_board(kappa, n_boards=N_BOARDS, seed=SEED, shared_block=None):
+    """shared_block = a public task count whose teams are treated as one agent: one private draw
+    per simulated board, copied to every team in the block (they stay tied, ordered by time)."""
+    grid = np.linspace(0, 0.6, 241)
+    Lpub, _ = thinned_lik(N_PUBLIC, kappa, grid)
+    w = fit_prior(board["tasks"].values, Lpub)
+    post = Lpub[board["tasks"].values] * w[None, :]
+    post /= post.sum(1, keepdims=True)
+    cdf = np.cumsum(post, 1)
+    m = max(N_PRIVATE, int(round(N_PRIVATE / kappa)))
+    rs = np.random.RandomState(seed)
+    pub_rank = board["Rank"].values
+    in_band = np.zeros(N_TEAMS)
+    top1 = 0
+    cut_tasks = np.zeros(n_boards, dtype=int)
+    for s in range(n_boards):
+        u = rs.random_sample(N_TEAMS)
+        gi = (cdf < u[:, None]).sum(1).clip(0, len(grid) - 1)
+        draws = rs.binomial(m, grid[gi])
+        priv = np.floor(draws * N_PRIVATE / m + 0.5).astype(int)
+        if shared_block is not None:
+            blk_idx = np.flatnonzero(board["tasks"].values == shared_block)
+            priv[blk_idx] = priv[blk_idx[0]]
+        order = np.lexsort((pub_rank, -priv))
+        rank = np.empty(N_TEAMS, dtype=int)
+        rank[order] = np.arange(1, N_TEAMS + 1)
+        in_band += rank <= BRONZE
+        top1 += rank[0] == 1
+        cut_tasks[s] = priv[order[BRONZE - 1]]
+    keep = in_band / n_boards
+    return {"kappa": kappa, "keep": keep, "top1": top1 / n_boards, "cut": cut_tasks, "prior": (grid, w)}
+
+
+sims = {tag: simulate_board(k) for tag, k in (("ind", 1.0), ("aimo", KAPPA))}
+if COPY_BLOCK is not None:
+    sims["copy"] = simulate_board(1.0, shared_block=COPY_BLOCK)
+top10 = board["Rank"].values <= 10
+band_now = board["Rank"].values <= BRONZE
+rows = []
+for tag, sres in sims.items():
+    keep = sres["keep"]
+    label = {"ind": "independent (kappa 1)", "aimo": f"AIMO kappa {KAPPA:.2f}",
+             "copy": f"kappa 1, the {COPY_BLOCK}-task block as one agent"}[tag]
+    rows.append({"outcome model": label,
+                 "P(public top-10 team ends outside top %d)" % BRONZE: round(1 - keep[top10].mean(), 3),
+                 "public top %d still inside (expected)" % BRONZE: round(keep[band_now].sum(), 1),
+                 "P(public #1 stays #1)": round(sres["top1"], 3),
+                 "private bronze cut, tasks (median)": int(np.median(sres["cut"]))})
+    rec(f"out10_{tag}", f"{1 - keep[top10].mean():.3f}")
+    rec(f"stay_{tag}", f"{keep[band_now].sum():.1f}")
+    rec(f"top1_{tag}", f"{sres['top1']:.3f}")
+    rec(f"cut_{tag}", int(np.median(sres["cut"])))
+sim_tab = pd.DataFrame(rows)
+print(f"{N_BOARDS} simulated private boards per model, {N_TEAMS} teams, bronze band = top {BRONZE}:")
+with pd.option_context("display.width", 250, "display.max_columns", 20):
+    print(sim_tab.to_string(index=False))
+
+by_block = pd.DataFrame({"tasks": board["tasks"], **{t: sres["keep"] for t, sres in sims.items()}})
+bb = by_block.groupby("tasks").agg(teams=("ind", "size"), **{f"p_band_{t}": (t, "mean") for t in sims})
+bb = bb[bb.index >= max(1, BRONZE_K - 3)].sort_index(ascending=False).round(3)
+print("\nP(inside the private bronze band) by public task count:")
+print(bb.to_string())
+
+# CELL 24 markdown
+**Read-out.** If the board froze today, a public top-10 team would land outside the top
+100 with probability 0.638 (AIMO kappa) to 0.831 (unrelated
+outcomes), and 34.5 to 16.4 of today's top 100 would keep a
+medal. These are model numbers, and section 7 lists what they assume; the board facts in sections
+2 and 3 are not.
+
+# CELL 25 markdown
+## 6. Which two submissions to select, priced in tasks
+
+You get two final selections and the better private score of the two counts. So the question for
+the second slot is not "is it better than my first?" but "how much private score does adding it
+buy?", which is E[max(A, B)] - E[A]. That gain depends on two things only: how far below your best
+it sits on public, in tasks, and how many tasks the two agents disagree on. The table uses a flat
+prior on the true gap (the public gap taken at face value), so predictive private gaps have
+standard deviation sqrt(2 x discordant tasks). Thresholds are in those standard deviations, so they
+hold at any score level.
+
+# CELL 26 code
+def second_pick_gain(gap, disc):
+    """Expected private tasks gained by adding a pick `gap` tasks below the best on public, when the
+    two disagree on `disc` tasks per split: E[max(0, B - A)] with B - A ~ N(-gap, 2 * disc)."""
+    s = math.sqrt(2 * disc)
+    t = gap / s
+    return s * norm.pdf(t) - gap * norm.cdf(-t), s
+
+
+p_ind = BRONZE_K / N_PUBLIC
+disc_ind = 2 * p_ind * (1 - p_ind) * N_PRIVATE
+disc_levels = {"near-copy (2 tasks)": 2.0,
+               f"AIMO kappa ({KAPPA * disc_ind:.1f} tasks)": KAPPA * disc_ind,
+               f"independent ({disc_ind:.1f} tasks)": disc_ind}
+rows = []
+for gap in range(0, 5):
+    row = {"public gap (tasks)": gap}
+    for lab, dsc in disc_levels.items():
+        g, s = second_pick_gain(gap, dsc)
+        row[lab] = f"{g:.2f} ({gap / s:.1f} SD)"
+    rows.append(row)
+gain_tab = pd.DataFrame(rows)
+print(f"expected private tasks added by the second pick (and the public gap in predictive SDs), "
+      f"base rate {BRONZE_K}/{N_PUBLIC}:")
+print(gain_tab.to_string(index=False))
+gain_tab.to_csv(WORK / "gemma4_second_pick_gain.csv", index=False)
+
+# the SD threshold at which a second pick stops paying 0.05 tasks, for each disagreement level
+for lab, dsc in disc_levels.items():
+    s = math.sqrt(2 * dsc)
+    lo, hi = 0.0, 10.0
+    for _ in range(60):
+        x = (lo + hi) / 2
+        lo, hi = (x, hi) if second_pick_gain(x * s, dsc)[0] > 0.05 else (lo, x)
+    print(f"{lab:<28} a second pick is worth under 0.05 tasks once it trails by {lo:.2f} SD = {lo * s:.1f} tasks")
+    if lab.startswith("AIMO"):
+        rec("inert_sd", f"{lo:.2f}")
+        rec("inert_tasks", f"{lo * s:.1f}")
+        rec("aimo_disc", f"{dsc:.1f}")
+        rec("gain0_aimo", f"{second_pick_gain(0, dsc)[0]:.2f}")
+        rec("gain1_aimo", f"{second_pick_gain(1, dsc)[0]:.2f}")
+    if lab.startswith("near-copy"):
+        rec("gain0_copy", f"{second_pick_gain(0, dsc)[0]:.2f}")
+    if lab.startswith("independent"):
+        rec("gain1_ind", f"{second_pick_gain(1, dsc)[0]:.2f}")
+        rec("gain2_ind", f"{second_pick_gain(2, dsc)[0]:.2f}")
+rec("disc_ind", f"{disc_ind:.1f}")
+
+# CELL 27 code
+# Your own submissions: change MY_PUBLIC_SCORES / MY_DISCORDANT_DEV_TASKS in the setup cell.
+mine = pd.Series(MY_PUBLIC_SCORES, dtype=float).sort_values(ascending=False)
+mine_tasks = np.rint(mine * N_PUBLIC).astype(int)
+best = mine_tasks.index[0]
+print(f"your submissions in tasks (of {N_PUBLIC}): {mine_tasks.to_dict()}")
+for name in mine_tasks.index[1:]:
+    ka, kb = mine_tasks[best], mine_tasks[name]
+    if MY_DISCORDANT_DEV_TASKS is not None:
+        disc = MY_DISCORDANT_DEV_TASKS * N_PRIVATE / DEV_TASKS
+        src = f"your {MY_DISCORDANT_DEV_TASKS} discordant dev tasks, scaled to {N_PRIVATE}"
+    else:
+        pa_, pb_ = ka / N_PUBLIC, kb / N_PUBLIC
+        disc = KAPPA * (pa_ * (1 - pb_) + pb_ * (1 - pa_)) * N_PRIVATE
+        src = f"AIMO kappa {KAPPA:.2f}"
+    gap = ka - kb
+    g, s = second_pick_gain(gap, disc)
+    z = gap / s
+    verdict = ("statistically tied: select both" if z < 1 else
+               "lean to the leader; the second still pays" if z < 2 else
+               "the leader is real; as a second pick this one is close to inert")
+    print(f"  {best} vs {name}: public gap {gap} task{'' if gap == 1 else 's'} = {z:.2f} SD (discordance {disc:.1f} tasks, {src}); "
+          f"P({name} ahead on private) = {norm.cdf(-z):.2f}; adding it gains {g:.2f} tasks -> {verdict}")
+
+# CELL 28 markdown
+## 7. What this notebook does not know
+
+* **Private scores are modelled, never observed.** The binomial arithmetic assumes the hidden
+  tasks were split into public and private at random, task by task. If the split followed
+  repositories instead, public and private differ by more than this, and every "keeps the order"
+  probability above is an upper bound.
+* **The private split is assumed to be the same size as the public one** (58 tasks),
+  which is what 50% of about 120 implies.
+* **The board shows each team's best public submission.** A team that submitted the same agent
+  many times shows its luckiest run on the public tasks, and that luck does not carry over to
+  private. The simulation treats each board score as one draw, so it understates the fall for
+  heavy submitters.
+* **Kappa comes from math problems, not repositories.** It anchors the scale of "how alike are
+  two picks"; it is not a measurement of Gemma agents. Your own count of disagreeing development
+  tasks (`MY_DISCORDANT_DEV_TASKS`) replaces it. If different teams' agents were more alike than one
+  AIMO team's two picks, the public order would persist better than section 5 says.
+* **Ties:** the board orders tied teams by submission time, and the simulation breaks private
+  ties by public rank, which flatters the current order.
+* **One snapshot, day 6 of 70.** Point `BOARD_CSV` at a fresh
+  download to redo every number.
+
+# CELL 29 code
+HL["runtime_s"] = f"{time.time() - T0:.0f}"
+blocks.to_csv(WORK / "gemma4_board_blocks.csv")
+(WORK / "headline.json").write_text(json.dumps(HL, indent=1))
+print("numbers quoted in the prose:")
+for k, v in HL.items():
+    print(f"  {k:<18} {v}")

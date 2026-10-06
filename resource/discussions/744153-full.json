@@ -1,0 +1,102 @@
+{
+  "forumTopic": {
+    "authorId": 8213790,
+    "authorThumbnailName": "default-thumb.png",
+    "authorUserDisplayName": "Artem_JDS",
+    "authorUserName": "artemjds",
+    "comments": [
+      {
+        "id": 3530894,
+        "postDate": "2026-10-01T00:53:01.223Z",
+        "rawMarkdown": "very first submission. and just ran into the same problem.",
+        "content": "<p>very first submission. and just ran into the same problem.</p>",
+        "parent": {},
+        "author": {
+          "displayName": "Yuanqing",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/yuanqing98",
+          "tier": "CONTRIBUTOR",
+          "id": 27197335,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 1269,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Yuanqing",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+            "url": "/yuanqing98",
+            "userName": "yuanqing98",
+            "tier": "CONTRIBUTOR",
+            "id": 27197335,
+            "profileUrl": "/yuanqing98",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 27197335,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3529721,
+      "postDate": "2026-09-28T20:05:58.907Z",
+      "rawMarkdown": "I keep getting this error when I try to submit a zip. Is it somehow related to [this issue]( https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743683)?\n\n![](https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F8213790%2Fdc0aeea3d8b2d4b8a9e15f78f470ea6d%2FScreenshot%202026-09-28%20at%2023.02.55.png?generation=1790625951140196&alt=media)\n\n",
+      "content": "<p>I keep getting this error when I try to submit a zip. Is it somehow related to <a href=\"https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743683\" target=\"_blank\">this issue</a>?</p>\n<p><img src=\"https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F8213790%2Fdc0aeea3d8b2d4b8a9e15f78f470ea6d%2FScreenshot%202026-09-28%20at%2023.02.55.png?generation=1790625951140196&amp;alt=media\" alt=\"\"></p>",
+      "parent": {},
+      "author": {
+        "displayName": "Artem_JDS",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+        "url": "/artemjds",
+        "tier": "CONTRIBUTOR",
+        "id": 8213790,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 3,
+        "canUpvote": true,
+        "totalUpvotes": 3
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 250,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Artem Volkov",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/artemiofranchime",
+          "userName": "artemiofranchime",
+          "tier": "CONTRIBUTOR",
+          "id": 16061642,
+          "profileUrl": "/artemiofranchime",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 16061642,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3529721,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 744153,
+    "name": "Get an error trying to submit a zip",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-28T20:05:58.908000300Z",
+    "totalVotes": 3,
+    "url": "/competitions/gemma-4-developer-agent/discussion/744153",
+    "totalMessages": 1,
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

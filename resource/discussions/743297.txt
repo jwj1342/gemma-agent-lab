@@ -1,0 +1,33 @@
+# Prize payout eligibility for participants residing in Russia
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743297
+
+## 3528170 /mrvsevolod TOPIC
+Hello,
+
+Could the Competition Host please clarify the rules for receiving monetary prizes for participants residing in the Russian Federation?
+
+Suppose a participant:
+
+- is a legal resident of the Russian Federation;
+- is not located in Crimea, DNR, LNR, or another excluded territory;
+- is not subject to U.S. sanctions or U.S. export controls;
+- otherwise fully complies with the competition rules.
+
+Would such a participant be able to actually receive the monetary prize if they win?
+
+In particular:
+
+1. Can monetary prizes currently be paid to residents of Russia?
+2. Which payment provider or payout method is used?
+3. If the standard payment provider cannot serve residents of Russia, is an alternative payout method available?
+
+I am asking specifically about the ability to actually receive the monetary prize, not only about eligibility to enter or participate in the competition.
+
+Thank you.
+
+## 3529645 /mrvsevolod TOPIC
+Hi, just following up on this question.
+
+A clarification from the Competition Host would be greatly appreciated, as the answer affects whether participants residing in Russia can reasonably commit time and compute to the competition.
+
+Thank you.

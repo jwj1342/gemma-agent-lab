@@ -1,0 +1,31 @@
+# The first task in the list (fastapi_15661) seems unsolvable from the prompt alone: hidden tests import names that appear nowhere in the task
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/745855
+
+## 3532843 /ayoubdiri TOPIC
+Hi all,
+
+I'd like to check whether others are seeing the same thing, or whether I'm missing something.
+
+The task: fastapi_15661, the first task in the list, so it's the first one every agent tries. The whole problem statement is the title "👷 Automate release preparation", followed by the empty PR template. The only extra hint is a link in the AI disclaimer to a PR in a different repo, which can't be opened because the sandbox is offline.
+
+What the hidden tests require: The test_patch imports a specific module path, a specific set of function and class names, specific CLI subcommands and options, specific environment variable names, and exact error message strings. I'm not going to list them here, but none of them appear in the task text or anywhere in the repo.
+
+What my agent did: It explored the repo, found an existing related script, and wrote a reasonable new script that worked when run. The result:
+
+resolved=False, exit_code=2, patch_chars=3246, tool_calls=27
+
+My understanding is that exit code 2 is pytest stopping at collection, because the module the tests import doesn't exist under that name. I haven't confirmed this inside the harness, so please correct me if that's wrong.
+
+Why this bothers me: Nothing in the prompt or the repo tells the agent what the file, the classes, or the env var prefix must be called. I don't think any prompt or model can get this right except by luck. A correct, working solution with different names scores the same as an empty patch.
+
+Questions:
+
+Have you seen other tasks where the names the tests need appear nowhere in the task text?
+
+Is the benchmark meant to reward guessing names, or is this a gap in the task?
+
+Has anyone found a good way to handle these cases?
+
+Side note: the 5-minute limit was also tight. About 295 s went to 27 tool calls, mostly model generation time.
+
+Thanks!

@@ -1,0 +1,6110 @@
+# CELL 0 markdown
+
+
+# CELL 1 code
+# ============================================================
+# CELL 1 — Gemma 4 SWE Agent Project
+# NO MODEL DOWNLOAD
+# ============================================================
+
+import os
+import json
+import shutil
+
+ROOT = "/kaggle/working/gemma4_swe_agent"
+
+# Clean previous attempt
+if os.path.exists(ROOT):
+    shutil.rmtree(ROOT)
+
+# Create ALL directories first
+directories = [
+    ROOT,
+    f"{ROOT}/prompts",
+    f"{ROOT}/skills",
+    f"{ROOT}/skills/repository-planning",
+    f"{ROOT}/skills/patch-validation",
+    f"{ROOT}/data",
+]
+
+for directory in directories:
+    os.makedirs(directory, exist_ok=True)
+
+
+# ------------------------------------------------------------
+# SYSTEM PROMPT
+# ------------------------------------------------------------
+
+system_prompt = """You are Gemma 4 SWE-Agent.
+
+Your objective is to solve repository-level software engineering
+issues and produce the smallest correct patch.
+
+WORKFLOW:
+
+1. Understand the issue.
+2. Inspect the repository.
+3. Search for relevant code.
+4. Read surrounding implementation.
+5. Form a concrete hypothesis.
+6. Make the smallest necessary change.
+7. Run relevant tests.
+8. Analyze failures.
+9. Iterate when necessary.
+10. Submit the final patch only after validation.
+
+RULES:
+
+- Use repository evidence instead of guessing.
+- Prefer minimal patches.
+- Do not modify unrelated files.
+- Preserve existing APIs unless required.
+- Inspect callers before changing interfaces.
+- Run tests after modifications.
+- Never claim success without validation.
+
+FAILURE RECOVERY:
+
+When a test fails:
+1. Read the traceback.
+2. Locate the responsible code.
+3. Update the hypothesis.
+4. Make the smallest correction.
+5. Run the test again.
+
+STOP CONDITION:
+
+Submit only when the requested behavior is implemented
+and relevant tests pass.
+"""
+
+with open(
+    f"{ROOT}/prompts/system.md",
+    "w",
+    encoding="utf-8"
+) as f:
+    f.write(system_prompt)
+
+
+# ------------------------------------------------------------
+# PLANNING SKILL
+# ------------------------------------------------------------
+
+planning_skill = """---
+name: repository-planning
+description: Plan repository changes before editing code.
+---
+
+# Repository Planning
+
+Before editing:
+
+1. Identify the affected component.
+2. Search for definitions.
+3. Search for callers.
+4. Inspect neighboring implementation.
+5. Identify relevant tests.
+6. Form a minimal change plan.
+
+Do not edit until the plan is supported by repository evidence.
+"""
+
+with open(
+    f"{ROOT}/skills/repository-planning/SKILL.md",
+    "w",
+    encoding="utf-8"
+) as f:
+    f.write(planning_skill)
+
+
+# ------------------------------------------------------------
+# VALIDATION SKILL
+# ------------------------------------------------------------
+
+validation_skill = """---
+name: patch-validation
+description: Validate patches using repository tests.
+---
+
+# Patch Validation
+
+After editing:
+
+1. Run the smallest relevant test first.
+2. Inspect the complete failure.
+3. Determine whether the failure is caused by the patch.
+4. Fix the implementation if necessary.
+5. Rerun the test.
+6. Run broader tests before submission when practical.
+
+Never submit an unvalidated patch.
+"""
+
+with open(
+    f"{ROOT}/skills/patch-validation/SKILL.md",
+    "w",
+    encoding="utf-8"
+) as f:
+    f.write(validation_skill)
+
+
+# ------------------------------------------------------------
+# TRAINING TRAJECTORY FORMAT
+# ------------------------------------------------------------
+
+trajectory = {
+    "task": {
+        "repository": "example/repository",
+        "issue": "Repository issue requiring a software fix"
+    },
+
+    "trajectory": [
+        {
+            "step": 1,
+            "tool": "get_status",
+            "reason": "Understand repository state"
+        },
+        {
+            "step": 2,
+            "tool": "search_similar_code",
+            "reason": "Locate relevant implementation"
+        },
+        {
+            "step": 3,
+            "tool": "read_file",
+            "reason": "Understand surrounding code"
+        },
+        {
+            "step": 4,
+            "tool": "edit_file",
+            "reason": "Apply minimal correction"
+        },
+        {
+            "step": 5,
+            "tool": "run_command",
+            "reason": "Run relevant tests"
+        },
+        {
+            "step": 6,
+            "tool": "submit_patch",
+            "reason": "Submit validated solution"
+        }
+    ],
+
+    "reward": {
+        "tests_pass": 1.0,
+        "minimal_patch": 1.0,
+        "unnecessary_changes": 0.0,
+        "failed_attempts": 0
+    }
+}
+
+with open(
+    f"{ROOT}/data/trajectory_format.json",
+    "w",
+    encoding="utf-8"
+) as f:
+    json.dump(trajectory, f, indent=2)
+
+
+# ------------------------------------------------------------
+# AGENT YAML
+# ------------------------------------------------------------
+
+agent_yaml = """name: gemma4_swe_agent
+
+description: >
+  Autonomous software engineering agent for repository-level
+  issue resolution.
+
+model:
+  name: gemma-4-31b-it-qat-w4a16-ct
+
+adapter: main_lora
+
+instruction: !include prompts/system.md
+
+skills:
+  - repository-planning
+  - patch-validation
+
+tools:
+  - run_command
+  - submit_patch
+  - get_status
+  - read_file
+  - edit_file
+  - write_file
+  - get_code_neighbors
+  - search_similar_code
+  - get_code_subgraph
+"""
+
+with open(
+    f"{ROOT}/agent.yaml",
+    "w",
+    encoding="utf-8"
+) as f:
+    f.write(agent_yaml)
+
+
+# ------------------------------------------------------------
+# README
+# ------------------------------------------------------------
+
+readme = """# Gemma 4 SWE Agent
+
+Autonomous software engineering agent designed for
+repository-level issue resolution.
+
+## Architecture
+
+Issue
+↓
+Repository Understanding
+↓
+Code Search
+↓
+Planning
+↓
+Editing
+↓
+Testing
+↓
+Failure Analysis
+↓
+Iteration
+↓
+Patch Submission
+
+## Training
+
+The project is designed for:
+
+- Supervised Fine-Tuning
+- LoRA / PEFT
+- Tool-use trajectories
+- Repository-level reasoning
+- Test-based rewards
+- Reinforcement Learning
+
+## Deployment Model
+
+gemma-4-31b-it-qat-w4a16-ct
+
+The model is intentionally NOT downloaded during
+the architecture stage.
+
+## Evaluation
+
+The final system produces repository patches that
+are validated by tests.
+"""
+
+with open(
+    f"{ROOT}/README.md",
+    "w",
+    encoding="utf-8"
+) as f:
+    f.write(readme)
+
+
+print("=" * 60)
+print("✅ PROJECT CREATED")
+print("=" * 60)
+
+for root, dirs, files in os.walk(ROOT):
+    level = root.replace(ROOT, "").count(os.sep)
+    indent = "  " * level
+
+    if root != ROOT:
+        print(f"{indent}{os.path.basename(root)}/")
+
+    for file in files:
+        print(f"{indent}  {file}")
+
+print("\n🚫 Gemma was NOT downloaded.")
+print("🚫 No large model files were downloaded.")
+
+# CELL 2 code
+# ============================================================
+# CELL 2 — VALIDATE AND PACKAGE
+# NO MODEL DOWNLOAD
+# ============================================================
+
+import os
+import zipfile
+
+required_files = [
+    "agent.yaml",
+    "README.md",
+    "prompts/system.md",
+    "skills/repository-planning/SKILL.md",
+    "skills/patch-validation/SKILL.md",
+    "data/trajectory_format.json",
+]
+
+print("=" * 60)
+print("VALIDATING PROJECT")
+print("=" * 60)
+
+for relative_path in required_files:
+
+    path = os.path.join(ROOT, relative_path)
+
+    if not os.path.isfile(path):
+        raise FileNotFoundError(
+            f"Missing required file: {relative_path}"
+        )
+
+    print("✅", relative_path)
+
+
+# Validate configuration
+with open(
+    f"{ROOT}/agent.yaml",
+    "r",
+    encoding="utf-8"
+) as f:
+    config = f.read()
+
+checks = [
+    "gemma-4-31b-it-qat-w4a16-ct",
+    "adapter: main_lora",
+    "run_command",
+    "submit_patch",
+    "get_status",
+]
+
+for check in checks:
+    assert check in config, f"Missing configuration: {check}"
+
+print("\n✅ agent.yaml validated")
+
+
+# ------------------------------------------------------------
+# ZIP
+# ------------------------------------------------------------
+
+ZIP_PATH = "/kaggle/working/gemma4_swe_agent.zip"
+
+if os.path.exists(ZIP_PATH):
+    os.remove(ZIP_PATH)
+
+with zipfile.ZipFile(
+    ZIP_PATH,
+    "w",
+    compression=zipfile.ZIP_DEFLATED
+) as z:
+
+    for root, dirs, files in os.walk(ROOT):
+
+        for file in files:
+
+            path = os.path.join(root, file)
+
+            relative_path = os.path.relpath(
+                path,
+                ROOT
+            )
+
+            z.write(
+                path,
+                relative_path
+            )
+
+
+print("\n" + "=" * 60)
+print("✅ PROJECT READY")
+print("=" * 60)
+
+print("Project:")
+print(ROOT)
+
+print("\nSubmission:")
+print(ZIP_PATH)
+
+print("\nZIP contents:")
+
+with zipfile.ZipFile(ZIP_PATH, "r") as z:
+    for name in z.namelist():
+        print("  ", name)
+
+print(
+    "\nZIP size:",
+    round(os.path.getsize(ZIP_PATH) / 1024, 2),
+    "KB"
+)
+
+print("\n🚫 Gemma 4 was NOT downloaded.")
+print("🚫 No GPU required.")
+print("🚫 No large Wi-Fi download.")
+
+# CELL 3 code
+# ============================================================
+# CELL 3 — REAL SWE-BENCH TRAINING DATA
+# NO GEMMA DOWNLOAD
+# ============================================================
+
+!pip install -q -U datasets
+
+from datasets import load_dataset
+import json
+from pathlib import Path
+
+DATA_DIR = Path("/kaggle/working/gemma4_swe_agent/data")
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+print("=" * 60)
+print("LOADING SWE-BENCH LITE")
+print("=" * 60)
+
+# Smaller dataset for development.
+# We are NOT downloading Gemma.
+dataset = load_dataset(
+    "SWE-bench/SWE-bench_Lite",
+    split="test"
+)
+
+print("Instances:", len(dataset))
+print("Columns:", dataset.column_names)
+
+
+# ------------------------------------------------------------
+# Convert SWE-bench → agent training trajectories
+# ------------------------------------------------------------
+
+def build_training_example(row):
+
+    return {
+        "instance_id": row["instance_id"],
+
+        "repo": row["repo"],
+
+        "base_commit": row["base_commit"],
+
+        "problem_statement": row["problem_statement"],
+
+        "agent_trajectory": [
+
+            {
+                "step": 1,
+                "type": "understand_issue",
+                "input": row["problem_statement"]
+            },
+
+            {
+                "step": 2,
+                "type": "inspect_repository",
+                "tool": "get_status"
+            },
+
+            {
+                "step": 3,
+                "type": "search_code",
+                "tool": "search_similar_code"
+            },
+
+            {
+                "step": 4,
+                "type": "read_code",
+                "tool": "read_file"
+            },
+
+            {
+                "step": 5,
+                "type": "reason",
+                "instruction":
+                    "Identify the smallest code change "
+                    "that addresses the issue."
+            },
+
+            {
+                "step": 6,
+                "type": "edit",
+                "tool": "edit_file"
+            },
+
+            {
+                "step": 7,
+                "type": "validate",
+                "tool": "run_command",
+                "tests": row["FAIL_TO_PASS"]
+            },
+
+            {
+                "step": 8,
+                "type": "regression_check",
+                "tests": row["PASS_TO_PASS"]
+            },
+
+            {
+                "step": 9,
+                "type": "submit",
+                "tool": "submit_patch"
+            }
+        ],
+
+        # Gold patch is kept separately.
+        # It will be used for supervised training later.
+        "gold_patch": row["patch"],
+
+        "fail_to_pass": row["FAIL_TO_PASS"],
+
+        "pass_to_pass": row["PASS_TO_PASS"]
+    }
+
+
+# ------------------------------------------------------------
+# Build dataset
+# ------------------------------------------------------------
+
+examples = []
+
+for row in dataset:
+
+    example = build_training_example(row)
+
+    examples.append(example)
+
+
+# ------------------------------------------------------------
+# Save JSONL
+# ------------------------------------------------------------
+
+output_file = DATA_DIR / "swe_bench_lite_trajectories.jsonl"
+
+with open(
+    output_file,
+    "w",
+    encoding="utf-8"
+) as f:
+
+    for example in examples:
+
+        f.write(
+            json.dumps(
+                example,
+                ensure_ascii=False
+            ) + "\n"
+        )
+
+
+# ------------------------------------------------------------
+# Statistics
+# ------------------------------------------------------------
+
+print("\n" + "=" * 60)
+print("✅ REAL SWE DATASET CREATED")
+print("=" * 60)
+
+print("Examples:", len(examples))
+
+print(
+    "File:",
+    output_file
+)
+
+print(
+    "Size:",
+    round(output_file.stat().st_size / 1024 / 1024, 2),
+    "MB"
+)
+
+print("\nExample:")
+
+print(
+    json.dumps(
+        examples[0],
+        indent=2,
+        ensure_ascii=False
+    )[:4000]
+)
+
+print("\n🚫 Gemma 4 was NOT downloaded.")
+print("🚫 No 31B model.")
+print("🚫 No GPU required.")
+
+# CELL 4 code
+# ============================================================
+# CELL 4 — SWE-BENCH → SFT TRAINING DATA
+# NO GEMMA DOWNLOAD
+# ============================================================
+
+import json
+from pathlib import Path
+
+DATA_DIR = Path("/kaggle/working/gemma4_swe_agent/data")
+
+SOURCE = DATA_DIR / "swe_bench_lite_trajectories.jsonl"
+OUTPUT = DATA_DIR / "swe_bench_sft.jsonl"
+
+if not SOURCE.exists():
+    raise FileNotFoundError(
+        f"Missing dataset: {SOURCE}\n"
+        "Run Cell 3 first."
+    )
+
+
+# ------------------------------------------------------------
+# Convert each SWE instance into an SFT conversation
+# ------------------------------------------------------------
+
+def make_sft_record(row):
+
+    issue = row["problem_statement"]
+
+    fail_tests = row.get("fail_to_pass", [])
+    pass_tests = row.get("pass_to_pass", [])
+
+    gold_patch = row.get("gold_patch", "")
+
+    messages = [
+
+        {
+            "role": "system",
+
+            "content": (
+                "You are an autonomous software engineering agent. "
+                "Solve repository-level issues using repository evidence. "
+                "Inspect code before editing, make minimal changes, "
+                "run relevant tests, and only submit a validated patch."
+            )
+        },
+
+        {
+            "role": "user",
+
+            "content": (
+                "Repository:\n"
+                f"{row['repo']}\n\n"
+
+                "Base commit:\n"
+                f"{row['base_commit']}\n\n"
+
+                "Issue:\n"
+                f"{issue}"
+            )
+        },
+
+        {
+            "role": "assistant",
+
+            "content": (
+                "I will first inspect the repository state and "
+                "identify the files relevant to the issue."
+            )
+        },
+
+        {
+            "role": "tool",
+
+            "name": "get_status",
+
+            "content": (
+                "Inspect repository status and structure."
+            )
+        },
+
+        {
+            "role": "assistant",
+
+            "content": (
+                "Next I will search the repository for the "
+                "implementation related to the reported behavior."
+            )
+        },
+
+        {
+            "role": "tool",
+
+            "name": "search_similar_code",
+
+            "content": (
+                "Search for relevant functions, classes, "
+                "and related implementations."
+            )
+        },
+
+        {
+            "role": "assistant",
+
+            "content": (
+                "I will read the relevant implementation and "
+                "its surrounding code before making a change."
+            )
+        },
+
+        {
+            "role": "tool",
+
+            "name": "read_file",
+
+            "content": (
+                "Read the relevant source files and nearby code."
+            )
+        },
+
+        {
+            "role": "assistant",
+
+            "content": (
+                "Based on the issue and repository evidence, "
+                "I will make the smallest change necessary "
+                "to address the reported behavior."
+            )
+        },
+
+        {
+            "role": "tool",
+
+            "name": "edit_file",
+
+            "content": (
+                "Apply the minimal source-code modification."
+            )
+        },
+
+        {
+            "role": "assistant",
+
+            "content": (
+                "The patch is now implemented. "
+                "I will run the tests associated with the issue."
+            )
+        },
+
+        {
+            "role": "tool",
+
+            "name": "run_command",
+
+            "content": json.dumps({
+                "fail_to_pass": fail_tests,
+                "pass_to_pass": pass_tests
+            })
+        },
+
+        {
+            "role": "assistant",
+
+            "content": (
+                "The relevant tests should pass after the "
+                "correction. I will verify the regression "
+                "tests before submitting."
+            )
+        },
+
+        {
+            "role": "tool",
+
+            "name": "run_command",
+
+            "content": json.dumps({
+                "regression_tests": pass_tests
+            })
+        },
+
+        {
+            "role": "assistant",
+
+            "content": (
+                "The patch has been validated. "
+                "I will submit the minimal repository patch."
+            )
+        },
+
+        {
+            "role": "tool",
+
+            "name": "submit_patch",
+
+            "content": "Submit the validated patch."
+        }
+    ]
+
+
+    return {
+        "instance_id": row["instance_id"],
+
+        "repo": row["repo"],
+
+        "base_commit": row["base_commit"],
+
+        "messages": messages,
+
+        # Gold solution kept as supervision metadata.
+        "gold_patch": gold_patch,
+
+        "validation": {
+            "fail_to_pass": fail_tests,
+            "pass_to_pass": pass_tests
+        }
+    }
+
+
+# ------------------------------------------------------------
+# Read source dataset
+# ------------------------------------------------------------
+
+records = []
+
+with open(
+    SOURCE,
+    "r",
+    encoding="utf-8"
+) as f:
+
+    for line in f:
+
+        if line.strip():
+
+            row = json.loads(line)
+
+            records.append(
+                make_sft_record(row)
+            )
+
+
+# ------------------------------------------------------------
+# Save SFT dataset
+# ------------------------------------------------------------
+
+with open(
+    OUTPUT,
+    "w",
+    encoding="utf-8"
+) as f:
+
+    for record in records:
+
+        f.write(
+            json.dumps(
+                record,
+                ensure_ascii=False
+            ) + "\n"
+        )
+
+
+# ------------------------------------------------------------
+# Validation
+# ------------------------------------------------------------
+
+assert len(records) > 0
+
+for record in records:
+
+    assert "instance_id" in record
+    assert "messages" in record
+    assert len(record["messages"]) >= 10
+    assert record["gold_patch"] is not None
+
+
+print("=" * 60)
+print("✅ SFT DATASET CREATED")
+print("=" * 60)
+
+print("Records:", len(records))
+
+print(
+    "Output:",
+    OUTPUT
+)
+
+print(
+    "Size:",
+    round(
+        OUTPUT.stat().st_size / 1024 / 1024,
+        2
+    ),
+    "MB"
+)
+
+
+# ------------------------------------------------------------
+# Show first conversation
+# ------------------------------------------------------------
+
+print("\nFIRST TRAINING RECORD")
+print("-" * 60)
+
+first = records[0]
+
+for message in first["messages"][:8]:
+
+    role = message["role"]
+
+    if role == "tool":
+
+        print(
+            f"\n[{role.upper()}:{message.get('name')}]"
+        )
+
+    else:
+
+        print(
+            f"\n[{role.upper()}]"
+        )
+
+    print(
+        str(message["content"])[:500]
+    )
+
+
+print("\n" + "=" * 60)
+print("NO GEMMA DOWNLOAD")
+print("NO GPU REQUIRED")
+print("=" * 60)
+
+# CELL 5 code
+# ============================================================
+# CELL 4 — SWE-BENCH → SFT TRAINING DATA
+# NO GEMMA DOWNLOAD
+# ============================================================
+
+import json
+from pathlib import Path
+
+DATA_DIR = Path("/kaggle/working/gemma4_swe_agent/data")
+
+SOURCE = DATA_DIR / "swe_bench_lite_trajectories.jsonl"
+OUTPUT = DATA_DIR / "swe_bench_sft.jsonl"
+
+if not SOURCE.exists():
+    raise FileNotFoundError(
+        f"Missing dataset: {SOURCE}\n"
+        "Run Cell 3 first."
+    )
+
+
+# ------------------------------------------------------------
+# Convert each SWE instance into an SFT conversation
+# ------------------------------------------------------------
+
+def make_sft_record(row):
+
+    issue = row["problem_statement"]
+
+    fail_tests = row.get("fail_to_pass", [])
+    pass_tests = row.get("pass_to_pass", [])
+
+    gold_patch = row.get("gold_patch", "")
+
+    messages = [
+
+        {
+            "role": "system",
+
+            "content": (
+                "You are an autonomous software engineering agent. "
+                "Solve repository-level issues using repository evidence. "
+                "Inspect code before editing, make minimal changes, "
+                "run relevant tests, and only submit a validated patch."
+            )
+        },
+
+        {
+            "role": "user",
+
+            "content": (
+                "Repository:\n"
+                f"{row['repo']}\n\n"
+
+                "Base commit:\n"
+                f"{row['base_commit']}\n\n"
+
+                "Issue:\n"
+                f"{issue}"
+            )
+        },
+
+        {
+            "role": "assistant",
+
+            "content": (
+                "I will first inspect the repository state and "
+                "identify the files relevant to the issue."
+            )
+        },
+
+        {
+            "role": "tool",
+
+            "name": "get_status",
+
+            "content": (
+                "Inspect repository status and structure."
+            )
+        },
+
+        {
+            "role": "assistant",
+
+            "content": (
+                "Next I will search the repository for the "
+                "implementation related to the reported behavior."
+            )
+        },
+
+        {
+            "role": "tool",
+
+            "name": "search_similar_code",
+
+            "content": (
+                "Search for relevant functions, classes, "
+                "and related implementations."
+            )
+        },
+
+        {
+            "role": "assistant",
+
+            "content": (
+                "I will read the relevant implementation and "
+                "its surrounding code before making a change."
+            )
+        },
+
+        {
+            "role": "tool",
+
+            "name": "read_file",
+
+            "content": (
+                "Read the relevant source files and nearby code."
+            )
+        },
+
+        {
+            "role": "assistant",
+
+            "content": (
+                "Based on the issue and repository evidence, "
+                "I will make the smallest change necessary "
+                "to address the reported behavior."
+            )
+        },
+
+        {
+            "role": "tool",
+
+            "name": "edit_file",
+
+            "content": (
+                "Apply the minimal source-code modification."
+            )
+        },
+
+        {
+            "role": "assistant",
+
+            "content": (
+                "The patch is now implemented. "
+                "I will run the tests associated with the issue."
+            )
+        },
+
+        {
+            "role": "tool",
+
+            "name": "run_command",
+
+            "content": json.dumps({
+                "fail_to_pass": fail_tests,
+                "pass_to_pass": pass_tests
+            })
+        },
+
+        {
+            "role": "assistant",
+
+            "content": (
+                "The relevant tests should pass after the "
+                "correction. I will verify the regression "
+                "tests before submitting."
+            )
+        },
+
+        {
+            "role": "tool",
+
+            "name": "run_command",
+
+            "content": json.dumps({
+                "regression_tests": pass_tests
+            })
+        },
+
+        {
+            "role": "assistant",
+
+            "content": (
+                "The patch has been validated. "
+                "I will submit the minimal repository patch."
+            )
+        },
+
+        {
+            "role": "tool",
+
+            "name": "submit_patch",
+
+            "content": "Submit the validated patch."
+        }
+    ]
+
+
+    return {
+        "instance_id": row["instance_id"],
+
+        "repo": row["repo"],
+
+        "base_commit": row["base_commit"],
+
+        "messages": messages,
+
+        # Gold solution kept as supervision metadata.
+        "gold_patch": gold_patch,
+
+        "validation": {
+            "fail_to_pass": fail_tests,
+            "pass_to_pass": pass_tests
+        }
+    }
+
+
+# ------------------------------------------------------------
+# Read source dataset
+# ------------------------------------------------------------
+
+records = []
+
+with open(
+    SOURCE,
+    "r",
+    encoding="utf-8"
+) as f:
+
+    for line in f:
+
+        if line.strip():
+
+            row = json.loads(line)
+
+            records.append(
+                make_sft_record(row)
+            )
+
+
+# ------------------------------------------------------------
+# Save SFT dataset
+# ------------------------------------------------------------
+
+with open(
+    OUTPUT,
+    "w",
+    encoding="utf-8"
+) as f:
+
+    for record in records:
+
+        f.write(
+            json.dumps(
+                record,
+                ensure_ascii=False
+            ) + "\n"
+        )
+
+
+# ------------------------------------------------------------
+# Validation
+# ------------------------------------------------------------
+
+assert len(records) > 0
+
+for record in records:
+
+    assert "instance_id" in record
+    assert "messages" in record
+    assert len(record["messages"]) >= 10
+    assert record["gold_patch"] is not None
+
+
+print("=" * 60)
+print("✅ SFT DATASET CREATED")
+print("=" * 60)
+
+print("Records:", len(records))
+
+print(
+    "Output:",
+    OUTPUT
+)
+
+print(
+    "Size:",
+    round(
+        OUTPUT.stat().st_size / 1024 / 1024,
+        2
+    ),
+    "MB"
+)
+
+
+# ------------------------------------------------------------
+# Show first conversation
+# ------------------------------------------------------------
+
+print("\nFIRST TRAINING RECORD")
+print("-" * 60)
+
+first = records[0]
+
+for message in first["messages"][:8]:
+
+    role = message["role"]
+
+    if role == "tool":
+
+        print(
+            f"\n[{role.upper()}:{message.get('name')}]"
+        )
+
+    else:
+
+        print(
+            f"\n[{role.upper()}]"
+        )
+
+    print(
+        str(message["content"])[:500]
+    )
+
+
+print("\n" + "=" * 60)
+print("NO GEMMA DOWNLOAD")
+print("NO GPU REQUIRED")
+print("=" * 60)
+
+# CELL 6 code
+# ============================================================
+# CELL 5A — Diagnose SFT Dataset
+# No downloads
+# ============================================================
+
+import json
+from pathlib import Path
+
+ROOT = Path("/kaggle/working/gemma4_swe_agent")
+DATA_DIR = ROOT / "data"
+
+FILES = [
+    DATA_DIR / "swe_bench_lite_trajectories.jsonl",
+    DATA_DIR / "swe_bench_sft.jsonl",
+]
+
+print("=" * 70)
+print("DATASET DIAGNOSTICS")
+print("=" * 70)
+
+for path in FILES:
+
+    print(f"\nFILE: {path}")
+    print("-" * 70)
+
+    if not path.exists():
+        print("❌ FILE DOES NOT EXIST")
+        continue
+
+    size = path.stat().st_size
+
+    print(f"Size: {size:,} bytes")
+
+    with path.open("r", encoding="utf-8") as f:
+        lines = f.readlines()
+
+    print(f"Lines: {len(lines)}")
+
+    valid_json = 0
+    invalid_json = 0
+
+    first_record = None
+
+    for line in lines:
+
+        line = line.strip()
+
+        if not line:
+            continue
+
+        try:
+            record = json.loads(line)
+
+            valid_json += 1
+
+            if first_record is None:
+                first_record = record
+
+        except Exception:
+            invalid_json += 1
+
+    print(f"Valid JSON records: {valid_json}")
+    print(f"Invalid JSON lines: {invalid_json}")
+
+    if first_record is not None:
+
+        print("\nFirst record keys:")
+        print(list(first_record.keys()))
+
+        print("\nFirst record preview:")
+
+        for key, value in first_record.items():
+
+            if key == "messages":
+                print(
+                    f"  messages: "
+                    f"{type(value).__name__}, "
+                    f"length={len(value) if isinstance(value, list) else 'N/A'}"
+                )
+            else:
+                text = str(value)
+
+                if len(text) > 300:
+                    text = text[:300] + "..."
+
+                print(f"  {key}: {text}")
+
+print("\n" + "=" * 70)
+print("END DIAGNOSTICS")
+print("=" * 70)
+
+# CELL 7 code
+# ============================================================
+# CELL 5 — FINAL DATASET QC + SPLIT
+# ============================================================
+
+import json
+import random
+from pathlib import Path
+from collections import Counter
+
+ROOT = Path("/kaggle/working/gemma4_swe_agent")
+DATA_DIR = ROOT / "data"
+
+INPUT = DATA_DIR / "swe_bench_sft.jsonl"
+
+TRAIN_OUT = DATA_DIR / "sft_train.jsonl"
+VALID_OUT = DATA_DIR / "sft_valid.jsonl"
+STATS_OUT = DATA_DIR / "dataset_stats.json"
+
+SEED = 42
+VALID_RATIO = 0.20
+
+
+# ============================================================
+# LOAD
+# ============================================================
+
+assert INPUT.exists(), f"Missing file: {INPUT}"
+
+records = []
+
+with INPUT.open("r", encoding="utf-8") as f:
+
+    for line in f:
+
+        line = line.strip()
+
+        if line:
+            records.append(json.loads(line))
+
+
+print("=" * 70)
+print("DATASET LOADED")
+print("=" * 70)
+
+print(f"Records: {len(records)}")
+
+
+# ============================================================
+# QUALITY CONTROL
+# ============================================================
+
+required_fields = [
+    "instance_id",
+    "repo",
+    "base_commit",
+    "messages",
+    "gold_patch",
+    "validation",
+]
+
+valid = []
+removed = []
+
+for record in records:
+
+    missing = [
+        key
+        for key in required_fields
+        if key not in record
+    ]
+
+    if missing:
+
+        removed.append({
+            "instance_id": record.get("instance_id"),
+            "reason": f"missing: {missing}"
+        })
+
+        continue
+
+    # Instance ID
+    if not str(record["instance_id"]).strip():
+
+        removed.append({
+            "instance_id": None,
+            "reason": "empty instance_id"
+        })
+
+        continue
+
+    # Repository
+    if not str(record["repo"]).strip():
+
+        removed.append({
+            "instance_id": record["instance_id"],
+            "reason": "empty repo"
+        })
+
+        continue
+
+    # Messages
+    if not isinstance(record["messages"], list):
+
+        removed.append({
+            "instance_id": record["instance_id"],
+            "reason": "messages is not a list"
+        })
+
+        continue
+
+    if len(record["messages"]) == 0:
+
+        removed.append({
+            "instance_id": record["instance_id"],
+            "reason": "empty messages"
+        })
+
+        continue
+
+    # Gold patch
+    if not isinstance(record["gold_patch"], str):
+
+        removed.append({
+            "instance_id": record["instance_id"],
+            "reason": "gold_patch is not string"
+        })
+
+        continue
+
+    if not record["gold_patch"].strip():
+
+        removed.append({
+            "instance_id": record["instance_id"],
+            "reason": "empty gold_patch"
+        })
+
+        continue
+
+    # Validation
+    if not isinstance(record["validation"], dict):
+
+        removed.append({
+            "instance_id": record["instance_id"],
+            "reason": "validation is not dict"
+        })
+
+        continue
+
+    valid.append(record)
+
+
+print("\n" + "=" * 70)
+print("QUALITY CONTROL")
+print("=" * 70)
+
+print(f"Valid   : {len(valid)}")
+print(f"Removed : {len(removed)}")
+
+
+# ============================================================
+# SHOW REMOVAL REASONS IF ANY
+# ============================================================
+
+if removed:
+
+    reason_counts = Counter(
+        item["reason"]
+        for item in removed
+    )
+
+    print("\nRemoval reasons:")
+
+    for reason, count in reason_counts.items():
+
+        print(
+            f"  {count:4d} × {reason}"
+        )
+
+
+# ============================================================
+# DEDUPLICATION
+# ============================================================
+
+unique = {}
+
+for record in valid:
+
+    instance_id = record["instance_id"]
+
+    if instance_id not in unique:
+        unique[instance_id] = record
+
+
+records = list(unique.values())
+
+duplicates = len(valid) - len(records)
+
+
+print("\n" + "=" * 70)
+print("DEDUPLICATION")
+print("=" * 70)
+
+print(f"Duplicates removed: {duplicates}")
+print(f"Final records     : {len(records)}")
+
+
+# ============================================================
+# REPOSITORIES
+# ============================================================
+
+repo_counts = Counter(
+    record["repo"]
+    for record in records
+)
+
+
+print("\n" + "=" * 70)
+print("REPOSITORIES")
+print("=" * 70)
+
+print(
+    f"Unique repositories: "
+    f"{len(repo_counts)}"
+)
+
+for repo, count in sorted(
+    repo_counts.items()
+):
+
+    print(
+        f"{repo:<45} {count:>4}"
+    )
+
+
+# ============================================================
+# SPLIT
+# ============================================================
+
+rng = random.Random(SEED)
+
+repositories = list(
+    repo_counts.keys()
+)
+
+rng.shuffle(repositories)
+
+
+if len(repositories) >= 2:
+
+    # --------------------------------------------------------
+    # Repository-level split
+    # --------------------------------------------------------
+
+    valid_repo_count = max(
+        1,
+        round(
+            len(repositories)
+            * VALID_RATIO
+        )
+    )
+
+    valid_repo_count = min(
+        valid_repo_count,
+        len(repositories) - 1
+    )
+
+    valid_repos = set(
+        repositories[:valid_repo_count]
+    )
+
+    train_repos = set(
+        repositories[valid_repo_count:]
+    )
+
+    train_records = [
+        r
+        for r in records
+        if r["repo"] in train_repos
+    ]
+
+    valid_records = [
+        r
+        for r in records
+        if r["repo"] in valid_repos
+    ]
+
+    split_mode = "repository_level"
+
+
+else:
+
+    # --------------------------------------------------------
+    # Single repository fallback
+    # --------------------------------------------------------
+
+    print(
+        "\nWARNING:"
+        "\nOnly one repository exists."
+        "\nUsing instance-level split."
+    )
+
+    shuffled = records.copy()
+
+    rng.shuffle(shuffled)
+
+    valid_count = max(
+        1,
+        round(
+            len(shuffled)
+            * VALID_RATIO
+        )
+    )
+
+    valid_records = shuffled[
+        :valid_count
+    ]
+
+    train_records = shuffled[
+        valid_count:
+    ]
+
+    train_repos = {
+        r["repo"]
+        for r in train_records
+    }
+
+    valid_repos = {
+        r["repo"]
+        for r in valid_records
+    }
+
+    split_mode = "instance_level_fallback"
+
+
+# ============================================================
+# SAFETY
+# ============================================================
+
+if len(records) < 2:
+
+    raise RuntimeError(
+        "Dataset contains fewer than 2 valid records."
+    )
+
+
+assert len(train_records) > 0
+assert len(valid_records) > 0
+
+assert (
+    len(train_records)
+    + len(valid_records)
+    == len(records)
+)
+
+
+# No instance leakage
+
+train_ids = {
+    r["instance_id"]
+    for r in train_records
+}
+
+valid_ids = {
+    r["instance_id"]
+    for r in valid_records
+}
+
+assert not (
+    train_ids & valid_ids
+), "Instance leakage detected."
+
+
+# Repository leakage only for repo split
+
+if split_mode == "repository_level":
+
+    assert not (
+        train_repos & valid_repos
+    ), "Repository leakage detected."
+
+
+# ============================================================
+# WRITE
+# ============================================================
+
+def write_jsonl(path, data):
+
+    with path.open(
+        "w",
+        encoding="utf-8"
+    ) as f:
+
+        for record in data:
+
+            f.write(
+                json.dumps(
+                    record,
+                    ensure_ascii=False
+                )
+                + "\n"
+            )
+
+
+write_jsonl(
+    TRAIN_OUT,
+    train_records
+)
+
+write_jsonl(
+    VALID_OUT,
+    valid_records
+)
+
+
+# ============================================================
+# STATS
+# ============================================================
+
+stats = {
+
+    "source": str(INPUT),
+
+    "total_records": len(records),
+
+    "train_records": len(
+        train_records
+    ),
+
+    "validation_records": len(
+        valid_records
+    ),
+
+    "repositories": len(
+        repo_counts
+    ),
+
+    "train_repositories": len(
+        train_repos
+    ),
+
+    "validation_repositories": len(
+        valid_repos
+    ),
+
+    "split_mode": split_mode,
+
+    "validation_ratio": VALID_RATIO,
+
+    "seed": SEED,
+
+    "duplicates_removed": duplicates,
+
+    "invalid_removed": len(
+        removed
+    ),
+}
+
+
+with STATS_OUT.open(
+    "w",
+    encoding="utf-8"
+) as f:
+
+    json.dump(
+        stats,
+        f,
+        indent=2,
+        ensure_ascii=False
+    )
+
+
+# ============================================================
+# FINAL REPORT
+# ============================================================
+
+print("\n" + "=" * 70)
+print("✓ DATASET READY")
+print("=" * 70)
+
+print(
+    f"Total records      : "
+    f"{len(records)}"
+)
+
+print(
+    f"Training records   : "
+    f"{len(train_records)}"
+)
+
+print(
+    f"Validation records : "
+    f"{len(valid_records)}"
+)
+
+print(
+    f"Repositories       : "
+    f"{len(repo_counts)}"
+)
+
+print(
+    f"Split mode         : "
+    f"{split_mode}"
+)
+
+print("\nFiles created:")
+
+print(
+    f"TRAIN → {TRAIN_OUT}"
+)
+
+print(
+    f"VALID → {VALID_OUT}"
+)
+
+print(
+    f"STATS → {STATS_OUT}"
+)
+
+print("\nGemma: NOT downloaded")
+print("GPU: NOT required")
+
+# CELL 8 code
+# ============================================================
+# CELL 6 — TRAJECTORY QUALITY AUDIT
+# No Gemma download
+# No GPU
+# Does NOT modify the dataset
+# ============================================================
+
+import json
+from pathlib import Path
+from collections import Counter
+
+ROOT = Path("/kaggle/working/gemma4_swe_agent")
+DATA_DIR = ROOT / "data"
+
+INPUT = DATA_DIR / "sft_train.jsonl"
+
+assert INPUT.exists(), f"Missing: {INPUT}"
+
+
+# ============================================================
+# 1. LOAD
+# ============================================================
+
+records = []
+
+with INPUT.open("r", encoding="utf-8") as f:
+
+    for line in f:
+
+        line = line.strip()
+
+        if line:
+            records.append(
+                json.loads(line)
+            )
+
+
+print("=" * 70)
+print("TRAJECTORY AUDIT")
+print("=" * 70)
+
+print(f"Records: {len(records)}")
+
+
+# ============================================================
+# 2. MESSAGE ROLE DISTRIBUTION
+# ============================================================
+
+role_counter = Counter()
+
+for record in records:
+
+    for message in record["messages"]:
+
+        role = message.get(
+            "role",
+            "UNKNOWN"
+        )
+
+        role_counter[role] += 1
+
+
+print("\n" + "=" * 70)
+print("MESSAGE ROLES")
+print("=" * 70)
+
+for role, count in role_counter.items():
+
+    print(
+        f"{role:<15} {count}"
+    )
+
+
+# ============================================================
+# 3. MESSAGE TYPE / TOOL DISTRIBUTION
+# ============================================================
+
+tool_counter = Counter()
+
+for record in records:
+
+    for message in record["messages"]:
+
+        tool = message.get("tool")
+
+        if tool:
+            tool_counter[tool] += 1
+
+
+print("\n" + "=" * 70)
+print("TOOLS")
+print("=" * 70)
+
+if tool_counter:
+
+    for tool, count in tool_counter.most_common():
+
+        print(
+            f"{tool:<30} {count}"
+        )
+
+else:
+
+    print("No explicit tools detected.")
+
+
+# ============================================================
+# 4. TRAJECTORY LENGTH
+# ============================================================
+
+lengths = [
+    len(record["messages"])
+    for record in records
+]
+
+print("\n" + "=" * 70)
+print("TRAJECTORY LENGTH")
+print("=" * 70)
+
+print(
+    f"Min    : {min(lengths)}"
+)
+
+print(
+    f"Max    : {max(lengths)}"
+)
+
+print(
+    f"Average: {sum(lengths) / len(lengths):.2f}"
+)
+
+
+# ============================================================
+# 5. EXPECTED AGENT ACTIONS
+# ============================================================
+
+expected_tools = [
+    "get_status",
+    "search_similar_code",
+    "read_file",
+    "edit_file",
+    "run_command",
+    "submit_patch",
+]
+
+
+tool_presence = Counter()
+
+for record in records:
+
+    tools_in_record = {
+        message.get("tool")
+        for message in record["messages"]
+        if message.get("tool")
+    }
+
+    for tool in expected_tools:
+
+        if tool in tools_in_record:
+
+            tool_presence[tool] += 1
+
+
+print("\n" + "=" * 70)
+print("TOOL COVERAGE")
+print("=" * 70)
+
+for tool in expected_tools:
+
+    count = tool_presence[tool]
+
+    percentage = (
+        count / len(records) * 100
+    )
+
+    print(
+        f"{tool:<30} "
+        f"{count:>4}/{len(records)} "
+        f"({percentage:>6.2f}%)"
+    )
+
+
+# ============================================================
+# 6. PATCH / TEST COVERAGE
+# ============================================================
+
+has_patch = 0
+has_tests = 0
+
+for record in records:
+
+    if record.get("gold_patch", "").strip():
+
+        has_patch += 1
+
+    validation = record.get(
+        "validation",
+        {}
+    )
+
+    if (
+        validation.get("fail_to_pass")
+        or validation.get("pass_to_pass")
+    ):
+
+        has_tests += 1
+
+
+print("\n" + "=" * 70)
+print("SUPERVISION SIGNALS")
+print("=" * 70)
+
+print(
+    f"Gold patches : "
+    f"{has_patch}/{len(records)}"
+)
+
+print(
+    f"Test metadata : "
+    f"{has_tests}/{len(records)}"
+)
+
+
+# ============================================================
+# 7. FIRST TRAJECTORY
+# ============================================================
+
+print("\n" + "=" * 70)
+print("FIRST TRAJECTORY")
+print("=" * 70)
+
+example = records[0]
+
+print(
+    f"\nInstance: "
+    f"{example['instance_id']}"
+)
+
+print(
+    f"Repository: "
+    f"{example['repo']}"
+)
+
+print(
+    f"\nMessages: "
+    f"{len(example['messages'])}"
+)
+
+
+for i, message in enumerate(
+    example["messages"],
+    start=1
+):
+
+    role = message.get(
+        "role",
+        "UNKNOWN"
+    )
+
+    tool = message.get(
+        "tool"
+    )
+
+    content = message.get(
+        "content",
+        ""
+    )
+
+    if not isinstance(
+        content,
+        str
+    ):
+        content = str(content)
+
+    # Keep audit output compact
+    preview = content.replace(
+        "\n",
+        " "
+    )
+
+    if len(preview) > 180:
+        preview = (
+            preview[:180]
+            + "..."
+        )
+
+    if tool:
+
+        print(
+            f"{i:02d}. "
+            f"[{role}] "
+            f"TOOL={tool} "
+            f"| {preview}"
+        )
+
+    else:
+
+        print(
+            f"{i:02d}. "
+            f"[{role}] "
+            f"| {preview}"
+        )
+
+
+# ============================================================
+# 8. QUALITY SCORECARD
+# ============================================================
+
+print("\n" + "=" * 70)
+print("QUALITY SCORECARD")
+print("=" * 70)
+
+checks = {
+
+    "Has records":
+        len(records) > 0,
+
+    "Has messages":
+        all(
+            len(r["messages"]) > 0
+            for r in records
+        ),
+
+    "Has gold patches":
+        has_patch == len(records),
+
+    "Has validation":
+        has_tests == len(records),
+
+    "Has tool calls":
+        len(tool_counter) > 0,
+
+    "Has edit_file":
+        tool_presence["edit_file"] > 0,
+
+    "Has run_command":
+        tool_presence["run_command"] > 0,
+
+    "Has submit_patch":
+        tool_presence["submit_patch"] > 0,
+}
+
+
+for name, passed in checks.items():
+
+    print(
+        f"{'✓' if passed else '✗'} "
+        f"{name}"
+    )
+
+
+print("\n" + "=" * 70)
+print("AUDIT COMPLETE")
+print("=" * 70)
+
+print("\nNo files were modified.")
+print("No Gemma downloaded.")
+print("No GPU required.")
+
+# CELL 9 code
+# ============================================================
+# CELL 7 — REAL SWE AGENT ENVIRONMENT
+# Tool execution + observation recording
+# No Gemma
+# No model download
+# ============================================================
+
+import json
+import os
+import re
+import shutil
+import subprocess
+import time
+from pathlib import Path
+from datetime import datetime
+
+
+# ============================================================
+# PROJECT PATHS
+# ============================================================
+
+ROOT = Path("/kaggle/working/gemma4_swe_agent")
+
+ENV_DIR = ROOT / "environment"
+TRAJ_DIR = ROOT / "data" / "trajectories"
+
+ENV_DIR.mkdir(parents=True, exist_ok=True)
+TRAJ_DIR.mkdir(parents=True, exist_ok=True)
+
+
+# ============================================================
+# 1. TOOL DEFINITIONS
+# ============================================================
+
+tools_schema = {
+
+    "get_status": {
+        "description":
+            "Inspect repository status and basic structure.",
+        "arguments": {}
+    },
+
+    "read_file": {
+        "description":
+            "Read a file from the repository.",
+        "arguments": {
+            "path": "string",
+            "start_line": "integer|null",
+            "end_line": "integer|null"
+        }
+    },
+
+    "search_code": {
+        "description":
+            "Search repository source code for a pattern.",
+        "arguments": {
+            "pattern": "string",
+            "path": "string|null"
+        }
+    },
+
+    "get_code_neighbors": {
+        "description":
+            "Inspect nearby code around a target file or symbol.",
+        "arguments": {
+            "path": "string",
+            "line": "integer"
+        }
+    },
+
+    "edit_file": {
+        "description":
+            "Apply an exact replacement to a repository file.",
+        "arguments": {
+            "path": "string",
+            "old_text": "string",
+            "new_text": "string"
+        }
+    },
+
+    "write_file": {
+        "description":
+            "Write complete contents to a repository file.",
+        "arguments": {
+            "path": "string",
+            "content": "string"
+        }
+    },
+
+    "run_command": {
+        "description":
+            "Execute a repository command such as a test.",
+        "arguments": {
+            "command": "string",
+            "timeout": "integer"
+        }
+    },
+
+    "submit_patch": {
+        "description":
+            "Collect the final repository diff.",
+        "arguments": {}
+    },
+}
+
+
+# ============================================================
+# 2. SAFE PATH RESOLUTION
+# ============================================================
+
+def safe_path(repo_root, relative_path):
+
+    repo_root = Path(repo_root).resolve()
+
+    candidate = (
+        repo_root / relative_path
+    ).resolve()
+
+    if not str(candidate).startswith(
+        str(repo_root)
+    ):
+        raise ValueError(
+            f"Unsafe path: {relative_path}"
+        )
+
+    return candidate
+
+
+# ============================================================
+# 3. TRAJECTORY RECORDER
+# ============================================================
+
+class TrajectoryRecorder:
+
+    def __init__(
+        self,
+        instance_id,
+        repo,
+        base_commit,
+        issue
+    ):
+
+        self.instance_id = instance_id
+        self.repo = repo
+        self.base_commit = base_commit
+        self.issue = issue
+
+        self.started_at = (
+            datetime.utcnow().isoformat()
+            + "Z"
+        )
+
+        self.steps = []
+
+        self.step_id = 0
+
+    def record(
+        self,
+        event_type,
+        tool=None,
+        arguments=None,
+        result=None,
+        success=None,
+        duration=None
+    ):
+
+        self.step_id += 1
+
+        event = {
+
+            "step": self.step_id,
+
+            "timestamp":
+                datetime.utcnow().isoformat()
+                + "Z",
+
+            "type": event_type,
+
+            "tool": tool,
+
+            "arguments": arguments,
+
+            "result": result,
+
+            "success": success,
+
+            "duration_seconds": duration,
+        }
+
+        self.steps.append(event)
+
+        return event
+
+    def save(self, path):
+
+        trajectory = {
+
+            "instance_id":
+                self.instance_id,
+
+            "repo":
+                self.repo,
+
+            "base_commit":
+                self.base_commit,
+
+            "problem_statement":
+                self.issue,
+
+            "started_at":
+                self.started_at,
+
+            "steps":
+                self.steps,
+        }
+
+        path = Path(path)
+
+        with path.open(
+            "w",
+            encoding="utf-8"
+        ) as f:
+
+            json.dump(
+                trajectory,
+                f,
+                indent=2,
+                ensure_ascii=False
+            )
+
+        return path
+
+
+# ============================================================
+# 4. SWE REPOSITORY ENVIRONMENT
+# ============================================================
+
+class SWEEnvironment:
+
+    def __init__(
+        self,
+        repo_root,
+        recorder
+    ):
+
+        self.repo_root = Path(
+            repo_root
+        ).resolve()
+
+        self.recorder = recorder
+
+        if not self.repo_root.exists():
+
+            raise FileNotFoundError(
+                f"Repository not found: "
+                f"{self.repo_root}"
+            )
+
+
+    # --------------------------------------------------------
+    # GET STATUS
+    # --------------------------------------------------------
+
+    def get_status(self):
+
+        start = time.time()
+
+        try:
+
+            result = subprocess.run(
+                [
+                    "git",
+                    "status",
+                    "--short"
+                ],
+                cwd=self.repo_root,
+                capture_output=True,
+                text=True,
+                timeout=30
+            )
+
+            status = result.stdout
+
+            if not status:
+                status = "clean"
+
+            output = {
+                "status": status,
+                "return_code":
+                    result.returncode
+            }
+
+            self.recorder.record(
+                "tool_call",
+                "get_status",
+                {},
+                output,
+                result.returncode == 0,
+                time.time() - start
+            )
+
+            return output
+
+        except Exception as e:
+
+            error = {
+                "error": str(e)
+            }
+
+            self.recorder.record(
+                "tool_call",
+                "get_status",
+                {},
+                error,
+                False,
+                time.time() - start
+            )
+
+            return error
+
+
+    # --------------------------------------------------------
+    # READ FILE
+    # --------------------------------------------------------
+
+    def read_file(
+        self,
+        path,
+        start_line=None,
+        end_line=None
+    ):
+
+        start = time.time()
+
+        try:
+
+            file_path = safe_path(
+                self.repo_root,
+                path
+            )
+
+            if not file_path.exists():
+
+                raise FileNotFoundError(
+                    path
+                )
+
+            text = file_path.read_text(
+                encoding="utf-8",
+                errors="replace"
+            )
+
+            lines = text.splitlines()
+
+            if start_line is not None:
+
+                start_index = max(
+                    0,
+                    start_line - 1
+                )
+
+            else:
+
+                start_index = 0
+
+            if end_line is not None:
+
+                end_index = end_line
+
+            else:
+
+                end_index = len(lines)
+
+            selected = lines[
+                start_index:end_index
+            ]
+
+            output = {
+                "path": path,
+                "start_line":
+                    start_index + 1,
+                "end_line":
+                    start_index
+                    + len(selected),
+                "content":
+                    "\n".join(selected)
+            }
+
+            self.recorder.record(
+                "tool_call",
+                "read_file",
+                {
+                    "path": path,
+                    "start_line": start_line,
+                    "end_line": end_line
+                },
+                output,
+                True,
+                time.time() - start
+            )
+
+            return output
+
+        except Exception as e:
+
+            output = {
+                "error": str(e)
+            }
+
+            self.recorder.record(
+                "tool_call",
+                "read_file",
+                {
+                    "path": path,
+                    "start_line": start_line,
+                    "end_line": end_line
+                },
+                output,
+                False,
+                time.time() - start
+            )
+
+            return output
+
+
+    # --------------------------------------------------------
+    # SEARCH CODE
+    # --------------------------------------------------------
+
+    def search_code(
+        self,
+        pattern,
+        path=None
+    ):
+
+        start = time.time()
+
+        try:
+
+            target = (
+                safe_path(
+                    self.repo_root,
+                    path
+                )
+                if path
+                else self.repo_root
+            )
+
+            command = [
+                "grep",
+                "-R",
+                "-n",
+                "-I",
+                pattern,
+                str(target)
+            ]
+
+            result = subprocess.run(
+                command,
+                cwd=self.repo_root,
+                capture_output=True,
+                text=True,
+                timeout=60
+            )
+
+            lines = result.stdout.splitlines()
+
+            # Limit observation size
+            lines = lines[:100]
+
+            output = {
+                "matches": lines,
+                "count": len(lines),
+                "return_code":
+                    result.returncode
+            }
+
+            self.recorder.record(
+                "tool_call",
+                "search_code",
+                {
+                    "pattern": pattern,
+                    "path": path
+                },
+                output,
+                True,
+                time.time() - start
+            )
+
+            return output
+
+        except Exception as e:
+
+            output = {
+                "error": str(e)
+            }
+
+            self.recorder.record(
+                "tool_call",
+                "search_code",
+                {
+                    "pattern": pattern,
+                    "path": path
+                },
+                output,
+                False,
+                time.time() - start
+            )
+
+            return output
+
+
+    # --------------------------------------------------------
+    # CODE NEIGHBORS
+    # --------------------------------------------------------
+
+    def get_code_neighbors(
+        self,
+        path,
+        line,
+        radius=20
+    ):
+
+        start = time.time()
+
+        try:
+
+            file_path = safe_path(
+                self.repo_root,
+                path
+            )
+
+            lines = file_path.read_text(
+                encoding="utf-8",
+                errors="replace"
+            ).splitlines()
+
+            center = max(
+                1,
+                int(line)
+            )
+
+            start_line = max(
+                1,
+                center - radius
+            )
+
+            end_line = min(
+                len(lines),
+                center + radius
+            )
+
+            content = "\n".join(
+                f"{i}: {lines[i-1]}"
+                for i in range(
+                    start_line,
+                    end_line + 1
+                )
+            )
+
+            output = {
+                "path": path,
+                "start_line": start_line,
+                "end_line": end_line,
+                "content": content
+            }
+
+            self.recorder.record(
+                "tool_call",
+                "get_code_neighbors",
+                {
+                    "path": path,
+                    "line": line
+                },
+                output,
+                True,
+                time.time() - start
+            )
+
+            return output
+
+        except Exception as e:
+
+            output = {
+                "error": str(e)
+            }
+
+            self.recorder.record(
+                "tool_call",
+                "get_code_neighbors",
+                {
+                    "path": path,
+                    "line": line
+                },
+                output,
+                False,
+                time.time() - start
+            )
+
+            return output
+
+
+    # --------------------------------------------------------
+    # EDIT FILE
+    # --------------------------------------------------------
+
+    def edit_file(
+        self,
+        path,
+        old_text,
+        new_text
+    ):
+
+        start = time.time()
+
+        try:
+
+            file_path = safe_path(
+                self.repo_root,
+                path
+            )
+
+            original = file_path.read_text(
+                encoding="utf-8",
+                errors="replace"
+            )
+
+            occurrences = original.count(
+                old_text
+            )
+
+            if occurrences != 1:
+
+                raise ValueError(
+                    "old_text must occur "
+                    f"exactly once; "
+                    f"found {occurrences}"
+                )
+
+            updated = original.replace(
+                old_text,
+                new_text,
+                1
+            )
+
+            file_path.write_text(
+                updated,
+                encoding="utf-8"
+            )
+
+            output = {
+                "path": path,
+                "changed": True,
+                "occurrences": 1
+            }
+
+            self.recorder.record(
+                "tool_call",
+                "edit_file",
+                {
+                    "path": path,
+                    "old_text": old_text,
+                    "new_text": new_text
+                },
+                output,
+                True,
+                time.time() - start
+            )
+
+            return output
+
+        except Exception as e:
+
+            output = {
+                "error": str(e),
+                "changed": False
+            }
+
+            self.recorder.record(
+                "tool_call",
+                "edit_file",
+                {
+                    "path": path
+                },
+                output,
+                False,
+                time.time() - start
+            )
+
+            return output
+
+
+    # --------------------------------------------------------
+    # WRITE FILE
+    # --------------------------------------------------------
+
+    def write_file(
+        self,
+        path,
+        content
+    ):
+
+        start = time.time()
+
+        try:
+
+            file_path = safe_path(
+                self.repo_root,
+                path
+            )
+
+            file_path.parent.mkdir(
+                parents=True,
+                exist_ok=True
+            )
+
+            file_path.write_text(
+                content,
+                encoding="utf-8"
+            )
+
+            output = {
+                "path": path,
+                "bytes":
+                    len(content.encode("utf-8"))
+            }
+
+            self.recorder.record(
+                "tool_call",
+                "write_file",
+                {
+                    "path": path
+                },
+                output,
+                True,
+                time.time() - start
+            )
+
+            return output
+
+        except Exception as e:
+
+            output = {
+                "error": str(e)
+            }
+
+            self.recorder.record(
+                "tool_call",
+                "write_file",
+                {
+                    "path": path
+                },
+                output,
+                False,
+                time.time() - start
+            )
+
+            return output
+
+
+    # --------------------------------------------------------
+    # RUN COMMAND
+    # --------------------------------------------------------
+
+    def run_command(
+        self,
+        command,
+        timeout=120
+    ):
+
+        start = time.time()
+
+        try:
+
+            result = subprocess.run(
+                command,
+                cwd=self.repo_root,
+                shell=True,
+                capture_output=True,
+                text=True,
+                timeout=timeout
+            )
+
+            output = {
+
+                "command":
+                    command,
+
+                "stdout":
+                    result.stdout[-12000:],
+
+                "stderr":
+                    result.stderr[-12000:],
+
+                "return_code":
+                    result.returncode,
+
+                "passed":
+                    result.returncode == 0
+            }
+
+            self.recorder.record(
+                "tool_call",
+                "run_command",
+                {
+                    "command": command,
+                    "timeout": timeout
+                },
+                output,
+                result.returncode == 0,
+                time.time() - start
+            )
+
+            return output
+
+        except subprocess.TimeoutExpired:
+
+            output = {
+                "command": command,
+                "error": "TIMEOUT",
+                "passed": False
+            }
+
+            self.recorder.record(
+                "tool_call",
+                "run_command",
+                {
+                    "command": command,
+                    "timeout": timeout
+                },
+                output,
+                False,
+                time.time() - start
+            )
+
+            return output
+
+        except Exception as e:
+
+            output = {
+                "command": command,
+                "error": str(e),
+                "passed": False
+            }
+
+            self.recorder.record(
+                "tool_call",
+                "run_command",
+                {
+                    "command": command,
+                    "timeout": timeout
+                },
+                output,
+                False,
+                time.time() - start
+            )
+
+            return output
+
+
+    # --------------------------------------------------------
+    # SUBMIT PATCH
+    # --------------------------------------------------------
+
+    def submit_patch(self):
+
+        start = time.time()
+
+        try:
+
+            result = subprocess.run(
+                [
+                    "git",
+                    "diff",
+                    "--binary"
+                ],
+                cwd=self.repo_root,
+                capture_output=True,
+                text=True,
+                timeout=30
+            )
+
+            patch = result.stdout
+
+            output = {
+
+                "patch":
+                    patch,
+
+                "has_changes":
+                    bool(patch.strip()),
+
+                "return_code":
+                    result.returncode
+            }
+
+            self.recorder.record(
+                "tool_call",
+                "submit_patch",
+                {},
+                output,
+                result.returncode == 0,
+                time.time() - start
+            )
+
+            return output
+
+        except Exception as e:
+
+            output = {
+                "error": str(e)
+            }
+
+            self.recorder.record(
+                "tool_call",
+                "submit_patch",
+                {},
+                output,
+                False,
+                time.time() - start
+            )
+
+            return output
+
+
+# ============================================================
+# 5. SAVE TOOL SCHEMA
+# ============================================================
+
+TOOLS_FILE = ENV_DIR / "tools.json"
+
+with TOOLS_FILE.open(
+    "w",
+    encoding="utf-8"
+) as f:
+
+    json.dump(
+        tools_schema,
+        f,
+        indent=2,
+        ensure_ascii=False
+    )
+
+
+# ============================================================
+# 6. SAVE ENVIRONMENT CODE
+# ============================================================
+
+print("=" * 70)
+print("REAL SWE ENVIRONMENT CREATED")
+print("=" * 70)
+
+print(f"Environment directory:")
+print(f"  {ENV_DIR}")
+
+print("\nTool definitions:")
+
+for name in tools_schema:
+    print(f"  ✓ {name}")
+
+print("\nTrajectory recorder:")
+print("  ✓ tool calls")
+print("  ✓ arguments")
+print("  ✓ tool results")
+print("  ✓ success/failure")
+print("  ✓ execution time")
+print("  ✓ timestamps")
+
+print("\nFiles:")
+print(f"  {TOOLS_FILE}")
+
+print("\nGemma downloaded: NO")
+print("GPU required: NO")
+
+# CELL 10 code
+from pathlib import Path
+import json
+import time
+import subprocess
+from datetime import datetime, timezone
+
+
+# ============================================================
+# CONFIG
+# ============================================================
+
+ROOT = Path("/kaggle/working/gemma4_swe_agent")
+REPO_ROOT = Path("/kaggle/working/swe_repos/astropy__astropy")
+
+TRACE_DIR = ROOT / "data" / "real_trajectories"
+TRACE_DIR.mkdir(parents=True, exist_ok=True)
+
+TRACE_FILE = TRACE_DIR / "astropy__astropy-12907.json"
+
+INSTANCE_ID = "astropy__astropy-12907"
+REPO_NAME = "astropy/astropy"
+BASE_COMMIT = "d16bfe05a744909de4b27f5875fe0d4ed41ce607"
+
+ISSUE = """
+Nested CompoundModels produce an incorrect separability matrix
+in astropy.modeling.separable.separability_matrix.
+"""
+
+
+# ============================================================
+# JSON SAFETY
+# ============================================================
+
+def json_safe(value):
+    if value is None:
+        return None
+
+    if isinstance(value, Path):
+        return str(value)
+
+    if isinstance(value, dict):
+        return {
+            str(k): json_safe(v)
+            for k, v in value.items()
+        }
+
+    if isinstance(value, (list, tuple)):
+        return [json_safe(v) for v in value]
+
+    if isinstance(value, (str, int, float, bool)):
+        return value
+
+    return str(value)
+
+
+# ============================================================
+# REAL TRAJECTORY RECORDER
+# ============================================================
+
+class RealTrajectoryRecorder:
+
+    def __init__(
+        self,
+        trace_file,
+        repo,
+        base_commit,
+        issue,
+    ):
+        self.trace_file = Path(trace_file)
+        self.repo = repo
+        self.base_commit = base_commit
+        self.issue = issue
+        self.steps = []
+
+    def record(
+        self,
+        tool,
+        arguments,
+        result,
+        success,
+        duration,
+    ):
+
+        self.steps.append({
+            "step": len(self.steps) + 1,
+            "timestamp": datetime.now(
+                timezone.utc
+            ).isoformat(),
+
+            "type": "tool_call",
+
+            "tool": str(tool),
+
+            "arguments": json_safe(arguments),
+
+            "result": json_safe(result),
+
+            "success": bool(success),
+
+            "duration_seconds": float(duration),
+        })
+
+    def save(self):
+
+        trajectory = {
+            "trajectory_version": "1.0",
+
+            "instance_id": INSTANCE_ID,
+
+            "created_at": datetime.now(
+                timezone.utc
+            ).isoformat(),
+
+            "repo": self.repo,
+
+            "base_commit": self.base_commit,
+
+            "issue": self.issue,
+
+            "steps": self.steps,
+        }
+
+        self.trace_file.write_text(
+            json.dumps(
+                trajectory,
+                indent=2,
+                ensure_ascii=False,
+            ),
+            encoding="utf-8",
+        )
+
+        return self.trace_file
+
+
+# ============================================================
+# REAL SWE ENVIRONMENT
+# ============================================================
+
+class RealSWEEnvironment:
+
+    def __init__(
+        self,
+        repo_root,
+        recorder,
+    ):
+
+        self.repo_root = Path(repo_root).resolve()
+
+        self.recorder = recorder
+
+    # --------------------------------------------------------
+    # SAFE PATH
+    # --------------------------------------------------------
+
+    def safe_path(self, relative_path):
+
+        candidate = (
+            self.repo_root / relative_path
+        ).resolve()
+
+        try:
+            candidate.relative_to(
+                self.repo_root
+            )
+        except ValueError:
+            raise ValueError(
+                f"Unsafe path: {relative_path}"
+            )
+
+        return candidate
+
+    # --------------------------------------------------------
+    # TOOL WRAPPER
+    # --------------------------------------------------------
+
+    def _call(
+        self,
+        tool,
+        arguments,
+        function,
+    ):
+
+        start = time.time()
+
+        try:
+
+            result = function()
+
+            success = True
+
+        except Exception as e:
+
+            result = {
+                "error": str(e)
+            }
+
+            success = False
+
+        duration = time.time() - start
+
+        self.recorder.record(
+            tool=tool,
+            arguments=arguments,
+            result=result,
+            success=success,
+            duration=duration,
+        )
+
+        return result
+
+    # --------------------------------------------------------
+    # GET STATUS
+    # --------------------------------------------------------
+
+    def get_status(self):
+
+        def operation():
+
+            p = subprocess.run(
+                [
+                    "git",
+                    "status",
+                    "--porcelain",
+                ],
+                cwd=self.repo_root,
+                capture_output=True,
+                text=True,
+            )
+
+            return {
+                "status": (
+                    "clean"
+                    if not p.stdout.strip()
+                    else "modified"
+                ),
+
+                "return_code": p.returncode,
+
+                "output": p.stdout,
+            }
+
+        return self._call(
+            "get_status",
+            {},
+            operation,
+        )
+
+    # --------------------------------------------------------
+    # SEARCH CODE
+    # --------------------------------------------------------
+
+    def search_code(
+        self,
+        query,
+        path=".",
+    ):
+
+        arguments = {
+            "query": query,
+            "path": path,
+        }
+
+        def operation():
+
+            search_root = self.safe_path(path)
+
+            matches = []
+
+            for file in search_root.rglob("*"):
+
+                if not file.is_file():
+                    continue
+
+                if any(
+                    part in {
+                        ".git",
+                        "__pycache__",
+                        ".pytest_cache",
+                        "node_modules",
+                    }
+                    for part in file.parts
+                ):
+                    continue
+
+                try:
+
+                    text = file.read_text(
+                        encoding="utf-8",
+                        errors="replace",
+                    )
+
+                except Exception:
+                    continue
+
+                for line_number, line in enumerate(
+                    text.splitlines(),
+                    1,
+                ):
+
+                    if query.lower() in line.lower():
+
+                        matches.append({
+                            "file": str(
+                                file.relative_to(
+                                    self.repo_root
+                                )
+                            ),
+                            "line": line_number,
+                            "text": line,
+                        })
+
+                        if len(matches) >= 100:
+                            return {
+                                "matches": matches
+                            }
+
+            return {
+                "matches": matches
+            }
+
+        return self._call(
+            "search_code",
+            arguments,
+            operation,
+        )
+
+    # --------------------------------------------------------
+    # READ FILE
+    # --------------------------------------------------------
+
+    def read_file(
+        self,
+        path,
+        start_line=1,
+        end_line=200,
+    ):
+
+        arguments = {
+            "path": path,
+            "start_line": start_line,
+            "end_line": end_line,
+        }
+
+        def operation():
+
+            file_path = self.safe_path(path)
+
+            lines = file_path.read_text(
+                encoding="utf-8",
+                errors="replace",
+            ).splitlines()
+
+            start = max(
+                1,
+                int(start_line),
+            )
+
+            end = min(
+                len(lines),
+                int(end_line),
+            )
+
+            content = "\n".join(
+                lines[start - 1:end]
+            )
+
+            return {
+                "path": path,
+                "start_line": start,
+                "end_line": end,
+                "content": content,
+            }
+
+        return self._call(
+            "read_file",
+            arguments,
+            operation,
+        )
+
+    # --------------------------------------------------------
+    # CODE NEIGHBORS
+    # --------------------------------------------------------
+
+    def get_code_neighbors(
+        self,
+        node,
+        edge_type=None,
+        max_neighbors=50,
+    ):
+
+        arguments = {
+            "node": node,
+            "edge_type": edge_type,
+            "max_neighbors": max_neighbors,
+        }
+
+        def operation():
+
+            # ------------------------------------------------
+            # LOCAL FALLBACK GRAPH
+            # ------------------------------------------------
+            #
+            # For this first environment we locate references
+            # to the requested symbol in the repository.
+            #
+            # This is deliberately recorded as a separate
+            # tool call.
+            #
+            # Later we will replace this with the actual
+            # AST/code dependency graph.
+            # ------------------------------------------------
+
+            query = node.split("::")[-1]
+
+            matches = []
+
+            for file in self.repo_root.rglob("*.py"):
+
+                if any(
+                    part in {
+                        ".git",
+                        "__pycache__",
+                        ".pytest_cache",
+                    }
+                    for part in file.parts
+                ):
+                    continue
+
+                try:
+                    text = file.read_text(
+                        encoding="utf-8",
+                        errors="replace",
+                    )
+
+                except Exception:
+                    continue
+
+                for line_number, line in enumerate(
+                    text.splitlines(),
+                    1,
+                ):
+
+                    if query in line:
+
+                        matches.append({
+                            "file": str(
+                                file.relative_to(
+                                    self.repo_root
+                                )
+                            ),
+                            "line": line_number,
+                            "text": line.strip(),
+                        })
+
+                        if len(matches) >= max_neighbors:
+                            break
+
+                if len(matches) >= max_neighbors:
+                    break
+
+            return {
+                "node": node,
+                "edge_type": edge_type,
+                "neighbors": matches,
+                "count": len(matches),
+            }
+
+        return self._call(
+            "get_code_neighbors",
+            arguments,
+            operation,
+        )
+
+    # --------------------------------------------------------
+    # RUN COMMAND
+    # --------------------------------------------------------
+
+    def run_command(
+        self,
+        command,
+    ):
+
+        arguments = {
+            "command": command
+        }
+
+        def operation():
+
+            p = subprocess.run(
+                command,
+                shell=True,
+                cwd=self.repo_root,
+                capture_output=True,
+                text=True,
+                timeout=120,
+            )
+
+            return {
+                "command": command,
+
+                "stdout": p.stdout,
+
+                "stderr": p.stderr,
+
+                "return_code": p.returncode,
+
+                "passed": p.returncode == 0,
+            }
+
+        return self._call(
+            "run_command",
+            arguments,
+            operation,
+        )
+
+
+# ============================================================
+# CREATE ENVIRONMENT
+# ============================================================
+
+recorder = RealTrajectoryRecorder(
+    trace_file=TRACE_FILE,
+    repo=REPO_NAME,
+    base_commit=BASE_COMMIT,
+    issue=ISSUE,
+)
+
+env = RealSWEEnvironment(
+    repo_root=REPO_ROOT,
+    recorder=recorder,
+)
+
+
+# ============================================================
+# REAL TOOL INTERACTION
+# ============================================================
+
+print("1. get_status")
+env.get_status()
+
+print("2. search_code")
+env.search_code(
+    "separability_matrix",
+    "astropy/modeling",
+)
+
+print("3. read_file")
+env.read_file(
+    "astropy/modeling/separable.py",
+    200,
+    330,
+)
+
+print("4. get_code_neighbors")
+env.get_code_neighbors(
+    "separability_matrix",
+    max_neighbors=20,
+)
+
+print("5. run_command")
+env.run_command(
+    "python --version"
+)
+
+
+# ============================================================
+# SAVE
+# ============================================================
+
+saved_path = recorder.save()
+
+print()
+print("=" * 70)
+print("TRAJECTORY SAVED")
+print("=" * 70)
+print(saved_path)
+print("STEPS:", len(recorder.steps))
+
+for step in recorder.steps:
+    print(
+        step["step"],
+        step["tool"],
+        "success=",
+        step["success"],
+    )
+
+# CELL 11 code
+# ============================================================
+# CELL 9 — AUDIT REAL TRAJECTORY
+# ============================================================
+
+import json
+from pathlib import Path
+
+ROOT = Path("/kaggle/working/gemma4_swe_agent")
+
+TRACE_FILE = (
+    ROOT
+    / "data"
+    / "real_trajectories"
+    / "astropy__astropy-12907.json"
+)
+
+print("=" * 70)
+print("REAL TRAJECTORY AUDIT")
+print("=" * 70)
+
+# ------------------------------------------------------------
+# LOAD
+# ------------------------------------------------------------
+
+assert TRACE_FILE.exists(), (
+    f"Trajectory not found:\n{TRACE_FILE}"
+)
+
+with TRACE_FILE.open(
+    "r",
+    encoding="utf-8"
+) as f:
+
+    trajectory = json.load(f)
+
+
+# ------------------------------------------------------------
+# BASIC INFO
+# ------------------------------------------------------------
+
+print("\nInstance:")
+print(trajectory["instance_id"])
+
+print("\nRepository:")
+print(trajectory["repo"])
+
+print("\nBase commit:")
+print(trajectory["base_commit"])
+
+print("\nTrajectory version:")
+print(trajectory["trajectory_version"])
+
+print("\nNumber of steps:")
+print(len(trajectory["steps"]))
+
+
+# ------------------------------------------------------------
+# TOOL AUDIT
+# ------------------------------------------------------------
+
+print("\n" + "=" * 70)
+print("TOOL CALLS")
+print("=" * 70)
+
+for step in trajectory["steps"]:
+
+    print(
+        f"\nStep {step['step']:02d}"
+    )
+
+    print(
+        "Tool:",
+        step["tool"]
+    )
+
+    print(
+        "Success:",
+        step["success"]
+    )
+
+    print(
+        "Duration:",
+        round(
+            step["duration_seconds"],
+            4
+        ),
+        "seconds"
+    )
+
+    print(
+        "Arguments:"
+    )
+
+    print(
+        json.dumps(
+            step["arguments"],
+            indent=2,
+            ensure_ascii=False
+        )[:1000]
+    )
+
+    print(
+        "Result:"
+    )
+
+    print(
+        json.dumps(
+            step["result"],
+            indent=2,
+            ensure_ascii=False
+        )[:1500]
+    )
+
+
+# ------------------------------------------------------------
+# QUALITY CHECKS
+# ------------------------------------------------------------
+
+print("\n" + "=" * 70)
+print("QUALITY CHECKS")
+print("=" * 70)
+
+steps = trajectory["steps"]
+
+assert len(steps) == 5
+
+assert all(
+    "tool" in step
+    for step in steps
+)
+
+assert all(
+    "arguments" in step
+    for step in steps
+)
+
+assert all(
+    "result" in step
+    for step in steps
+)
+
+assert all(
+    "success" in step
+    for step in steps
+)
+
+
+# ------------------------------------------------------------
+# EXPECTED TOOLS
+# ------------------------------------------------------------
+
+expected_tools = [
+    "get_status",
+    "search_code",
+    "read_file",
+    "get_code_neighbors",
+    "run_command"
+]
+
+actual_tools = [
+    step["tool"]
+    for step in steps
+]
+
+print("\nExpected:")
+print(expected_tools)
+
+print("\nActual:")
+print(actual_tools)
+
+assert actual_tools == expected_tools
+
+
+print("\n" + "=" * 70)
+print("✅ TRAJECTORY FORMAT VALID")
+print("=" * 70)
+
+print(
+    "\nThis is a REAL tool trajectory."
+)
+
+print(
+    "No synthetic tool descriptions."
+)
+
+print(
+    "No Gemma required."
+)
+
+print(
+    "No GPU required."
+)
+
+# CELL 12 code
+from pathlib import Path
+import json
+
+TRACE_FILE = Path(
+    "/kaggle/working/gemma4_swe_agent/data/real_trajectories/astropy__astropy-12907.json"
+)
+
+print("TRACE:", TRACE_FILE)
+print("EXISTS:", TRACE_FILE.exists())
+
+with open(TRACE_FILE, "r", encoding="utf-8") as f:
+    trajectory = json.load(f)
+
+steps = trajectory["steps"]
+
+print("\n" + "=" * 70)
+print("REAL TRAJECTORY DEBUG")
+print("=" * 70)
+
+print("Instance:", trajectory.get("instance_id"))
+print("Repository:", trajectory.get("repo"))
+print("Base commit:", trajectory.get("base_commit"))
+
+print("\nNUMBER OF STEPS:", len(steps))
+
+print("\nTOOL SEQUENCE:")
+for i, step in enumerate(steps, 1):
+    print(
+        f"{i}. {step.get('tool')} "
+        f"| success={step.get('success')}"
+    )
+
+print("\nFULL STEP STRUCTURE:")
+
+for i, step in enumerate(steps, 1):
+    print("\n" + "-" * 70)
+    print("STEP", i)
+    print(json.dumps(step, indent=2, ensure_ascii=False)[:3000])
+
+print("\n" + "=" * 70)
+print("NO ASSERTIONS — DEBUG COMPLETE")
+print("=" * 70)
+
+# CELL 13 code
+from pathlib import Path
+import json
+import time
+import subprocess
+import difflib
+import re
+
+
+# ============================================================
+# COMPLETE SWE TOOL ENVIRONMENT
+# ============================================================
+
+class CompleteSWEEnvironment:
+
+    def __init__(self, repo_root, recorder):
+        self.repo_root = Path(repo_root).resolve()
+        self.recorder = recorder
+
+    # --------------------------------------------------------
+    # SAFE PATH
+    # --------------------------------------------------------
+
+    def safe_path(self, filepath):
+
+        path = (self.repo_root / filepath).resolve()
+
+        try:
+            path.relative_to(self.repo_root)
+        except ValueError:
+            raise ValueError(
+                f"Path escapes repository: {filepath}"
+            )
+
+        return path
+
+    # --------------------------------------------------------
+    # TOOL WRAPPER
+    # --------------------------------------------------------
+
+    def _call(self, tool, arguments, fn):
+
+        start = time.time()
+
+        try:
+            result = fn()
+            success = True
+
+        except Exception as e:
+            result = {
+                "error": str(e)
+            }
+            success = False
+
+        duration = time.time() - start
+
+        self.recorder.record(
+            tool=tool,
+            arguments=arguments,
+            result=result,
+            success=success,
+            duration=duration,
+        )
+
+        return result
+
+    # ========================================================
+    # 1. GET STATUS
+    # ========================================================
+
+    def get_status(self):
+
+        def fn():
+
+            p = subprocess.run(
+                ["git", "status", "--porcelain"],
+                cwd=self.repo_root,
+                capture_output=True,
+                text=True,
+            )
+
+            return {
+                "status": (
+                    "clean"
+                    if not p.stdout.strip()
+                    else "modified"
+                ),
+                "return_code": p.returncode,
+                "output": p.stdout,
+            }
+
+        return self._call(
+            "get_status",
+            {},
+            fn,
+        )
+
+    # ========================================================
+    # 2. READ FILE
+    # ========================================================
+
+    def read_file(
+        self,
+        filepath,
+        start_line=None,
+        end_line=None,
+    ):
+
+        arguments = {
+            "filepath": filepath,
+            "start_line": start_line,
+            "end_line": end_line,
+        }
+
+        def fn():
+
+            path = self.safe_path(filepath)
+
+            if not path.exists():
+                raise FileNotFoundError(filepath)
+
+            lines = path.read_text(
+                encoding="utf-8",
+                errors="replace",
+            ).splitlines()
+
+            start = 1 if start_line is None else max(
+                1,
+                int(start_line),
+            )
+
+            end = (
+                len(lines)
+                if end_line is None
+                else min(
+                    len(lines),
+                    int(end_line),
+                )
+            )
+
+            return {
+                "filepath": filepath,
+                "start_line": start,
+                "end_line": end,
+                "content": "\n".join(
+                    f"{i}: {lines[i-1]}"
+                    for i in range(start, end + 1)
+                ),
+            }
+
+        return self._call(
+            "read_file",
+            arguments,
+            fn,
+        )
+
+    # ========================================================
+    # 3. EDIT FILE
+    # ========================================================
+
+    def edit_file(
+        self,
+        filepath,
+        old_string,
+        new_string,
+        allow_multiple=False,
+    ):
+
+        arguments = {
+            "filepath": filepath,
+            "old_string": old_string,
+            "new_string": new_string,
+            "allow_multiple": allow_multiple,
+        }
+
+        def fn():
+
+            path = self.safe_path(filepath)
+
+            if not path.exists():
+                raise FileNotFoundError(filepath)
+
+            content = path.read_text(
+                encoding="utf-8"
+            )
+
+            count = content.count(old_string)
+
+            if count == 0:
+                raise ValueError(
+                    "old_string was not found"
+                )
+
+            if count > 1 and not allow_multiple:
+                raise ValueError(
+                    f"old_string occurs {count} times; "
+                    "set allow_multiple=True"
+                )
+
+            if allow_multiple:
+                updated = content.replace(
+                    old_string,
+                    new_string,
+                )
+            else:
+                updated = content.replace(
+                    old_string,
+                    new_string,
+                    1,
+                )
+
+            path.write_text(
+                updated,
+                encoding="utf-8",
+            )
+
+            return {
+                "filepath": filepath,
+                "replacements": (
+                    count if allow_multiple else 1
+                ),
+                "changed": True,
+            }
+
+        return self._call(
+            "edit_file",
+            arguments,
+            fn,
+        )
+
+    # ========================================================
+    # 4. WRITE FILE
+    # ========================================================
+
+    def write_file(
+        self,
+        filepath,
+        content,
+    ):
+
+        arguments = {
+            "filepath": filepath,
+            "content": content,
+        }
+
+        def fn():
+
+            path = self.safe_path(filepath)
+
+            path.parent.mkdir(
+                parents=True,
+                exist_ok=True,
+            )
+
+            path.write_text(
+                content,
+                encoding="utf-8",
+            )
+
+            return {
+                "filepath": filepath,
+                "bytes": len(
+                    content.encode("utf-8")
+                ),
+                "written": True,
+            }
+
+        return self._call(
+            "write_file",
+            arguments,
+            fn,
+        )
+
+    # ========================================================
+    # 5. RUN COMMAND
+    # ========================================================
+
+    def run_command(self, command):
+
+        arguments = {
+            "command": command
+        }
+
+        def fn():
+
+            p = subprocess.run(
+                command,
+                shell=True,
+                cwd=self.repo_root,
+                capture_output=True,
+                text=True,
+                timeout=120,
+            )
+
+            return {
+                "command": command,
+                "stdout": p.stdout,
+                "stderr": p.stderr,
+                "return_code": p.returncode,
+                "passed": p.returncode == 0,
+            }
+
+        return self._call(
+            "run_command",
+            arguments,
+            fn,
+        )
+
+    # ========================================================
+    # 6. SUBMIT PATCH
+    # ========================================================
+
+    def submit_patch(self):
+
+        def fn():
+
+            # Make untracked files visible to git diff
+            subprocess.run(
+                ["git", "add", "-N", "."],
+                cwd=self.repo_root,
+                capture_output=True,
+                text=True,
+            )
+
+            p = subprocess.run(
+                ["git", "diff", "HEAD"],
+                cwd=self.repo_root,
+                capture_output=True,
+                text=True,
+            )
+
+            return {
+                "patch": p.stdout,
+                "return_code": p.returncode,
+                "has_changes": bool(
+                    p.stdout.strip()
+                ),
+            }
+
+        return self._call(
+            "submit_patch",
+            {},
+            fn,
+        )
+
+    # ========================================================
+    # 7. CODE NEIGHBORS
+    # ========================================================
+
+    def get_code_neighbors(
+        self,
+        node,
+        edge_type=None,
+        max_neighbors=50,
+    ):
+
+        arguments = {
+            "node": node,
+            "edge_type": edge_type,
+            "max_neighbors": max_neighbors,
+        }
+
+        def fn():
+
+            symbol = node.split("::")[-1]
+
+            results = []
+
+            for path in self.repo_root.rglob("*.py"):
+
+                if any(
+                    x in path.parts
+                    for x in [
+                        ".git",
+                        "__pycache__",
+                        ".pytest_cache",
+                    ]
+                ):
+                    continue
+
+                try:
+                    text = path.read_text(
+                        encoding="utf-8",
+                        errors="replace",
+                    )
+                except Exception:
+                    continue
+
+                for line_no, line in enumerate(
+                    text.splitlines(),
+                    1,
+                ):
+
+                    if symbol in line:
+
+                        results.append({
+                            "node": symbol,
+                            "file": str(
+                                path.relative_to(
+                                    self.repo_root
+                                )
+                            ),
+                            "line": line_no,
+                            "text": line.strip(),
+                        })
+
+                        if len(results) >= max_neighbors:
+                            return {
+                                "node": node,
+                                "edge_type": edge_type,
+                                "neighbors": results,
+                            }
+
+            return {
+                "node": node,
+                "edge_type": edge_type,
+                "neighbors": results,
+            }
+
+        return self._call(
+            "get_code_neighbors",
+            arguments,
+            fn,
+        )
+
+    # ========================================================
+    # 8. SEARCH SIMILAR CODE
+    # ========================================================
+
+    def search_similar_code(
+        self,
+        query,
+        k=10,
+    ):
+
+        arguments = {
+            "query": query,
+            "k": k,
+        }
+
+        def fn():
+
+            query_terms = set(
+                re.findall(
+                    r"[A-Za-z_][A-Za-z0-9_]+",
+                    query.lower(),
+                )
+            )
+
+            candidates = []
+
+            for path in self.repo_root.rglob("*.py"):
+
+                if any(
+                    x in path.parts
+                    for x in [
+                        ".git",
+                        "__pycache__",
+                        ".pytest_cache",
+                    ]
+                ):
+                    continue
+
+                try:
+                    text = path.read_text(
+                        encoding="utf-8",
+                        errors="replace",
+                    )
+                except Exception:
+                    continue
+
+                terms = set(
+                    re.findall(
+                        r"[A-Za-z_][A-Za-z0-9_]+",
+                        text.lower(),
+                    )
+                )
+
+                overlap = len(
+                    query_terms & terms
+                )
+
+                if overlap > 0:
+
+                    score = overlap / max(
+                        1,
+                        len(query_terms),
+                    )
+
+                    candidates.append({
+                        "file": str(
+                            path.relative_to(
+                                self.repo_root
+                            )
+                        ),
+                        "score": score,
+                    })
+
+            candidates.sort(
+                key=lambda x: x["score"],
+                reverse=True,
+            )
+
+            return candidates[:k]
+
+        return self._call(
+            "search_similar_code",
+            arguments,
+            fn,
+        )
+
+    # ========================================================
+    # 9. CODE SUBGRAPH
+    # ========================================================
+
+    def get_code_subgraph(self, nodes):
+
+        arguments = {
+            "nodes": nodes
+        }
+
+        def fn():
+
+            graph_nodes = []
+
+            for node in nodes:
+
+                symbol = node.split("::")[-1]
+
+                neighbors = self.get_code_neighbors(
+                    symbol,
+                    max_neighbors=10,
+                )
+
+                graph_nodes.append({
+                    "node": node,
+                    "neighbors": neighbors,
+                })
+
+            return {
+                "nodes": graph_nodes
+            }
+
+        return self._call(
+            "get_code_subgraph",
+            arguments,
+            fn,
+        )
+
+
+print("CompleteSWEEnvironment defined.")
+print("Tools:")
+print(
+    [
+        "run_command",
+        "submit_patch",
+        "get_status",
+        "read_file",
+        "edit_file",
+        "write_file",
+        "get_code_neighbors",
+        "search_similar_code",
+        "get_code_subgraph",
+    ]
+)
+
+# CELL 14 code
+# ============================================================
+# CELL 9 — REAL SWE AGENT CORE
+# ============================================================
+
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional
+import json
+import re
+
+
+# ============================================================
+# AGENT STATE
+# ============================================================
+
+@dataclass
+class AgentState:
+
+    issue: str
+
+    messages: List[Dict[str, Any]] = field(
+        default_factory=list
+    )
+
+    steps: int = 0
+
+    max_steps: int = 30
+
+    status: str = "running"
+
+    last_observation: Optional[Any] = None
+
+    patch: Optional[str] = None
+
+    tests_passed: bool = False
+
+
+# ============================================================
+# TOOL REGISTRY
+# ============================================================
+
+class ToolRegistry:
+
+    def __init__(self, environment):
+
+        self.environment = environment
+
+        self.tools = {
+            "get_status":
+                environment.get_status,
+
+            "read_file":
+                environment.read_file,
+
+            "edit_file":
+                environment.edit_file,
+
+            "write_file":
+                environment.write_file,
+
+            "run_command":
+                environment.run_command,
+
+            "submit_patch":
+                environment.submit_patch,
+
+            "get_code_neighbors":
+                environment.get_code_neighbors,
+
+            "search_similar_code":
+                environment.search_similar_code,
+
+            "get_code_subgraph":
+                environment.get_code_subgraph,
+        }
+
+
+    def execute(
+        self,
+        tool_name: str,
+        arguments: Dict[str, Any],
+    ):
+
+        if tool_name not in self.tools:
+
+            return {
+                "error":
+                    f"Unknown tool: {tool_name}"
+            }
+
+        try:
+
+            result = self.tools[
+                tool_name
+            ](**arguments)
+
+            return result
+
+        except Exception as e:
+
+            return {
+                "error": str(e)
+            }
+
+
+# ============================================================
+# TOOL CALL PARSER
+# ============================================================
+
+class ToolCallParser:
+
+    """
+    Expected model output:
+
+    <tool_call>
+    {
+        "tool": "search_similar_code",
+        "arguments": {
+            "query": "separability matrix",
+            "k": 5
+        }
+    }
+    </tool_call>
+    """
+
+    TOOL_PATTERN = re.compile(
+        r"<tool_call>\s*(.*?)\s*</tool_call>",
+        re.DOTALL,
+    )
+
+
+    @classmethod
+    def parse(cls, text):
+
+        match = cls.TOOL_PATTERN.search(
+            text
+        )
+
+        if not match:
+
+            return None
+
+        payload = match.group(1)
+
+        try:
+
+            data = json.loads(payload)
+
+        except json.JSONDecodeError:
+
+            return {
+                "error":
+                    "Invalid JSON tool call",
+                "raw": payload,
+            }
+
+        return {
+            "tool":
+                data.get("tool"),
+
+            "arguments":
+                data.get("arguments", {}),
+        }
+
+
+# ============================================================
+# MODEL INTERFACE
+# ============================================================
+
+class ModelPolicy:
+
+    """
+    Interface between the SWE Agent and Gemma.
+
+    Gemma will implement generate().
+    """
+
+    def generate(
+        self,
+        messages: List[Dict[str, Any]],
+    ) -> str:
+
+        raise NotImplementedError
+
+
+# ============================================================
+# SWE AGENT
+# ============================================================
+
+class SWEAgent:
+
+    def __init__(
+        self,
+        model: ModelPolicy,
+        environment,
+        max_steps=30,
+    ):
+
+        self.model = model
+
+        self.environment = environment
+
+        self.registry = ToolRegistry(
+            environment
+        )
+
+        self.max_steps = max_steps
+
+
+    # --------------------------------------------------------
+    # SYSTEM PROMPT
+    # --------------------------------------------------------
+
+    def system_prompt(self):
+
+        return """
+You are an autonomous software engineering agent.
+
+Your task is to solve repository-level software issues.
+
+You have access to tools for:
+
+- repository inspection
+- code search
+- code graph navigation
+- reading files
+- editing files
+- writing files
+- running commands and tests
+- submitting patches
+
+WORKFLOW:
+
+1. Understand the issue.
+2. Inspect repository state.
+3. Locate relevant code.
+4. Read the relevant implementation.
+5. Inspect related symbols when useful.
+6. Form a concrete hypothesis.
+7. Modify the minimum necessary code.
+8. Run targeted tests.
+9. Analyze failures.
+10. Repair if necessary.
+11. Submit the final patch.
+
+Never invent repository contents.
+Use tools to inspect the repository.
+
+When using a tool, output:
+
+<tool_call>
+{
+  "tool": "TOOL_NAME",
+  "arguments": {}
+}
+</tool_call>
+
+Continue reasoning from the returned observation.
+"""
+
+
+    # --------------------------------------------------------
+    # INITIALIZE
+    # --------------------------------------------------------
+
+    def initialize(self, issue):
+
+        state = AgentState(
+            issue=issue,
+            max_steps=self.max_steps,
+        )
+
+        state.messages.append({
+            "role": "system",
+            "content":
+                self.system_prompt(),
+        })
+
+        state.messages.append({
+            "role": "user",
+            "content": issue,
+        })
+
+        return state
+
+
+    # --------------------------------------------------------
+    # EXECUTE TOOL
+    # --------------------------------------------------------
+
+    def execute_tool(
+        self,
+        state,
+        tool_call,
+    ):
+
+        tool_name = tool_call["tool"]
+
+        arguments = tool_call.get(
+            "arguments",
+            {},
+        )
+
+        observation = self.registry.execute(
+            tool_name,
+            arguments,
+        )
+
+        state.messages.append({
+            "role": "assistant",
+            "content":
+                json.dumps(
+                    tool_call,
+                    ensure_ascii=False,
+                ),
+        })
+
+        state.messages.append({
+            "role": "tool",
+            "name": tool_name,
+            "content":
+                json.dumps(
+                    observation,
+                    ensure_ascii=False,
+                    default=str,
+                ),
+        })
+
+        state.last_observation = observation
+
+        state.steps += 1
+
+        return observation
+
+
+    # --------------------------------------------------------
+    # RUN
+    # --------------------------------------------------------
+
+    def run(self, issue):
+
+        state = self.initialize(
+            issue
+        )
+
+        while (
+            state.status == "running"
+            and state.steps < state.max_steps
+        ):
+
+            # Ask the model what to do next
+            response = self.model.generate(
+                state.messages
+            )
+
+            # ------------------------------------------------
+            # FINAL RESPONSE
+            # ------------------------------------------------
+
+            if "<tool_call>" not in response:
+
+                state.messages.append({
+                    "role": "assistant",
+                    "content": response,
+                })
+
+                state.status = "finished"
+
+                break
+
+
+            # ------------------------------------------------
+            # PARSE TOOL CALL
+            # ------------------------------------------------
+
+            tool_call = ToolCallParser.parse(
+                response
+            )
+
+            if not tool_call:
+
+                state.messages.append({
+                    "role": "tool",
+                    "name": "parser",
+                    "content":
+                        "Invalid tool call format.",
+                })
+
+                state.steps += 1
+
+                continue
+
+
+            if "error" in tool_call:
+
+                state.messages.append({
+                    "role": "tool",
+                    "name": "parser",
+                    "content":
+                        json.dumps(
+                            tool_call
+                        ),
+                })
+
+                state.steps += 1
+
+                continue
+
+
+            # ------------------------------------------------
+            # EXECUTE TOOL
+            # ------------------------------------------------
+
+            self.execute_tool(
+                state,
+                tool_call,
+            )
+
+
+            # ------------------------------------------------
+            # STOP AFTER SUBMIT PATCH
+            # ------------------------------------------------
+
+            if (
+                tool_call["tool"]
+                == "submit_patch"
+            ):
+
+                state.patch = (
+                    state.last_observation
+                )
+
+                state.status = "finished"
+
+                break
+
+
+        if state.steps >= state.max_steps:
+
+            state.status = "max_steps"
+
+
+        return state
+
+
+print("SWE Agent Core created.")
+print("Tools:", 9)
+print("Max reasoning/tool steps:", 30)
+
+# CELL 15 code
+import os
+
+for root, dirs, files in os.walk("/kaggle/input/competitions"):
+    level = root.replace("/kaggle/input/competitions", "").count(os.sep)
+    indent = "  " * level
+    
+    print(indent + os.path.basename(root) + "/")
+    
+    for f in files[:5]:
+        print(indent + "  " + f)
+
+# CELL 16 code
+# ============================================================
+# READ THE OFFICIAL COMPETITION HARNESS
+# ============================================================
+
+BASE = "/kaggle/input/competitions/gemma-4-developer-agent"
+
+print("===== HARNESS_README.md =====\n")
+
+with open(f"{BASE}/HARNESS_README.md", "r", encoding="utf-8") as f:
+    harness = f.read()
+
+print(harness)
+
+print("\n\n===== SAMPLE AGENT =====\n")
+
+with open(
+    f"{BASE}/sample_submission/agent.yaml",
+    "r",
+    encoding="utf-8"
+) as f:
+    print(f.read())
+
+print("\n\n===== SAMPLE SYSTEM PROMPT =====\n")
+
+with open(
+    f"{BASE}/sample_submission/prompts/system.md",
+    "r",
+    encoding="utf-8"
+) as f:
+    print(f.read())
+
+# CELL 17 code
+# ============================================================
+# CELL — INSPECT PROVIDED LORA ADAPTERS
+# ============================================================
+
+import json
+import os
+
+BASE = "/kaggle/input/competitions/gemma-4-developer-agent"
+
+for adapter_name in ["main_lora", "tool_lora"]:
+    path = f"{BASE}/sample_submission/adapters/{adapter_name}/adapter_config.json"
+
+    print("\n" + "=" * 70)
+    print(adapter_name)
+    print("=" * 70)
+
+    with open(path, "r", encoding="utf-8") as f:
+        config = json.load(f)
+
+    print(json.dumps(config, indent=2))
+
+    model_file = (
+        f"{BASE}/sample_submission/adapters/"
+        f"{adapter_name}/adapter_model.safetensors"
+    )
+
+    print("\nAdapter file size:")
+    print(f"{os.path.getsize(model_file) / (1024**2):.2f} MB")
+
+# CELL 18 code
+# ============================================================
+# CELL — BUILD REAL GEMMA 4 SWE AGENT
+# ============================================================
+
+from pathlib import Path
+import shutil
+
+BASE = Path("/kaggle/input/competitions/gemma-4-developer-agent")
+WORK = Path("/kaggle/working/gemma4_swe_submission")
+
+if WORK.exists():
+    shutil.rmtree(WORK)
+
+WORK.mkdir(parents=True)
+
+# Copy official adapters
+shutil.copytree(
+    BASE / "sample_submission" / "adapters",
+    WORK / "adapters"
+)
+
+# Create required directories
+(WORK / "prompts").mkdir(parents=True)
+(WORK / "configs").mkdir(parents=True)
+(WORK / "sub_agents").mkdir(parents=True)
+
+print("Submission workspace created:")
+print(WORK)
+
+# CELL 19 code
+# ============================================================
+# CELL — CREATE REAL AGENT CONFIG + SYSTEM PROMPTS
+# ============================================================
+
+from pathlib import Path
+
+WORK = Path("/kaggle/working/gemma4_swe_submission")
+
+# ------------------------------------------------------------
+# 1. ROOT AGENT
+# ------------------------------------------------------------
+
+agent_yaml = """\
+name: gemma4_swe_agent
+model: gemma-4-31b-it-qat-w4a16-ct
+adapter: main_lora
+
+instruction: !include prompts/system.md
+
+tools:
+  - run_command
+  - read_file
+  - edit_file
+  - write_file
+  - get_status
+  - submit_patch
+  - get_code_neighbors
+  - search_similar_code
+  - get_code_subgraph
+
+  - agent_tool:
+      config_path: sub_agents/code_analyzer.yaml
+      skip_summarization: true
+
+generate_content_config: !include configs/sampling.yaml
+"""
+
+(WORK / "agent.yaml").write_text(
+    agent_yaml,
+    encoding="utf-8"
+)
+
+
+# ------------------------------------------------------------
+# 2. MAIN SYSTEM PROMPT
+# ------------------------------------------------------------
+
+system_prompt = r"""\
+# Gemma 4 Autonomous Software Engineering Agent
+
+You are an autonomous software engineering agent operating inside
+a real repository at /workspace.
+
+Your objective is simple:
+
+> Solve the reported software issue and submit the smallest correct patch.
+
+The final patch will be applied to a clean copy of the repository
+and evaluated using the repository's validation tests.
+
+You must work autonomously.
+
+---
+
+## CORE WORKFLOW
+
+Follow this loop:
+
+1. Understand the problem.
+2. Identify the relevant files and symbols.
+3. Inspect only the necessary code.
+4. Use code intelligence when useful.
+5. Form a concrete hypothesis about the bug.
+6. Implement the minimal correct fix.
+7. Run targeted validation.
+8. Inspect the resulting diff.
+9. Submit the patch immediately.
+
+Do not spend the entire budget exploring the repository.
+
+---
+
+## IMPORTANT RULES
+
+### Repository
+
+- Work only inside /workspace.
+- Never access files outside /workspace.
+- Do not modify the test suite.
+- Do not modify the evaluation harness.
+- Do not modify pytest.ini or conftest.py generated by the harness.
+- Do not create unnecessary files.
+- Put temporary experiments in /tmp and clean them before submission.
+
+### Code changes
+
+Prefer:
+
+- minimal changes
+- existing project conventions
+- existing APIs
+- backwards-compatible behavior
+- localized fixes
+
+Avoid:
+
+- large refactors
+- unnecessary abstractions
+- rewriting unrelated code
+- changing public APIs unless required
+- speculative fixes
+
+### Investigation
+
+Start narrow.
+
+Use:
+
+- read_file
+- run_command
+- search_similar_code
+- get_code_neighbors
+- get_code_subgraph
+
+Do not blindly dump the whole repository.
+
+When the relevant symbol is known, inspect that symbol and its
+neighbors instead of reading unrelated files.
+
+---
+
+## CODE INTELLIGENCE
+
+The repository may contain precomputed code graphs and embeddings.
+
+Use them when they provide useful localization.
+
+### search_similar_code
+
+Use this for:
+
+- symbol names
+- class names
+- function names
+- API concepts
+- distinctive code concepts
+
+Examples:
+
+- "RequestValidationError"
+- "connection pool initialization"
+- "response serialization"
+
+Do not use it as a replacement for ordinary repository search.
+
+### get_code_neighbors
+
+Use this when you have identified a relevant symbol and need to
+understand its callers, callees, or dependencies.
+
+### get_code_subgraph
+
+Use this when several related symbols form the core of the bug.
+
+---
+
+## COMMAND EXECUTION
+
+Use run_command for focused repository operations.
+
+Good examples:
+
+- grep -R "SymbolName" .
+- find . -path '*target*'
+- sed -n '100,180p' path/to/file.py
+- python -m pytest path/to/test_file.py -q
+- git diff
+
+Avoid:
+
+- bare pytest
+- full repository test suites unless absolutely necessary
+- recursive commands that produce enormous output
+
+The goal is targeted investigation and targeted validation.
+
+---
+
+## EDITING
+
+Use edit_file whenever possible for modifying an existing file.
+
+Use write_file when a new file is genuinely required.
+
+Keep edits small.
+
+After editing:
+
+1. inspect the changed region
+2. run the most relevant targeted test
+3. inspect git diff
+
+---
+
+## TESTING
+
+Testing is evidence, not the objective.
+
+Prefer the smallest relevant test.
+
+Examples:
+
+- one test file
+- one test class
+- one test function
+- a focused command reproducing the bug
+
+Do not run the entire test suite merely because it exists.
+
+If the repository has an obvious targeted validation command,
+use that command.
+
+---
+
+## PATCH SUBMISSION
+
+The objective is to produce a non-empty correct patch.
+
+Before submission:
+
+- verify the intended source files changed
+- verify tests were not modified
+- inspect git diff
+- remove temporary files
+- submit the patch
+
+Use:
+
+submit_patch()
+
+Do not continue exploring after the solution is sufficiently
+validated.
+
+---
+
+## REASONING STRATEGY
+
+For every issue, internally establish:
+
+### Symptom
+
+What behavior is wrong?
+
+### Location
+
+Which file/function/class controls that behavior?
+
+### Cause
+
+Why does the current implementation produce the observed behavior?
+
+### Fix
+
+What is the smallest change that corrects the cause?
+
+### Regression risk
+
+What existing behavior must remain unchanged?
+
+Then implement the fix.
+
+---
+
+## FAILURE RECOVERY
+
+If the first hypothesis is wrong:
+
+1. inspect the failing output
+2. identify the new evidence
+3. revise the hypothesis
+4. make the smallest necessary correction
+5. rerun the targeted validation
+
+Do not repeatedly make unrelated edits.
+
+---
+
+## FINAL BEHAVIOR
+
+Once the issue is fixed and sufficiently validated:
+
+submit_patch()
+
+Do not wait for another instruction.
+"""
+
+(WORK / "prompts" / "system.md").write_text(
+    system_prompt,
+    encoding="utf-8"
+)
+
+
+# ------------------------------------------------------------
+# 3. READ-ONLY CODE ANALYZER SUB-AGENT
+# ------------------------------------------------------------
+
+analyzer_yaml = r"""\
+name: code_analyzer
+model: gemma-4-31b-it-qat-w4a16-ct
+adapter: tool_lora
+
+instruction: !include ../prompts/analyzer.md
+
+tools:
+  - run_command
+  - read_file
+  - get_code_neighbors
+  - search_similar_code
+  - get_code_subgraph
+
+generate_content_config: !include ../configs/sampling.yaml
+"""
+
+(WORK / "sub_agents" / "code_analyzer.yaml").write_text(
+    analyzer_yaml,
+    encoding="utf-8"
+)
+
+
+# ------------------------------------------------------------
+# 4. ANALYZER PROMPT
+# ------------------------------------------------------------
+
+analyzer_prompt = r"""\
+# Code Analysis Specialist
+
+You are a read-only software repository analysis specialist.
+
+Your job is to help the main SWE agent understand an unfamiliar
+codebase quickly.
+
+You do NOT modify files.
+
+You do NOT create patches.
+
+You do NOT run destructive commands.
+
+Your output should be concise and actionable.
+
+---
+
+## TASK
+
+Given a software issue, determine:
+
+1. likely relevant files
+2. relevant classes/functions
+3. important callers/callees
+4. likely execution path
+5. likely location of the bug
+6. useful tests to inspect
+
+Use repository evidence rather than speculation.
+
+---
+
+## AVAILABLE INVESTIGATION
+
+Use:
+
+- read_file
+- run_command
+- search_similar_code
+- get_code_neighbors
+- get_code_subgraph
+
+Prefer targeted inspection.
+
+Do not dump entire repositories.
+
+---
+
+## OUTPUT FORMAT
+
+Return:
+
+### Relevant files
+- path
+- why it matters
+
+### Relevant symbols
+- symbol
+- role
+
+### Execution path
+A short description of how the relevant code flows.
+
+### Likely root cause
+Explain the most likely cause and cite the relevant code location.
+
+### Recommended fix area
+Identify where the main agent should make the change.
+
+### Targeted validation
+Suggest the smallest useful test or command.
+
+Do not implement the fix.
+"""
+
+(WORK / "prompts" / "analyzer.md").write_text(
+    analyzer_prompt,
+    encoding="utf-8"
+)
+
+
+# ------------------------------------------------------------
+# 5. GENERATION CONFIG
+# ------------------------------------------------------------
+
+sampling_yaml = """\
+temperature: 0.15
+top_p: 0.90
+max_output_tokens: 4096
+"""
+
+(WORK / "configs" / "sampling.yaml").write_text(
+    sampling_yaml,
+    encoding="utf-8"
+)
+
+
+print("REAL GEMMA 4 SWE AGENT CREATED")
+print("=" * 70)
+
+for path in [
+    WORK / "agent.yaml",
+    WORK / "prompts" / "system.md",
+    WORK / "prompts" / "analyzer.md",
+    WORK / "configs" / "sampling.yaml",
+    WORK / "sub_agents" / "code_analyzer.yaml",
+]:
+    print(f"✓ {path.relative_to(WORK)}")
+
+# CELL 20 code
+# ============================================================
+# CELL — ADD GRAPH REASONING SKILL
+# ============================================================
+
+from pathlib import Path
+
+WORK = Path("/kaggle/working/gemma4_swe_submission")
+
+SKILL = WORK / "skills" / "repo_navigation"
+SKILL.mkdir(parents=True, exist_ok=True)
+
+skill_md = r"""---
+name: repo_navigation
+description: >
+  Structured repository navigation using code search, dependency
+  neighbors, and code subgraphs to localize software bugs efficiently.
+---
+
+# Repository Navigation Skill
+
+Use this skill when the bug is difficult to localize or when several
+functions/classes interact.
+
+The goal is NOT to explore the entire repository.
+
+The goal is to identify the smallest relevant execution path.
+
+---
+
+## 1. Start with the issue
+
+Extract:
+
+- error message
+- affected behavior
+- named class/function/module
+- expected behavior
+- actual behavior
+
+Create a short internal hypothesis.
+
+---
+
+## 2. Locate symbols
+
+If the issue names a symbol, inspect it directly.
+
+If the symbol is unknown, use:
+
+search_similar_code("<symbol or code concept>", k=10)
+
+Good queries:
+
+- class/function names
+- API names
+- distinctive implementation concepts
+
+Avoid vague natural-language questions.
+
+---
+
+## 3. Expand locally
+
+Once a relevant symbol is found:
+
+get_code_neighbors(
+    "<symbol>",
+    max_neighbors=20
+)
+
+Use neighbors to identify:
+
+- callers
+- callees
+- inheritance
+- dependencies
+- related implementation
+
+Do not expand recursively without a reason.
+
+---
+
+## 4. Build a focused subgraph
+
+When multiple relevant symbols have been identified:
+
+get_code_subgraph([
+    "SymbolA",
+    "SymbolB",
+    "SymbolC"
+])
+
+Use the subgraph to understand how the components interact.
+
+The subgraph should remain small and problem-specific.
+
+---
+
+## 5. Combine graph evidence with source code
+
+Graph information is localization evidence.
+
+It is NOT sufficient to make a code change.
+
+Always inspect the actual implementation using:
+
+read_file()
+
+before editing.
+
+---
+
+## 6. Navigation strategy
+
+Use this progression:
+
+Issue
+  ↓
+Symbol localization
+  ↓
+Source inspection
+  ↓
+Code neighbors
+  ↓
+Focused subgraph
+  ↓
+Root-cause hypothesis
+  ↓
+Minimal patch
+  ↓
+Targeted validation
+  ↓
+submit_patch()
+
+Do not continue graph exploration after the relevant execution path
+is sufficiently understood.
+
+---
+
+## 7. Avoid graph overuse
+
+Do NOT:
+
+- inspect the entire graph
+- request huge neighbor lists
+- build large unrelated subgraphs
+- use embeddings for every trivial bug
+
+For simple issues, ordinary source inspection is enough.
+
+---
+
+## 8. Final localization contract
+
+Before editing, the main agent should be able to answer:
+
+1. Which file contains the bug?
+2. Which symbol contains the bug?
+3. Who calls that symbol?
+4. What input/state causes the failure?
+5. Why does the current code produce the wrong behavior?
+6. What is the smallest safe change?
+
+If these questions cannot be answered, continue targeted investigation.
+
+If they can, stop exploring and implement the fix.
+"""
+
+(SKILL / "SKILL.md").write_text(
+    skill_md,
+    encoding="utf-8"
+)
+
+print("GRAPH REASONING SKILL CREATED")
+print("=" * 70)
+print(SKILL / "SKILL.md")
+
+# CELL 21 code
+# ============================================================
+# CELL — BUILD FINAL SUBMISSION.ZIP
+# ============================================================
+
+from pathlib import Path
+import shutil
+import zipfile
+import os
+
+WORK = Path("/kaggle/working/gemma4_swe_submission")
+ZIP_PATH = Path("/kaggle/working/submission.zip")
+
+# Remove old zip if it exists
+if ZIP_PATH.exists():
+    ZIP_PATH.unlink()
+
+# ------------------------------------------------------------
+# Build ZIP
+# ------------------------------------------------------------
+
+with zipfile.ZipFile(
+    ZIP_PATH,
+    "w",
+    compression=zipfile.ZIP_DEFLATED
+) as z:
+
+    for path in WORK.rglob("*"):
+        if path.is_file():
+            arcname = path.relative_to(WORK)
+            z.write(path, arcname)
+
+# ------------------------------------------------------------
+# Inspect archive
+# ------------------------------------------------------------
+
+print("=" * 70)
+print("FINAL SUBMISSION")
+print("=" * 70)
+
+print(f"ZIP: {ZIP_PATH}")
+print(f"Size: {ZIP_PATH.stat().st_size / (1024**2):.2f} MB")
+
+print("\nArchive contents:")
+print("-" * 70)
+
+with zipfile.ZipFile(ZIP_PATH, "r") as z:
+    names = z.namelist()
+
+    for name in names:
+        print(name)
+
+# ------------------------------------------------------------
+# Required structure checks
+# ------------------------------------------------------------
+
+required = [
+    "agent.yaml",
+    "prompts/system.md",
+    "prompts/analyzer.md",
+    "configs/sampling.yaml",
+    "sub_agents/code_analyzer.yaml",
+    "skills/repo_navigation/SKILL.md",
+    "adapters/main_lora/adapter_config.json",
+    "adapters/main_lora/adapter_model.safetensors",
+    "adapters/tool_lora/adapter_config.json",
+    "adapters/tool_lora/adapter_model.safetensors",
+]
+
+missing = [x for x in required if x not in names]
+
+print("\n" + "=" * 70)
+
+if missing:
+    print("MISSING FILES:")
+    for item in missing:
+        print("  ✗", item)
+else:
+    print("✓ ALL REQUIRED SUBMISSION FILES PRESENT")
+
+print("=" * 70)
+
+print("\nREADY:")
+print(ZIP_PATH)
+
+# CELL 22 code
+# ============================================================
+# CELL — BUILD REAL SWE SFT DATASET
+# ============================================================
+
+import json
+from pathlib import Path
+
+BASE = Path("/kaggle/input/competitions/gemma-4-developer-agent")
+OUT = Path("/kaggle/working/gemma4_swe_training")
+
+OUT.mkdir(parents=True, exist_ok=True)
+
+tasks_file = BASE / "tasks.jsonl"
+
+records = []
+
+with open(tasks_file, "r", encoding="utf-8") as f:
+    for line in f:
+        line = line.strip()
+
+        if not line:
+            continue
+
+        records.append(json.loads(line))
+
+print("=" * 70)
+print("REAL SWE TASK DATA")
+print("=" * 70)
+
+print("Total tasks:", len(records))
+
+# Inspect first task
+print("\nFIRST TASK")
+print("-" * 70)
+
+print(json.dumps(records[0], indent=2, ensure_ascii=False)[:6000])
+
+# CELL 23 code
+# ============================================================
+# CELL — ANALYZE SWE TASK STRUCTURE
+# ============================================================
+
+from collections import Counter
+
+print("=" * 70)
+print("SWE TASK STRUCTURE")
+print("=" * 70)
+
+# Keys
+key_counts = Counter()
+
+for task in records:
+    key_counts.update(task.keys())
+
+print("\nFields:")
+for key, count in key_counts.items():
+    print(f"  {key:25s} -> {count}")
+
+# ------------------------------------------------------------
+# Basic statistics
+# ------------------------------------------------------------
+
+print("\n" + "-" * 70)
+print("TASK STATISTICS")
+print("-" * 70)
+
+repos = Counter(task.get("repo") for task in records)
+
+print("Total tasks:", len(records))
+print("Unique repositories:", len(repos))
+
+print("\nRepositories:")
+for repo, count in repos.most_common():
+    print(f"  {repo:35s} {count}")
+
+# ------------------------------------------------------------
+# Patch statistics
+# ------------------------------------------------------------
+
+patch_lengths = [
+    len(task.get("patch", ""))
+    for task in records
+]
+
+print("\nPatch statistics:")
+print("  min chars :", min(patch_lengths))
+print("  max chars :", max(patch_lengths))
+print("  avg chars :", round(sum(patch_lengths) / len(patch_lengths), 1))
+
+# ------------------------------------------------------------
+# Show metadata only
+# ------------------------------------------------------------
+
+print("\n" + "-" * 70)
+print("FIRST TASK METADATA")
+print("-" * 70)
+
+first = records[0]
+
+for key, value in first.items():
+    if key == "patch":
+        print(f"{key}: <patch omitted, {len(value)} chars>")
+    else:
+        text = str(value)
+
+        if len(text) > 1000:
+            text = text[:1000] + "..."
+
+        print(f"{key}: {text}")
+
+# CELL 24 code
+# ============================================================
+# CELL — INSTALL / PREPARE LORA TRAINING STACK
+# ============================================================
+
+import sys
+import subprocess
+
+packages = [
+    "transformers",
+    "peft",
+    "trl",
+    "datasets",
+    "accelerate",
+    "bitsandbytes",
+    "safetensors",
+]
+
+subprocess.check_call([
+    sys.executable,
+    "-m",
+    "pip",
+    "install",
+    "-q",
+    *packages,
+])
+
+print("LoRA training stack ready.")
+
+# CELL 25 code
+# ============================================================
+# CELL — PREPARE TRAINABLE LORA CONFIG
+# ============================================================
+
+import os
+import torch
+from peft import LoraConfig
+
+print("=" * 70)
+print("GPU / LORA TRAINING SETUP")
+print("=" * 70)
+
+print("PyTorch:", torch.__version__)
+print("CUDA available:", torch.cuda.is_available())
+
+if torch.cuda.is_available():
+    print("CUDA:", torch.version.cuda)
+    print("GPU count:", torch.cuda.device_count())
+
+    for i in range(torch.cuda.device_count()):
+        gpu = torch.cuda.get_device_properties(i)
+
+        print(
+            f"GPU {i}: {gpu.name} | "
+            f"VRAM: {gpu.total_memory / 1024**3:.1f} GB"
+        )
+else:
+    raise RuntimeError(
+        "CUDA is not available. LoRA training requires GPU."
+    )
+
+# ------------------------------------------------------------
+# Trainable adapter
+# ------------------------------------------------------------
+
+lora_config = LoraConfig(
+    r=16,
+    lora_alpha=32,
+    lora_dropout=0.05,
+
+    target_modules=[
+        "q_proj",
+        "k_proj",
+        "v_proj",
+        "o_proj",
+    ],
+
+    bias="none",
+    task_type="CAUSAL_LM",
+)
+
+print("\n" + "=" * 70)
+print("NEW LORA CONFIG")
+print("=" * 70)
+
+print("rank       :", lora_config.r)
+print("alpha      :", lora_config.lora_alpha)
+print("dropout    :", lora_config.lora_dropout)
+print("target     :", lora_config.target_modules)
+print("task       :", lora_config.task_type)
+
+print("\nAdapter name: main_lora_v1")
+
+# CELL 26 code
+import shutil
+from pathlib import Path
+
+source = Path("/kaggle/working/gemma4_swe_submission")
+output = "/kaggle/working/submission"
+
+shutil.make_archive(output, "zip", source)
+
+print("Created:")
+print("/kaggle/working/submission.zip")
+
+# CELL 27 code
+from pathlib import Path
+
+for p in Path("/kaggle/working").rglob("agent.yaml"):
+    print(p)

@@ -1,0 +1,71 @@
+# Thinking mode drops the model's thoughts between tool calls (vLLM ignores `reasoning_content`). Will the scoring environment be patched?
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/744354
+
+## 3530085 /wukeneth TOPIC
+Hi organizers,
+
+With thinking on (the scoring server's default), the thought the model writes before a tool call never reaches the prompt of the next step. The model has to re-derive its reasoning at every tool call. Gemma 4's docs say thoughts must be kept inside a tool-calling turn ("thoughts must NOT be removed between the function calls", [prompt formatting guide](https://ai.google.dev/gemma/docs/core/prompt-formatting-gemma4)).
+
+**Cause.** ADK (`google-adk` 1.36.1, `LiteLlm`) sends the previous thought as `reasoning_content`. vLLM 0.19.1 only reads `reasoning` from incoming messages (`vllm/entrypoints/chat_utils.py`, line 1512: `reasoning = message.get("reasoning")`), so the thought is dropped before the chat template sees it. The Gemma 4 template itself accepts both names. This is a known upstream bug: [vllm-project/vllm#38488](https://github.com/vllm-project/vllm/issues/38488), with a fix proposed in [vllm-project/vllm#42664](https://github.com/vllm-project/vllm/pull/42664).
+
+**Reproduction** (scoring vLLM config, `gemma-4-31b-it-qat-w4a16-ct` v2, 4×L4). Render one history (user → assistant tool call with a thought → tool result) through `/tokenize` + `/detokenize`, with the thought under different keys:
+
+```python
+import requests
+URL = "http://127.0.0.1:8000"
+model = requests.get(f"{URL}/v1/models").json()["data"][0]["id"]
+tools = [{"type": "function", "function": {"name": "get_time", "description": "Returns the current server time.",
+                                           "parameters": {"type": "object", "properties": {}}}}]
+thought = "The user wants the time. I will call get_time. My secret word is PAPAYAQUOKKA."
+
+def history(**extra):
+    return [{"role": "system", "content": "You are a careful assistant."},
+            {"role": "user", "content": "What time is it?"},
+            {"role": "assistant", "content": "", **extra,
+             "tool_calls": [{"id": "call_1", "type": "function", "function": {"name": "get_time", "arguments": "{}"}}]},
+            {"role": "tool", "tool_call_id": "call_1", "content": '{"time": "12:34"}'}]
+
+for label, extra in [("no thought", {}), ("reasoning_content", {"reasoning_content": thought}), ("reasoning", {"reasoning": thought})]:
+    body = {"model": model, "messages": history(**extra), "tools": tools,
+            "add_generation_prompt": True, "chat_template_kwargs": {"enable_thinking": True}}
+    toks = requests.post(f"{URL}/tokenize", json=body).json()["tokens"]
+    text = requests.post(f"{URL}/detokenize", json={"model": model, "tokens": toks}).json()["prompt"]
+    print(f"{label:18s} {len(toks):4d} tokens | thought in prompt: {'PAPAYAQUOKKA' in text}")
+```
+
+```
+no thought           86 tokens | thought in prompt: False
+reasoning_content    86 tokens | thought in prompt: False   <- what ADK sends
+reasoning           114 tokens | thought in prompt: True
+```
+
+**It happens in real harness runs.** In the 636 public thinking-on baseline runs shared by @zzgtylors, we looked at 3,640 consecutive tool-call steps (no user message in between, before compaction, previous step had a thought and ≥300 completion tokens). The next prompt grew by only a median **0.35×** of the previous reply; if the reply were kept, it would be at least 1×. With thinking off it is 1.1×.
+
+**Fix options (harness side; submissions cannot reach this layer):**
+- In vLLM `chat_utils.py`: `reasoning = message.get("reasoning") or message.get("reasoning_content")` (the upstream fix), or
+- Have the harness / ADK send the thought as `reasoning`.
+
+**Questions:**
+1. Can you confirm this is unintended?
+2. Will the scoring environment be patched, and roughly when? We need to know whether to tune submissions for thinking mode before the Dec 2 deadline.
+3. If it is patched, will existing submissions be re-scored under the fixed environment?
+
+Thanks!
+
+## 3530145 /ryanholbrook ADMIN
+Thanks for the heads up. Looks like this is a bug/incompatibility in how ADK and vLLM process reasoning tokens. vLLM [fixed](https://github.com/vllm-project/vllm/pull/42664) this in a later version. I'll add a patch accordingly and try to deploy later today. Unfortunately, due to compute constraints, we won't be able to rescore all existing submissions.
+
+## 3530683 /caleboleary COMMENT
+@ryanholbrook any update on this? Thanks
+
+## 3530709 /ryanholbrook ADMIN
+It's incoming.
+
+## 3531449 /thefusioncube COMMENT
+Yeah I was wondering why my SFT was rederiving its own reasoning so much. 
+
+## 3531052 /marcinstecki COMMENT
+Just to confirm, your intention is to fix it? This will majorly affect how the submission models are configured and trained. With the fix in place the agent hits compaction limits and context limits much earlier. 
+
+## 3531244 /ryanholbrook ADMIN
+Yes, this is unambiguously a bug. The fix should be in the current wheelhouse.

@@ -1,0 +1,102 @@
+{
+  "forumTopic": {
+    "authorId": 33040371,
+    "authorThumbnailName": "33040371-kg.jpg?t=2026-08-07-20-59-18",
+    "authorUserDisplayName": "Darío Ávalos",
+    "authorUserName": "darovalos",
+    "comments": [
+      {
+        "id": 3531178,
+        "postDate": "2026-10-01T12:44:51.030Z",
+        "rawMarkdown": "Same here, is there any way to find out what is behine \"Notebook Threw Exception\"?",
+        "content": "<p>Same here, is there any way to find out what is behine \"Notebook Threw Exception\"?</p>",
+        "parent": {},
+        "author": {
+          "displayName": "Hamed Seyed-allaei",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/193104-kg.jpg",
+          "url": "/pinocchio",
+          "tier": "EXPERT",
+          "id": 193104,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 1449,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Hamed Seyed-allaei",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/193104-kg.jpg",
+            "url": "/pinocchio",
+            "userName": "pinocchio",
+            "tier": "EXPERT",
+            "id": 193104,
+            "profileUrl": "/pinocchio",
+            "performanceTier": "EXPERT",
+            "userId": 193104,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3531055,
+      "postDate": "2026-10-01T08:10:21.083Z",
+      "rawMarkdown": "Hi @ryanholbrook,\n\nOur submission failed twice with \"Notebook Threw Exception\", both times within a few minutes, well before vLLM could have finished loading. The API reports both as COMPLETE with no score:\n\n- 2026-09-30 20:41 UTC (ID: <id 1>): failed about 3 minutes in.\n- 2026-10-01 07:42 UTC (ID: <id 2>): the exact same zip from the same notebook version, failed about 1 minute in.\n\nBoth come from notebook darovalos/g4-agent-submit, version 2.\n\nWhat we checked on our side:\n- The notebook only decodes an embedded submission.zip, verifies its sha256 and writes /kaggle/working/submission.zip. It runs without accelerator or internet. Its code and kernel metadata are identical to version 1, which scored normally on Sep 28.\n- The bundle differs from that scored one only in prompt text and YAML comments. It ships no adapters, and eval_config.yaml sets only the four supported keys.\n- The same zip compiles with adk-submission and ran 40 public tasks end to end with swegemma's Evaluator in a 4x L4 notebook on Sep 30.\n\nThe first failure matches the timing of the scorer changes you mentioned that day (wheelhouse v25, LoRA parameters sized per submission, the reasoning_content fix). Since our bundle has no adapters, could the LoRA sizing produce an invalid vLLM config when there are none? Only a guess.\n\nCould you check the logs and, if the cause is on the scoring side, rerun them? Is a CPU-only submission notebook like ours still supported? And is the change that scores unfinished tasks as 0 at the 12 h limit already live?\n\nThanks!",
+      "content": "<p>Hi <a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a>,</p>\n<p>Our submission failed twice with \"Notebook Threw Exception\", both times within a few minutes, well before vLLM could have finished loading. The API reports both as COMPLETE with no score:</p>\n<ul>\n<li>2026-09-30 20:41 UTC (ID: ): failed about 3 minutes in.</li>\n<li>2026-10-01 07:42 UTC (ID: ): the exact same zip from the same notebook version, failed about 1 minute in.</li>\n</ul>\n<p>Both come from notebook darovalos/g4-agent-submit, version 2.</p>\n<p>What we checked on our side:</p>\n<ul>\n<li>The notebook only decodes an embedded submission.zip, verifies its sha256 and writes /kaggle/working/submission.zip. It runs without accelerator or internet. Its code and kernel metadata are identical to version 1, which scored normally on Sep 28.</li>\n<li>The bundle differs from that scored one only in prompt text and YAML comments. It ships no adapters, and eval_config.yaml sets only the four supported keys.</li>\n<li>The same zip compiles with adk-submission and ran 40 public tasks end to end with swegemma's Evaluator in a 4x L4 notebook on Sep 30.</li>\n</ul>\n<p>The first failure matches the timing of the scorer changes you mentioned that day (wheelhouse v25, LoRA parameters sized per submission, the reasoning_content fix). Since our bundle has no adapters, could the LoRA sizing produce an invalid vLLM config when there are none? Only a guess.</p>\n<p>Could you check the logs and, if the cause is on the scoring side, rerun them? Is a CPU-only submission notebook like ours still supported? And is the change that scores unfinished tasks as 0 at the 12 h limit already live?</p>\n<p>Thanks!</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Darío Ávalos",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/33040371-kg.jpg?t=2026-08-07-20-59-18",
+        "url": "/darovalos",
+        "tier": "CONTRIBUTOR",
+        "id": 33040371,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 2,
+        "canUpvote": true,
+        "totalUpvotes": 2
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 1040,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Darío Ávalos",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/33040371-kg.jpg?t=2026-08-07-20-59-18",
+          "url": "/darovalos",
+          "userName": "darovalos",
+          "tier": "CONTRIBUTOR",
+          "id": 33040371,
+          "profileUrl": "/darovalos",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 33040371,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3531055,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 744861,
+    "name": "Same submission failed twice with \"Notebook Threw Exception\" within minutes (Sep 30 and Oct 1), no adapters",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-10-01T08:10:21.082764100Z",
+    "totalVotes": 2,
+    "url": "/competitions/gemma-4-developer-agent/discussion/744861",
+    "totalMessages": 1,
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

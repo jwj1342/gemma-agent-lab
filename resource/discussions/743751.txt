@@ -1,0 +1,20 @@
+# Needs clarifications on Agent Architecture + Graph/Embeddings
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743751
+
+## 3528894 /rahulrathnavel TOPIC
+A.Agent architecture
+1)can a custom skill carry substantial precomputed repository metadata?(what it should not carry list can be pretty useful)
+2)how many LLM sub-agents can be invoked?
+3)are sub-agent calls counted against the same global task time?
+4)re parallel sub-agents actually useful given sequential task execution?
+5)is there a limit on nested agent depth?
+6)are custom tools limited to deterministic code?
+
+B.Graph/embedding resources
+1)Is the graph built from AST only or AST + semantic dependencies or how in which basis?
+2)what exactly does embedding similarity represent?
+3)are embeddings indexed per snapshot/commit?
+4)are the zero-byte graph files a known release bug?
+5)will corrected graph files be released?how soon?
+6)will corrected embedding files be released?how soon?
+7)are async functions intentionally missing or a preprocessing bug?

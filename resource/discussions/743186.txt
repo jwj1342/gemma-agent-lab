@@ -1,0 +1,15 @@
+# Suggestions on infra for post training, SFT, and RL?
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743186
+
+## 3527986 /thefusioncube TOPIC
+How exactly are we supposed to post train? Do we have to do it on our own GPUs (of which I have 64 gb of VRAM, which can't load the full gemma-4-31B-it-qat-q4_0-unquantized model for post-training, which is ~63 gigs of VRAM just to sit on disk), or can we use Kaggle notebooks for it. Furthermore, if we aren't supposed to use Kaggle notebooks for training, can we use QLoRA feasibly without severe degradation, and if we are, are 4x L4's considered sufficient for post training purposes or could more/higher quality compute be provided later on? 
+
+## 3530722 /aelhajj COMMENT
+Usually I would say Google Colab, and Kaggle. 
+
+Guide from unsloth : https://unsloth.ai/docs/models/gemma-4/qat 
+
+You can also test it out without training, helping you optimize quite a bit, on HuggingFace inference endpoints, there's several hosts for this model.
+
+## 3528160 / COMMENT
+

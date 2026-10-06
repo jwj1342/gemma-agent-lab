@@ -1,0 +1,426 @@
+# CELL 0 code
+from pathlib import Path
+import json
+import hashlib
+import yaml
+
+
+# ------------------------------------------------------------
+# 1. Saved artifact location
+# ------------------------------------------------------------
+
+MODEL_ROOT = Path(
+    "/kaggle/input/models/jek1wantaufik/buddy/transformers/gemma4/1"
+)
+
+EXPERIMENT_CARD = MODEL_ROOT / "experiment_card.json"
+
+SUBMISSION_DIR = MODEL_ROOT / "submission"
+BUNDLE_DIR = MODEL_ROOT / "submission_bundle"
+
+
+# ------------------------------------------------------------
+# 2. Select submission directory
+# ------------------------------------------------------------
+
+if SUBMISSION_DIR.exists():
+    ARTIFACT_DIR = SUBMISSION_DIR
+elif BUNDLE_DIR.exists():
+    ARTIFACT_DIR = BUNDLE_DIR
+else:
+    raise FileNotFoundError(
+        "No saved submission directory found."
+    )
+
+
+# ------------------------------------------------------------
+# 3. Load experiment card
+# ------------------------------------------------------------
+
+if not EXPERIMENT_CARD.exists():
+    raise FileNotFoundError(
+        f"Missing: {EXPERIMENT_CARD}"
+    )
+
+with EXPERIMENT_CARD.open("r", encoding="utf-8") as f:
+    EXPERIMENT = json.load(f)
+
+
+# ------------------------------------------------------------
+# 4. YAML loader with !include support
+# ------------------------------------------------------------
+
+class IncludeLoader(yaml.SafeLoader):
+    pass
+
+
+def construct_include(loader, node):
+    """
+    Resolve !include paths relative to the YAML file
+    currently being loaded.
+    """
+    relative_path = loader.construct_scalar(node)
+
+    base_dir = Path(
+        getattr(loader, "_base_dir", ARTIFACT_DIR)
+    )
+
+    include_path = (base_dir / relative_path).resolve()
+
+    artifact_root = ARTIFACT_DIR.resolve()
+
+    try:
+        include_path.relative_to(artifact_root)
+    except ValueError:
+        raise ValueError(
+            f"Invalid include outside artifact directory: "
+            f"{include_path}"
+        )
+
+    if not include_path.exists():
+        raise FileNotFoundError(
+            f"Included file not found: {include_path}"
+        )
+
+    text = include_path.read_text(encoding="utf-8")
+
+    if include_path.suffix.lower() in {".yaml", ".yml"}:
+        child_loader = IncludeLoader(text)
+        child_loader._base_dir = include_path.parent
+
+        try:
+            return child_loader.get_single_data()
+        finally:
+            child_loader.dispose()
+
+    return text
+
+
+IncludeLoader.add_constructor(
+    "!include",
+    construct_include,
+)
+
+
+def load_yaml(path: Path):
+    """
+    Load YAML with support for the custom !include tag.
+    """
+    text = path.read_text(encoding="utf-8")
+
+    loader = IncludeLoader(text)
+    loader._base_dir = path.parent
+
+    try:
+        return loader.get_single_data()
+    finally:
+        loader.dispose()
+
+
+# ------------------------------------------------------------
+# 5. Expected files
+# ------------------------------------------------------------
+
+EXPECTED_FILES = [
+    "agent.yaml",
+    "configs/sampling.yaml",
+    "prompts/system.md",
+    "prompts/analyzer.md",
+    "sub_agents/code_analyzer.yaml",
+]
+
+
+# ------------------------------------------------------------
+# 6. Verify files
+# ------------------------------------------------------------
+
+missing = [
+    p for p in EXPECTED_FILES
+    if not (ARTIFACT_DIR / p).exists()
+]
+
+if missing:
+    raise FileNotFoundError(
+        "Missing required files:\n"
+        + "\n".join(f"  - {p}" for p in missing)
+    )
+
+
+# ------------------------------------------------------------
+# 7. Load YAML configuration
+# ------------------------------------------------------------
+
+AGENT_CONFIG_PATH = ARTIFACT_DIR / "agent.yaml"
+SAMPLING_CONFIG_PATH = ARTIFACT_DIR / "configs" / "sampling.yaml"
+ANALYZER_CONFIG_PATH = (
+    ARTIFACT_DIR / "sub_agents" / "code_analyzer.yaml"
+)
+
+SYSTEM_PROMPT_PATH = ARTIFACT_DIR / "prompts" / "system.md"
+ANALYZER_PROMPT_PATH = ARTIFACT_DIR / "prompts" / "analyzer.md"
+
+
+AGENT_CONFIG = load_yaml(AGENT_CONFIG_PATH)
+
+SAMPLING_CONFIG = load_yaml(
+    SAMPLING_CONFIG_PATH
+)
+
+ANALYZER_CONFIG = load_yaml(
+    ANALYZER_CONFIG_PATH
+)
+
+
+# ------------------------------------------------------------
+# 8. Load prompts
+# ------------------------------------------------------------
+
+SYSTEM_PROMPT = SYSTEM_PROMPT_PATH.read_text(
+    encoding="utf-8"
+)
+
+ANALYZER_PROMPT = ANALYZER_PROMPT_PATH.read_text(
+    encoding="utf-8"
+)
+
+
+# ------------------------------------------------------------
+# 9. Basic validation
+# ------------------------------------------------------------
+
+assert isinstance(
+    AGENT_CONFIG, dict
+), "agent.yaml must contain a YAML mapping"
+
+assert isinstance(
+    SAMPLING_CONFIG, dict
+), "sampling.yaml must contain a YAML mapping"
+
+assert isinstance(
+    ANALYZER_CONFIG, dict
+), "code_analyzer.yaml must contain a YAML mapping"
+
+assert SYSTEM_PROMPT.strip(), "system.md is empty"
+assert ANALYZER_PROMPT.strip(), "analyzer.md is empty"
+
+
+# ------------------------------------------------------------
+# 10. Check !include references in raw YAML
+# ------------------------------------------------------------
+
+def check_includes(path: Path):
+    text = path.read_text(encoding="utf-8")
+
+    includes = []
+
+    for line in text.splitlines():
+        stripped = line.strip()
+
+        if stripped.startswith("!include "):
+            includes.append(
+                stripped[len("!include "):].strip()
+            )
+
+        elif "!include " in stripped:
+            value = stripped.split("!include ", 1)[1].strip()
+            includes.append(value)
+
+    for relative in includes:
+        relative = relative.strip("\"'")
+
+        target = (path.parent / relative).resolve()
+
+        try:
+            target.relative_to(ARTIFACT_DIR.resolve())
+        except ValueError:
+            raise ValueError(
+                f"Include escapes submission directory: "
+                f"{relative}"
+            )
+
+        if not target.exists():
+            raise FileNotFoundError(
+                f"Missing included file: {target}"
+            )
+
+
+check_includes(AGENT_CONFIG_PATH)
+check_includes(ANALYZER_CONFIG_PATH)
+
+
+# ------------------------------------------------------------
+# 11. Optional SHA-256 verification
+# ------------------------------------------------------------
+
+def sha256_file(path: Path) -> str:
+    h = hashlib.sha256()
+
+    with path.open("rb") as f:
+        for chunk in iter(
+            lambda: f.read(1024 * 1024),
+            b""
+        ):
+            h.update(chunk)
+
+    return h.hexdigest()
+
+
+EXPECTED_SHA = EXPERIMENT.get("sha256")
+
+ZIP_PATH = MODEL_ROOT / "submission.zip"
+
+if EXPECTED_SHA and ZIP_PATH.exists():
+
+    ACTUAL_SHA = sha256_file(ZIP_PATH)
+
+    if ACTUAL_SHA != EXPECTED_SHA:
+        raise ValueError(
+            "SHA-256 verification failed:\n"
+            f"Expected: {EXPECTED_SHA}\n"
+            f"Actual:   {ACTUAL_SHA}"
+        )
+
+    SHA_STATUS = "verified"
+
+elif EXPECTED_SHA:
+    SHA_STATUS = (
+        "checksum recorded; submission.zip not included"
+    )
+
+else:
+    SHA_STATUS = "not recorded"
+
+
+# ------------------------------------------------------------
+# 12. Extract useful metadata
+# ------------------------------------------------------------
+
+MODEL_ALIAS = (
+    EXPERIMENT.get("model_alias")
+    or AGENT_CONFIG.get("model")
+    or AGENT_CONFIG.get("model_name")
+    or "unknown"
+)
+
+ARCHITECTURE = EXPERIMENT.get(
+    "architecture",
+    "unknown"
+)
+
+CONTEXT_LIMIT = EXPERIMENT.get(
+    "context_limit",
+    "unknown"
+)
+
+
+# ------------------------------------------------------------
+# 13. Final report
+# ------------------------------------------------------------
+
+print("=" * 64)
+print("GEMMA 4 SWE AGENT — LOADED ARTIFACT")
+print("=" * 64)
+
+print(f"Artifact directory : {ARTIFACT_DIR}")
+print(f"Model              : {MODEL_ALIAS}")
+print(f"Architecture       : {ARCHITECTURE}")
+print(f"Context limit      : {CONTEXT_LIMIT}")
+print(f"SHA-256 status     : {SHA_STATUS}")
+
+print("\nFiles:")
+
+for relative_path in EXPECTED_FILES:
+    print(f"  ✓ {relative_path}")
+
+print("\nSampling configuration:")
+print(
+    yaml.safe_dump(
+        SAMPLING_CONFIG,
+        sort_keys=False,
+        default_flow_style=False,
+    )
+)
+
+print("=" * 64)
+print("✓ Gemma 4 agent artifact loaded successfully.")
+print("✓ YAML !include references resolved successfully.")
+print("✓ Submission structure verified.")
+print("=" * 64)
+
+# CELL 1 code
+print("\n" + "=" * 64)
+print("FINAL SUBMISSION")
+print("=" * 64)
+
+print("\n[agent.yaml]")
+print(AGENT_CONFIG_PATH.read_text(encoding="utf-8"))
+
+print("\n[sampling.yaml]")
+print(SAMPLING_CONFIG_PATH.read_text(encoding="utf-8"))
+
+print("\n[system.md]")
+print(SYSTEM_PROMPT)
+
+print("\n[analyzer.md]")
+print(ANALYZER_PROMPT)
+
+print("\n[code_analyzer.yaml]")
+print(ANALYZER_CONFIG_PATH.read_text(encoding="utf-8"))
+
+print("=" * 64)
+print("✓ Submission artifact is ready.")
+print("=" * 64)
+
+# CELL 2 code
+from pathlib import Path
+import shutil
+
+OUTPUT_DIR = Path("/kaggle/working/submission")
+
+if OUTPUT_DIR.exists():
+    shutil.rmtree(OUTPUT_DIR)
+
+shutil.copytree(
+    ARTIFACT_DIR,
+    OUTPUT_DIR,
+)
+
+print("=" * 64)
+print("SUBMISSION FINAL")
+print("=" * 64)
+
+for path in sorted(OUTPUT_DIR.rglob("*")):
+    if path.is_file():
+        print(path.relative_to(OUTPUT_DIR))
+
+print(f"\nSubmission directory:")
+print(OUTPUT_DIR)
+
+# CELL 3 code
+import shutil
+from pathlib import Path
+
+OUTPUT_DIR = Path("/kaggle/working/submission")
+OUTPUT_ZIP = Path("/kaggle/working/submission.zip")
+
+if OUTPUT_DIR.exists():
+    shutil.rmtree(OUTPUT_DIR)
+
+shutil.copytree(ARTIFACT_DIR, OUTPUT_DIR)
+
+if OUTPUT_ZIP.exists():
+    OUTPUT_ZIP.unlink()
+
+shutil.make_archive(
+    "/kaggle/working/submission",
+    "zip",
+    OUTPUT_DIR,
+)
+
+print("=" * 64)
+print("FINAL SUBMISSION")
+print("=" * 64)
+print(f"Directory : {OUTPUT_DIR}")
+print(f"ZIP       : {OUTPUT_ZIP}")
+print(f"Size      : {OUTPUT_ZIP.stat().st_size:,} bytes")
+print("=" * 64)

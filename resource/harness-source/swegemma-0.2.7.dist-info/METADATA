@@ -1,0 +1,24 @@
+Metadata-Version: 2.4
+Name: swegemma
+Version: 0.2.7
+Summary: SWE-bench evaluation system for coding agents
+Requires-Python: >=3.12
+Requires-Dist: adk-submission
+Requires-Dist: cachetools>=5.0.0
+Requires-Dist: docker>=7.0.0
+Requires-Dist: google-adk>=1.34.0
+Requires-Dist: google-genai>=1.0.0
+Requires-Dist: networkx>=3.0
+Requires-Dist: numpy>=1.26.0
+Requires-Dist: pydantic>=2.0.0
+Requires-Dist: python-dotenv>=1.0.0
+Requires-Dist: pyyaml>=6.0.0
+Requires-Dist: rich>=13.0.0
+Requires-Dist: adk-eval-core
+Requires-Dist: litellm>=1.0.0
+Requires-Dist: pandas>=2.0.0
+Requires-Dist: tokenizers>=0.20.0
+Requires-Dist: torchvision
+Requires-Dist: transformers>=4.40.0
+Requires-Dist: safetensors
+Requires-Dist: accelerate

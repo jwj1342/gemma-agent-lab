@@ -1,0 +1,19 @@
+# Test on a Small Public Sample and Share Full Logs
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/744924
+
+## 3531195 /pinocchio TOPIC
+My first submission today failed. Kaggle showed only:  **“Notebook Threw Exception.”** 
+I had no clue what went wrong or how to fix it.
+I understand why Kaggle limits logs from private test data: detailed logs could reveal information about that data. 
+
+Could Kaggle first run each submission on **a small sample of public data and show the full log?**
+If a submission fails on private data, Kaggle could still show only a general error message. This would help me tell whether the problem is in my notebook or in Kaggle’s system, while keeping the private data safe.
+
+## 3531207 /youchy COMMENT
+same thing happened with me. maybe wait for them to provide more information
+
+## 3531201 /yashraj2308 COMMENT
+yes, same happened with me. They should provide the exact error logs
+
+## 3531317 /pinocchio TOPIC
+Also it doesn't make sense to loose daily submission limit when the problem happens before the task actually started.

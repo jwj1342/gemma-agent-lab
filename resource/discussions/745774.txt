@@ -1,0 +1,13 @@
+# The baseline agent repeats the same command up to 69 times (local eval, 10 tasks)
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/745774
+
+## 3532649 /hitarthjain0 TOPIC
+Ran the official evaluator on Kaggle (L4 x4) on 10 spread-out tasks from `tasks.jsonl`, with a 10-minute / 100-tool-call budget per task and the public analyzer+coder bundle.
+
+- 4 of 10 tasks used 92-97 of 100 tool calls.
+- In one, the same `python3 -c` command ran 69 times; in another, the same `grep` ran 46 times. 0-2 edits, no test runs.
+- The system prompt already says "never run the same command twice unchanged". The model ignores it once it's in a loop.
+- Temp 0.7 made it worse (5/10 tasks looped, 66 calls on average vs 36). Temp 0.7 + thinking_budget 4096 resolved 3/10 but within noise.
+- Re-running the same baseline resolved 3/10, then 1/10. Treat small score differences as noise.
+
+The harness's registries are closed, so custom callbacks can't break loops from the bundle. Has anyone found a prompt or sub-agent structure that actually stops repetition?

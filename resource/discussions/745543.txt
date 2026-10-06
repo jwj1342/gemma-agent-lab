@@ -1,0 +1,8 @@
+# Googel Gemma and ARC AGI 2 have same problem of queue
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/745543
+
+## 3532264 /kozykappa TOPIC
+all notebooks related to GPU L4 x4 are in long queue?
+
+## 3532272 /navneetbende COMMENT
+Thank you for the Google Gemma and ARC AGI 2 have the same problem of queue @kozykappa 

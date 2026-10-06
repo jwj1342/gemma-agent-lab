@@ -1,0 +1,2 @@
+# CELL 0 code
+%pip install -q trl peft bitsandbytes accelerate datasets transformers

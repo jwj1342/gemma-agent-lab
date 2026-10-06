@@ -1,0 +1,73 @@
+# Official sample_submission scores FAILED — are submitted adapters meant to be registered as named LoRA modules?
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743213
+
+## 3528047 /dominicjamil TOPIC
+The official `sample_submission`, submitted byte-for-byte as-is (submission `56539111`, 2026-09-25 03:46 UTC): **FAILED, no score.** The only message is the generic `Your notebook hit an unhandled error while rerunning your code.`
+
+I could not reproduce the failure locally, and ruled three explanations out with the same pins as the official wheelhouse (`google-adk 1.36.1`, `adk-submission 0.2.11`, `swegemma 0.2.7`):
+
+- the package **compiles clean** — `compile_submission()` returns the full `LlmAgent` tree, so this is not a YAML/assembly bug;
+- `discover_adapters()` returns `main_lora` / `tool_lora` exactly as declared in `agent.yaml`, so it is not an adapter-name collision;
+- all 9 tools are registered unconditionally (`create_tools()` in `swegemma/tools/__init__.py`) — the `has_g`/`has_e` file-size check in `agent_runner.py` only gates prompt *prose*, not tool registration — so it is not the empty graph/embedding files either.
+
+The part that matters: **the adapter never goes through local PEFT loading.** In `swegemma/models/registry.py` (`resolve_swegemma_adapter`, and `_make_adapter_model` inside `setup_gemma_model_registry`), `adapter: <name>` rewrites the agent's model into a LiteLLM id of `openai/<adapter-name>` — i.e. it asks the inference endpoint to serve a LoRA **already registered under that name** (vLLM `--lora-modules <name>=<path>`). For this submission the compiled root agent's model string is literally `openai/main_lora`. `swegemma` itself never starts the inference server (the endpoint comes from `MODEL_PROXY_URL` / `LITELLM_API_BASE` / `LOCAL_INFERENCE_URL` / `OPENAI_BASE_URL`), so that registration step appears to live entirely on the scoring side.
+
+Supporting observation: I read the packaging cells of both public notebooks whose scores are known — `nursrijan`'s starter kit (0.05) and `romanrozen`'s baseline (0.12) — and **neither writes an `adapters/` directory into its bundle**; `romanrozen`'s notebook mentions LoRA only in a validator check and in a roadmap line reading "LoRA adapter (*if the rules allow*)". So as far as I can tell **no public submission has exercised this path at all**, which is consistent with the failure above rather than with a bug in my packaging.
+
+Two questions, if the organizers have a moment:
+
+1. Is the scoring server expected to register submitted adapters as named LoRA modules (`--lora-modules main_lora=...`), or to merge them into the base model first?
+2. If they are meant to be addressable, is there a required naming convention, or a constraint on `base_model_name_or_path` in `adapter_config.json` relative to the served model?
+
+For context, an earlier participant topic here reported that the pinned `vllm 0.19.1` refuses to start with `--enable-lora` for `Gemma4ForConditionalGeneration` ("does not support LoRA yet"), and that topic has since been deleted — so I can't tell whether the server-side refusal or the unregistered model id is what we are hitting. The distinction matters, because a non-empty `adapters/` directory changes how the model is addressed at all: if this is the cause, then **any** submission carrying an adapter fails regardless of its rank or quality, and the LoRA route is closed rather than merely unhelpful.
+
+I can run the single-variable check on my next submission — the identical official package with `adapters/` and the two `adapter:` lines removed, nothing else touched — and report back either way.
+
+## 3528095 /ryanholbrook ADMIN
+Hi @dominicjamil,
+
+I have a fix incoming. Will try to post a demo notebook later today.
+
+## 3528283 /smitbailwal COMMENT
+Confirming this is still happening as of just now (2026-09-26). I submitted the sample_submission/ bundle completely unmodified (byte-for-byte copy, adapters/main_lora and adapters/tool_lora included, no edits at all) and it also failed with the generic Kaggle Error, same as @dominicjamil reported ~8 hours ago. I also tried several of our own bundles beforehand (no adapters, various tool/sub-agent configurations, with and without eval_config.yaml) and every single one failed identically before this test, so it does not look specific to adapters or to any particular bundle structure on our end. Wanted to flag that the fix does not appear to be live yet, in case that's useful. Happy to share exact repro steps if it helps.
+
+## 3528298 /ryanholbrook ADMIN
+I'll check again. There might have been a data bundle that didn't catch the update. It's working in the Getting Started notebook, at least.
+
+## 3528735 /varunambadi COMMENT
+Are you referring to this notebook? https://www.kaggle.com/code/ryanholbrook/getting-started-gemma-4-developer-agent/notebook because I downloaded and submitted the submission.zip file to the leaderboard 2hrs ago and it crashed with this error just now: ![](https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F31268718%2Fb53344e9ed5ab42942b31fbe8ff68922%2FScreenshot%202026-09-26%20165754.png?generation=1790422130716964&alt=media) 
+
+## 3528716 /saltice COMMENT
+Adding another one to the list: submission 56573423 (submitted today at 07:47 UTC, plain YAML bundle, no adapters) also failed with "Your notebook has requested more CPU, GPU or TPU resources than are available." Ran for around 2 hours.
+
+@ryanholbrook could our team's daily slot also be restored once the platform fix is deployed? Thanks!
+
+## 3528740 /ryanholbrook ADMIN
+Thanks for the report. I think I've resolved this one, but please let me know.
+
+## 3528695 /carsonrodrigues COMMENT
+Same resource error here: submission 56563379 (2026-09-26 00:01 UTC, plain YAML bundle, no adapters) completed with no score, error_description "Your notebook has requested more CPU, GPU or TPU resources than are available." Our previous submission from the same pipeline scored 0.10. @ryanholbrook, could the slot be restored for submissions that failed with this platform-side error?
+
+One note for anyone testing adapters locally: the PyPI vllm 0.19.1 wheel still fails at startup with "Gemma4ForConditionalGeneration does not support LoRA yet" (we reproduced this on 2x H100 with the competition checkpoint and the sample main_lora). Only the patched vllm 0.19.1 in metric/gemma-4-developer-agent-wheelhouse adds SupportsLoRA, so local LoRA tests must install that exact wheel. With the patched wheel, see the separate report in 743508 that adapters load but are reset to zero.
+
+## 3528648 /alperenzfddg COMMENT
+Same here. Submission 56563939 (2026-09-26 00:08 UTC, plain YAML bundle, no adapters) completed with no score; error_description: "Your notebook has requested more CPU, GPU or TPU resources than are available." My previous bundle from the same pipeline (differing only in the thinking settings in sampling.yaml and timeout_seconds in eval_config.yaml) scored 0.13 the day before, so this looks platform-side. The failed run still used the daily submission slot. @ryanholbrook, could slots be restored for submissions that failed with this resource error? Thanks!
+
+## 3528507 /whisperlast COMMENT
+Same failure here, but a different error text. Submission 56565084 (2026-09-26 00:53 UTC; a plain YAML bundle, no adapters) completed with no score and the message "Your notebook has requested more CPU, GPU or TPU resources than are available." It still used the daily allowance: resubmitting the identical zip is rejected with "Your team has used its daily Submission allowance (1) today". The same bundle structure (only the prompt text and max_turns differ) scored normally the day before, and my Kaggle GPU quota is untouched. @ryanholbrook, could the slot be restored when a submission fails on this platform-side resource error?
+
+Separately, once the server starts with the patched vLLM, LoRA adapters are silently wiped (no effect on outputs). I opened a separate topic with the cause and a repro: https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743508
+
+## 3528530 /omallo COMMENT
+I got the same error "Your notebook has requested more CPU, GPU or TPU resources than are available." this morning. If possible, I would also be happy to get my slot back in case that's an error on Kaggle side.
+
+## 3528709 /wikimindai COMMENT
+I got the same error today; the notebook stopped after 4 hours... I assume it's happening to everyone, right?
+
+## 3528751 /mahmoudalghraibeh COMMENT
+Same resource error here. Submission 56566212 (2026-09-26 01:49 UTC): a plain YAML bundle, no adapters and no LoRA, one model (gemma-4-31b-it-qat-w4a16-ct). It completed with no score, and the error_description was "Your notebook has requested more CPU, GPU or TPU resources than are available." Earlier bundles from the same pipeline, with the same structure, were scored normally. The bundle passes validate_directory and compile_submission locally. It still used the daily submission slot.
+
+Thanks for looking into it, @ryanholbrook. I'll resubmit the same bundle when the next slot opens and report back here. Could the slot be restored for submissions that failed with this error before the fix?
+
+## 3528737 /ajitdageniusguy COMMENT
+Same here: submission 56571006 (2026-09-26 06:11 UTC, a plain YAML bundle with no adapters, ~3 KB zip) completed with no score and the message "Your notebook has requested more CPU, GPU or TPU resources than are available." (UI: "Notebook Exceeded Allowed Compute"). @ryanholbrook, if slots are being restored for this platform-side error, we'd be grateful for ours too. Thanks!

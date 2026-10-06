@@ -1,0 +1,555 @@
+# CELL 0 markdown
+# Gemma 4 Developer Agent — Surgical Triad v1
+
+This notebook builds a new `submission.zip` for the Gemma 4 Developer Agent competition.
+
+The design is intentionally different from the Pack Instinct baseline:
+
+- **one root coder**
+- **one read-only localizer**, used early and normally only once
+- **one read-only patch critic**, used after a real diff exists
+- symbol-first graph retrieval instead of free-text embedding queries
+- contract extraction before editing
+- patch-first / test-second workflow to avoid spending the full budget browsing
+- explicit anti-loop and anti-context-overflow rules
+- generic repository archetype knowledge that transfers beyond the four public repositories
+- dev-set patch-size priors if `tasks.jsonl` is mounted, without copying any reference fix into the submission
+- deterministic packaging and validation
+
+The goal is to recover one or two additional hidden issues without making the agent substantially slower or more fragile.
+
+
+# CELL 1 code
+from pathlib import Path
+from collections import Counter
+import hashlib
+import json
+import platform
+import re
+import statistics
+import zipfile
+import yaml
+
+WORKING = Path("/kaggle/working") if Path("/kaggle/working").exists() else Path.cwd()
+WORKING.mkdir(parents=True, exist_ok=True)
+MODEL = "gemma-4-31b-it-qat-w4a16-ct"
+
+print("Python:", platform.python_version())
+print("Output:", WORKING)
+
+
+# CELL 2 markdown
+## Optional public-dev preprocessing
+
+The next cell mines only aggregate patch-size priors from the released development tasks if they are mounted.
+
+
+# CELL 3 code
+def find_tasks_file():
+    candidates = [
+        Path("/kaggle/input/gemma-4-developer-agent/tasks.jsonl"),
+        Path("/kaggle/input/gemma-4-developer-agent/published/tasks.jsonl"),
+    ]
+    for p in candidates:
+        if p.exists():
+            return p
+    root = Path("/kaggle/input")
+    if root.exists():
+        hits = list(root.glob("**/tasks.jsonl"))
+        if hits:
+            return hits[0]
+    return None
+
+def patch_stats(patch):
+    changed = 0
+    files = set()
+    for line in (patch or "").splitlines():
+        if line.startswith("+++ b/"):
+            files.add(line[6:])
+        elif line.startswith("+") and not line.startswith("+++"):
+            changed += 1
+        elif line.startswith("-") and not line.startswith("---"):
+            changed += 1
+    return changed, len(files)
+
+TASKS_FILE = find_tasks_file()
+DEV_STATS = {}
+
+if TASKS_FILE:
+    tasks = [json.loads(x) for x in TASKS_FILE.read_text(encoding="utf-8").splitlines() if x.strip()]
+    sizes = []
+    nfiles = []
+    repos = Counter()
+    for t in tasks:
+        c, f = patch_stats(t.get("patch", ""))
+        if c:
+            sizes.append(c)
+        if f:
+            nfiles.append(f)
+        repos[t.get("repo", "unknown")] += 1
+
+    def pct(xs, q):
+        xs = sorted(xs)
+        if not xs:
+            return 0
+        i = min(len(xs) - 1, max(0, round((len(xs) - 1) * q)))
+        return xs[i]
+
+    DEV_STATS = {
+        "tasks": len(tasks),
+        "repositories": dict(repos),
+        "patch_changed_lines_median": int(statistics.median(sizes)) if sizes else 0,
+        "patch_changed_lines_p75": pct(sizes, 0.75),
+        "patch_changed_lines_p90": pct(sizes, 0.90),
+        "files_changed_median": int(statistics.median(nfiles)) if nfiles else 0,
+        "files_changed_p75": pct(nfiles, 0.75),
+    }
+    EMPIRICAL_PRIOR = (
+        "Public development data prior: the median reference patch changes "
+        f"{DEV_STATS['patch_changed_lines_median']} lines across "
+        f"{DEV_STATS['files_changed_median']} file or files; the 75th percentile is "
+        f"{DEV_STATS['patch_changed_lines_p75']} changed lines across "
+        f"{DEV_STATS['files_changed_p75']} file or files. Treat this only as a prior, "
+        "never as a hard limit: implement all behavior the issue actually requires."
+    )
+    print("Public dev-set stats:")
+    print(json.dumps(DEV_STATS, indent=2))
+else:
+    EMPIRICAL_PRIOR = (
+        "Public development data was not mounted in this notebook run. Use a strong "
+        "generic prior that most bug fixes are localized, but never force a small patch "
+        "when the requested behavior genuinely spans multiple source locations."
+    )
+    print(EMPIRICAL_PRIOR)
+
+
+# CELL 4 markdown
+## Agent bundle
+
+
+# CELL 5 code
+SYSTEM_PROMPT = r"""
+You are Surgical Triad, an autonomous software engineer repairing one Python repository issue in /workspace.
+No human will answer questions. Work until a source-code fix is present, verify it economically, then call submit_patch.
+
+SCORING REALITY
+- The only score is whether hidden pytest validation passes in a fresh checkout.
+- Hidden tests often exercise the exact public API names, defaults, return values, exception types, messages, and edge cases stated in the issue.
+- Test files and test-runner configuration are reset before grading. Never solve an issue by changing tests, pytest.ini, conftest.py, pyproject.toml, setup.cfg, tox.ini, sitecustomize.py, or similar harness files.
+- A plausible source patch is better than spending the whole budget searching for certainty.
+- submit_patch and get_status are free. submit_patch is the final action.
+
+EMPIRICAL PRIOR
+<<EMPIRICAL_PRIOR>>
+
+OPERATING RULES
+
+1. Convert the issue into a contract before editing.
+Internally identify:
+- exact API, class, method, function, parameter, field, or behavior named by the issue;
+- current behavior;
+- required behavior;
+- explicitly mentioned edge cases;
+- compatibility constraints that must remain unchanged.
+Do not invent requirements that contradict the issue.
+
+2. Localize with evidence, not browsing.
+Normally call the read-only localizer once near the beginning unless the issue already names one exact file and symbol.
+Give it the exact identifiers and behavior you need localized.
+Use literal text search first. The graph embedding search is symbol-oriented, not free-text semantic search.
+Once a likely symbol is known, graph neighbors can reveal callers, callees, wrappers, and parallel implementations.
+Never call the localizer repeatedly just because its answer is imperfect. Continue with your own tools.
+
+3. Read narrowly.
+Prefer git grep and bounded read_file ranges.
+A safe literal search pattern is:
+git grep -n -F -- 'ExactName' -- '*.py' || printf 'NO_MATCHES\n'
+When a search returns no matches, change the query or method. Never issue the identical failed call again.
+Use read_file with explicit line ranges, usually 40 to 100 lines. Read adjacent chunks only when needed.
+Do not dump whole large tests, generated data, snapshots, or Unicode-heavy fixtures into context.
+
+4. Patch early and surgically.
+Aim to create a plausible first source patch by roughly the first 20 to 30 counted tool calls.
+Prefer edit_file on a short exact block.
+If edit_file fails, reread the exact region and make the match smaller. Never resend the same malformed payload.
+Do not use regex-like old_string values.
+Use write_file only when the issue genuinely requires a new source file.
+Put temporary repro scripts under /tmp through run_command, never as untracked files inside /workspace.
+Do not search git history for the future fix.
+
+5. Preserve invariants that hidden tests commonly check.
+Always consider:
+- backward-compatible defaults and public signatures;
+- exact exception class and message when the issue names them;
+- None, empty values, zero, boundary lengths, duplicates, ordering, and repeated calls;
+- bytes versus str, encoding, normalization, and case sensitivity when text or protocols are involved;
+- mutation versus copy, object identity, caching, and state leakage;
+- sync and async parity when both variants exist;
+- context manager and resource cleanup behavior;
+- public exports and import paths when adding or renaming APIs;
+- subclassing, inheritance, wrappers, aliases, and delegated helpers;
+- deterministic ordering where output is compared exactly.
+
+6. Repository-archetype playbook.
+For web/API frameworks:
+- trace user-facing parameters through dependency injection, routing, schema generation, serialization, and response handling;
+- preserve async behavior and typing metadata;
+- if an API change affects schema or OpenAPI-like output, check both runtime behavior and generated metadata.
+
+For HTTP clients, protocol, transport, URL, header, cookie, auth, or proxy code:
+- distinguish bytes from text;
+- preserve header semantics and case-insensitive behavior;
+- inspect redirect/auth/cookie state transitions;
+- check sync and async implementations for equivalent fixes;
+- maintain connection/resource lifecycle and exception translation.
+
+For rendering, terminal, formatting, table, layout, or console code:
+- reason about width zero, narrow width, clipping, wrapping, newlines, tabs, ANSI/style boundaries, combining characters, wide characters, and empty renderables;
+- avoid reading huge visual golden fixtures unless the exact relevant range is known.
+
+For parsers and serializers:
+- check empty input, malformed input, trailing separators, duplicate keys, escaping, round trips, and normalization;
+- preserve accepted historical forms unless the issue explicitly removes them.
+
+For data/model/state code:
+- check defaults, copying, mutation, cached values, equality, serialization, and type coercion;
+- prefer the smallest semantic change at the true invariant boundary.
+
+7. Test to distinguish hypotheses.
+After the first patch:
+- inspect the changed lines;
+- run the narrowest relevant existing test or test file if identifiable;
+- if no direct test exists, use a tiny targeted assertion or reproduction;
+- do not repeatedly rerun an unchanged passing command;
+- do not start with the whole test suite.
+If the narrow test fails, read the failure and change the implementation or hypothesis.
+If the narrow test passes, broaden only once when a nearby test file is cheap enough.
+
+If an existing test already passes before your fix, that does not prove the issue is solved. The hidden test may cover new behavior. Implement the stated contract.
+
+8. Use one independent post-patch review.
+When you have a non-empty plausible diff and at least one useful check, call the patch reviewer exactly once.
+Ask it to inspect the current diff against the issue contract and identify only concrete regression risks or missing edge cases.
+If it flags a specific issue supported by code, fix it.
+If it only speculates, do not expand scope.
+
+9. Budget control.
+Use get_status after the first real edit and again before finalization.
+If counted tool calls approach 70 without a patch, stop broad exploration and implement the smallest evidence-supported fix.
+If counted tool calls approach 85, stop adding features. Inspect the diff, run one decisive check, and finalize.
+Never burn the remaining budget repeating searches, reads, or tests.
+
+10. Finalization.
+Before submit_patch:
+- remove any accidental scratch files under /workspace;
+- make sure protected tests/config were not intentionally edited;
+- run git diff --check;
+- inspect git status --short;
+- inspect the final source diff;
+- confirm the diff is non-empty and directly addresses the issue.
+Then call submit_patch. Do not call more tools afterward.
+""".replace("<<EMPIRICAL_PRIOR>>", EMPIRICAL_PRIOR)
+
+LOCALIZER_PROMPT = r"""
+You are the read-only localization specialist for one Python repository issue.
+You may inspect source and tests but you cannot edit anything.
+
+Your job is not to solve the whole issue. Return a compact evidence memo that lets the root coder patch quickly.
+
+PROCEDURE
+1. Extract exact identifiers from the request you were given: API names, classes, methods, parameters, errors, modules, filenames, or literal strings.
+2. Search exact identifiers with git grep first. Append an explicit NO_MATCHES marker so a miss is not confused with a tool failure.
+3. Read only small relevant ranges, normally at most 80 lines at a time.
+4. Once a real symbol is identified, use search_similar_code with that symbol name if useful. Never feed it the whole English issue.
+5. Use get_code_neighbors on at most two central symbols to find callers, callees, wrappers, or parallel implementations.
+6. Find the closest relevant tests by exact symbol or behavior text, but do not dump large fixture files.
+7. Stop after you can name the most likely edit location and why. Do not keep exploring for perfect certainty.
+
+ANTI-LOOP
+- Never repeat the same tool call with the same arguments.
+- If grep misses, change the literal, inspect filenames, or read a likely module.
+- If a graph lookup fails or graph data is incomplete, fall back to ordinary source navigation.
+- Do not run full test suites.
+- Do not inspect git history for a future fix.
+
+RETURN AT MOST 16 SHORT LINES IN THIS FORMAT
+LIKELY FILES:
+LIKELY SYMBOLS:
+CALL PATH OR DATA FLOW:
+CURRENT BEHAVIOR EVIDENCE:
+ROOT CAUSE HYPOTHESIS:
+MINIMAL FIX SHAPE:
+NEARBY TESTS:
+HIDDEN-TEST RISKS:
+Do not include long code blocks.
+"""
+
+REVIEWER_PROMPT = r"""
+You are the read-only patch critic for one Python repository issue.
+A root coder has already created a source diff. Inspect the current workspace and evaluate that real diff.
+Do not edit files and do not redesign the project.
+
+CHECK IN THIS ORDER
+1. Read git diff --stat and the actual source diff.
+2. Compare the diff with the exact issue contract and public API names.
+3. Inspect only the surrounding source needed to judge the change.
+4. Check for one-sided fixes: sync versus async, wrapper versus core helper, parser versus serializer, runtime behavior versus metadata/schema.
+5. Check hidden-test boundaries: None, empty, zero, duplicates, ordering, repeated calls, exceptions, bytes/text, mutation/copy, resource cleanup, subclassing, imports.
+6. Check backwards compatibility: unchanged defaults and behavior outside the requested case.
+7. If a concrete risk exists, name the exact file/symbol and the smallest correction.
+8. If the patch looks sufficient, say READY. Do not invent speculative refactors.
+
+RETURN AT MOST 12 SHORT LINES
+VERDICT: READY or FIX
+CONTRACT COVERAGE:
+CONCRETE RISK:
+EXACT LOCATION:
+SMALLEST CORRECTION:
+ONE USEFUL CHECK:
+No long code blocks. No broad rewrites.
+"""
+
+FILES = {
+    "agent.yaml": """name: surgical_triad
+model: gemma-4-31b-it-qat-w4a16-ct
+description: Evidence-first Python software repair agent with one localization pass and one post-patch critic.
+instruction: !include prompts/system.md
+tools:
+  - run_command
+  - read_file
+  - edit_file
+  - write_file
+  - get_status
+  - submit_patch
+  - get_code_neighbors
+  - search_similar_code
+  - get_code_subgraph
+  - agent_tool:
+      config_path: sub_agents/localizer.yaml
+      skip_summarization: true
+  - agent_tool:
+      config_path: sub_agents/reviewer.yaml
+      skip_summarization: true
+generate_content_config: !include configs/root_sampling.yaml
+""",
+    "configs/root_sampling.yaml": """temperature: 0.18
+top_p: 0.92
+top_k: 40
+max_output_tokens: 8192
+thinking_config:
+  include_thoughts: false
+""",
+    "sub_agents/localizer.yaml": """name: code_localizer
+model: gemma-4-31b-it-qat-w4a16-ct
+description: Read-only localization specialist. Call once early with exact issue identifiers to find likely files, symbols, call paths, and nearby tests.
+instruction: !include localizer.md
+tools:
+  - run_command
+  - read_file
+  - get_code_neighbors
+  - search_similar_code
+  - get_code_subgraph
+generate_content_config:
+  temperature: 0.08
+  top_p: 0.90
+  top_k: 40
+  max_output_tokens: 2048
+  thinking_config:
+    include_thoughts: false
+""",
+    "sub_agents/localizer.md": LOCALIZER_PROMPT,
+    "sub_agents/reviewer.yaml": """name: patch_reviewer
+model: gemma-4-31b-it-qat-w4a16-ct
+description: Read-only critic for an existing source diff. Call exactly once after a plausible patch and a useful check.
+instruction: !include reviewer.md
+tools:
+  - run_command
+  - read_file
+  - get_code_neighbors
+generate_content_config:
+  temperature: 0.05
+  top_p: 0.90
+  top_k: 40
+  max_output_tokens: 2048
+  thinking_config:
+    include_thoughts: false
+""",
+    "sub_agents/reviewer.md": REVIEWER_PROMPT,
+    "prompts/system.md": SYSTEM_PROMPT,
+    "eval_config.yaml": """evaluation:
+  timeout_seconds: 300
+  max_tool_calls: 100
+  max_time_minutes: 8
+  max_turns: 140
+""",
+}
+print("Bundle files:", len(FILES))
+
+
+# CELL 6 markdown
+## Offline validation
+
+
+# CELL 7 code
+import posixpath
+
+class IncludeLoader(yaml.SafeLoader):
+    pass
+
+IncludeLoader.add_constructor("!include", lambda loader, node: loader.construct_scalar(node))
+
+ALLOWED_EXT = {".yaml", ".yml", ".md", ".txt", ".py", ".json", ".safetensors"}
+REGISTERED_TOOLS = {
+    "run_command", "read_file", "edit_file", "write_file", "get_status",
+    "submit_patch", "get_code_neighbors", "search_similar_code", "get_code_subgraph"
+}
+WRITE_TOOLS = {"edit_file", "write_file", "submit_patch"}
+STATE_PLACEHOLDER = re.compile(r"(?<![\$\{\\])\{+[^{}]*\}+")
+ROOT_NAMES = {"agent.yaml", "agent.yml", "root_agent.yaml", "root_agent.yml"}
+
+def resolve_include(owner, ref):
+    p = posixpath.normpath(posixpath.join(posixpath.dirname(owner), ref))
+    assert not p.startswith("../") and p != "..", (owner, ref)
+    return p
+
+def load_yaml(name):
+    return yaml.load(FILES[name], Loader=IncludeLoader)
+
+def validate_instruction(name, text):
+    for m in STATE_PLACEHOLDER.finditer(text):
+        token = m.group()
+        inner = token.strip("{}").strip().removesuffix("?")
+        if inner.isidentifier():
+            raise AssertionError(f"{name}: unsafe ADK state placeholder {token}")
+    assert not re.search(r"(^|[`\s(])rg\s+-", text), f"{name}: prompt assumes ripgrep"
+
+def validate_agent(name, root=False):
+    cfg = load_yaml(name)
+    assert cfg["model"] == MODEL, (name, cfg.get("model"))
+
+    ins = cfg.get("instruction")
+    if isinstance(ins, str) and ins in FILES:
+        text = FILES[ins]
+    elif isinstance(ins, str):
+        inc = re.fullmatch(r"!include\s+(.+)", ins.strip())
+        text = FILES[resolve_include(name, inc.group(1))] if inc else ins
+    else:
+        raise AssertionError(f"{name}: invalid instruction")
+    validate_instruction(name, text)
+
+    tool_names = [x for x in cfg.get("tools", []) if isinstance(x, str)]
+    assert set(tool_names) <= REGISTERED_TOOLS, (name, set(tool_names) - REGISTERED_TOOLS)
+    if root:
+        assert "submit_patch" in tool_names
+    else:
+        assert not (set(tool_names) & WRITE_TOOLS), f"{name}: subagent must be read-only"
+
+    for tool in cfg.get("tools", []):
+        if isinstance(tool, dict) and "agent_tool" in tool:
+            child = tool["agent_tool"]["config_path"]
+            assert child in FILES, (name, child)
+            validate_agent(child, root=False)
+
+    gc = cfg.get("generate_content_config")
+    if isinstance(gc, str):
+        ref = re.fullmatch(r"!include\s+(.+)", gc.strip())
+        if ref:
+            gc = load_yaml(resolve_include(name, ref.group(1)))
+        elif gc in FILES:
+            gc = load_yaml(gc)
+    assert isinstance(gc, dict)
+    assert 1 <= int(gc["max_output_tokens"]) <= 32768
+    assert gc.get("thinking_config", {}).get("include_thoughts") is False
+
+def validate_bundle():
+    roots = sorted(ROOT_NAMES & set(FILES))
+    assert roots == ["agent.yaml"], roots
+
+    for name, content in FILES.items():
+        p = Path(name)
+        assert not p.is_absolute()
+        assert ".." not in p.parts
+        assert p.suffix in ALLOWED_EXT
+        assert isinstance(content, str) and content.strip()
+        if p.suffix in {".yaml", ".yml"}:
+            yaml.load(content, Loader=IncludeLoader)
+        for ref in re.findall(r"!include\s+([^\s]+)", content):
+            resolved = resolve_include(name, ref)
+            assert resolved in FILES, (name, ref, resolved)
+
+    validate_agent("agent.yaml", root=True)
+
+    budget = yaml.safe_load(FILES["eval_config.yaml"])["evaluation"]
+    assert 0 < budget["timeout_seconds"] <= 300
+    assert 0 < budget["max_tool_calls"] <= 100
+    assert 0 < budget["max_time_minutes"] <= 60
+    assert 0 < budget["max_turns"] <= 500
+
+    for prompt_name in ["prompts/system.md", "sub_agents/localizer.md", "sub_agents/reviewer.md"]:
+        assert "{" not in FILES[prompt_name] and "}" not in FILES[prompt_name], (
+            prompt_name, "avoid accidental ADK state interpolation"
+        )
+
+    print("Validation passed.")
+    print("Agents: root + localizer + reviewer")
+    print("Budget:", budget)
+
+validate_bundle()
+
+
+# CELL 8 markdown
+## Build submission.zip
+
+
+# CELL 9 code
+def write_bundle(files, root):
+    root.mkdir(parents=True, exist_ok=True)
+    for name, content in files.items():
+        p = root / name
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(content, encoding="utf-8")
+
+def deterministic_zip(files, output):
+    with zipfile.ZipFile(output, "w") as z:
+        for name in sorted(files):
+            info = zipfile.ZipInfo(name, date_time=(1980, 1, 1, 0, 0, 0))
+            info.compress_type = zipfile.ZIP_DEFLATED
+            info.create_system = 3
+            info.external_attr = 0o644 << 16
+            z.writestr(info, files[name].encode("utf-8"))
+    return output
+
+bundle_dir = WORKING / "surgical_triad_submission"
+if bundle_dir.exists():
+    import shutil
+    shutil.rmtree(bundle_dir)
+
+write_bundle(FILES, bundle_dir)
+submission = deterministic_zip(FILES, WORKING / "submission.zip")
+
+with zipfile.ZipFile(submission) as z:
+    assert z.testzip() is None
+    assert sorted(z.namelist()) == sorted(FILES)
+    assert z.read("agent.yaml").decode("utf-8") == FILES["agent.yaml"]
+
+sha = hashlib.sha256(submission.read_bytes()).hexdigest()
+print("Created:", submission)
+print("SHA256:", sha)
+print("Archive files:")
+for name in sorted(FILES):
+    print(" -", name)
+
+
+# CELL 10 markdown
+## Why this should be stronger than a plain coder + analyzer
+
+The likely gain is not from making every task longer. It comes from recovering failure modes that are disproportionately expensive:
+
+1. **Wrong localization:** the localizer uses exact names first, then graph expansion from a real symbol.
+2. **Correct idea, incomplete patch:** the reviewer checks sync/async parity, wrappers, metadata/schema, and hidden-test boundaries after a diff exists.
+3. **Tool loops:** every miss must change the next action; the prompt explicitly stops exploration late in the budget.
+4. **Context blowups:** file reads are bounded and large visual fixtures are avoided.
+5. **Overfitting to the four public repositories:** domain knowledge is phrased as transferable repository archetypes rather than hardcoded filenames.
+6. **Over-editing:** public reference-patch size is used only as a prior, not as a hard constraint.
+
+Do not assume a +0.02–0.03 gain is guaranteed. On a public split of roughly sixty tasks, one recovered issue can move the score by about 0.02, so the right test is paired evaluation on a fixed local panel plus a leaderboard submission.

@@ -1,0 +1,8 @@
+{
+  "competition": "gemma-4-developer-agent",
+  "verified_at": "2026-10-05T03:37:55.721236+00:00",
+  "file_count": 524,
+  "uncompressed_bytes": 22416766904,
+  "archive_bytes": 21929289087,
+  "verification": "API manifest names and sizes; ZIP CRC checked during extraction"
+}

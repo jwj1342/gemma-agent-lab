@@ -1,0 +1,13 @@
+# Task Verification Question
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743817
+
+## 3529044 /jcrpaquin TOPIC
+It says in `Data > Dataset Generation & Verification Pipeline` that:
+> Near Completion with Frontier Models: For the test set, we check that a larger frontier model can pass the case or get within a single test case of passing.
+
+One of the training tasks is [fastapi/fastapi#15661](https://github.com/fastapi/fastapi/pull/15661). This task essentially requires the model to guess the exact file name and API surface that the tests require. Given the competition restrictions, there's no reasonable way for this task to be completed successfully. Without the ability to see the test imports or the referenced PR from [fastapi/asyncer#608](https://github.com/fastapi/asyncer/pull/608) it's not possible to know what the test is expecting.
+
+Were frontier models run using the same harness and restrictions when doing task validation? Could the tasks be re-reviewed for feasibility in case other, similar issues exist in the train/val/test sets?
+
+## 3529102 /ryanholbrook ADMIN
+We did much more extensive reviewing and editing of the test tasks than the training tasks. "Impossible" tasks like you've described are one of the things we checked for. We also checked that a failing test case for the frontier model's patch was something it could have gotten correct with the information given. Unfortunately, time and resource constraints meant that we weren't able to do the same kind of review for the training set.

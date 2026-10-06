@@ -1,0 +1,99 @@
+{
+  "forumTopic": {
+    "authorId": 27302398,
+    "authorThumbnailName": "27302398-kg.png?t=2026-10-02-17-16-17",
+    "authorUserDisplayName": "Aryan Gupta",
+    "authorUserName": "aryangupta85",
+    "comments": [
+      {
+        "id": 3532636,
+        "postDate": "2026-10-04T09:27:31.270Z",
+        "rawMarkdown": "and what was your score on the leaderboard with this setup?",
+        "content": "<p>and what was your score on the leaderboard with this setup?</p>",
+        "parent": {},
+        "author": {
+          "displayName": "omkar_pavale",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/omkarpawale",
+          "tier": "CONTRIBUTOR",
+          "id": 18444456,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 696,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "omkar_pavale",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+            "url": "/omkarpawale",
+            "userName": "omkarpawale",
+            "tier": "CONTRIBUTOR",
+            "id": 18444456,
+            "profileUrl": "/omkarpawale",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 18444456,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3532492,
+      "postDate": "2026-10-03T18:27:35.070Z",
+      "rawMarkdown": "Hi Kagglers!\n\nWhile exploring the Google Gemma 4 Developer Agent Competition, we observed a common failure pattern in naive single-agent setups: when a single model tries to read large repositories, design the architecture, and edit files simultaneously, it often exceeds context budgets or makes broad changes that break existing test suites.\n\nTo tackle this, we implemented a Hierarchical Multi-Agent Architecture following Google ADK's declarative standard:\n\nArchitectural Overview:\n\n1.code_analyzer (The Investigator - Read-Only):\n-Never modifies files.\n-Leverages precomputed embeddings and fast AST symbol search (repo-scout) to extract the exact file, lines, and root cause without polluting the context window.\n-Outputs a strict structured fix plan (LOCATION, ROOT CAUSE, FIX PLAN).\n\n2.swe_coder (The Surgeon):\n-Receives the plan from code_analyzer.\n-Executes atomic edit_file replacements preserving existing APIs and backward compatibility.\n-Verifies syntax and targeted test sanity in the sandbox before concluding with submit_patch().\n\n3.Deterministic Packaging & ADK Compliance:\n-100% declarative YAML tree (agent.yaml, configs/sampling.yaml, eval_config.yaml).\n-Adheres to Google's single base model constraint (gemma-4-31b-it-qat-w4a16-ct) and fits cleanly under the size ceiling.\n\nFull code and packaging notebook is available here:\nhttps://www.kaggle.com/code/aryangupta85/gemma-4-developer-agent-swe-architecture\n\nWould love to hear how other teams are handling context management and multi-agent coordination under the 4x L4 GPU constraints! Any feedback or thoughts are welcome. If you find the approach interesting, please consider dropping an upvote!",
+      "content": "<p>Hi Kagglers!</p>\n<p>While exploring the Google Gemma 4 Developer Agent Competition, we observed a common failure pattern in naive single-agent setups: when a single model tries to read large repositories, design the architecture, and edit files simultaneously, it often exceeds context budgets or makes broad changes that break existing test suites.</p>\n<p>To tackle this, we implemented a Hierarchical Multi-Agent Architecture following Google ADK's declarative standard:</p>\n<p>Architectural Overview:</p>\n<p>1.code_analyzer (The Investigator - Read-Only):\n-Never modifies files.\n-Leverages precomputed embeddings and fast AST symbol search (repo-scout) to extract the exact file, lines, and root cause without polluting the context window.\n-Outputs a strict structured fix plan (LOCATION, ROOT CAUSE, FIX PLAN).</p>\n<p>2.swe_coder (The Surgeon):\n-Receives the plan from code_analyzer.\n-Executes atomic edit_file replacements preserving existing APIs and backward compatibility.\n-Verifies syntax and targeted test sanity in the sandbox before concluding with submit_patch().</p>\n<p>3.Deterministic Packaging &amp; ADK Compliance:\n-100% declarative YAML tree (agent.yaml, configs/sampling.yaml, eval_config.yaml).\n-Adheres to Google's single base model constraint (gemma-4-31b-it-qat-w4a16-ct) and fits cleanly under the size ceiling.</p>\n<p>Full code and packaging notebook is available here:\n<a href=\"https://www.kaggle.com/code/aryangupta85/gemma-4-developer-agent-swe-architecture\" target=\"_blank\">https://www.kaggle.com/code/aryangupta85/gemma-4-developer-agent-swe-architecture</a></p>\n<p>Would love to hear how other teams are handling context management and multi-agent coordination under the 4x L4 GPU constraints! Any feedback or thoughts are welcome. If you find the approach interesting, please consider dropping an upvote!</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Aryan Gupta",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/27302398-kg.png?t=2026-10-02-17-16-17",
+        "url": "/aryangupta85",
+        "tier": "CONTRIBUTOR",
+        "id": 27302398,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "canUpvote": true
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 1729,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Aryan Gupta",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/27302398-kg.png?t=2026-10-02-17-16-17",
+          "url": "/aryangupta85",
+          "userName": "aryangupta85",
+          "tier": "CONTRIBUTOR",
+          "id": 27302398,
+          "profileUrl": "/aryangupta85",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 27302398,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3532492,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 745691,
+    "name": "[Multi-Agent SWE Architecture] Separating Bug Investigation from Surgical Patching with Gemma 4",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-10-03T18:27:35.069663300Z",
+    "url": "/competitions/gemma-4-developer-agent/discussion/745691",
+    "totalMessages": 1,
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

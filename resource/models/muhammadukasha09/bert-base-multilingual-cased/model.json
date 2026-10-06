@@ -1,0 +1,24 @@
+{
+  "id": 207404,
+  "ref": "muhammadukasha09/bert-base-multilingual-cased",
+  "title": "bert-base-multilingual-cased",
+  "author": "Muhammad Ukasha",
+  "slug": "bert-base-multilingual-cased",
+  "instances": [
+    {
+      "id": 185265,
+      "slug": "default",
+      "framework": "MODEL_FRAMEWORK_TRANSFORMERS",
+      "fineTunable": true,
+      "versionId": 217271,
+      "versionNumber": 1,
+      "url": "https://www.kaggle.com/models/muhammadukasha09/bert-base-multilingual-cased/Transformers/default",
+      "licenseName": "Apache 2.0",
+      "totalUncompressedBytes": 717272069
+    }
+  ],
+  "url": "https://www.kaggle.com/models/muhammadukasha09/bert-base-multilingual-cased",
+  "voteCount": 2,
+  "authorImageUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/18360293-kg.png?t=2025-10-30-02-53-31",
+  "updateTime": "2025-01-02T18:07:50.013Z"
+}

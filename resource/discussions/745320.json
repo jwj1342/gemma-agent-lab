@@ -1,0 +1,33 @@
+{
+  "messages": [
+    {
+      "id": 3532005,
+      "postDate": "2026-10-03T02:10:05.303Z",
+      "content": "<p>Easy step to reproduce: \n1) Copy and Run from <a href=\"https://www.kaggle.com/code/ryanholbrook/getting-started-gemma-4-developer-agent\" target=\"_blank\">ryanholbrook</a>\n2) You see immediate fail</p>\n<p>I am assuming this is part of GPU issue that people talked about? But GPU issue for immediate failure? really? Appreciate your help in advance. </p>\n<p><img src=\"https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F5578954%2F342551f690c65838c3609b43f4309642%2FScreenshot%202026-10-03%20at%2011.06.23AM.png?generation=1790993244280411&amp;alt=media\" alt=\"\"></p>",
+      "rawMarkdown": "Easy step to reproduce: \n1) Copy and Run from [ryanholbrook](https://www.kaggle.com/code/ryanholbrook/getting-started-gemma-4-developer-agent)\n2) You see immediate fail\n\nI am assuming this is part of GPU issue that people talked about? But GPU issue for immediate failure? really? Appreciate your help in advance. \n\n![](https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F5578954%2F342551f690c65838c3609b43f4309642%2FScreenshot%202026-10-03%20at%2011.06.23AM.png?generation=1790993244280411&alt=media)",
+      "votes": 1
+    },
+    {
+      "id": 3532263,
+      "postDate": "2026-10-03T07:26:10.333Z",
+      "content": "<p>Hi Shoto! To submit your work you need to wait till your notebook will be finished, dont cancel it. After that you go to submissions section and press submit prediction,then notebook part. Select exact notebook and press submit. So after this procedure your submission will have score, you just need to wait for 10-12 hours`</p>",
+      "rawMarkdown": "Hi Shoto! To submit your work you need to wait till your notebook will be finished, dont cancel it. After that you go to submissions section and press submit prediction,then notebook part. Select exact notebook and press submit. So after this procedure your submission will have score, you just need to wait for 10-12 hours`",
+      "replies": [
+        {
+          "id": 3532735,
+          "postDate": "2026-10-04T14:47:30.117Z",
+          "content": "<p><a href=\"/kozykappa\" target=\"_blank\">@kozykappa</a> \nHi, thanks for the suggestion. I followed those steps, which I let the notebook finish, submitted the completed notebook version from the Submissions page, and did not cancel it. However, my submission has now been waiting for about 13 hours without getting a score. At this point, I suspect this may be related to the competition GPU queue rather than the submission procedure itself.<br>\nIf anyone else is seeing the same behavior, please let me know!! It would also be helpful if the organizers could clarify whether this is expected at the moment. </p>\n<p><img src=\"https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F5578954%2F31ce5d4de8a24cce01c200acf9ec05b1%2FScreenshot%202026-10-04%20at%2011.43.52PM.png?generation=1791125049795083&amp;alt=media\" alt=\"\"></p>",
+          "rawMarkdown": "@kozykappa \nHi, thanks for the suggestion. I followed those steps, which I let the notebook finish, submitted the completed notebook version from the Submissions page, and did not cancel it. However, my submission has now been waiting for about 13 hours without getting a score. At this point, I suspect this may be related to the competition GPU queue rather than the submission procedure itself.  \nIf anyone else is seeing the same behavior, please let me know!! It would also be helpful if the organizers could clarify whether this is expected at the moment. \n\n![](https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F5578954%2F31ce5d4de8a24cce01c200acf9ec05b1%2FScreenshot%202026-10-04%20at%2011.43.52PM.png?generation=1791125049795083&alt=media)",
+          "replies": [
+            {
+              "id": 3532776,
+              "postDate": "2026-10-04T17:06:48.663Z",
+              "content": "<p>Oh, you just need to wait till it comes to your order to use GPU, most of the users are utilizing L4 x4, dont worry competition author will solve this problem asap, wait and your notebook will run, after full run you can submit your notebook to score, score will run without queue</p>",
+              "rawMarkdown": "Oh, you just need to wait till it comes to your order to use GPU, most of the users are utilizing L4 x4, dont worry competition author will solve this problem asap, wait and your notebook will run, after full run you can submit your notebook to score, score will run without queue"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

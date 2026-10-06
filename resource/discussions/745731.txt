@@ -1,0 +1,36 @@
+# Notes on the graph tools from auditing all 127 graphs
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/745731
+
+## 3532562 /akhilchinta1505 TOPIC
+I went through all 127 released code graphs and the tool code in the harness wheel (swegemma 0.2.7), then checked the graphs against calls recorded while fastapi, rich, requests and httpx ran their own test suites. The data page says the hidden set uses identical graph generation, so I expect all of this to hold at scoring time too.
+
+Some of it is already known. Jason Wold reported the missing async defs ([thread 742911](https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/742911)), and Tarun Singhal found that the tools only match exact names and that the examples in their help return nothing ([thread 745220](https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/745220)). Reading the code explains why, and turns up a few more things.
+
+**What the tools do**
+
+- `get_code_neighbors` returns an empty list unless the id matches exactly. The README describes a four-step resolver (exact, suffix, case-insensitive, substring), but 0.2.7 only does the exact step. Ids are full paths like `fastapi.routing.APIRoute`.
+- `edge_type` is compared as an exact string, and every stored edge has the type `calls`, lowercase. `CALLS`, `DEFINED_IN` and `IMPORTS` all come back empty.
+- The neighbour list doesn't say which way an edge goes. It's sorted alphabetically and cut at `max_neighbors` (50 by default), so the first 50 are just the first 50 names alphabetically.
+- `search_similar_code` can't embed free text. It looks up a stored vector by node id or node source, so any other query returns an empty list.
+
+**What the graphs hold**
+
+- Every edge is stored in both directions, and each class is linked to its members with a `calls` edge too. A neighbour can be a caller, a callee or the enclosing class.
+- None of the 10,321 `self.m()` calls I could resolve from the node sources are in the graphs, and no graph has a single async def.
+- Against the recorded calls (leaving out framework dispatch), the released graphs hold 14 to 21 percent of 6,432 pairs in fastapi, rich and requests. httpx is at 2 percent, since almost all of its calls go to methods.
+- The node embeddings follow graph distance much more than code text (Spearman -0.28 to -0.34 with graph distance, 0.06 to 0.18 with TF-IDF similarity of the source).
+
+**What I'd change in an agent**
+
+1. Don't ask the graph who calls a method. Grep for it with `run_command`.
+2. Pass the full id, and use `edge_type="calls"` in lowercase or leave it out. An empty list can mean a bad lookup or a missing def, not "nobody calls this".
+3. Treat `search_similar_code` as "near this symbol in the graph", not "looks like this code".
+4. Start with text search on the issue. On the 122 public tasks that change a non-test def, plain TF-IDF over def names and source puts a changed def in the top 10 for 52 percent of tasks. The embeddings alone manage 9 percent.
+5. Skills can ship Python scripts. If one runs in your sandbox, the builder in the notebook makes a fuller graph of the workspace in seconds (I haven't tested that inside the harness). On a fuller graph, ask for more than 50 neighbours, because the alphabetical cut starts dropping real callers.
+
+I also rebuilt every graph in the same format with Python's `ast` module: async defs included, methods kept in their class, and calls through `self` and `super()` resolved. It holds 62 to 69 percent of the same recorded pairs. The notebook has the builder code, rebuilds all 127 graphs from the competition snapshots and reproduces every number above in about eight minutes on CPU. The code and traces are Apache 2.0.
+
+- Notebook: https://www.kaggle.com/code/akhilchinta1505/code-graph-audit
+- Call traces: https://www.kaggle.com/datasets/akhilchinta1505/code-graph-call-traces
+
+If a newer wheel changes any of this, I'd like to know.

@@ -1,0 +1,27 @@
+# Getting gpu l4*4 queued and system errror
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743600
+
+## 3528625 /nihilisticneuralnet TOPIC
+![](https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F15559822%2F728686c1b4eed76e32d0b7bdd5cbf8ef%2FScreenshot%202026-09-26%20144147.png?generation=1790413923245395&alt=media)
+
+As soon as i hit submit, submission fails with system error+ gpu l4 are being queued for a long time. 
+
+is it just me or other people are also experiencing simialr issue??
+
+## 3529170 /kinance COMMENT
+Adding a data point: two 4x L4 batch sessions (script kernels, competition + wheelhouse + model attached) have been queued for about 4 hours without starting, and an earlier one sat queued for ~5 hours before I cancelled it. CPU sessions start immediately.
+
+Could the hosts share whether 4x L4 capacity is currently constrained, and whether there's a recommended way to run local evaluation in the meantime? Thanks!
+
+## 3529175 /chandramdutta COMMENT
+yeah the capacity for L4x4 and TPUs are bad.
+all my runs are still queued
+
+![](https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F14027805%2F94ff6e1b309ae96a18e4f0de1d592093%2FScreenshot%202026-09-27%20at%208.44.35PM.png?generation=1790522112646557&alt=media)
+
+## 3529197 /penguin069 COMMENT
+same, I have been waiting in queue for 4+ hours <br>
+I had previously suggested providing RTX PROs for this competition, those gpus would be much much better
+
+## 3528652 /chandramdutta COMMENT
+yeah my l4x4 and tpu runs are in queue for 3 hrs now, altho it doesnt fail

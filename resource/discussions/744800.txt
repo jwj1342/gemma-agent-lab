@@ -1,0 +1,13 @@
+# Submission ended with "Notebook Threw Exception": could you check what raised?
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/744800
+
+## 3530901 /madhukardevarasetti TOPIC
+Hi @ryanholbrook, my submission from notebook notebook35c2b989ac (version DMV4, submitted on 1 Oct) ended with "Notebook Threw Exception" and no score. Its commit run succeeded (91 s), and in that run validate_directory, validate_single_declared_model and compile_submission (wheelhouse v25) all passed. The same notebook design scored on 28, 29 and 30 Sep; this version only changed prompt text.
+
+Could you check what raised in this run, and whether it was on the scorer side (for example during today's patches)? If so, a rerun would be much appreciated. Thanks!!
+
+## 3530911 /shengkaisu COMMENT
+Same here: submission 56729291 (2026-10-01 00:07 UTC) ended with "Your notebook hit an unhandled error while rerunning your code". No adapters. It's a self-contained notebook (bundle embedded, no input datasets) that writes /kaggle/working/submission.zip. The notebook run completes normally, and the zip is valid (agent.yaml at the root; it passes validate_directory and compile_submission with wheelhouse v25). The failure came about 4–7 min after submitting, likely before vLLM had finished starting. The same bundle is running fine through the official Evaluator on Kaggle 4×L4. Could you check what raised, and rerun it or restore the allowance if it was on the scorer side? Thanks!
+
+## 3530909 / COMMENT
+

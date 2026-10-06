@@ -1,0 +1,20 @@
+# vLLM's Gemma 4 tool-argument parser can loop forever on some malformed array arguments
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/745138
+
+## 3531711 /adesolanke TOPIC
+Hi @ryanholbrook,
+
+While building a local stand-in for the scoring server, we compared vLLM 0.19.1's Gemma 4 tool parser (the `gemma4_tool_parser.py` from the competition wheel) against a reimplementation on 60,000 fuzzed call strings. On 85 of them, `_parse_gemma4_args` never returns. All 85 are array arguments where a string delimiter breaks the bracket matching. Minimal examples (run in a subprocess with a timeout):
+
+```
+x:[a<|"|>]
+x:[a<|"|>]<|"|>]
+x:[btrue<|"|>-1]1<|"|>:\n{
+```
+
+`x:[<|"|>a]b<|"|>]` parses fine (`{'x': ['a]b']}`), so the trigger is a delimiter that opens inside an array item and never closes before the bracket. The loop sits in the array branch: an item position whose next character is `]` never advances the index.
+
+Why it might matter on the scorer: the parser runs inside the API server, so a single generation like this could stall that request until the task's time limit, or longer if the server's event loop is blocked. None of our own runs has produced such a call (our tools take no array arguments), but agents that expose array-typed tools, such as lists of symbols for the code-graph tools, could hit it.
+
+A guard that raises on a non-advancing index (or a timeout around tool parsing) would turn it into an ordinary parse failure. Repro script: a few lines, happy to share.
+

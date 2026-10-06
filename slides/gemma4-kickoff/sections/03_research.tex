@@ -1,0 +1,47 @@
+% Research directions
+\section{Research directions}
+\sectionframe{03}{Ideas to explore}
+
+\begin{frame}{SFT, LoRA, and RL in plain language}
+\begin{columns}[T,onlytextwidth]
+\column{.30\textwidth}\eyebrow[teal]{SFT: LEARN BY EXAMPLE}
+\textbf{Show good repairs}\par\vspace{2mm}
+\small Supervised fine-tuning teaches useful tool calls and edits from checked examples.
+\column{.30\textwidth}\eyebrow{LoRA: A SMALL UPDATE}
+\textbf{Train extra weights}\par\vspace{2mm}
+\small A compact adapter changes the model's behavior while the base stays fixed.
+\column{.30\textwidth}\eyebrow{RL: LEARN BY FEEDBACK}
+\textbf{Reward useful actions}\par\vspace{2mm}
+\small Reinforcement learning improves choices using feedback, such as test results.
+\end{columns}
+\vspace{7mm}
+\softpanel{orange}{How they fit together}{SFT or RL defines how the model learns. LoRA defines which weights we train.}
+
+\note{SFT uses target outputs, such as vetted traces of reasoning actions, tool calls, and edits. LoRA is a parameter-efficient update method, not a separate objective: small low-rank updates are learned instead of changing all base weights. RL optimizes a policy using a reward signal; in this setting verification success is a possible reward, but environment failures and reward shortcuts must be controlled. DPO and GRPO are more specific methods reserved for later reading. None of these training methods has been validated in this project yet.}
+\end{frame}
+
+
+
+\begin{frame}{Three ideas to compare with our starting agent}
+\tagline{Change one thing at a time; use the same model, tasks, and time budget.}
+\input{figures/experiment-map}
+\vspace{2mm}
+\small Compare repair success, time spent, and what went wrong.
+% Sources: Proposed controlled ablations. The baseline has an official public score; comparative ablation results are still needed.
+\note{An ablation is a controlled comparison where one component changes. Freeze the model revision, harness version, task grouping, seeds, and total budget. A0 has a formal public score and one successful local/public runtime check, but still needs broader local validation. A1--A3 are proposals, not completed results. Record configurations, traces, patches, and test logs so another teammate can inspect the conclusion.}
+\end{frame}
+
+\begin{frame}{Turn checked repairs into learning material}
+\tagline{A trace records the agent's actions, tool results, and code changes.}
+\vspace{2mm}
+\input{figures/training-flow}
+\vspace{4mm}
+\begin{columns}[T,onlytextwidth]
+\column{.48\textwidth}\eyebrow[teal]{SAVE FRESH TASKS FOR LATER}
+\small Keep related code together when making training and evaluation sets.
+\column{.48\textwidth}\eyebrow{LEARN FROM CHECKED OUTCOMES}
+\small Confirm that the patch works and the test environment behaves correctly.
+\end{columns}
+% Sources: Proposed training path; organizer clarification on external teacher data: \href{https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/742807}{discussion 742807}.
+
+\end{frame}

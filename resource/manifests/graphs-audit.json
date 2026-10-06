@@ -1,0 +1,2542 @@
+[
+  {
+    "file": "fastapi_016ab760faba1813ba235d5582a014a58bd2f417.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 4287,
+    "edges": 2490,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2490
+    }
+  },
+  {
+    "file": "fastapi_08924400c2c75533685148b029defcf6913f1def.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 4330,
+    "edges": 2448,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2448
+    }
+  },
+  {
+    "file": "fastapi_08b09e5236e315b6f10265ed229f130d4befb4ea.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 3837,
+    "edges": 2564,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2564
+    }
+  },
+  {
+    "file": "fastapi_0bdc3ca3732e3742e094bea2b320e9774659ac38.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 3250,
+    "edges": 2012,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2012
+    }
+  },
+  {
+    "file": "fastapi_0dd42b746e17d33a74ea267a62eace9ccdccf345.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 4353,
+    "edges": 2466,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2466
+    }
+  },
+  {
+    "file": "fastapi_16d75d90eb96976a57b94cc24e4018859cd54c4d.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 3238,
+    "edges": 1988,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 1988
+    }
+  },
+  {
+    "file": "fastapi_1b3bea8b6be2220cc1544653ea785d2134fcb35b.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 4596,
+    "edges": 2664,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2664
+    }
+  },
+  {
+    "file": "fastapi_1e78a36b7310003f0ff634627d8a7bc53c6ccdee.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 4106,
+    "edges": 2326,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2326
+    }
+  },
+  {
+    "file": "fastapi_1fcec88ad2df4541b6a81c4786c4d039dc745e1e.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 4479,
+    "edges": 2776,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2776
+    }
+  },
+  {
+    "file": "fastapi_202b2d2f5f331db9102b5dbcef071a9e09bed10e.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 4380,
+    "edges": 2708,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2708
+    }
+  },
+  {
+    "file": "fastapi_22b02e26f9e8c7e32bd8266e2b0ebe8bb3a0db2b.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 4259,
+    "edges": 2428,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2428
+    }
+  },
+  {
+    "file": "fastapi_27c0f7e75fc0ce26ca75295d455eb36f0ca033d3.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 3314,
+    "edges": 2062,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2062
+    }
+  },
+  {
+    "file": "fastapi_2b212ddd7604891d42e2ffbafe764c334230bdb7.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 4269,
+    "edges": 2668,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2668
+    }
+  },
+  {
+    "file": "fastapi_2cf04ee30db9df2db04a5b1e0d2c625dfbf1a211.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 3627,
+    "edges": 2390,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2390
+    }
+  },
+  {
+    "file": "fastapi_2f9c914d440e99fe8b62646b51e4d24c5bcd858b.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 4151,
+    "edges": 2354,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2354
+    }
+  },
+  {
+    "file": "fastapi_3b4b5ab8c819dce27fbaf0aa0a9c74b7f3255ec0.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 3743,
+    "edges": 2492,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2492
+    }
+  },
+  {
+    "file": "fastapi_3c54a8f07b70cdd40e3d81ea319e9fcccd2481d2.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 3757,
+    "edges": 2492,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2492
+    }
+  },
+  {
+    "file": "fastapi_3fe6522aaed4d36d6a38175a4a8137ee0fc62451.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 4487,
+    "edges": 2780,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2780
+    }
+  },
+  {
+    "file": "fastapi_425a4c5bb1d1a8e00007e82e5188fc4d30585767.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 3630,
+    "edges": 2390,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2390
+    }
+  },
+  {
+    "file": "fastapi_464c359bb03f7ba72330198cc9f44df36194837d.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 4338,
+    "edges": 2452,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2452
+    }
+  },
+  {
+    "file": "fastapi_48d58ae3b6ef4ded5a4794618c00345667256d98.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 4194,
+    "edges": 2392,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2392
+    }
+  },
+  {
+    "file": "fastapi_4976568fc7cb7501729d8f84d946cde1e91299cd.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 3768,
+    "edges": 2500,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2500
+    }
+  },
+  {
+    "file": "fastapi_4a98a66778987648d2195155c9cbe0824d67b02a.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 3944,
+    "edges": 2680,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2680
+    }
+  },
+  {
+    "file": "fastapi_5126e099bdda51f261fd5a101b5f914991d31897.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 3768,
+    "edges": 2500,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2500
+    }
+  },
+  {
+    "file": "fastapi_516169428d2fa189d34318ebc469a082c49c1189.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 3837,
+    "edges": 2564,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2564
+    }
+  },
+  {
+    "file": "fastapi_5265c4f5cb4d8fb4fb5015bccf1a6de8f3fc6044.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 3698,
+    "edges": 2456,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2456
+    }
+  },
+  {
+    "file": "fastapi_54f8aeeb9a15e4d5a12401ec5549840966df0087.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 4354,
+    "edges": 2468,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2468
+    }
+  },
+  {
+    "file": "fastapi_566e3157a5517784c741dbf36e39687af326fe90.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 3689,
+    "edges": 2444,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2444
+    }
+  },
+  {
+    "file": "fastapi_5c1f87c56387a96dbdddb2b1c4ec9ba48dcebc4e.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 3238,
+    "edges": 1988,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 1988
+    }
+  },
+  {
+    "file": "fastapi_603df6e36f59cc4a3e189f506b8f36d1e816c3ac.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 3822,
+    "edges": 2548,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2548
+    }
+  },
+  {
+    "file": "fastapi_60699f306b67dc1f4918ebea17f04d7a48cda645.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 3939,
+    "edges": 2674,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2674
+    }
+  },
+  {
+    "file": "fastapi_63d7a2b9978258d13dfc22664e60fc2110d30e20.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 3717,
+    "edges": 2478,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2478
+    }
+  },
+  {
+    "file": "fastapi_6513d4daa16a536d17743de6a292f49bd06388a4.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 4264,
+    "edges": 2668,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2668
+    }
+  },
+  {
+    "file": "fastapi_6b53786f626db95a42fd0f66afd360bab161f4b1.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 4597,
+    "edges": 2678,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2678
+    }
+  },
+  {
+    "file": "fastapi_6cf40df24d1d199fd25d034fc87fcae284fc23a2.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 3750,
+    "edges": 2492,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2492
+    }
+  },
+  {
+    "file": "fastapi_6e49dc029541aaa896fa63c47647ccd3f066df67.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 3601,
+    "edges": 2384,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2384
+    }
+  },
+  {
+    "file": "fastapi_6ee87478d821171139264cd9cd17cbd2232934ce.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 4248,
+    "edges": 2416,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2416
+    }
+  },
+  {
+    "file": "fastapi_7132a690461c2367f22556eb87c2b5eb7d9cfb45.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 3619,
+    "edges": 2392,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2392
+    }
+  },
+  {
+    "file": "fastapi_71a17b5932e38bcf798fcd05c5bb384e6d4db5bf.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 3931,
+    "edges": 2662,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2662
+    }
+  },
+  {
+    "file": "fastapi_740ec2787b25e59f7aa9e3df1db09d4489c22718.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 3745,
+    "edges": 2492,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2492
+    }
+  },
+  {
+    "file": "fastapi_811fa898752e7f5697733a2958ff79ad8dfb5276.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 3818,
+    "edges": 2542,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2542
+    }
+  },
+  {
+    "file": "fastapi_861b22c40897a03d2d7e5926923d962121ed5e2e.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 3263,
+    "edges": 2014,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2014
+    }
+  },
+  {
+    "file": "fastapi_8e50c55fd90c4433ddc9096ff439da9498a8314a.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 4363,
+    "edges": 2470,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2470
+    }
+  },
+  {
+    "file": "fastapi_930b27e5fa32ce150ddcea61f0c913435ae71c83.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 3775,
+    "edges": 2506,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2506
+    }
+  },
+  {
+    "file": "fastapi_94a1ee749e63591e6e275b726a66e07a25f6c407.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 4128,
+    "edges": 2354,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2354
+    }
+  },
+  {
+    "file": "fastapi_972a967d5d3fa24d450637c36c6b7ad1f1d8c1b6.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 3677,
+    "edges": 2436,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2436
+    }
+  },
+  {
+    "file": "fastapi_9a9c4ad5d06f5fe8ee6775a5aeaa2f83c854f263.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 4377,
+    "edges": 2692,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2692
+    }
+  },
+  {
+    "file": "fastapi_a456e92a21d5b94a67d6d0fd070218df09444443.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 4330,
+    "edges": 2448,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2448
+    }
+  },
+  {
+    "file": "fastapi_a7f2dbe976bf72703376f0cd04487bfc4a849f83.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 3255,
+    "edges": 2014,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2014
+    }
+  },
+  {
+    "file": "fastapi_aee8e78078e8a7f2736d3cab7a1cb7197356951c.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 3780,
+    "edges": 2510,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2510
+    }
+  },
+  {
+    "file": "fastapi_bc06e4296d588f39f38c7ac2fc96d3913c565962.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 4115,
+    "edges": 2332,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2332
+    }
+  },
+  {
+    "file": "fastapi_c0836dc1b7f4ba91e9563c8c4ccd0ebe655bc914.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 4193,
+    "edges": 2390,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2390
+    }
+  },
+  {
+    "file": "fastapi_c57ac7bdf3613798c94caceff562a41fa16d4a2d.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 3792,
+    "edges": 2518,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2518
+    }
+  },
+  {
+    "file": "fastapi_c6487ed632056e450d844846a1b63be551a3cbc6.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 3715,
+    "edges": 2478,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2478
+    }
+  },
+  {
+    "file": "fastapi_cb83b83dcf78eab4ea17d504db5abcda705fbdc4.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 4256,
+    "edges": 2422,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2422
+    }
+  },
+  {
+    "file": "fastapi_cd31576d5704b6aef1bdadc43770238cd88aad2b.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 4363,
+    "edges": 2472,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2472
+    }
+  },
+  {
+    "file": "fastapi_cff2236dacb7aedcaf2d2de0873cfbc9bb2b897a.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 3774,
+    "edges": 2502,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2502
+    }
+  },
+  {
+    "file": "fastapi_d2c17b603d2f986d5f3800d3bf24acba8e1f485b.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 4094,
+    "edges": 2320,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2320
+    }
+  },
+  {
+    "file": "fastapi_e2354a0a063f2fcb890ec568f1a98e136a39fd25.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 3698,
+    "edges": 2456,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2456
+    }
+  },
+  {
+    "file": "fastapi_e94028ab60d18080810910352bc9129e8046c92d.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 4364,
+    "edges": 2476,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2476
+    }
+  },
+  {
+    "file": "fastapi_eacbce24c9d299c6a28110d9fc8ac50f53cddb08.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 4330,
+    "edges": 2448,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2448
+    }
+  },
+  {
+    "file": "fastapi_eaf611f9ee56de4f16c837d4f487a4b9fca507c4.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 3685,
+    "edges": 2442,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2442
+    }
+  },
+  {
+    "file": "fastapi_eb1d50479ba0ac873e4ffa08a824b1d822ca3a17.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 3826,
+    "edges": 2548,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2548
+    }
+  },
+  {
+    "file": "fastapi_ee22a4b8ca46dcce26c8c183afc4992a888d8be2.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 4263,
+    "edges": 2430,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2430
+    }
+  },
+  {
+    "file": "fastapi_eead41bf4cf8587b4d86091dd3eabbb85796e717.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 3761,
+    "edges": 2500,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2500
+    }
+  },
+  {
+    "file": "fastapi_f1d750fddad90e2faad6c3cc5c85c7687b787e89.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 4401,
+    "edges": 2752,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2752
+    }
+  },
+  {
+    "file": "fastapi_f2687dc1bb01f4cb62eee90e656b61c38c2aaf6a.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 4275,
+    "edges": 2384,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 2384
+    }
+  },
+  {
+    "file": "httpx_4acf5c2c37714cc63b5cf71b3e284fca83c90311.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 740,
+    "edges": 1618,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 1618
+    }
+  },
+  {
+    "file": "requests_0b401c76b6e80a4eecf3c690085b2553f6e261ca.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 754,
+    "edges": 1878,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 1878
+    }
+  },
+  {
+    "file": "requests_0b4d494192de489701d3a2e32acef8fb5d3f042e.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 711,
+    "edges": 1748,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 1748
+    }
+  },
+  {
+    "file": "requests_0e322af87745eff34caffe4df68456ebc20d9068.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 730,
+    "edges": 1812,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 1812
+    }
+  },
+  {
+    "file": "requests_1b40fdd004bfc8ba5301bcf8a6908264e9b6b877.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 732,
+    "edges": 1826,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 1826
+    }
+  },
+  {
+    "file": "requests_382fc2c0c6c0ef0874bc65bc1175f97c073e5086.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 714,
+    "edges": 1754,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 1754
+    }
+  },
+  {
+    "file": "requests_6360477c52303c9445b45fa8744b02d05a2f0905.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 733,
+    "edges": 1828,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 1828
+    }
+  },
+  {
+    "file": "requests_661970d171d9c3e12e4c789c4768db647d8c4da0.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 758,
+    "edges": 1884,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 1884
+    }
+  },
+  {
+    "file": "requests_6f205ff422bccd5e4c4fc0b64c5f3e7df5181db6.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 759,
+    "edges": 1884,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 1884
+    }
+  },
+  {
+    "file": "requests_7407309c8a8a73aa2f4337184025d440bbedab7a.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 733,
+    "edges": 1828,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 1828
+    }
+  },
+  {
+    "file": "requests_7a13c041dbef42f9f3feb14110f02626f6892e9a.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 712,
+    "edges": 1750,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 1750
+    }
+  },
+  {
+    "file": "requests_b684dcb9bbf3aa557d1238e72062c4a29737dd1c.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 753,
+    "edges": 1876,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 1876
+    }
+  },
+  {
+    "file": "requests_cbce031327be4f1b4b5fd041ff4dcaa8efa2ce53.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 733,
+    "edges": 1828,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 1828
+    }
+  },
+  {
+    "file": "rich_01b85ac116c4635b6ddb8b488be8254be6df2a84.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 1925,
+    "edges": 5482,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 5482
+    }
+  },
+  {
+    "file": "rich_05ff970926cbd0b5d0acb6fc18cdbd1fc971e582.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 2006,
+    "edges": 5742,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 5742
+    }
+  },
+  {
+    "file": "rich_0ba607dc080c9f102b5ae5346bcdb70d6e9c969d.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 1958,
+    "edges": 5582,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 5582
+    }
+  },
+  {
+    "file": "rich_0c8bb032ad3b54a32fdb8a43f5ab457c8cd6dcb1.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 1926,
+    "edges": 5486,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 5486
+    }
+  },
+  {
+    "file": "rich_0f2f51b872d14588de3a65968f5cdde6fb5694a3.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 1970,
+    "edges": 5628,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 5628
+    }
+  },
+  {
+    "file": "rich_19c67b9a3479841e9133bea94607c89ee931d3fc.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 2021,
+    "edges": 5786,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 5786
+    }
+  },
+  {
+    "file": "rich_1ad6f73a4d1d3b40ac3f879feccfaad66412bd1d.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 1933,
+    "edges": 5504,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 5504
+    }
+  },
+  {
+    "file": "rich_1d402e0c59f8765e420a5a4440eb2fca7465d1ae.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 2012,
+    "edges": 5756,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 5756
+    }
+  },
+  {
+    "file": "rich_1fc7cb210ae52eb099df39818ddb9569e5b14c7b.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 2015,
+    "edges": 5772,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 5772
+    }
+  },
+  {
+    "file": "rich_27701029082052c6541031b6f139097230253900.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 2014,
+    "edges": 5760,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 5760
+    }
+  },
+  {
+    "file": "rich_2809954800af15b4027364cebf82390fe23dc194.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 1978,
+    "edges": 5654,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 5654
+    }
+  },
+  {
+    "file": "rich_2b5d648b2c62960deb6439f4204ed8fa6eb3cf7b.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 1970,
+    "edges": 5628,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 5628
+    }
+  },
+  {
+    "file": "rich_368e8ad77c95a6bef8f9d332039091d1417296bc.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 1924,
+    "edges": 5476,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 5476
+    }
+  },
+  {
+    "file": "rich_36fe3f7ca9becca4777861d5e6e625f5a4a37545.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 2011,
+    "edges": 5754,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 5754
+    }
+  },
+  {
+    "file": "rich_3b70db5a2997de191f7db3e422dbe4da35ca1c95.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 1980,
+    "edges": 5660,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 5660
+    }
+  },
+  {
+    "file": "rich_4101991898ee7a09fe1706daca24af5e1e054862.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 1964,
+    "edges": 5598,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 5598
+    }
+  },
+  {
+    "file": "rich_49117ced6648a432d85951f72dce777038f6ce09.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 1979,
+    "edges": 5658,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 5658
+    }
+  },
+  {
+    "file": "rich_4c5d305bb902ce97011666ada19e48d0b27b49e1.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 1952,
+    "edges": 5564,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 5564
+    }
+  },
+  {
+    "file": "rich_4d6d631a3d2deddf8405522d4b8c976a6d35726c.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 1986,
+    "edges": 5680,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 5680
+    }
+  },
+  {
+    "file": "rich_53757bc234cf18977cade41a5b64f3abaccb0b85.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 1986,
+    "edges": 5680,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 5680
+    }
+  },
+  {
+    "file": "rich_577def22dd83b999c5937cb2bf2ed49600943325.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 1944,
+    "edges": 5542,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 5542
+    }
+  },
+  {
+    "file": "rich_58ac15120fe254886c10d6253667733c83604cb4.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 2017,
+    "edges": 5776,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 5776
+    }
+  },
+  {
+    "file": "rich_5ba9cb56e68dcdf2db50c214d8f1412c8a50761b.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 1969,
+    "edges": 5624,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 5624
+    }
+  },
+  {
+    "file": "rich_610fd75c433c3dfcd9c296e8b91363979127b9fa.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 1949,
+    "edges": 5556,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 5556
+    }
+  },
+  {
+    "file": "rich_66074922edabeac684434b4d87ee994fb97b0627.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 1970,
+    "edges": 5628,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 5628
+    }
+  },
+  {
+    "file": "rich_6764b24739b580c0c32ff5ef0b971ed4cfcf4f75.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 1998,
+    "edges": 5720,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 5720
+    }
+  },
+  {
+    "file": "rich_720800e6930d85ad027b1e9bd0cbb96b5e994ce3.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 1933,
+    "edges": 5504,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 5504
+    }
+  },
+  {
+    "file": "rich_7a168a27c5097805b3bafa495f35e3955004ff4a.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 1936,
+    "edges": 5516,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 5516
+    }
+  },
+  {
+    "file": "rich_7d36119f8378b36129502c3281a7faffef837e02.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 1984,
+    "edges": 5668,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 5668
+    }
+  },
+  {
+    "file": "rich_8a616de8e25db3c93abaaa220c493d80878de69d.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 1926,
+    "edges": 5486,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 5486
+    }
+  },
+  {
+    "file": "rich_96dd4b60e3a7c647c43a85ad375afa690b3bb85b.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 2000,
+    "edges": 5726,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 5726
+    }
+  },
+  {
+    "file": "rich_9cb198944f8184df92217efc8b20d3fffa4b4fa0.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 2016,
+    "edges": 5774,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 5774
+    }
+  },
+  {
+    "file": "rich_9ec419154102acce7363e3958bec6c261864d7fb.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 1961,
+    "edges": 5592,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 5592
+    }
+  },
+  {
+    "file": "rich_9f620dc50c0008c35e9f8493f198e6e593574a70.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 1936,
+    "edges": 5516,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 5516
+    }
+  },
+  {
+    "file": "rich_aca9467ec6a482b3bed1ba7d2e3de72271c5f817.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 1920,
+    "edges": 5464,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 5464
+    }
+  },
+  {
+    "file": "rich_ae15db600976a7999d21653002f338d0761b180c.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 1954,
+    "edges": 5574,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 5574
+    }
+  },
+  {
+    "file": "rich_b6f2f7aa5b27f612f391cd28212aff51ad0d42d1.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 1959,
+    "edges": 5588,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 5588
+    }
+  },
+  {
+    "file": "rich_c478588f3c228a4e86741a057c42b452d7bc6bce.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 1957,
+    "edges": 5578,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 5578
+    }
+  },
+  {
+    "file": "rich_c595fa95068dd2c5095d25446b2f0571bc0b3995.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 2010,
+    "edges": 5756,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 5756
+    }
+  },
+  {
+    "file": "rich_d0de442c08df8793c5ff36d9ad322ca5c47fc38c.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 1962,
+    "edges": 5594,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 5594
+    }
+  },
+  {
+    "file": "rich_e1e6d745f670ff3df6b8f47377c0a4006cb74066.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 1953,
+    "edges": 5572,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 5572
+    }
+  },
+  {
+    "file": "rich_e2a982d5ea747f0deb7f78e8eaa5b4be7d9194cf.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 1958,
+    "edges": 5582,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 5582
+    }
+  },
+  {
+    "file": "rich_e76f3c3ea78481342e21a7b3328075462ab69c2b.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 1936,
+    "edges": 5516,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 5516
+    }
+  },
+  {
+    "file": "rich_edc6b0a39b6df1c0e26d409bb5c5eda7149b2de6.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 1971,
+    "edges": 5630,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 5630
+    }
+  },
+  {
+    "file": "rich_fc41075a3206d2a5fd846c6f41c4d2becab814fa.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 2015,
+    "edges": 5762,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 5762
+    }
+  },
+  {
+    "file": "rich_fde5d6eee3b0437eaecdcbf6f8b11aeab3a5d503.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 1953,
+    "edges": 5568,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 5568
+    }
+  },
+  {
+    "file": "rich_fe55a131c2780fa856464ad04d7d6dc8a1079b72.json",
+    "keys": [
+      "directed",
+      "multigraph",
+      "graph",
+      "nodes",
+      "edges"
+    ],
+    "nodes": 2001,
+    "edges": 5730,
+    "node_fields": [
+      "id",
+      "name",
+      "text"
+    ],
+    "edge_types": {
+      "calls": 5730
+    }
+  }
+]

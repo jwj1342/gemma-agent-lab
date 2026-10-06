@@ -1,0 +1,10 @@
+{
+  "messages": [
+    {
+      "id": 3531910,
+      "postDate": "2026-10-02T19:56:12.583Z",
+      "content": "<p>Is omitting python-multipart from the provided wheels intentional or an oversight? FastAPI task fastapi_14616 uses Form(), but the offline sandbox has no python-multipart wheel, so the reproduction fails.</p>",
+      "rawMarkdown": "Is omitting python-multipart from the provided wheels intentional or an oversight? FastAPI task fastapi_14616 uses Form(), but the offline sandbox has no python-multipart wheel, so the reproduction fails."
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+# Submission 56740049: Notebook Threw Exception, no score, prompt-text-only change
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/744805
+
+## 3530912 /narendarkumarale TOPIC
+Hi @ryanholbrook, our submission 56740049 (2026-10-01 01:04 UTC) ended with "Notebook Threw Exception" and no score. The only change from our previous submission (which scored normally on 29/30 Sep) was prompt text in agent.yaml's included system prompt -- no config, model, adapter or tool changes. Given the reports in this thread and others today (e.g. the read_file line-range type error acknowledged with a fix incoming), this looks like it may be platform-side rather than caused by our submission. If so, could it be rerun, or the daily allowance restored? Happy to share more detail if useful. Thanks!

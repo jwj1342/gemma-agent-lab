@@ -1,0 +1,58 @@
+{
+  "forumTopic": {
+    "authorId": 11228484,
+    "authorThumbnailName": "11228484-kg.jpg?t=2024-06-28-18-22-55",
+    "authorUserDisplayName": "Tarun Singhal",
+    "authorUserName": "singhaltarun",
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3531866,
+      "postDate": "2026-10-02T18:23:57.313Z",
+      "rawMarkdown": "Hi @ryanholbrook ,\n\nTwo small issues in the task prompt that swegemma/harness/agent_runner.py builds for every task. Submissions can't change this text, and both points actively mislead the model.\n\n1. \"Workspace Layout\" is cut off before the source code\n\nThe tree is built with:\n\ncd /workspace && find . -maxdepth 3 -not -path \"./.git/*\" -not -name \"*.pyc\" -not -name \"__pycache__\" | sort | head -150\n\nBecause of the alphabetical sort plus head -150, ./.github, ./benchmarks, ./docs and ./docs_src fill the 150 lines before the package directory is reached. We rebuilt this listing for all 129 public tasks at their base commits: in 115/129 tasks (all 67 fastapi, all 48 rich) neither the file changed by the reference patch nor its folder appears in the listing. Example: in fastapi_15588 the listing is 149 lines of .github/ and docs_src/ tutorials, and fastapi/ and fastapi/sse.py never appear. In our traces the agent then opens docs_src/.../tutorial001.py files looking for the code.\n\nPossible fixes: exclude .github/, docs/ and docs_src/ (and tests/) from the tree, list .py files of the package directories first, or raise the line limit.\n\n2. \"Code Intelligence Tools\" describes search_similar_code as \"by keyword\"\n\nThe section, added whenever graph data exists, says:\nsearch_similar_code(query): Find semantically similar functions/classes by keyword.\n\nBut embedding_utils.embed() is an exact dictionary lookup over the stored node keys, with no text encoder. Only an exact full dotted node name returns results. Tested on requests_6644 with the official functions:\n\nquery\tresults\nrequests.models.RequestEncodingMixin.path_url\t5\nRequestEncodingMixin.path_url\t0\npath_url\t0\npath separator leading /\t0\n\nget_code_neighbors behaves the same way (exact full name only), and its docstring's examples ('parse_request', edge_type='CALLS') return nothing, since all edges are stored as lowercase calls. In our runs the model follows the prompt and sends keyword queries, which all return 0 results (7 of 7 graph calls across 8 tasks in one run).\n\nPossible fixes: describe the input as \"the full dotted name of an existing node, e.g. pkg.module.Class.method\", fix the docstring examples, and/or make the lookup accept short names or name suffixes.\n\nSince this section is added regardless of which tools agent.yaml declares, it also feeds the undeclared-tool crash reported in #745028.\n\nThanks!",
+      "content": "<p>Hi <a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a> ,</p>\n<p>Two small issues in the task prompt that swegemma/harness/agent_runner.py builds for every task. Submissions can't change this text, and both points actively mislead the model.</p>\n<ol>\n<li>\"Workspace Layout\" is cut off before the source code</li>\n</ol>\n<p>The tree is built with:</p>\n<p>cd /workspace &amp;&amp; find . -maxdepth 3 -not -path \"./.git/<em>\" -not -name \"</em>.pyc\" -not -name \"<strong>pycache</strong>\" | sort | head -150</p>\n<p>Because of the alphabetical sort plus head -150, ./.github, ./benchmarks, ./docs and ./docs_src fill the 150 lines before the package directory is reached. We rebuilt this listing for all 129 public tasks at their base commits: in 115/129 tasks (all 67 fastapi, all 48 rich) neither the file changed by the reference patch nor its folder appears in the listing. Example: in fastapi_15588 the listing is 149 lines of .github/ and docs_src/ tutorials, and fastapi/ and fastapi/sse.py never appear. In our traces the agent then opens docs_src/…/tutorial001.py files looking for the code.</p>\n<p>Possible fixes: exclude .github/, docs/ and docs_src/ (and tests/) from the tree, list .py files of the package directories first, or raise the line limit.</p>\n<ol>\n<li>\"Code Intelligence Tools\" describes search_similar_code as \"by keyword\"</li>\n</ol>\n<p>The section, added whenever graph data exists, says:\nsearch_similar_code(query): Find semantically similar functions/classes by keyword.</p>\n<p>But embedding_utils.embed() is an exact dictionary lookup over the stored node keys, with no text encoder. Only an exact full dotted node name returns results. Tested on requests_6644 with the official functions:</p>\n<p>query    results\nrequests.models.RequestEncodingMixin.path_url    5\nRequestEncodingMixin.path_url    0\npath_url    0\npath separator leading /    0</p>\n<p>get_code_neighbors behaves the same way (exact full name only), and its docstring's examples ('parse_request', edge_type='CALLS') return nothing, since all edges are stored as lowercase calls. In our runs the model follows the prompt and sends keyword queries, which all return 0 results (7 of 7 graph calls across 8 tasks in one run).</p>\n<p>Possible fixes: describe the input as \"the full dotted name of an existing node, e.g. pkg.module.Class.method\", fix the docstring examples, and/or make the lookup accept short names or name suffixes.</p>\n<p>Since this section is added regardless of which tools agent.yaml declares, it also feeds the undeclared-tool crash reported in #745028.</p>\n<p>Thanks!</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Tarun Singhal",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/11228484-kg.jpg?t=2024-06-28-18-22-55",
+        "url": "/singhaltarun",
+        "tier": "CONTRIBUTOR",
+        "id": 11228484,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "canUpvote": true
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 58,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Tarun Singhal",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/11228484-kg.jpg?t=2024-06-28-18-22-55",
+          "url": "/singhaltarun",
+          "userName": "singhaltarun",
+          "tier": "CONTRIBUTOR",
+          "id": 11228484,
+          "profileUrl": "/singhaltarun",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 11228484,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3531866,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 745220,
+    "name": "Task prompt: \"Workspace Layout\" omits the source package in 115/129 tasks, and \"Code Intelligence Tools\" tells the model to search by keyword (which always returns 0 results)",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-10-02T18:23:57.313446Z",
+    "url": "/competitions/gemma-4-developer-agent/discussion/745220",
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

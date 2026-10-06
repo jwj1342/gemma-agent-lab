@@ -1,0 +1,11 @@
+{
+  "messages": [
+    {
+      "id": 3532696,
+      "postDate": "2026-10-04T12:32:39.460Z",
+      "content": "<p>I am building a declarative ADK submission with a <code>SequentialAgent</code> containing a <code>LoopAgent</code> (<code>max_iterations</code>) whose children are a <code>Worker</code> and a <code>Solver</code>.</p>\n<p>In <code>google-adk==1.36.1</code>, the built-in <code>exit_loop</code> tool sets <code>tool_context.actions.escalate = True</code>, and <code>LoopAgent</code> checks that flag to stop early. However, when I add <code>tools: [exit_loop]</code> to the Solver YAML, the local <code>adk-submission==0.2.12</code> compiler rejects it because <code>exit_loop</code> is not in the tool registry. As a result, the Solver cannot request an early exit through this tool, and the loop runs until <code>max_iterations</code>.</p>\n<p>Could <code>exit_loop</code> be registered in the submission tool allowlist, with an example of how the Solver should declare and call it? A CPU-only harness check could verify both paths: the Solver escalates and the loop exits early; without escalation, the loop runs to <code>max_iterations</code>.</p>",
+      "rawMarkdown": "I am building a declarative ADK submission with a `SequentialAgent` containing a `LoopAgent` (`max_iterations`) whose children are a `Worker` and a `Solver`.\n\nIn `google-adk==1.36.1`, the built-in `exit_loop` tool sets `tool_context.actions.escalate = True`, and `LoopAgent` checks that flag to stop early. However, when I add `tools: [exit_loop]` to the Solver YAML, the local `adk-submission==0.2.12` compiler rejects it because `exit_loop` is not in the tool registry. As a result, the Solver cannot request an early exit through this tool, and the loop runs until `max_iterations`.\n\nCould `exit_loop` be registered in the submission tool allowlist, with an example of how the Solver should declare and call it? A CPU-only harness check could verify both paths: the Solver escalates and the loop exits early; without escalation, the loop runs to `max_iterations`.",
+      "votes": 1
+    }
+  ]
+}

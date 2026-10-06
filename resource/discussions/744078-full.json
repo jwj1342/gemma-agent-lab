@@ -1,0 +1,58 @@
+{
+  "forumTopic": {
+    "authorId": 21748053,
+    "authorThumbnailName": "default-thumb.png",
+    "authorUserDisplayName": "Dr ChandraShekar",
+    "authorUserName": "drchandrashekar",
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3529588,
+      "postDate": "2026-09-28T15:16:06.013Z",
+      "rawMarkdown": "Hi,\n\nI downloaded tasks.jsonl and the individual archives snapshots/requests_7309.tgz and snapshots/requests_7315.tgz. For requests_7309, the task’s base_commit is 7407309c8a8a73aa2f4337184025d440bbedab7a, but the archive’s main points to 9c4881dc9e15b24186eb7d542752e6c554156222. For requests_7315, the task specifies 6360477c52303c9445b45fa8744b02d05a2f0905, while the archive points to ff2b582d029a3d50ea7bcf39744d2766b7aa99c1. Neither specified commit is present in its archive’s Git objects. The harness guide states that snapshots are built through base_commit. \n\nCould the organizers confirm whether these archives are expected to match those commits, or whether another reconstruction step or corrected snapshot set is required?  Thanks.",
+      "content": "<p>Hi,</p>\n<p>I downloaded tasks.jsonl and the individual archives snapshots/requests_7309.tgz and snapshots/requests_7315.tgz. For requests_7309, the task’s base_commit is 7407309c8a8a73aa2f4337184025d440bbedab7a, but the archive’s main points to 9c4881dc9e15b24186eb7d542752e6c554156222. For requests_7315, the task specifies 6360477c52303c9445b45fa8744b02d05a2f0905, while the archive points to ff2b582d029a3d50ea7bcf39744d2766b7aa99c1. Neither specified commit is present in its archive’s Git objects. The harness guide states that snapshots are built through base_commit. </p>\n<p>Could the organizers confirm whether these archives are expected to match those commits, or whether another reconstruction step or corrected snapshot set is required?  Thanks.</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Dr ChandraShekar",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+        "url": "/drchandrashekar",
+        "tier": "CONTRIBUTOR",
+        "id": 21748053,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "canUpvote": true
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 131,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Dr ChandraShekar",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/drchandrashekar",
+          "userName": "drchandrashekar",
+          "tier": "CONTRIBUTOR",
+          "id": 21748053,
+          "profileUrl": "/drchandrashekar",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 21748053,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3529588,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 744078,
+    "name": "Possible mismatch between published task base commits and snapshots",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-28T15:16:06.011816700Z",
+    "url": "/competitions/gemma-4-developer-agent/discussion/744078",
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

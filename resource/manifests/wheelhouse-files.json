@@ -1,0 +1,209 @@
+{
+  "datasetFiles": [
+    {
+      "name": "adk_eval_core-0.1.0-py3-none-any.whl",
+      "creationDate": "2026-09-30T20:33:55.934Z",
+      "totalBytes": 90060
+    },
+    {
+      "name": "adk_submission-0.2.12-py3-none-any.whl",
+      "creationDate": "2026-09-30T20:33:56.333Z",
+      "totalBytes": 65642
+    },
+    {
+      "name": "anthropic-1.4.0-py3-none-any.whl",
+      "creationDate": "2026-09-30T20:33:56.417Z",
+      "totalBytes": 1300390
+    },
+    {
+      "name": "apache_tvm_ffi-0.1.13.post3-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl",
+      "creationDate": "2026-09-30T20:33:55.831Z",
+      "totalBytes": 2955490
+    },
+    {
+      "name": "astor-0.8.1-py2.py3-none-any.whl",
+      "creationDate": "2026-09-30T20:33:55.951Z",
+      "totalBytes": 27488
+    },
+    {
+      "name": "bitsandbytes-0.46.1-py3-none-manylinux_2_24_x86_64.whl",
+      "creationDate": "2026-09-30T20:33:57.425Z",
+      "totalBytes": 72865511
+    },
+    {
+      "name": "cbor2-6.1.4-cp312-cp312-manylinux_2_28_x86_64.whl",
+      "creationDate": "2026-09-30T20:33:55.932Z",
+      "totalBytes": 461193
+    },
+    {
+      "name": "compressed_tensors-0.15.0.1-py3-none-any.whl",
+      "creationDate": "2026-09-30T20:33:55.831Z",
+      "totalBytes": 194260
+    },
+    {
+      "name": "depyf-0.20.0-py3-none-any.whl",
+      "creationDate": "2026-09-30T20:33:54.773Z",
+      "totalBytes": 39381
+    },
+    {
+      "name": "diskcache-5.6.3-py3-none-any.whl",
+      "creationDate": "2026-09-30T20:33:55.952Z",
+      "totalBytes": 45550
+    },
+    {
+      "name": "flashinfer_cubin-0.6.6-py3-none-any.whl",
+      "creationDate": "2026-09-30T20:34:12.635Z",
+      "totalBytes": 267661457
+    },
+    {
+      "name": "flashinfer_python-0.6.6-py3-none-any.whl",
+      "creationDate": "2026-09-30T20:33:56.540Z",
+      "totalBytes": 7817047
+    },
+    {
+      "name": "gguf-0.19.0-py3-none-any.whl",
+      "creationDate": "2026-09-30T20:33:56.908Z",
+      "totalBytes": 118475
+    },
+    {
+      "name": "google_adk-1.36.1-py3-none-any.whl",
+      "creationDate": "2026-09-30T20:33:55.856Z",
+      "totalBytes": 2877731
+    },
+    {
+      "name": "google_genai-2.11.0-py3-none-any.whl",
+      "creationDate": "2026-09-30T20:33:54.805Z",
+      "totalBytes": 984162
+    },
+    {
+      "name": "ijson-3.5.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl",
+      "creationDate": "2026-09-30T20:33:54.761Z",
+      "totalBytes": 149848
+    },
+    {
+      "name": "interegular-0.3.3-py37-none-any.whl",
+      "creationDate": "2026-09-30T20:33:55.800Z",
+      "totalBytes": 23635
+    },
+    {
+      "name": "llguidance-1.3.0-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "creationDate": "2026-09-30T20:33:55.870Z",
+      "totalBytes": 3033133
+    },
+    {
+      "name": "lm_format_enforcer-0.11.3-py3-none-any.whl",
+      "creationDate": "2026-09-30T20:34:01.918Z",
+      "totalBytes": 45418
+    },
+    {
+      "name": "loguru-0.7.3-py3-none-any.whl",
+      "creationDate": "2026-09-30T20:33:55.898Z",
+      "totalBytes": 61595
+    },
+    {
+      "name": "mistral_common-1.11.7-py3-none-any.whl",
+      "creationDate": "2026-09-30T20:33:56.020Z",
+      "totalBytes": 6553583
+    },
+    {
+      "name": "model_hosting_container_standards-0.1.16-py3-none-any.whl",
+      "creationDate": "2026-09-30T20:33:54.760Z",
+      "totalBytes": 125666
+    },
+    {
+      "name": "msgspec-0.21.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl",
+      "creationDate": "2026-09-30T20:33:55.698Z",
+      "totalBytes": 225025
+    },
+    {
+      "name": "nvidia_cudnn_frontend-1.18.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl",
+      "creationDate": "2026-09-30T20:33:56.366Z",
+      "totalBytes": 2159245
+    },
+    {
+      "name": "openai_harmony-0.0.8-cp38-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "creationDate": "2026-09-30T20:33:55.881Z",
+      "totalBytes": 2953260
+    },
+    {
+      "name": "opentelemetry_exporter_otlp-1.44.0-py3-none-any.whl",
+      "creationDate": "2026-09-30T20:33:55.900Z",
+      "totalBytes": 6727
+    },
+    {
+      "name": "opentelemetry_semantic_conventions_ai-0.5.1-py3-none-any.whl",
+      "creationDate": "2026-09-30T20:33:56.160Z",
+      "totalBytes": 11250
+    },
+    {
+      "name": "outlines_core-0.2.11-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "creationDate": "2026-09-30T20:33:55.737Z",
+      "totalBytes": 2287677
+    },
+    {
+      "name": "partial_json_parser-0.2.1.1.post7-py3-none-any.whl",
+      "creationDate": "2026-09-30T20:33:54.737Z",
+      "totalBytes": 10877
+    },
+    {
+      "name": "prometheus_fastapi_instrumentator-8.1.0-py3-none-any.whl",
+      "creationDate": "2026-09-30T20:33:55.729Z",
+      "totalBytes": 19649
+    },
+    {
+      "name": "pybase64-1.5.0-cp312-cp312-manylinux1_x86_64.manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_5_x86_64.whl",
+      "creationDate": "2026-09-30T20:33:55.934Z",
+      "totalBytes": 94681
+    },
+    {
+      "name": "pycountry-26.2.16-py3-none-any.whl",
+      "creationDate": "2026-09-30T20:34:06.818Z",
+      "totalBytes": 8044600
+    },
+    {
+      "name": "pydantic_extra_types-2.11.2-py3-none-any.whl",
+      "creationDate": "2026-09-30T20:33:56.346Z",
+      "totalBytes": 82851
+    },
+    {
+      "name": "quack_kernels-0.6.4-py3-none-any.whl",
+      "creationDate": "2026-09-30T20:33:55.945Z",
+      "totalBytes": 728458
+    },
+    {
+      "name": "safetensors-0.8.0-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "creationDate": "2026-09-30T20:33:56.155Z",
+      "totalBytes": 506502
+    },
+    {
+      "name": "setproctitle-1.3.7-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl",
+      "creationDate": "2026-09-30T20:33:55.727Z",
+      "totalBytes": 32932
+    },
+    {
+      "name": "swegemma-0.2.7-py3-none-any.whl",
+      "creationDate": "2026-09-30T20:34:06.750Z",
+      "totalBytes": 117587
+    },
+    {
+      "name": "tokenizers-0.22.2-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "creationDate": "2026-09-30T20:33:55.938Z",
+      "totalBytes": 3274982
+    },
+    {
+      "name": "transformers-5.13.1-py3-none-any.whl",
+      "creationDate": "2026-09-30T20:33:56.456Z",
+      "totalBytes": 11503977
+    },
+    {
+      "name": "vllm-0.19.1-cp38-abi3-manylinux_2_31_x86_64.whl",
+      "creationDate": "2026-09-30T20:34:13.184Z",
+      "totalBytes": 433132506
+    },
+    {
+      "name": "xgrammar-0.2.5.post1-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl",
+      "creationDate": "2026-09-30T20:33:57.952Z",
+      "totalBytes": 48149933
+    }
+  ]
+}

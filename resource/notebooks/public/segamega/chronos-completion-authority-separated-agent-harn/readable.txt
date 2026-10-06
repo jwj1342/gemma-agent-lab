@@ -1,0 +1,351 @@
+# CELL 0 markdown
+# Chronos: Completion-Authority-Separated Agent Harness (Gemma 4 Developer Agent)
+
+**Idea:** the model never decides that a task is solved. It only *proposes* a patch; the physical evaluator returns the verdict, and every claim/proof pair is written to a tamper-evident local log.
+
+**What is mine vs. provided by the organizers**
+
+| Part | Origin |
+|---|---|
+| Env fix (cutlass hooks, `+cu128` wheel names), vLLM server, `Evaluator`, `swegemma.*`, zip limits | organizers' infrastructure (required to run in the offline environment) |
+| `transponder.py` (atomic JSONL bus, flock+fsync, 9-event schema) | **own** |
+| `audit.py` (hash chain, passive observer with 0/1/2 exit codes) | **own** |
+| Claim-vs-proof loop, divergence metric, optional C-T submission gate | **own** |
+| Agent logic inside the submission dir (`agent.yaml`, prompts, tools) | see section 3, edit here |
+
+Honest limits: hash chain uses SHA-256 (BLAKE3/Ed25519 signing is roadmap); canonical JSON is JCS-like, not full RFC 8785.
+
+# CELL 1 markdown
+## 1. Environment (organizer-required fixes)
+
+# CELL 2 code
+import glob, importlib, os, shutil, subprocess, sys
+from pathlib import Path
+
+ENV = {
+    'LITELLM_LOCAL_MODEL_COST_MAP': 'True', 'TRANSFORMERS_NO_TF': '1',
+    'VLLM_WORKER_MULTIPROC_METHOD': 'spawn', 'VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS': '1',
+    'VLLM_ENGINE_READY_TIMEOUT_S': '1200', 'VLLM_NO_USAGE_STATS': '1',
+    'OTEL_SDK_DISABLED': 'true', 'PYTORCH_CUDA_ALLOC_CONF': 'expandable_segments:True',
+}
+os.environ.update(ENV)
+
+for pat in ('/usr/local/lib/python*/dist-packages/*cutlass*.pth',
+            '/usr/local/lib/python*/site-packages/*cutlass*.pth'):
+    for p in glob.glob(pat):
+        try: os.unlink(p)
+        except OSError: pass
+
+WHEELHOUSE = Path('/kaggle/input/datasets/metric/gemma-4-developer-agent-wheelhouse')
+tmp = Path('/tmp/wheelhouse'); tmp.mkdir(parents=True, exist_ok=True)
+for w in WHEELHOUSE.glob('*.whl'):
+    if 'cutlass' in w.name.lower(): continue
+    name = w.name.replace('cu128', '+cu128') if ('cu128' in w.name and '+' not in w.name) else w.name
+    if not (tmp / name).exists(): os.symlink(w, tmp / name)
+
+wheels = sorted(map(str, tmp.glob('*.whl')))
+subprocess.run([sys.executable, '-m', 'pip', 'install', '-q', '--no-deps', '--force-reinstall', *wheels], check=True)
+importlib.invalidate_caches()
+print(f'installed {len(wheels)} wheels')
+
+# CELL 3 markdown
+## 2. Own modules: telemetry bus and audit ledger
+
+# CELL 4 code
+from pathlib import Path
+Path('/kaggle/working/chronos').mkdir(parents=True, exist_ok=True)
+Path('/kaggle/working/telemetry').mkdir(parents=True, exist_ok=True)
+
+# CELL 5 code
+%%writefile /kaggle/working/chronos/transponder.py
+"""META-CORE transponder: local atomic JSONL event bus (flock + fsync). No network, no git."""
+import fcntl, json, os, uuid
+from datetime import datetime, timezone
+from pathlib import Path
+
+EVENTS = ("CORE_STARTED", "CORE_STOPPED", "HEARTBEAT", "STEP_STARTED", "STEP_COMPLETED",
+          "STEP_FAILED", "SPAWN_REQUESTED", "SPAWN_COMPLETED", "FATAL_ERROR")
+REQUIRED = ("schema", "event_id", "core_id", "event", "timestamp")
+TRACED = ("STEP_", "SPAWN_")  # ADR-002: trace ids mandatory for execution events
+
+LOG_PATH = Path(os.environ.get("METACORE_LOG", "/kaggle/working/telemetry/event_stream.jsonl"))
+
+
+def _canon(obj):
+    # JCS-like canonical form (sorted keys, no whitespace). Not a full RFC 8785 implementation.
+    return json.dumps(obj, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+
+
+def emit(event, core_id, log_path=None, **fields):
+    if event not in EVENTS:
+        raise ValueError(f"unknown event {event!r}")
+    rec = {"schema": "v1.0", "event_id": str(uuid.uuid4()), "core_id": core_id,
+           "event": event, "timestamp": datetime.now(timezone.utc).isoformat()}
+    rec.update(fields)
+    if event.startswith(TRACED):
+        rec.setdefault("trace_id", uuid.uuid4().hex)
+        rec.setdefault("span_id", uuid.uuid4().hex[:16])
+    missing = [k for k in REQUIRED if k not in rec]
+    if missing:
+        raise ValueError(f"missing fields: {missing}")
+    path = Path(log_path or LOG_PATH)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    line = _canon(rec) + "\n"
+    with open(path, "a", encoding="utf-8") as f:
+        fcntl.flock(f, fcntl.LOCK_EX)
+        try:
+            f.write(line)
+            f.flush()
+            os.fsync(f.fileno())
+        finally:
+            fcntl.flock(f, fcntl.LOCK_UN)
+    return rec
+
+
+# CELL 6 code
+%%writefile /kaggle/working/chronos/audit.py
+"""Hash-chain ledger + passive observer over event_stream.jsonl (read-only)."""
+import hashlib, json
+from pathlib import Path
+
+
+def _canon(obj):
+    return json.dumps(obj, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+
+
+def read_events(log_path):
+    p = Path(log_path)
+    if not p.exists():
+        return []
+    return [json.loads(l) for l in p.read_text(encoding="utf-8").splitlines() if l.strip()]
+
+
+def build_chain(events, out_path):
+    # H_t = SHA256(H_{t-1} || canonical(event)). Stand-in for BLAKE3+Ed25519 (roadmap).
+    prev, rows = "0" * 64, []
+    for e in events:
+        h = hashlib.sha256((prev + _canon(e)).encode()).hexdigest()
+        rows.append({"hash": h, "prev": prev, "event_id": e["event_id"]})
+        prev = h
+    Path(out_path).write_text("\n".join(_canon(r) for r in rows) + "\n", encoding="utf-8")
+    return prev
+
+
+def verify_chain(events, chain_path):
+    rows = [json.loads(l) for l in Path(chain_path).read_text().splitlines() if l.strip()]
+    if len(rows) != len(events):
+        return False, f"length mismatch {len(rows)} vs {len(events)}"
+    prev = "0" * 64
+    for i, (e, r) in enumerate(zip(events, rows)):
+        h = hashlib.sha256((prev + _canon(e)).encode()).hexdigest()
+        if r["prev"] != prev or r["hash"] != h:
+            return False, f"tamper detected at event #{i}"
+        prev = h
+    return True, f"ok, head={prev[:12]}"
+
+
+def observe(events, max_depth=4):
+    # Exit-code contract: 0 OK, 1 WARN, 2 CRITICAL.
+    open_spans, parents, issues, level = {}, {}, [], 0
+    for e in events:
+        sid = e.get("span_id")
+        if e["event"] == "STEP_STARTED":
+            open_spans[sid] = e
+            parents[sid] = e.get("parent_span_id")
+        elif e["event"] in ("STEP_COMPLETED", "STEP_FAILED"):
+            open_spans.pop(sid, None)
+        elif e["event"] == "FATAL_ERROR":
+            issues.append("FATAL_ERROR logged"); level = 2
+    for sid in open_spans:
+        issues.append(f"unclosed span {sid}"); level = max(level, 1)
+    for sid in parents:
+        d, cur, seen = 0, sid, set()
+        while parents.get(cur):
+            if cur in seen:
+                issues.append(f"cycle at {sid}"); level = 2; break
+            seen.add(cur); cur = parents[cur]; d += 1
+        if d > max_depth:
+            issues.append(f"depth {d} at {sid}"); level = max(level, 1)
+    return level, issues
+
+
+# CELL 7 code
+sys.path.insert(0, '/kaggle/working/chronos')
+import transponder as T, audit as A
+LOG = Path('/kaggle/working/telemetry/event_stream.jsonl')
+LOG.unlink(missing_ok=True)
+T.LOG_PATH = LOG
+CORE = 'chronos-core-001'
+T.emit('CORE_STARTED', CORE)
+
+# CELL 8 markdown
+## 3. Data, submission directory, sampling config
+
+# CELL 9 code
+from swegemma.models import load_tasks
+
+DATA_DIR = Path('/kaggle/input/competitions/gemma-4-developer-agent')
+WORKING_DIR = Path('/kaggle/working')
+AGENT_DIR = WORKING_DIR / 'sample_submission'
+if AGENT_DIR.exists(): shutil.rmtree(AGENT_DIR)
+shutil.copytree(DATA_DIR / 'sample_submission', AGENT_DIR)
+
+# thinking_level must NOT be set (LiteLLM maps it to reasoning_effort -> payload errors)
+(AGENT_DIR / 'configs' / 'sampling.yaml').write_text(
+    'temperature: 0.2\ntop_p: 0.95\nmax_output_tokens: 16384\n'
+    'thinking_config:\n  thinking_budget: 4096\n  include_thoughts: true\n', encoding='utf-8')
+
+TASKS_PATH = DATA_DIR / 'tasks.jsonl'
+tasks = load_tasks(TASKS_PATH)
+print(len(tasks), 'tasks')
+
+# Where your own agent logic goes: inspect what the starter ships, then edit these files.
+for p in sorted(AGENT_DIR.rglob('*')):
+    if p.is_file(): print(p.relative_to(AGENT_DIR), p.stat().st_size, 'bytes')
+
+# CELL 10 markdown
+## 4. Graph tools smoke test (organizer API)
+
+# CELL 11 code
+from swegemma import graph as sg
+GRAPH_DIR, EMBEDDINGS_DIR = str(DATA_DIR / 'graphs'), str(DATA_DIR / 'embeddings')
+t0 = tasks[0]
+g = sg.get_graph(repo_name=t0.repo, graph_dir=GRAPH_DIR, embeddings_dir=EMBEDDINGS_DIR, base_commit=t0.base_commit)
+node = next((n for n, d in g.degree() if d >= 5), next(iter(g.nodes())))
+nb = sg.get_neighbor(node=node, graph=g, max_neighbors=10)
+sub = sg.get_induced_subgraph(g, [node, *nb[:4]])
+print(t0.repo, g.number_of_nodes(), 'nodes ->', sub.number_of_nodes(), 'in focal subgraph')
+
+# CELL 12 markdown
+## 5. vLLM server
+
+# CELL 13 code
+import litellm, torch
+from adk_submission import VllmConfig, VllmServer, discover_adapters
+from swegemma.config import ALLOWED_ADAPTER_EXTENSIONS
+from swegemma.models.discovery import validate_single_declared_model
+
+litellm.drop_params = True
+TARGET = 'gemma-4-31b-it-qat-w4a16-ct'
+MODEL_PATH = Path('/kaggle/input/models/google/gemma-4/other/gemma-4-31b-it-qat-w4a16-ct/2')
+
+declared = validate_single_declared_model(AGENT_DIR)
+adapters = discover_adapters(str(AGENT_DIR), adapter_extensions=ALLOWED_ADAPTER_EXTENSIONS)
+n = torch.cuda.device_count() if torch.cuda.is_available() else 1
+tp = 4 if n >= 4 else (2 if n >= 2 else 1)
+
+cfg = VllmConfig(
+    model=str(MODEL_PATH), port=8000, host='127.0.0.1',
+    tool_call_parser='gemma4', reasoning_parser='gemma4', max_model_len=32768,
+    dtype='bfloat16' if (torch.cuda.is_available() and torch.cuda.is_bf16_supported()) else 'auto',
+    gpu_memory_utilization=0.90, enable_auto_tool_choice=True,
+    enable_lora=True, max_loras=8, max_lora_rank=128,
+    tensor_parallel_size=tp, startup_timeout=60 * 20)
+server = VllmServer(cfg, adapter_manifest=adapters)
+server.start()
+models = server.create_model_registry(aliases=[declared, TARGET], model_prefix='openai/', api_key='EMPTY')
+
+# CELL 14 markdown
+## 6. Claim vs. proof loop
+
+For every task: the agent's *claim* is "I produced a patch". The *proof* is the evaluator's physical verdict (`resolved`). A **divergence** is claim without proof. This is the measurable false-positive signal, computed from real runs only.
+
+`GATE = True` applies the C-T rule at submission time: patches without proof are replaced by an empty prediction.
+
+# CELL 15 code
+import asyncio, concurrent.futures, time, uuid
+import pandas as pd, yaml
+from google.adk.agents.context_cache_config import ContextCacheConfig
+from google.adk.apps._configs import EventsCompactionConfig
+from swegemma.config import EvalConfig, build_submission_limits
+from swegemma.evaluate import Evaluator
+
+N_TASKS = 5      # raise for a real A/B run
+GATE = False     # True = submit only proven patches
+
+def run_sync(fn, *a, **kw):
+    def go(): return asyncio.run(fn(*a, **kw))
+    try: asyncio.get_running_loop()
+    except RuntimeError: return go()
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+        return pool.submit(go).result()
+
+ev = yaml.safe_load((AGENT_DIR / 'eval_config.yaml').read_text(encoding='utf-8'))
+ev = ev.get('evaluation', ev)
+limits, gen = build_submission_limits()
+turns = ev.get('max_turns', ev.get('max_llm_calls'))
+
+evaluator = Evaluator(EvalConfig(
+    tasks_path=TASKS_PATH, snapshots_dir=DATA_DIR / 'snapshots', results_dir=WORKING_DIR / 'results',
+    submission_dir=AGENT_DIR, models=models, sandbox='subprocess',
+    timeout_seconds=int(ev.get('timeout_seconds', 300)), max_time_minutes=float(ev.get('max_time_minutes', 60.0)),
+    max_tool_calls=int(ev.get('max_tool_calls', 100)), max_turns=int(turns) if turns is not None else None,
+    limits=limits, generation_constraints=gen, adapter_manifest=adapters,
+    context_cache_config=ContextCacheConfig(min_tokens=2048, ttl_seconds=1800, cache_intervals=10),
+    events_compaction_config=EventsCompactionConfig(compaction_interval=15, overlap_size=2,
+                                                    token_threshold=14336, event_retention_size=5),
+    graph_dir=GRAPH_DIR, embeddings_dir=EMBEDDINGS_DIR, wheels_dir=DATA_DIR / 'wheels', verbose=False))
+
+rows, preds = [], []
+for i, task in enumerate(tasks[:N_TASKS], 1):
+    trace = uuid.uuid4().hex
+    span = uuid.uuid4().hex[:16]
+    T.emit('STEP_STARTED', CORE, trace_id=trace, span_id=span, data={'task': task.instance_id})
+    t0 = time.time()
+    try:
+        r = run_sync(evaluator.evaluate_task, task=task, task_index=i, total_tasks=N_TASKS)
+        patch = r.agent_patch or ''
+        proof = {'resolved': bool(r.resolved), 'exit_code': r.test_exit_code, 'tool_calls': r.tool_calls}
+        T.emit('STEP_COMPLETED', CORE, trace_id=trace, span_id=span,
+               data={'task': task.instance_id, 'claim_patch_chars': len(patch), 'proof': proof},
+               metrics={'seconds': round(time.time() - t0, 1)})
+    except Exception as exc:
+        patch, proof = '', {'resolved': False, 'exit_code': -1, 'tool_calls': 0}
+        T.emit('STEP_FAILED', CORE, trace_id=trace, span_id=span,
+               data={'task': task.instance_id, 'error': repr(exc)[:300]})
+    claim = bool(patch.strip())
+    diverged = claim and not proof['resolved']
+    rows.append({'id': task.instance_id, 'claim': claim, 'resolved': proof['resolved'],
+                 'diverged': diverged, 'exit_code': proof['exit_code'], 'tool_calls': proof['tool_calls']})
+    preds.append({'id': task.instance_id, 'prediction': patch if (not GATE or proof['resolved']) else ''})
+    print(rows[-1])
+
+report = pd.DataFrame(rows)
+submission_df = pd.DataFrame(preds, columns=['id', 'prediction'])
+claims = int(report.claim.sum())
+print(f"\nresolved {int(report.resolved.sum())}/{len(report)}; "
+      f"claims {claims}; claim-without-proof {int(report.diverged.sum())} "
+      f"({(report.diverged.sum() / claims * 100 if claims else 0):.1f}% of claims)")
+display(report)
+
+# CELL 16 markdown
+## 7. Audit: seal the log, verify, observe
+
+# CELL 17 code
+T.emit('CORE_STOPPED', CORE)
+events = A.read_events(LOG)
+CHAIN = LOG.with_suffix('.chain.jsonl')
+head = A.build_chain(events, CHAIN)
+ok, msg = A.verify_chain(events, CHAIN)
+level, issues = A.observe(events)
+print(f'{len(events)} events | chain: {ok} ({msg}) | observer exit={level} {issues}')
+
+# tamper test: change one event in memory, the chain must reject it
+bad = [dict(e) for e in events]; bad[1]['core_id'] = 'forged'
+print('tamper check ->', A.verify_chain(bad, CHAIN))
+
+# CELL 18 markdown
+## 8. Package submission
+
+# CELL 19 code
+import zipfile
+from swegemma.config import ALLOWED_SUBMISSION_EXTENSIONS, MAX_SUBMISSION_SIZE_BYTES
+
+zip_path = Path(shutil.make_archive(str(WORKING_DIR / 'submission'), 'zip', root_dir=AGENT_DIR))
+with zipfile.ZipFile(zip_path) as zf:
+    infos = zf.infolist()
+    assert sum(i.file_size for i in infos) <= MAX_SUBMISSION_SIZE_BYTES, 'archive too large'
+    for i in infos:
+        if not i.is_dir():
+            assert Path(i.filename).suffix.lower() in ALLOWED_SUBMISSION_EXTENSIONS, f'bad extension: {i.filename}'
+print(f'{zip_path.name}: {zip_path.stat().st_size / 2**20:.2f} MiB')

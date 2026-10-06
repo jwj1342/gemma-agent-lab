@@ -1,0 +1,198 @@
+{
+  "forumTopic": {
+    "authorId": 36090390,
+    "authorThumbnailName": "default-thumb.png",
+    "authorUserDisplayName": "Just A Chonk",
+    "authorUserName": "chonkymfer",
+    "comments": [
+      {
+        "id": 3531014,
+        "postDate": "2026-10-01T06:57:04.927Z",
+        "rawMarkdown": "Not ideal, but since many seem to struggle locally (as did I), you can use it via HuggingFace Inference, I have been able to run a lot of tests with the exact model, less than 10$. ",
+        "content": "<p>Not ideal, but since many seem to struggle locally (as did I), you can use it via HuggingFace Inference, I have been able to run a lot of tests with the exact model, less than 10$. </p>",
+        "replies": [
+          {
+            "id": 3531091,
+            "postDate": "2026-10-01T09:04:05.080Z",
+            "rawMarkdown": "My original comment was not about GPU cost (indeed Kaggle gives a decent quota there) but more about the utility of the coding agent that is the final outcome of the competition.",
+            "content": "<p>My original comment was not about GPU cost (indeed Kaggle gives a decent quota there) but more about the utility of the coding agent that is the final outcome of the competition.</p>",
+            "parent": {},
+            "author": {
+              "displayName": "Just A Chonk",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+              "url": "/chonkymfer",
+              "tier": "CONTRIBUTOR",
+              "id": 36090390,
+              "progressionOptOut": false
+            },
+            "authorType": "TOPIC",
+            "votes": {
+              "canUpvote": true
+            },
+            "kernelVersion": 0,
+            "feedbackTrackingData": {},
+            "isThankYou": false
+          }
+        ],
+        "parent": {},
+        "author": {
+          "displayName": "Amanie El-Hajj",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/1668870-kg.jpg",
+          "url": "/aelhajj",
+          "tier": "CONTRIBUTOR",
+          "id": 1668870,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "totalVotes": 1,
+          "canUpvote": true,
+          "totalUpvotes": 1
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 979,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Amanie El-Hajj",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/1668870-kg.jpg",
+            "url": "/aelhajj",
+            "userName": "aelhajj",
+            "tier": "CONTRIBUTOR",
+            "id": 1668870,
+            "profileUrl": "/aelhajj",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 1668870,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3529027,
+        "postDate": "2026-09-27T07:21:05.460Z",
+        "rawMarkdown": "lmao all the losers from the shitty small seed funded AI labs downvoting this... tell me... what justification do you have? A good coding agent that runs locally on almost every laptop is literally the pinnacle of local AI. Why not have a fair competition with actual tangible benefits for the environment and independent developers instead of focusing on a model that basically only runs on a server or needs a minimum 5k euro investment to run locally?",
+        "content": "<p>lmao all the losers from the shitty small seed funded AI labs downvoting this… tell me… what justification do you have? A good coding agent that runs locally on almost every laptop is literally the pinnacle of local AI. Why not have a fair competition with actual tangible benefits for the environment and independent developers instead of focusing on a model that basically only runs on a server or needs a minimum 5k euro investment to run locally?</p>",
+        "parent": {},
+        "author": {
+          "displayName": "Just A Chonk",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/chonkymfer",
+          "tier": "CONTRIBUTOR",
+          "id": 36090390,
+          "progressionOptOut": false
+        },
+        "authorType": "TOPIC",
+        "votes": {
+          "totalVotes": 1,
+          "canUpvote": true,
+          "totalUpvotes": 4
+        },
+        "kernelVersion": 0,
+        "feedbackTrackingData": {},
+        "isThankYou": false
+      },
+      {
+        "id": 3528580,
+        "postDate": "2026-09-26T08:20:57.050Z",
+        "rawMarkdown": "I think having a separate leaderboard for E2B/E4B would be a great idea.\n\nThe 31B model is quite demanding for many participants, especially those working with local hardware. A smaller-model track could make the competition more accessible and encourage more developers to experiment with local/edge deployment.\n\nIt would also be interesting to compare the trade-off between model size, agent performance, inference speed, and hardware requirements.\n\nHopefully the organizers can consider a separate E2B/E4B leaderboard if the competition rules allow it.\n",
+        "content": "<p>I think having a separate leaderboard for E2B/E4B would be a great idea.</p>\n<p>The 31B model is quite demanding for many participants, especially those working with local hardware. A smaller-model track could make the competition more accessible and encourage more developers to experiment with local/edge deployment.</p>\n<p>It would also be interesting to compare the trade-off between model size, agent performance, inference speed, and hardware requirements.</p>\n<p>Hopefully the organizers can consider a separate E2B/E4B leaderboard if the competition rules allow it.</p>",
+        "parent": {},
+        "author": {
+          "displayName": "Muhammad Amjad",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/amjadehakt",
+          "tier": "CONTRIBUTOR",
+          "id": 11234508,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "totalVotes": 2,
+          "canUpvote": true,
+          "totalUpvotes": 3
+        },
+        "kernelVersion": 0,
+        "feedbackTrackingData": {},
+        "isThankYou": false
+      },
+      {
+        "id": 3529053,
+        "postDate": "2026-09-27T08:47:27.263Z",
+        "rawMarkdown": "Yeah ... I can't run it in my PC (8GB VRAM only) so I can't check my model first ...",
+        "content": "<p>Yeah … I can't run it in my PC (8GB VRAM only) so I can't check my model first …</p>",
+        "parent": {},
+        "author": {
+          "displayName": "M.A.P.L.E MAGI Labs",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/doaimabt",
+          "tier": "CONTRIBUTOR",
+          "id": 34567520,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 1665,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "M.A.P.L.E MAGI Labs",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+            "url": "/doaimabt",
+            "userName": "doaimabt",
+            "tier": "CONTRIBUTOR",
+            "id": 34567520,
+            "profileUrl": "/doaimabt",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 34567520,
+            "progressionOptOut": false
+          },
+          "intro": "Ðu?c r?i ... tôi mu?n tìm d?ng d?i (ngu?i Vi?t gi?ng tôi) cung dang tham gia cu?c thi này.\nVà c?m on b?n dã d?c nó!"
+        }
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3528536,
+      "postDate": "2026-09-26T06:45:03.050Z",
+      "rawMarkdown": "Hello, since the 31B model is too chonky to likely run on most local machines out there, and since there does seem to be a big interest in the smaller more efficient models...\n\nIt might be possible to have 2 LBs, although idk how prize money split will work lmao",
+      "content": "<p>Hello, since the 31B model is too chonky to likely run on most local machines out there, and since there does seem to be a big interest in the smaller more efficient models…</p>\n<p>It might be possible to have 2 LBs, although idk how prize money split will work lmao</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Just A Chonk",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+        "url": "/chonkymfer",
+        "tier": "CONTRIBUTOR",
+        "id": 36090390,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 5,
+        "canUpvote": true,
+        "totalUpvotes": 8
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false
+    },
+    "firstMessageId": 3528536,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 743531,
+    "name": "Local Models (E4B/E2B) possible? Separate LB likely?",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-26T06:45:03.051656300Z",
+    "totalVotes": 5,
+    "url": "/competitions/gemma-4-developer-agent/discussion/743531",
+    "totalMessages": 5,
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

@@ -1,0 +1,23 @@
+# Which google-adk versions and YAML features does the official evaluator support?
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743800
+
+## 3529011 /anshengjhang TOPIC
+Thanks for releasing the competition harness. I am trying to identify the right ADK version to learn and use for a competition submission.
+
+The current official wheelhouse (v22) includes google-adk 1.36.1 and adk-submission 0.2.11. The latter declares google-adk>=1.34.0,<2.0 as a dependency. In a small Kaggle preflight, installing the official PyPI wheel for google-adk 2.9.2 over that wheelhouse succeeded, but pip check reported that version conflict and several incompatible dependencies. Importing LlmAgent then failed in the mixed environment, before config validation or model inference. This only shows that replacing the ADK wheel alone is insufficient; it does not establish whether a fully compatible 2.x environment could be supported.
+
+Could the organizers clarify:
+
+1. Which google-adk version and Agent Config schema are used to compile and score submission.zip? Is the wheelhouse's 1.x version an intentional requirement for this competition, or expected to change?
+2. Are ADK 2.x features, especially graph Workflow/edges in YAML, supported in a competition agent.yaml? If so, how should participants provide compatible dependencies in the internet-disabled scoring environment? Does the scorer use a participant's Notebook package overrides?
+3. Is there an authoritative list of supported YAML fields and pinned harness dependencies that we should target when building agents?
+
+This determines whether we should focus on the competition's ADK 1.x subset or invest in ADK 2.x architecture. Thank you for clarifying.
+
+## 3529108 /ryanholbrook ADMIN
+1. I would take the set of packages in the wheelhouse dataset as the authoritative set of packages for this competition.
+2. We do not support for ADK 2.x features for this competition (maybe for future competitions). The scoring environment has a fixed set of packages installed which cannot be modified.
+3. The `HARNESS_README.md` has some of this information. Almost any kind of ADK 1.x configuration is allowed, as described in the [Agent Config spec](https://adk.dev/api-reference/agentconfig/). We block anything that allows arbitrary code execution.
+
+## 3529038 / COMMENT
+

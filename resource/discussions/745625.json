@@ -1,0 +1,39 @@
+{
+  "messages": [
+    {
+      "id": 3532660,
+      "postDate": "2026-10-04T10:58:03.287Z",
+      "content": "<p><a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a> im also facing same issue, mine one is queued since 4 hrs.</p>",
+      "rawMarkdown": "@ryanholbrook im also facing same issue, mine one is queued since 4 hrs.",
+      "votes": 1,
+      "replies": [
+        {
+          "id": 3532684,
+          "postDate": "2026-10-04T12:00:41.960Z",
+          "content": "<p>sadly it is a problem. but you need to wait and soon enough it will start to run. mine were sometimes queued for 5+ hours then started running</p>",
+          "rawMarkdown": "sadly it is a problem. but you need to wait and soon enough it will start to run. mine were sometimes queued for 5+ hours then started running",
+          "votes": 1
+        }
+      ]
+    },
+    {
+      "id": 3532389,
+      "postDate": "2026-10-03T12:18:55.920Z",
+      "content": "<p><img src=\"https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F2384691%2Ffa6ca490c5723edd0aeea50deb31230c%2FScreenshot%202026-10-03%20174711.png?generation=1791029860864236&amp;alt=media\" alt=\"Queued/Stuck Notebook Run\"></p>\n<p>One of my test notebooks with GPU queued for 3+ hours…. is there really so much demand?\nFor context: I am trying to compare frontier agents vs my Gemma Agent for solving the tasks….</p>",
+      "rawMarkdown": "![Queued/Stuck Notebook Run](https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F2384691%2Ffa6ca490c5723edd0aeea50deb31230c%2FScreenshot%202026-10-03%20174711.png?generation=1791029860864236&alt=media)\n\nOne of my test notebooks with GPU queued for 3+ hours.... is there really so much demand?\nFor context: I am trying to compare frontier agents vs my Gemma Agent for solving the tasks....",
+      "votes": 3
+    },
+    {
+      "id": 3532694,
+      "postDate": "2026-10-04T12:25:14.487Z",
+      "content": "<p>:-( pareille plus de 3h </p>",
+      "rawMarkdown": ":-( pareille plus de 3h "
+    },
+    {
+      "id": 3532484,
+      "postDate": "2026-10-03T18:04:00.997Z",
+      "rawMarkdown": "",
+      "isDeleted": true
+    }
+  ]
+}

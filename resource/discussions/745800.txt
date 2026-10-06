@@ -1,0 +1,15 @@
+# Validating locally: how representative are the public tasks, and can we see per-task outcomes?
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/745800
+
+## 3532711 /cyphernova1337 TOPIC
+Hi, a few questions about testing against the hidden set:
+
+Are the public tasks in the dataset drawn from the same distribution as the ~120 hidden tasks: similar repo size, patch size and test setup? Our local resolve rate on public tasks is far above our leaderboard score, so we suspect the hidden set differs in some systematic way.
+
+Is there any way to see a breakdown for a submission, even just counts: tasks that errored, tasks that ended with an empty patch, tasks whose tests failed, tasks that hit the time limit? Without it, a score can't tell us whether a failure comes from the agent or the environment.
+
+Is the agent's sandbox during scoring the same as in the walkthrough notebook? In particular: is /tmp writable, is python3 on PATH, are shell heredocs supported in run_command, and does the scorer use the same wheel set and Python version as the notebook?
+
+Would the hosts consider releasing a small validation subset of private-style tasks, or a local script that matches the scorer exactly, so we can check that a submission behaves the same before we use a daily slot?
+
+Thanks!

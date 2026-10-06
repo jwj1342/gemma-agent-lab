@@ -1,0 +1,24 @@
+# Why official starter notebook fails in second with no specific error msg
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/745320
+
+## 3532005 /bloodymonday TOPIC
+Easy step to reproduce: 
+1) Copy and Run from [ryanholbrook](https://www.kaggle.com/code/ryanholbrook/getting-started-gemma-4-developer-agent)
+2) You see immediate fail
+
+I am assuming this is part of GPU issue that people talked about? But GPU issue for immediate failure? really? Appreciate your help in advance. 
+
+![](https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F5578954%2F342551f690c65838c3609b43f4309642%2FScreenshot%202026-10-03%20at%2011.06.23AM.png?generation=1790993244280411&alt=media)
+
+## 3532263 /kozykappa COMMENT
+Hi Shoto! To submit your work you need to wait till your notebook will be finished, dont cancel it. After that you go to submissions section and press submit prediction,then notebook part. Select exact notebook and press submit. So after this procedure your submission will have score, you just need to wait for 10-12 hours`
+
+## 3532735 /bloodymonday TOPIC
+@kozykappa 
+Hi, thanks for the suggestion. I followed those steps, which I let the notebook finish, submitted the completed notebook version from the Submissions page, and did not cancel it. However, my submission has now been waiting for about 13 hours without getting a score. At this point, I suspect this may be related to the competition GPU queue rather than the submission procedure itself.  
+If anyone else is seeing the same behavior, please let me know!! It would also be helpful if the organizers could clarify whether this is expected at the moment. 
+
+![](https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F5578954%2F31ce5d4de8a24cce01c200acf9ec05b1%2FScreenshot%202026-10-04%20at%2011.43.52PM.png?generation=1791125049795083&alt=media)
+
+## 3532776 /kozykappa COMMENT
+Oh, you just need to wait till it comes to your order to use GPU, most of the users are utilizing L4 x4, dont worry competition author will solve this problem asap, wait and your notebook will run, after full run you can submit your notebook to score, score will run without queue

@@ -1,0 +1,31 @@
+{
+  "messages": [
+    {
+      "id": 3531207,
+      "postDate": "2026-10-01T13:42:53.323Z",
+      "content": "<p>same thing happened with me. maybe wait for them to provide more information</p>",
+      "rawMarkdown": "same thing happened with me. maybe wait for them to provide more information",
+      "votes": 1
+    },
+    {
+      "id": 3531201,
+      "postDate": "2026-10-01T13:27:42.710Z",
+      "content": "<p>yes, same happened with me. They should provide the exact error logs</p>",
+      "rawMarkdown": "yes, same happened with me. They should provide the exact error logs",
+      "votes": 1
+    },
+    {
+      "id": 3531195,
+      "postDate": "2026-10-01T13:19:46.430Z",
+      "content": "<p>My first submission today failed. Kaggle showed only:  <strong>“Notebook Threw Exception.”</strong> \nI had no clue what went wrong or how to fix it.\nI understand why Kaggle limits logs from private test data: detailed logs could reveal information about that data. </p>\n<p>Could Kaggle first run each submission on <strong>a small sample of public data and show the full log?</strong>\nIf a submission fails on private data, Kaggle could still show only a general error message. This would help me tell whether the problem is in my notebook or in Kaggle’s system, while keeping the private data safe.</p>",
+      "rawMarkdown": "My first submission today failed. Kaggle showed only:  **“Notebook Threw Exception.”** \nI had no clue what went wrong or how to fix it.\nI understand why Kaggle limits logs from private test data: detailed logs could reveal information about that data. \n\nCould Kaggle first run each submission on **a small sample of public data and show the full log?**\nIf a submission fails on private data, Kaggle could still show only a general error message. This would help me tell whether the problem is in my notebook or in Kaggle’s system, while keeping the private data safe.",
+      "votes": 2
+    },
+    {
+      "id": 3531317,
+      "postDate": "2026-10-01T17:14:55.393Z",
+      "content": "<p>Also it doesn't make sense to loose daily submission limit when the problem happens before the task actually started.</p>",
+      "rawMarkdown": "Also it doesn't make sense to loose daily submission limit when the problem happens before the task actually started."
+    }
+  ]
+}

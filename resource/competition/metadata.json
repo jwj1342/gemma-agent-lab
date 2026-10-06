@@ -1,0 +1,95 @@
+{
+  "competitions": [
+    {
+      "id": 149921,
+      "ref": "https://www.kaggle.com/competitions/gemma-4-developer-agent",
+      "title": "Google - The Gemma 4 Developer Agent Competition",
+      "url": "https://www.kaggle.com/competitions/gemma-4-developer-agent",
+      "description": "Accelerate research in autonomous coding agents",
+      "organizationName": "Google DeepMind",
+      "category": "Featured",
+      "reward": "65,000 Usd",
+      "tags": [
+        {
+          "ref": "artificial intelligence",
+          "name": "artificial intelligence",
+          "description": "This tag has datasets and kernels where people come together and use cutting-edge research to train models on pictures of cats.",
+          "fullPath": "subject > science and technology > computer science > artificial intelligence",
+          "competitionCount": 125,
+          "datasetCount": 5659,
+          "scriptCount": 4298,
+          "totalCount": 10082
+        },
+        {
+          "ref": "coding",
+          "name": "coding",
+          "description": "",
+          "fullPath": "task > evaluation > coding",
+          "competitionCount": 11,
+          "datasetCount": 152,
+          "scriptCount": 133,
+          "totalCount": 296
+        },
+        {
+          "ref": "custom metric",
+          "name": "custom metric",
+          "description": "This competition's metric is defined under the 'Evaluation' tab",
+          "fullPath": ""
+        }
+      ],
+      "deadline": "2026-12-02T23:59:00.000Z",
+      "teamCount": 1755,
+      "userHasEntered": true,
+      "mergerDeadline": "2026-11-25T23:59:00.000Z",
+      "newEntrantDeadline": "2026-11-25T23:59:00.000Z",
+      "enabledDate": "2026-09-23T14:05:47.363Z",
+      "maxDailySubmissions": 1,
+      "maxTeamSize": 5,
+      "evaluationMetric": "Gemma 4 Developer Agent (149921)",
+      "awardsPoints": true,
+      "hostName": "Google DeepMind",
+      "dateCreated": "2026-06-16T18:24:03.200Z"
+    },
+    {
+      "id": 163111,
+      "ref": "https://www.kaggle.com/competitions/gemma-4-developer-agent-paper",
+      "title": "Google - The Gemma 4 Developer Agent Paper Track",
+      "url": "https://www.kaggle.com/competitions/gemma-4-developer-agent-paper",
+      "description": "Submit a Research Paper advancing the state-of-the-art for agentic software engineering",
+      "organizationName": "Google DeepMind",
+      "category": "Featured",
+      "reward": "35,000 Usd",
+      "tags": [
+        {
+          "ref": "artificial intelligence",
+          "name": "artificial intelligence",
+          "description": "This tag has datasets and kernels where people come together and use cutting-edge research to train models on pictures of cats.",
+          "fullPath": "subject > science and technology > computer science > artificial intelligence",
+          "competitionCount": 125,
+          "datasetCount": 5659,
+          "scriptCount": 4298,
+          "totalCount": 10082
+        },
+        {
+          "ref": "coding",
+          "name": "coding",
+          "description": "",
+          "fullPath": "task > evaluation > coding",
+          "competitionCount": 11,
+          "datasetCount": 152,
+          "scriptCount": 133,
+          "totalCount": 296
+        }
+      ],
+      "deadline": "2026-11-12T23:59:00.807Z",
+      "teamCount": 122,
+      "mergerDeadline": "2026-11-12T23:59:00.000Z",
+      "newEntrantDeadline": "2026-11-12T23:59:00.000Z",
+      "enabledDate": "2026-09-23T15:15:22.937Z",
+      "maxDailySubmissions": 5,
+      "maxTeamSize": 5,
+      "hostName": "Google DeepMind",
+      "dateCreated": "2026-08-27T23:32:17.762Z"
+    }
+  ]
+}

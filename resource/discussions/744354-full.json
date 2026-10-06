@@ -1,0 +1,310 @@
+{
+  "forumTopic": {
+    "authorId": 29437037,
+    "authorThumbnailName": "default-thumb.png",
+    "authorUserDisplayName": "KE WU",
+    "authorUserName": "wukeneth",
+    "comments": [
+      {
+        "id": 3530145,
+        "postDate": "2026-09-29T16:41:31.640Z",
+        "rawMarkdown": "Thanks for the heads up. Looks like this is a bug/incompatibility in how ADK and vLLM process reasoning tokens. vLLM [fixed](https://github.com/vllm-project/vllm/pull/42664) this in a later version. I'll add a patch accordingly and try to deploy later today. Unfortunately, due to compute constraints, we won't be able to rescore all existing submissions.",
+        "content": "<p>Thanks for the heads up. Looks like this is a bug/incompatibility in how ADK and vLLM process reasoning tokens. vLLM <a href=\"https://github.com/vllm-project/vllm/pull/42664\" target=\"_blank\">fixed</a> this in a later version. I'll add a patch accordingly and try to deploy later today. Unfortunately, due to compute constraints, we won't be able to rescore all existing submissions.</p>",
+        "replies": [
+          {
+            "id": 3530683,
+            "postDate": "2026-09-30T17:28:15.950Z",
+            "rawMarkdown": "@ryanholbrook any update on this? Thanks",
+            "content": "<p><a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a> any update on this? Thanks</p>",
+            "replies": [
+              {
+                "id": 3530709,
+                "postDate": "2026-09-30T18:32:23.863Z",
+                "rawMarkdown": "It's incoming.",
+                "content": "<p>It's incoming.</p>",
+                "parent": {},
+                "author": {
+                  "displayName": "Ryan Holbrook",
+                  "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+                  "url": "/ryanholbrook",
+                  "tier": "STAFF",
+                  "id": 2003505,
+                  "progressionOptOut": false
+                },
+                "authorType": "ADMIN",
+                "votes": {
+                  "totalVotes": 2,
+                  "canUpvote": true,
+                  "totalUpvotes": 2
+                },
+                "kernelVersion": 0,
+                "feedbackTrackingData": {},
+                "isThankYou": false,
+                "reactions": [
+                  {
+                    "emoji": "LOVE",
+                    "featuredUserNames": [
+                      "caleboleary",
+                      "moazeldegwy"
+                    ],
+                    "userCount": 2
+                  }
+                ],
+                "teamUpInfo": {
+                  "teamLeader": {
+                    "displayName": "Ryan Holbrook",
+                    "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+                    "url": "/ryanholbrook",
+                    "userName": "ryanholbrook",
+                    "tier": "STAFF",
+                    "id": 2003505,
+                    "profileUrl": "/ryanholbrook",
+                    "performanceTier": "STAFF",
+                    "userId": 2003505,
+                    "progressionOptOut": false
+                  },
+                  "intro": ""
+                }
+              }
+            ],
+            "parent": {},
+            "author": {
+              "displayName": "CTO",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/3279985-kg.jpg",
+              "url": "/caleboleary",
+              "tier": "CONTRIBUTOR",
+              "id": 3279985,
+              "progressionOptOut": false
+            },
+            "authorType": "COMMENT",
+            "votes": {
+              "canUpvote": true
+            },
+            "kernelVersion": 0,
+            "competitionRanking": 90,
+            "feedbackTrackingData": {},
+            "isThankYou": false,
+            "teamUpInfo": {
+              "teamLeader": {
+                "displayName": "CTO",
+                "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/3279985-kg.jpg",
+                "url": "/caleboleary",
+                "userName": "caleboleary",
+                "tier": "CONTRIBUTOR",
+                "id": 3279985,
+                "profileUrl": "/caleboleary",
+                "performanceTier": "CONTRIBUTOR",
+                "userId": 3279985,
+                "progressionOptOut": false
+              },
+              "intro": ""
+            }
+          },
+          {
+            "id": 3531449,
+            "postDate": "2026-10-01T21:35:47.470Z",
+            "rawMarkdown": "Yeah I was wondering why my SFT was rederiving its own reasoning so much. ",
+            "content": "<p>Yeah I was wondering why my SFT was rederiving its own reasoning so much. </p>",
+            "parent": {},
+            "author": {
+              "displayName": "TheFusionCube",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+              "url": "/thefusioncube",
+              "tier": "CONTRIBUTOR",
+              "id": 35891656,
+              "progressionOptOut": false
+            },
+            "authorType": "COMMENT",
+            "votes": {
+              "canUpvote": true
+            },
+            "kernelVersion": 0,
+            "competitionRanking": 1166,
+            "feedbackTrackingData": {},
+            "isThankYou": false,
+            "teamUpInfo": {
+              "teamLeader": {
+                "displayName": "TheFusionCube",
+                "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+                "url": "/thefusioncube",
+                "userName": "thefusioncube",
+                "tier": "CONTRIBUTOR",
+                "id": 35891656,
+                "profileUrl": "/thefusioncube",
+                "performanceTier": "CONTRIBUTOR",
+                "userId": 35891656,
+                "progressionOptOut": false
+              },
+              "intro": ""
+            }
+          }
+        ],
+        "parent": {},
+        "author": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "progressionOptOut": false
+        },
+        "authorType": "ADMIN",
+        "votes": {
+          "totalVotes": 3,
+          "canUpvote": true,
+          "totalUpvotes": 3
+        },
+        "kernelVersion": 0,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Ryan Holbrook",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+            "url": "/ryanholbrook",
+            "userName": "ryanholbrook",
+            "tier": "STAFF",
+            "id": 2003505,
+            "profileUrl": "/ryanholbrook",
+            "performanceTier": "STAFF",
+            "userId": 2003505,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3531052,
+        "postDate": "2026-10-01T08:08:50.407Z",
+        "rawMarkdown": "Just to confirm, your intention is to fix it? This will majorly affect how the submission models are configured and trained. With the fix in place the agent hits compaction limits and context limits much earlier. ",
+        "content": "<p>Just to confirm, your intention is to fix it? This will majorly affect how the submission models are configured and trained. With the fix in place the agent hits compaction limits and context limits much earlier. </p>",
+        "replies": [
+          {
+            "id": 3531244,
+            "postDate": "2026-10-01T14:46:47.410Z",
+            "rawMarkdown": "Yes, this is unambiguously a bug. The fix should be in the current wheelhouse.",
+            "content": "<p>Yes, this is unambiguously a bug. The fix should be in the current wheelhouse.</p>",
+            "parent": {},
+            "author": {
+              "displayName": "Ryan Holbrook",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+              "url": "/ryanholbrook",
+              "tier": "STAFF",
+              "id": 2003505,
+              "progressionOptOut": false
+            },
+            "authorType": "ADMIN",
+            "votes": {
+              "totalVotes": 2,
+              "canUpvote": true,
+              "totalUpvotes": 2
+            },
+            "kernelVersion": 0,
+            "feedbackTrackingData": {},
+            "isThankYou": false,
+            "teamUpInfo": {
+              "teamLeader": {
+                "displayName": "Ryan Holbrook",
+                "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+                "url": "/ryanholbrook",
+                "userName": "ryanholbrook",
+                "tier": "STAFF",
+                "id": 2003505,
+                "profileUrl": "/ryanholbrook",
+                "performanceTier": "STAFF",
+                "userId": 2003505,
+                "progressionOptOut": false
+              },
+              "intro": ""
+            }
+          }
+        ],
+        "parent": {},
+        "author": {
+          "displayName": "MrMadsheep",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/32895152-gr.jpg",
+          "url": "/marcinstecki",
+          "tier": "CONTRIBUTOR",
+          "id": 32895152,
+          "progressionOptOut": true
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 89,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "MrMadsheep",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/32895152-gr.jpg",
+            "url": "/marcinstecki",
+            "userName": "marcinstecki",
+            "tier": "CONTRIBUTOR",
+            "id": 32895152,
+            "profileUrl": "/marcinstecki",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 32895152,
+            "progressionOptOut": true
+          },
+          "intro": ""
+        }
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3530085,
+      "postDate": "2026-09-29T14:05:56.997Z",
+      "rawMarkdown": "Hi organizers,\n\nWith thinking on (the scoring server's default), the thought the model writes before a tool call never reaches the prompt of the next step. The model has to re-derive its reasoning at every tool call. Gemma 4's docs say thoughts must be kept inside a tool-calling turn (\"thoughts must NOT be removed between the function calls\", [prompt formatting guide](https://ai.google.dev/gemma/docs/core/prompt-formatting-gemma4)).\n\n**Cause.** ADK (`google-adk` 1.36.1, `LiteLlm`) sends the previous thought as `reasoning_content`. vLLM 0.19.1 only reads `reasoning` from incoming messages (`vllm/entrypoints/chat_utils.py`, line 1512: `reasoning = message.get(\"reasoning\")`), so the thought is dropped before the chat template sees it. The Gemma 4 template itself accepts both names. This is a known upstream bug: [vllm-project/vllm#38488](https://github.com/vllm-project/vllm/issues/38488), with a fix proposed in [vllm-project/vllm#42664](https://github.com/vllm-project/vllm/pull/42664).\n\n**Reproduction** (scoring vLLM config, `gemma-4-31b-it-qat-w4a16-ct` v2, 4×L4). Render one history (user → assistant tool call with a thought → tool result) through `/tokenize` + `/detokenize`, with the thought under different keys:\n\n```python\nimport requests\nURL = \"http://127.0.0.1:8000\"\nmodel = requests.get(f\"{URL}/v1/models\").json()[\"data\"][0][\"id\"]\ntools = [{\"type\": \"function\", \"function\": {\"name\": \"get_time\", \"description\": \"Returns the current server time.\",\n                                           \"parameters\": {\"type\": \"object\", \"properties\": {}}}}]\nthought = \"The user wants the time. I will call get_time. My secret word is PAPAYAQUOKKA.\"\n\ndef history(**extra):\n    return [{\"role\": \"system\", \"content\": \"You are a careful assistant.\"},\n            {\"role\": \"user\", \"content\": \"What time is it?\"},\n            {\"role\": \"assistant\", \"content\": \"\", **extra,\n             \"tool_calls\": [{\"id\": \"call_1\", \"type\": \"function\", \"function\": {\"name\": \"get_time\", \"arguments\": \"{}\"}}]},\n            {\"role\": \"tool\", \"tool_call_id\": \"call_1\", \"content\": '{\"time\": \"12:34\"}'}]\n\nfor label, extra in [(\"no thought\", {}), (\"reasoning_content\", {\"reasoning_content\": thought}), (\"reasoning\", {\"reasoning\": thought})]:\n    body = {\"model\": model, \"messages\": history(**extra), \"tools\": tools,\n            \"add_generation_prompt\": True, \"chat_template_kwargs\": {\"enable_thinking\": True}}\n    toks = requests.post(f\"{URL}/tokenize\", json=body).json()[\"tokens\"]\n    text = requests.post(f\"{URL}/detokenize\", json={\"model\": model, \"tokens\": toks}).json()[\"prompt\"]\n    print(f\"{label:18s} {len(toks):4d} tokens | thought in prompt: {'PAPAYAQUOKKA' in text}\")\n```\n\n```\nno thought           86 tokens | thought in prompt: False\nreasoning_content    86 tokens | thought in prompt: False   <- what ADK sends\nreasoning           114 tokens | thought in prompt: True\n```\n\n**It happens in real harness runs.** In the 636 public thinking-on baseline runs shared by @zzgtylors, we looked at 3,640 consecutive tool-call steps (no user message in between, before compaction, previous step had a thought and ≥300 completion tokens). The next prompt grew by only a median **0.35×** of the previous reply; if the reply were kept, it would be at least 1×. With thinking off it is 1.1×.\n\n**Fix options (harness side; submissions cannot reach this layer):**\n- In vLLM `chat_utils.py`: `reasoning = message.get(\"reasoning\") or message.get(\"reasoning_content\")` (the upstream fix), or\n- Have the harness / ADK send the thought as `reasoning`.\n\n**Questions:**\n1. Can you confirm this is unintended?\n2. Will the scoring environment be patched, and roughly when? We need to know whether to tune submissions for thinking mode before the Dec 2 deadline.\n3. If it is patched, will existing submissions be re-scored under the fixed environment?\n\nThanks!",
+      "content": "<p>Hi organizers,</p>\n<p>With thinking on (the scoring server's default), the thought the model writes before a tool call never reaches the prompt of the next step. The model has to re-derive its reasoning at every tool call. Gemma 4's docs say thoughts must be kept inside a tool-calling turn (\"thoughts must NOT be removed between the function calls\", <a href=\"https://ai.google.dev/gemma/docs/core/prompt-formatting-gemma4\" target=\"_blank\">prompt formatting guide</a>).</p>\n<p><strong>Cause.</strong> ADK (<code>google-adk</code> 1.36.1, <code>LiteLlm</code>) sends the previous thought as <code>reasoning_content</code>. vLLM 0.19.1 only reads <code>reasoning</code> from incoming messages (<code>vllm/entrypoints/chat_utils.py</code>, line 1512: <code>reasoning = message.get(\"reasoning\")</code>), so the thought is dropped before the chat template sees it. The Gemma 4 template itself accepts both names. This is a known upstream bug: <a href=\"https://github.com/vllm-project/vllm/issues/38488\" target=\"_blank\">vllm-project/vllm#38488</a>, with a fix proposed in <a href=\"https://github.com/vllm-project/vllm/pull/42664\" target=\"_blank\">vllm-project/vllm#42664</a>.</p>\n<p><strong>Reproduction</strong> (scoring vLLM config, <code>gemma-4-31b-it-qat-w4a16-ct</code> v2, 4×L4). Render one history (user → assistant tool call with a thought → tool result) through <code>/tokenize</code> + <code>/detokenize</code>, with the thought under different keys:</p>\n<pre><code>import requests\nURL = \"http://127.0.0.1:8000\"\nmodel = requests.get(f\"{URL}/v1/models\").json()[\"data\"][0][\"id\"]\ntools = [{\"type\": \"function\", \"function\": {\"name\": \"get_time\", \"description\": \"Returns the current server time.\",\n                                           \"parameters\": {\"type\": \"object\", \"properties\": {}}}}]\nthought = \"The user wants the time. I will call get_time. My secret word is PAPAYAQUOKKA.\"\n\ndef history(**extra):\n    return [{\"role\": \"system\", \"content\": \"You are a careful assistant.\"},\n            {\"role\": \"user\", \"content\": \"What time is it?\"},\n            {\"role\": \"assistant\", \"content\": \"\", **extra,\n             \"tool_calls\": [{\"id\": \"call_1\", \"type\": \"function\", \"function\": {\"name\": \"get_time\", \"arguments\": \"{}\"}}]},\n            {\"role\": \"tool\", \"tool_call_id\": \"call_1\", \"content\": '{\"time\": \"12:34\"}'}]\n\nfor label, extra in [(\"no thought\", {}), (\"reasoning_content\", {\"reasoning_content\": thought}), (\"reasoning\", {\"reasoning\": thought})]:\n    body = {\"model\": model, \"messages\": history(**extra), \"tools\": tools,\n            \"add_generation_prompt\": True, \"chat_template_kwargs\": {\"enable_thinking\": True}}\n    toks = requests.post(f\"{URL}/tokenize\", json=body).json()[\"tokens\"]\n    text = requests.post(f\"{URL}/detokenize\", json={\"model\": model, \"tokens\": toks}).json()[\"prompt\"]\n    print(f\"{label:18s} {len(toks):4d} tokens | thought in prompt: {'PAPAYAQUOKKA' in text}\")\n</code></pre>\n<pre><code>no thought           86 tokens | thought in prompt: False\nreasoning_content    86 tokens | thought in prompt: False   &lt;- what ADK sends\nreasoning           114 tokens | thought in prompt: True\n</code></pre>\n<p><strong>It happens in real harness runs.</strong> In the 636 public thinking-on baseline runs shared by <a href=\"/zzgtylors\" target=\"_blank\">@zzgtylors</a>, we looked at 3,640 consecutive tool-call steps (no user message in between, before compaction, previous step had a thought and ≥300 completion tokens). The next prompt grew by only a median <strong>0.35×</strong> of the previous reply; if the reply were kept, it would be at least 1×. With thinking off it is 1.1×.</p>\n<p><strong>Fix options (harness side; submissions cannot reach this layer):</strong></p>\n<ul>\n<li>In vLLM <code>chat_utils.py</code>: <code>reasoning = message.get(\"reasoning\") or message.get(\"reasoning_content\")</code> (the upstream fix), or</li>\n<li>Have the harness / ADK send the thought as <code>reasoning</code>.</li>\n</ul>\n<p><strong>Questions:</strong></p>\n<ol>\n<li>Can you confirm this is unintended?</li>\n<li>Will the scoring environment be patched, and roughly when? We need to know whether to tune submissions for thinking mode before the Dec 2 deadline.</li>\n<li>If it is patched, will existing submissions be re-scored under the fixed environment?</li>\n</ol>\n<p>Thanks!</p>",
+      "parent": {},
+      "author": {
+        "displayName": "KE WU",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+        "url": "/wukeneth",
+        "tier": "EXPERT",
+        "id": 29437037,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 10,
+        "canUpvote": true,
+        "totalUpvotes": 10
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "KE WU",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/wukeneth",
+          "userName": "wukeneth",
+          "tier": "EXPERT",
+          "id": 29437037,
+          "profileUrl": "/wukeneth",
+          "performanceTier": "EXPERT",
+          "userId": 29437037,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3530085,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 744354,
+    "name": "Thinking mode drops the model's thoughts between tool calls (vLLM ignores `reasoning_content`). Will the scoring environment be patched?",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-29T14:05:56.996308900Z",
+    "totalVotes": 10,
+    "url": "/competitions/gemma-4-developer-agent/discussion/744354",
+    "totalMessages": 6,
+    "authorPerformanceTier": "EXPERT",
+    "authorProgressionOptOut": false
+  }
+}

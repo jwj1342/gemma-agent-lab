@@ -1,0 +1,59 @@
+{
+  "forumTopic": {
+    "authorId": 30602177,
+    "authorThumbnailName": "30602177-kg.jpg?t=2026-09-30-05-48-09",
+    "authorUserDisplayName": "Fasil",
+    "authorUserName": "fasiltheengineer",
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3531239,
+      "postDate": "2026-10-01T14:38:48.413Z",
+      "rawMarkdown": "The rules say publicly shared Competition Code must be shared on this competition's forum or notebooks. If a team's paper-track Writeup (public after 12 November) links agent analysis code, does it satisfy the rule to publish that code as a public Kaggle Notebook attached to this competition and post the link here the same day? Is a public Kaggle Dataset also acceptable?",
+      "content": "<p>The rules say publicly shared Competition Code must be shared on this competition's forum or notebooks. If a team's paper-track Writeup (public after 12 November) links agent analysis code, does it satisfy the rule to publish that code as a public Kaggle Notebook attached to this competition and post the link here the same day? Is a public Kaggle Dataset also acceptable?</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Fasil",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/30602177-kg.jpg?t=2026-09-30-05-48-09",
+        "url": "/fasiltheengineer",
+        "tier": "CONTRIBUTOR",
+        "id": 30602177,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "canUpvote": true
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 995,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "enabled": true,
+        "teamLeader": {
+          "displayName": "Fasil",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/30602177-kg.jpg?t=2026-09-30-05-48-09",
+          "url": "/fasiltheengineer",
+          "userName": "fasiltheengineer",
+          "tier": "CONTRIBUTOR",
+          "id": 30602177,
+          "profileUrl": "/fasiltheengineer",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 30602177,
+          "progressionOptOut": false
+        },
+        "intro": "Winter Is Coming — Join the Night’s Watch"
+      }
+    },
+    "firstMessageId": 3531239,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 744941,
+    "name": "Public code sharing via a Notebook or Dataset linked from a paper-track Writeup",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-10-01T14:38:48.413537800Z",
+    "url": "/competitions/gemma-4-developer-agent/discussion/744941",
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

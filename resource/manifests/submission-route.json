@@ -1,0 +1,10 @@
+{
+  "checked_at": "2026-10-05T05:52:35.590997+00:00",
+  "competition": "gemma-4-developer-agent",
+  "is_kernels_submissions_only": false,
+  "submissions_disabled": false,
+  "user_has_entered": true,
+  "limits": {
+    "numAllowedNow": 1
+  }
+}

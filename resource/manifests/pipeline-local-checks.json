@@ -1,0 +1,10 @@
+{
+  "bundle_sha256": "02bb939095ded0c970088fc9d19634e203e2d3119a36a5feff20bad55c9343fc",
+  "checks": [
+    "deterministic ZIP",
+    "Kaggle version 1 equality",
+    "symlink rejection",
+    "unsupported extension rejection",
+    "inference task excludes labels"
+  ]
+}

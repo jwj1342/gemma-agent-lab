@@ -1,0 +1,448 @@
+# CELL 0 markdown
+# # Repair Manifold — End-to-End Ablation
+#
+# Compares free-form vs operator-first prompting on the same set of tasks.
+# Measures: pass rate, patch attempts, token consumption.
+#
+# Hypothesis: operator-first prompting reduces token consumption and iterations
+# without degrading pass rate, because the operator vocabulary constrains the
+# search space.
+
+# CELL 1 code
+import json, os, re, subprocess, shutil, tempfile, time, glob, sys
+
+def find_base():
+    for p in ["/kaggle/input/competitions/gemma-4-developer-agent",
+              "/kaggle/input/gemma-4-developer-agent"]:
+        if os.path.isdir(p):
+            return p
+    for root, dirs, files in os.walk("/kaggle/input"):
+        if "tasks.jsonl" in files:
+            return root
+    raise FileNotFoundError("tasks.jsonl not found")
+
+BASE = find_base()
+SNAP_DIR = os.path.join(BASE, "snapshots")
+WHEELS_DIR = os.path.join(BASE, "wheels")
+OUT = "/kaggle/working"
+
+tasks = [json.loads(l) for l in open(os.path.join(BASE, "tasks.jsonl"))]
+print(f"Loaded {len(tasks)} tasks from {BASE}")
+
+# CELL 2 markdown
+# ## 1. Helpers (reused from main experiment)
+
+# CELL 3 code
+def find_snapshot_tgz(instance_id):
+    if not os.path.isdir(SNAP_DIR):
+        return None
+    target = instance_id + ".tgz"
+    for name in os.listdir(SNAP_DIR):
+        if name == target or name.startswith(instance_id + "."):
+            return os.path.join(SNAP_DIR, name)
+    return None
+
+def extract_snapshot(tgz_path, dest_dir):
+    try:
+        subprocess.run(["tar", "xf", tgz_path, "-C", dest_dir],
+                       timeout=120, capture_output=True)
+    except Exception:
+        return None
+    items = os.listdir(dest_dir)
+    if len(items) == 1 and os.path.isdir(os.path.join(dest_dir, items[0])):
+        return os.path.join(dest_dir, items[0])
+    return dest_dir
+
+def discover_test_files(test_patch):
+    files = set()
+    for line in test_patch.split("\n"):
+        if line.startswith("+++ b/"):
+            p = line[6:].strip()
+            if p and p != "/dev/null":
+                files.add(p)
+    return list(files)
+
+def try_apply(workdir, patch_text):
+    fd, pf = tempfile.mkstemp(suffix=".patch")
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
+        f.write(patch_text)
+    try:
+        r = subprocess.run(["git", "apply", pf], cwd=workdir,
+                           capture_output=True, text=True, timeout=30)
+        if r.returncode == 0:
+            return True
+        r = subprocess.run(["patch", "-p1", "--no-backup-if-mismatch", "-i", pf],
+                          cwd=workdir, capture_output=True, text=True, timeout=30)
+        return r.returncode == 0
+    except Exception:
+        return False
+    finally:
+        try: os.unlink(pf)
+        except OSError: pass
+
+def run_tests_in(workdir, test_files, timeout=60):
+    if not test_files:
+        return None, ""
+    cmd = ["python", "-m", "pytest"] + test_files + ["-x", "-q", "--tb=line", "--no-header"]
+    try:
+        r = subprocess.run(cmd, cwd=workdir, capture_output=True, text=True, timeout=timeout)
+        return r.returncode == 0, (r.stdout + r.stderr)[-800:]
+    except Exception:
+        return None, "timeout"
+
+def parse_patch_files(patch):
+    files = []
+    for line in patch.split("\n"):
+        if line.startswith("diff --git"):
+            parts = line.split()
+            if len(parts) >= 4:
+                p = parts[-1]
+                if p.startswith("b/"): p = p[2:]
+                files.append(p)
+    return files
+
+def read_file_content(repo_root, file_path):
+    full = os.path.join(repo_root, file_path)
+    if os.path.isfile(full):
+        with open(full, encoding="utf-8", errors="replace") as f:
+            return f.read()
+    return None
+
+# CELL 4 markdown
+# ## 2. Load Gemma model
+
+# CELL 5 code
+import os, glob
+
+# Multi-strategy model loading: keras_nlp → kagglehub → search → Qwen fallback
+USE_KERAS = False
+MODEL_NAME = None
+
+# Strategy 1: keras_hub (Kaggle-native Gemma access)
+try:
+    os.environ["KERAS_BACKEND"] = "jax"
+    import keras_hub
+    gemma_classes = [x for x in dir(keras_hub.models) if 'emma' in x.lower()]
+    print(f"keras_hub Gemma classes: {gemma_classes}")
+    # Try Gemma 3 first (might have different license), then Gemma 2
+    for cls_name in ["Gemma3CausalLM", "GemmaCausalLM"]:
+        if hasattr(keras_hub.models, cls_name):
+            cls = getattr(keras_hub.models, cls_name)
+            # Try various presets
+            presets = ["gemma3_4b_en", "gemma3_1b_en", "gemma3_12b_en"] if "3" in cls_name else ["gemma2_2b_en", "gemma_2b_en", "gemma2_2b_it_en"]
+            for preset in presets:
+                try:
+                    print(f"Trying {cls_name}.from_preset('{preset}')...")
+                    gemma_model = cls.from_preset(preset)
+                    print(f"Gemma loaded via {cls_name} with {preset}!")
+                    USE_KERAS = True
+                    MODEL_NAME = f"{preset} (keras_hub)"
+                    break
+                except Exception as e:
+                    print(f"  {preset}: {e}")
+            if USE_KERAS:
+                break
+except Exception as e:
+    print(f"keras_hub failed: {e}")
+
+# Strategy 2: kagglehub (unset token to use kernel credentials)
+if not USE_KERAS:
+    try:
+        os.environ.pop("KAGGLE_API_TOKEN", None)
+        os.environ.pop("KAGGLE_KEY", None)
+        import kagglehub
+        print("Trying kagglehub for Gemma 2 2B (no token)...")
+        model_path = kagglehub.model_download("google/gemma-2-2b-it/pyTorch/2b-it/2")
+        print(f"Downloaded to {model_path}")
+        import torch
+        from transformers import AutoTokenizer, AutoModelForCausalLM
+        tokenizer = AutoTokenizer.from_pretrained(model_path)
+        model = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype=torch.float16, device_map="auto")
+        MODEL_NAME = model_path
+        print("Gemma loaded via kagglehub + transformers!")
+    except Exception as e:
+        print(f"kagglehub failed: {e}")
+
+# Strategy 3: Search /kaggle/input/ for pre-loaded model files
+if not USE_KERAS and MODEL_NAME is None:
+    candidates = glob.glob("/kaggle/input/*gemma*") + glob.glob("/kaggle/input/models/*/*gemma*")
+    candidates = [c for c in candidates if os.path.isdir(c)]
+    print(f"Searching /kaggle/input/ for Gemma: {candidates[:5]}")
+    for d in candidates:
+        try:
+            import torch
+            from transformers import AutoTokenizer, AutoModelForCausalLM
+            tokenizer = AutoTokenizer.from_pretrained(d)
+            model = AutoModelForCausalLM.from_pretrained(d, torch_dtype=torch.float16, device_map="auto")
+            MODEL_NAME = d
+            print(f"Gemma loaded from {d}!")
+            break
+        except Exception as e:
+            print(f"  {d}: {e}")
+
+# Strategy 4: Fall back to Qwen2.5-3B-Instruct (larger open model, not gated)
+if not USE_KERAS and MODEL_NAME is None:
+    import torch
+    from transformers import AutoTokenizer, AutoModelForCausalLM
+    MODEL_NAME = "Qwen/Qwen2.5-3B-Instruct"
+    print(f"Falling back to {MODEL_NAME}...")
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+    model = AutoModelForCausalLM.from_pretrained(MODEL_NAME, torch_dtype=torch.float16, device_map="auto")
+    print(f"Loaded {MODEL_NAME}")
+
+if not USE_KERAS:
+    print(f"Transformers model on {model.device}")
+
+def generate_text(prompt, max_new_tokens=768):
+    if USE_KERAS:
+        import keras
+        toks = gemma_model.preprocessor.tokenizer.tokenize(prompt)
+        n_input = int(keras.ops.shape(toks)[0]) if not isinstance(toks, int) else toks
+        n_input = max(n_input, 1)
+        max_len = min(n_input + max_new_tokens, 2048)
+        output = gemma_model.generate(prompt, max_length=max_len)
+        # Output may be a string or tensor
+        if hasattr(output, '__getitem__') and not isinstance(output, str):
+            output = str(output)
+        response = output[len(prompt):] if len(output) > len(prompt) else output
+        out_toks = gemma_model.preprocessor.tokenizer.tokenize(response)
+        n_output = int(keras.ops.shape(out_toks)[0]) if not isinstance(out_toks, int) else out_toks
+        n_output = max(n_output, 1)
+        return response, n_input, n_output
+    else:
+        # transformers path
+        messages = [{"role": "user", "content": prompt}]
+        text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+        inputs = tokenizer(text, return_tensors="pt", truncation=True, max_length=4096)
+        n_input = inputs.input_ids.shape[1]
+        inputs = inputs.to(model.device)
+        with torch.no_grad():
+            outputs = model.generate(
+                **inputs, max_new_tokens=max_new_tokens,
+                do_sample=True, temperature=0.7,
+                pad_token_id=tokenizer.eos_token_id
+            )
+        n_output = outputs.shape[1] - n_input
+        response = tokenizer.decode(outputs[0, n_input:], skip_special_tokens=True)
+        return response, n_input, n_output
+
+# CELL 6 markdown
+# ## 3. Ablation experiment
+
+# CELL 7 code
+OPERATOR_VOCAB = """Most common repair operators (by frequency):
+1. ADD_IMPORT (13.7%) - Add an import statement
+2. REPLACE_STATEMENT (11.4%) - Replace a statement with a modified version
+3. ADD_STATEMENT (10.4%) - Add a new statement
+4. CHANGE_CONDITION (9.5%) - Modify a boolean condition
+5. CHANGE_VALUE (7.2%) - Change a literal value
+6. ADD_CONDITIONAL (6.6%) - Add an if/elif/else branch
+7. ADD_METHOD (6.0%) - Add a new method to a class
+8. CHANGE_CALL (4.6%) - Change a function call target or arguments
+9. ADD_FUNCTION (4.5%) - Add a new function
+Top-10 cover 81.4% of all repair operations."""
+
+MAX_ITER = 3
+N_TASKS = 15
+
+# Select tasks with snapshots and simple patches
+# Build snapshot index directly (avoid function scope issues)
+snap_index = {}
+if os.path.isdir(SNAP_DIR):
+    for name in os.listdir(SNAP_DIR):
+        if name.endswith(".tgz"):
+            iid = name[:-4]
+            snap_index[iid] = os.path.join(SNAP_DIR, name)
+print(f"Snapshot index: {len(snap_index)} entries")
+print(f"First task '{tasks[0]['instance_id']}' in index: {tasks[0]['instance_id'] in snap_index}")
+
+selected = []
+# Debug: check first 3 tasks
+for t in tasks[:3]:
+    iid = t["instance_id"]
+    in_idx = iid in snap_index
+    rf = []
+    for line in t["patch"].split("\n"):
+        if line.startswith("+++ b/"):
+            p = line[6:].strip()
+            if p and p != "/dev/null":
+                rf.append(p)
+    nh = sum(1 for line in t["patch"].split("\n") if line.startswith("@@"))
+    print(f"  {iid}: in_idx={in_idx}, ref_files={rf[:2]}, n_hunks={nh}, patch_start={repr(t['patch'][:80])}")
+
+for t in tasks:
+    if t["instance_id"] not in snap_index:
+        continue
+    ref_files = []
+    for line in t["patch"].split("\n"):
+        if line.startswith("+++ b/"):
+            p = line[6:].strip()
+            if p and p != "/dev/null":
+                ref_files.append(p)
+    n_hunks = sum(1 for line in t["patch"].split("\n") if line.startswith("@@"))
+    if n_hunks <= 3 and len(ref_files) >= 1:
+        selected.append(t)
+    if len(selected) >= N_TASKS:
+        break
+
+print(f"Selected {len(selected)} tasks for ablation")
+for t in selected:
+    print(f"  {t['instance_id']} ({t['repo']})")
+
+# Install wheels
+print("\nInstalling wheels...")
+for whl in sorted(glob.glob(os.path.join(WHEELS_DIR, "*.whl"))):
+    subprocess.run(["pip", "install", "--no-deps", "-q", whl],
+                   timeout=60, capture_output=True)
+print("Done")
+
+# CELL 8 code
+results = {"free_form": [], "operator_first": []}
+ablation_start = time.time()
+
+for ti, t in enumerate(selected):
+    print(f"\n--- Task {ti+1}/{len(selected)}: {t['instance_id']} ---")
+    
+    tgz = snap_index.get(t["instance_id"])
+    test_patch = t.get("test_patch", "")
+    test_files = discover_test_files(test_patch) if test_patch else []
+    ref_files = parse_patch_files(t["patch"])
+    problem = t.get("problem_statement", "")[:1500]
+    
+    for config_name, use_ops in [("free_form", False), ("operator_first", True)]:
+        print(f"  [{config_name}]", end=" ")
+        
+        workdir = tempfile.mkdtemp(prefix=f"abl_{ti}_{config_name}_")
+        total_in, total_out = 0, 0
+        passed = False
+        n_attempts = 0
+        error_msg = ""
+        
+        try:
+            repo_root = extract_snapshot(tgz, workdir)
+            if not repo_root:
+                print("no snapshot")
+                continue
+            
+            subprocess.run(["pip", "install", "-e", ".", "-q", "--no-deps"],
+                          cwd=repo_root, timeout=60, capture_output=True)
+            if test_patch:
+                try_apply(repo_root, test_patch)
+            
+            file_path = ref_files[0] if ref_files else None
+            file_content = read_file_content(repo_root, file_path) if file_path else None
+            
+            for iteration in range(MAX_ITER):
+                n_attempts += 1
+                
+                if use_ops:
+                    prompt = f"""{OPERATOR_VOCAB}
+
+Given the following issue, select the most likely operator and generate the modified file content that applies it.
+
+Issue: {problem}
+
+File: {file_path}
+Current content:
+{file_content[:2000] if file_content else 'N/A'}
+
+Output only the complete modified file content. No explanation."""
+                else:
+                    prompt = f"""Given the following issue, generate the modified file content to fix it.
+
+Issue: {problem}
+
+File: {file_path}
+Current content:
+{file_content[:2000] if file_content else 'N/A'}
+
+Output only the complete modified file content. No explanation."""
+                
+                response, n_in, n_out = generate_text(prompt, max_new_tokens=1024)
+                total_in += n_in
+                total_out += n_out
+                
+                modified = response.strip()
+                # Strip markdown code fences
+                if modified.startswith("```"):
+                    lines = modified.split("\n")
+                    if lines[-1].strip() == "```":
+                        lines = lines[1:-1]
+                    else:
+                        lines = lines[1:]
+                    modified = "\n".join(lines)
+                
+                if file_path and file_content and modified:
+                    full_path = os.path.join(repo_root, file_path)
+                    with open(full_path, "w", encoding="utf-8") as f:
+                        f.write(modified)
+                    
+                    test_passed, test_output = run_tests_in(repo_root, test_files)
+                    if test_passed:
+                        passed = True
+                        break
+                    error_msg = test_output[-200:] if test_output else ""
+                    # Reset for next iteration
+                    with open(full_path, "w", encoding="utf-8") as f:
+                        f.write(file_content)
+        except Exception as e:
+            print(f"error: {e}")
+        finally:
+            shutil.rmtree(workdir, ignore_errors=True)
+        
+        result = {
+            "instance_id": t["instance_id"],
+            "config": config_name,
+            "passed": passed,
+            "attempts": n_attempts,
+            "input_tokens": total_in,
+            "output_tokens": total_out,
+            "total_tokens": total_in + total_out,
+        }
+        results[config_name].append(result)
+        status = "PASS" if passed else "FAIL"
+        print(f"{status} attempts={n_attempts} tokens={total_in+total_out}")
+
+ablation_elapsed = time.time() - ablation_start
+print(f"\nAblation complete in {ablation_elapsed:.0f}s")
+
+# CELL 9 markdown
+# ## 4. Results
+
+# CELL 10 code
+print("\n=== Ablation Results ===")
+print(f"{'Metric':<20} {'Free-form':>12} {'Operator-first':>16} {'Delta':>10}")
+print("-" * 60)
+
+summary = {}
+for config in ["free_form", "operator_first"]:
+    rs = results[config]
+    n = len(rs)
+    if n == 0:
+        summary[config] = None
+        continue
+    summary[config] = {
+        "n_tasks": n,
+        "pass_rate": round(sum(1 for r in rs if r["passed"]) / n, 4),
+        "mean_attempts": round(sum(r["attempts"] for r in rs) / n, 1),
+        "mean_input_tokens": round(sum(r["input_tokens"] for r in rs) / n),
+        "mean_output_tokens": round(sum(r["output_tokens"] for r in rs) / n),
+        "mean_total_tokens": round(sum(r["total_tokens"] for r in rs) / n),
+    }
+
+ff = summary.get("free_form", {})
+of = summary.get("operator_first", {})
+if ff and of:
+    print(f"{'n_tasks':<20} {ff['n_tasks']:>12} {of['n_tasks']:>16}")
+    print(f"{'pass_rate':<20} {ff['pass_rate']:>12.1%} {of['pass_rate']:>16.1%} {of['pass_rate']-ff['pass_rate']:>+10.1%}")
+    print(f"{'mean_attempts':<20} {ff['mean_attempts']:>12.1f} {of['mean_attempts']:>16.1f} {of['mean_attempts']-ff['mean_attempts']:>+10.1f}")
+    print(f"{'mean_input_tokens':<20} {ff['mean_input_tokens']:>12.0f} {of['mean_input_tokens']:>16.0f} {of['mean_input_tokens']-ff['mean_input_tokens']:>+10.0f}")
+    print(f"{'mean_output_tokens':<20} {ff['mean_output_tokens']:>12.0f} {of['mean_output_tokens']:>16.0f} {of['mean_output_tokens']-ff['mean_output_tokens']:>+10.0f}")
+    print(f"{'mean_total_tokens':<20} {ff['mean_total_tokens']:>12.0f} {of['mean_total_tokens']:>16.0f} {of['mean_total_tokens']-ff['mean_total_tokens']:>+10.0f}")
+
+# Save
+with open(os.path.join(OUT, "ablation_results.json"), "w") as f:
+    json.dump({"summary": summary, "per_task": results,
+               "model": MODEL_NAME, "n_tasks": N_TASKS, "max_iter": MAX_ITER,
+               "elapsed_seconds": round(ablation_elapsed, 1)}, f, indent=2)
+print("\nSaved ablation_results.json")

@@ -1,0 +1,330 @@
+# CELL 0 markdown
+# Gemma 4 Agent: Run the Real Evaluator Locally
+
+> **TL;DR.** The official starter evaluates **2 tasks** with a **1-minute, 10-tool-call demo limit**, so every task "times out" with no patch. This notebook runs the same official evaluator on **N tasks with realistic budgets**, records per-task diagnostics, and adds a **repetition-loop detector**. In my runs, 4 of 10 tasks burned 92-97 of 100 tool calls (identical commands repeated up to 79 times), and re-running the *same* bundle gave 3/10 then 1/10 resolved, so single scores are mostly noise.
+
+Built on the official **Getting Started - Gemma 4 Developer Agent** notebook by Ryan Holbrook (vLLM server + `swegemma` Evaluator). The harness code is theirs; the multi-task loop, realistic budgets, trace diagnostics and findings below are mine.
+
+**Needs:** a Kaggle GPU session (the notebook is set to the same `L4` machine as the starter). Model load takes about 9 minutes; each task then takes 1-10 minutes.
+
+# CELL 1 markdown
+## What this shows (measured on 10 tasks spread across `tasks.jsonl`, 10 min / 100 tool calls / 300 s commands per task)
+
+| Run | Resolved | Tasks stuck in a loop* | Avg tool calls |
+|---|---|---|---|
+| Public analyzer+coder bundle, temp 0.2 (run 1) | 3/10 | 4 | 47.6 |
+| Same bundle, rerun | **1/10** | 2 | 36 |
+| temp 0.7 | 1/10 | **5** | 66 |
+| temp 0.7 + thinking budget 4096 | 3/10 | 3 | 54 |
+
+\* a loop = the exact same `run_command` text (whitespace-normalized) 5+ times. In one task the same `python3 -c` ran **69** times; in two others an identical command ran **79** and **42** times. Those tasks made 0-2 edits and ran no tests.
+
+**How to read it:** the rerun of an identical bundle moved from 3 to 1 resolved task, so differences of one or two tasks between configs are noise. The loop count is the steadier signal. These are my numbers on 10 tasks, not a leaderboard result.
+
+# CELL 2 markdown
+## 1. Environment (from the official starter)
+
+# CELL 3 code
+import glob
+import importlib
+import os
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+# Configure environment variables for offline vLLM serving and LiteLLM routing
+os.environ['LITELLM_LOCAL_MODEL_COST_MAP'] = 'True'
+os.environ['TRANSFORMERS_NO_TF'] = '1'
+os.environ['VLLM_WORKER_MULTIPROC_METHOD'] = 'spawn'
+os.environ['VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS'] = '1'
+os.environ['VLLM_ENGINE_READY_TIMEOUT_S'] = '1200'
+os.environ['VLLM_NO_USAGE_STATS'] = '1'
+os.environ['OTEL_SDK_DISABLED'] = 'true'
+os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
+
+WHEELHOUSE_DIR = Path('/kaggle/input/datasets/metric/gemma-4-developer-agent-wheelhouse')
+
+# Remove broken cutlass .pth hooks if present
+for pth_pattern in (
+    '/usr/local/lib/python*/dist-packages/*cutlass*.pth',
+    '/usr/local/lib/python*/site-packages/*cutlass*.pth',
+):
+    for pth in glob.glob(pth_pattern):
+        try:
+            os.unlink(pth)
+        except OSError:
+            pass
+
+# Restore PEP 440 '+cu128' wheel filenames stripped by Kaggle dataset uploads
+tmp_whl = Path('/tmp/wheelhouse')
+tmp_whl.mkdir(parents=True, exist_ok=True)
+for w in WHEELHOUSE_DIR.glob('*.whl'):
+    if 'cutlass' in w.name.lower():
+        continue
+    target_name = (
+        w.name.replace('cu128', '+cu128')
+        if ('cu128' in w.name and '+' not in w.name)
+        else w.name
+    )
+    target = tmp_whl / target_name
+    if not target.exists():
+        os.symlink(w, target)
+
+wheels = sorted(str(w) for w in tmp_whl.glob('*.whl'))
+print(f'Installing {len(wheels)} wheels from {WHEELHOUSE_DIR}...')
+subprocess.run(
+    [sys.executable, '-m', 'pip', 'install', '-q', '--no-deps', '--force-reinstall', *wheels],
+    check=True,
+)
+importlib.invalidate_caches()
+print('Wheelhouse installation complete.')
+
+# CELL 4 markdown
+## 2. Config: the only cell you need to edit
+`STRIDE` picks every k-th task so the sample spans repositories (the first tasks are all `fastapi`). Budgets default to **realistic** values; the official sample's `eval_config.yaml` uses 1 minute / 10 tool calls, which is a demo.
+
+# CELL 5 code
+N_TASKS = 10            # how many tasks to run
+STRIDE = 13             # take every STRIDE-th task: tasks[::STRIDE][:N_TASKS]
+EVAL = dict(timeout_seconds=300, max_tool_calls=100, max_time_minutes=10, max_turns=250)
+SAMPLING = ("temperature: 0.2\ntop_p: 0.95\ntop_k: 40\nmax_output_tokens: 8192\n"
+            "thinking_config:\n  thinking_budget: 4096\n  include_thoughts: false\n")
+USE_OFFICIAL_SAMPLE_BUNDLE = False   # True = evaluate the official sample submission instead of the bundle below
+
+# CELL 6 markdown
+## 3. The bundle under test
+A small analyzer + coder agent (a coder with the sandbox tools, plus a read-only `code_analyzer` sub-agent that navigates the repo graph). Replace these strings with your own files to evaluate your bundle.
+
+# CELL 7 code
+BUNDLE_FILES = {
+ "agent.yaml": "name: swe_coder\nmodel: gemma-4-31b-it-qat-w4a16-ct\ndescription: Fixes one repository issue with a small, verified source patch.\ninstruction: !include prompts/system.md\ngenerate_content_config: !include configs/sampling.yaml\ntools:\n  - run_command\n  - read_file\n  - edit_file\n  - write_file\n  - get_status\n  - submit_patch\n  - search_similar_code\n  - get_code_neighbors\n  - get_code_subgraph\n  - agent_tool:\n      config_path: sub_agents/code_analyzer.yaml\n      skip_summarization: true\n",
+ "prompts/analyzer.md": "You are code_analyzer, a read-only navigator. You never modify files. You already know the issue —\nfind exactly where it must be fixed and hand back a plan the coder can act on in one hop.\n\nMethod:\n1. Extract identifiers from the issue: function/class names, error text, file paths, options. If the\n   issue is a pull-request description, ignore its template text and target the change it describes.\n2. Search with a symbol taken from the code (e.g. `APIKeyHeader`, `parse_header`), never a sentence:\n   `git grep -n \"<symbol>\" -- '*.py' | head`, or search_similar_code. Confirm every hit by reading\n   the code; use get_code_neighbors to follow callers/callees to where behaviour diverges, and\n   get_code_subgraph to see how a few candidates connect. Never guess line numbers.\n3. If a search returns nothing, change the term (shorter name, class instead of method, exact error\n   text) rather than repeating it.\n\nKeep outputs short — the coder's context is tight. Answer in at most 200 words, nothing else:\n\nLOCATION: <path>:<start>-<end> (<symbol>)\nROOT CAUSE: <one or two sentences>\nFIX PLAN: <concrete change>\nRELATED: <other call sites needing the same change, or \"none\">\nTESTS: <closest existing test files that exercise this code>\nCONFIDENCE: high | medium | low\n",
+ "prompts/system.md": "You are an autonomous software engineer fixing ONE issue in the Python repository at /workspace.\nNo one answers questions — decide and act with your tools, then call submit_patch() once.\n\n## How you are graded\n- Hidden tests run against your source changes in a fresh checkout; the task passes only if pytest\n  exits 0. A careful best-effort fix beats an empty patch — never revert a plausible one.\n- Test files, conftest.py, pytest.ini, pyproject.toml, setup.cfg and tox.ini are reset before\n  grading, so editing them never helps. Fix the source code.\n\n## Sandbox facts (compute is tight — keep every output short)\n- Offline, dependencies already installed. Never install packages.\n- `rg` and `tree` are NOT available; search with `git grep -n`. git, grep, find, sed, awk, python3 are.\n- run_command output is cut to its FIRST 5,000 characters. read_file returns at most 150 lines or\n  10,000 characters — always request narrow line ranges.\n- read_file / write_file / edit_file only reach /workspace. Put scratch files in /tmp via\n  run_command (e.g. a heredoc), never in /workspace — anything left there becomes your patch.\n- The context window is ~32k tokens; every long output brings you closer to a crash that discards\n  your work, so keep outputs short. get_status() and submit_patch() are free.\n\n## Workflow\n1. Understand: state expected vs actual behaviour to yourself in one line.\n2. Localize: call the `code_analyzer` tool first with the issue — it returns LOCATION / ROOT CAUSE /\n   FIX PLAN / TESTS. Confirm its claim by reading those exact lines. For a quick check you also hold\n   search_similar_code / get_code_neighbors / get_code_subgraph directly; use a symbol, not a sentence.\n3. Fix: edit_file with a short, unique, verbatim old_string (copy indentation exactly, strip line\n   numbers). One logical change per edit. Fix the root cause, not the symptom, and handle the edge\n   cases the issue names. Use write_file only to create a genuinely new source file the fix needs.\n4. Verify in ONE command to save budget:\n   `python -m py_compile <file> && python -m pytest <closest test path> -x -q -p no:anyio -o timeout=0`\n   Tests already failing for unrelated reasons (missing fixtures, no network) are not your task.\n5. Submit: `git diff` and confirm only intended source changes remain, delete any /workspace scratch,\n   then call submit_patch() once.\n\n## Budget discipline\n- Call get_status() every ~8 tool calls. When less than 25% of turns or time remains, stop exploring\n  and go straight to fix -> verify -> submit.\n- Never run the same command twice unchanged. If an edit fails twice, re-read the exact lines with\n  `sed -n 'A,Bp' FILE` and retry with a smaller (2-3 line) unique snippet.\n",
+ "sub_agents/code_analyzer.yaml": "name: code_analyzer\nmodel: gemma-4-31b-it-qat-w4a16-ct\ndescription: Read-only code navigator. It already knows the issue; returns the exact fix location, root cause, fix plan and closest tests.\ninstruction: !include ../prompts/analyzer.md\ntools:\n  - run_command\n  - read_file\n  - search_similar_code\n  - get_code_neighbors\n  - get_code_subgraph\ngenerate_content_config:\n  temperature: 0.1\n  top_p: 0.95\n  top_k: 40\n  max_output_tokens: 2048\n  thinking_config:\n    include_thoughts: false\n"
+}
+
+# CELL 8 markdown
+## 4. Tasks
+
+# CELL 9 code
+from swegemma.models import load_tasks
+
+DATA_DIR = Path('/kaggle/input/competitions/gemma-4-developer-agent')
+WORKING_DIR = Path('/kaggle/working')
+WORKING_DIR.mkdir(parents=True, exist_ok=True)
+
+SAMPLE_SUBMISSION_SRC = DATA_DIR / 'sample_submission'
+AGENT_DIR = WORKING_DIR / 'agent_under_test'
+if AGENT_DIR.exists():
+    shutil.rmtree(AGENT_DIR)
+if USE_OFFICIAL_SAMPLE_BUNDLE:
+    shutil.copytree(SAMPLE_SUBMISSION_SRC, AGENT_DIR)
+else:
+    for rel, txt in BUNDLE_FILES.items():
+        p = AGENT_DIR / rel
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(txt, encoding='utf-8')
+    (AGENT_DIR / 'configs').mkdir(exist_ok=True)
+    (AGENT_DIR / 'configs' / 'sampling.yaml').write_text(SAMPLING, encoding='utf-8')
+    (AGENT_DIR / 'eval_config.yaml').write_text(
+        'evaluation:\n' + ''.join(f'  {k}: {v}\n' for k, v in EVAL.items()), encoding='utf-8')
+print('Bundle files:', sorted(str(p.relative_to(AGENT_DIR)) for p in AGENT_DIR.rglob('*') if p.is_file()))
+
+# Load tasks from the published dataset
+TASKS_PATH = DATA_DIR / 'tasks.jsonl'
+tasks = load_tasks(TASKS_PATH)
+
+print(f'Data directory: {DATA_DIR}')
+print(f'Agent directory: {AGENT_DIR}')
+print(f'Loaded {len(tasks)} tasks from {TASKS_PATH.name}')
+for t in tasks[:5]:
+    print(f'  - {t.instance_id} ({t.repo} @ {t.base_commit[:8]})')
+
+# code-graph and embedding locations the evaluator needs (defined in the official starter's graph section)
+GRAPH_DIR = str(DATA_DIR / 'graphs')
+EMBEDDINGS_DIR = str(DATA_DIR / 'embeddings')
+
+# CELL 10 markdown
+## 5. Start the vLLM server (from the official starter)
+
+# CELL 11 code
+import litellm
+import torch
+from adk_submission import VllmConfig, VllmServer, discover_adapters
+from swegemma.config import ALLOWED_ADAPTER_EXTENSIONS
+from swegemma.models.discovery import validate_single_declared_model
+
+litellm.drop_params = True
+
+TARGET_MODEL_NAME = 'gemma-4-31b-it-qat-w4a16-ct'
+MODEL_PATH = Path('/kaggle/input/models/google/gemma-4/other/gemma-4-31b-it-qat-w4a16-ct/2')
+INFERENCE_API_KEY = 'EMPTY'
+
+# Validate single base model and discover any PEFT LoRA adapters in the submission directory
+declared_model = validate_single_declared_model(AGENT_DIR)
+adapters = discover_adapters(str(AGENT_DIR), adapter_extensions=ALLOWED_ADAPTER_EXTENSIONS)
+
+gpu_count = torch.cuda.device_count() if torch.cuda.is_available() else 1
+tp_size = 4 if gpu_count >= 4 else (2 if gpu_count >= 2 else 1)
+
+vllm_cfg = VllmConfig(
+    model=str(MODEL_PATH),
+    port=8000,
+    host='127.0.0.1',
+    tool_call_parser='gemma4',
+    reasoning_parser='gemma4',
+    max_model_len=32768,
+    dtype='bfloat16' if (torch.cuda.is_available() and torch.cuda.is_bf16_supported()) else 'auto',
+    gpu_memory_utilization=0.90,
+    enable_auto_tool_choice=True,
+    enable_lora=True,
+    max_loras=8,
+    max_lora_rank=128,
+    tensor_parallel_size=tp_size,
+    startup_timeout=60 * 20,
+)
+server_instance = VllmServer(vllm_cfg, adapter_manifest=adapters)
+server_instance.start()
+print(f'vLLM server started on {server_instance.base_url} (tp={tp_size})')
+
+# Register model and LoRA adapter aliases for Google ADK
+models = server_instance.create_model_registry(
+    aliases=[declared_model, TARGET_MODEL_NAME],
+    model_prefix='openai/',
+    api_key=INFERENCE_API_KEY,
+)
+
+# CELL 12 markdown
+## 6. Evaluate N tasks with per-task diagnostics
+Besides `resolved`, each row records tool calls, duration, the end status and **trace statistics**: the highest repeat count of a single command (`max_repeat`), the number of `run_command` / edit calls and pytest runs. A trace with `max_repeat` of 5 or more is a loop.
+
+# CELL 13 code
+import asyncio
+import concurrent.futures
+import pandas as pd
+import yaml
+from google.adk.agents.context_cache_config import ContextCacheConfig
+from google.adk.apps._configs import EventsCompactionConfig
+from swegemma.config import EvalConfig, build_submission_limits
+from swegemma.evaluate import Evaluator
+
+
+def run_sync(coro_or_fn, *args, **kwargs):
+    """Run an async coroutine synchronously inside a notebook event loop."""
+    fn = (lambda: coro_or_fn(*args, **kwargs)) if callable(coro_or_fn) else (lambda: coro_or_fn)
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
+    if loop is not None and loop.is_running():
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+            return pool.submit(lambda: asyncio.run(fn())).result()
+    return asyncio.run(fn())
+
+
+
+import json as _j, re as _re, collections as _c
+def trace_stats(iid):
+    p = WORKING_DIR / 'results' / 'traces' / f'trace_{iid}.json'
+    out = dict(max_repeat=0, n_cmd=0, n_edit=0, n_pytest=0)
+    try:
+        t = _j.loads(p.read_text()); cmds = []
+        for s in t['steps']:
+            for c in (s.get('tool_calls') or []):
+                n = c.get('function_name') or c.get('name'); a = c.get('arguments') or {}
+                if n == 'run_command' and isinstance(a, dict): cmds.append(_re.sub(r'\s+', ' ', a.get('command', ''))[:200])
+                if n in ('edit_file', 'write_file'): out['n_edit'] += 1
+        out['n_cmd'] = len(cmds); out['n_pytest'] = sum('pytest' in c for c in cmds)
+        out['max_repeat'] = max(_c.Counter(cmds).values()) if cmds else 0
+    except Exception as e:
+        out['err_trace'] = str(e)[:60]
+    return out
+
+# Read evaluation settings from the submission's eval_config.yaml
+eval_config_file = AGENT_DIR / 'eval_config.yaml'
+raw_eval_cfg = yaml.safe_load(eval_config_file.read_text(encoding='utf-8'))
+eval_section = raw_eval_cfg.get('evaluation', raw_eval_cfg)
+
+timeout_seconds = int(eval_section.get('timeout_seconds', 300))
+max_tool_calls = int(eval_section.get('max_tool_calls', 100))
+max_time_minutes = float(eval_section.get('max_time_minutes', 60.0))
+turns_raw = eval_section.get('max_turns', eval_section.get('max_llm_calls'))
+max_turns = int(turns_raw) if turns_raw is not None else None
+
+# Select a small subset of tasks from the published dataset
+SAMPLE_TASKS = tasks[::STRIDE][:N_TASKS]
+limits, gen_constraints = build_submission_limits()
+
+# Configure Evaluator to run Phase 1 (agent patch generation) and Phase 2 (verification)
+# using the subprocess sandbox backend and the submission's eval_config parameters
+eval_config = EvalConfig(
+    tasks_path=TASKS_PATH,
+    snapshots_dir=DATA_DIR / 'snapshots',
+    results_dir=WORKING_DIR / 'results',
+    submission_dir=AGENT_DIR,
+    models=models,
+    sandbox='subprocess',
+    timeout_seconds=timeout_seconds,
+    max_time_minutes=max_time_minutes,
+    max_tool_calls=max_tool_calls,
+    max_turns=max_turns,
+    limits=limits,
+    generation_constraints=gen_constraints,
+    adapter_manifest=adapters,
+    context_cache_config=ContextCacheConfig(min_tokens=2048, ttl_seconds=1800, cache_intervals=10),
+    events_compaction_config=EventsCompactionConfig(
+        compaction_interval=15,
+        overlap_size=2,
+        token_threshold=14336,
+        event_retention_size=5,
+    ),
+    graph_dir=GRAPH_DIR,
+    embeddings_dir=EMBEDDINGS_DIR,
+    wheels_dir=DATA_DIR / 'wheels',
+    verbose=False,
+)
+
+evaluator = Evaluator(eval_config)
+predictions = []
+rows = []
+
+for idx, task in enumerate(SAMPLE_TASKS, start=1):
+    print(f'[{idx}/{len(SAMPLE_TASKS)}] Evaluating {task.instance_id} ({task.repo})...')
+    result = run_sync(
+        evaluator.evaluate_task,
+        task=task,
+        task_index=idx,
+        total_tasks=len(SAMPLE_TASKS),
+    )
+    predictions.append({'id': task.instance_id, 'prediction': result.agent_patch or ''})
+    rows.append(dict(id=task.instance_id, repo=task.repo, resolved=bool(result.resolved),
+                     patch_chars=len(result.agent_patch or ''), tool_calls=result.tool_calls,
+                     dur=round(result.duration_seconds, 1), end=str(getattr(result, 'end_status', None)),
+                     err=str(getattr(result, 'error', None))[:80], exit=result.test_exit_code,
+                     **trace_stats(task.instance_id)))
+    print(
+        f'  -> resolved={result.resolved}, '
+        f'exit_code={result.test_exit_code}, '
+        f'patch_chars={len(result.agent_patch or "")}, '
+        f'tool_calls={result.tool_calls}, '
+        f'duration={result.duration_seconds:.1f}s'
+    )
+
+# CELL 14 markdown
+## 7. Summary
+
+# CELL 15 code
+summary = pd.DataFrame(rows)
+print(summary.drop(columns=["repo"]).to_string())
+print()
+print(f"resolved {int(summary.resolved.sum())}/{len(summary)} | had a patch {int((summary.patch_chars>0).sum())}/{len(summary)} "
+      f"| tasks with a loop (same cmd >=5x): {int((summary.max_repeat>=5).sum())} | mean tool calls {summary.tool_calls.mean():.1f}")
+summary.to_csv("eval_summary.csv", index=False)
+
+# CELL 16 markdown
+## 8. Notes and caveats
+- **Noise:** with N = 10, one task is 10 percentage points. Identical bundles gave 3/10 and 1/10 in my reruns. Use the loop/behaviour metrics to compare configs, and only trust resolved-rate differences over many tasks.
+- **Closed registries:** the competition's validator uses closed registries for tools, models, skills and callbacks, so a bundle cannot ship custom Python callbacks to break loops. The prompt already tells the model not to repeat commands, and it still does once a loop starts.
+- **Not a leaderboard estimate:** the local `tasks.jsonl` is not the hidden test set. My local 3/10 and the public leaderboard's 0.12-0.13 for the same style of bundle are not comparable numbers.
+- **Cost:** the official sandbox is `subprocess` mode here. Expect roughly 10 minutes of model load plus 1-10 minutes per task.

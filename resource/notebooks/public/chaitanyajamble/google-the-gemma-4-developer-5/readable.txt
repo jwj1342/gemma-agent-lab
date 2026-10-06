@@ -1,0 +1,767 @@
+# CELL 0 code
+# This Python 3 environment comes with many helpful analytics libraries installed
+# It is defined by the kaggle/python Docker image: https://github.com/kaggle/docker-python
+# For example, here's several helpful packages to load
+
+import numpy as np # linear algebra
+import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
+
+# Input data files are available in the read-only "../input/" directory
+# For example, running this (by clicking run or pressing Shift+Enter) will list all files under the input directory
+
+import os
+for dirname, _, filenames in os.walk('/kaggle/input'):
+    for filename in filenames:
+        print(os.path.join(dirname, filename))
+
+# You can write up to 20GB to the current directory (/kaggle/working/) that gets preserved as output when you create a version using "Save & Run All" 
+# You can also write temporary files to /kaggle/temp/, but they won't be saved outside of the current session
+
+# Use the kagglehub client library to attach Kaggle resources like competitions, datasets, and models to your session
+# Learn more about kagglehub: https://github.com/Kaggle/kagglehub/blob/main/README.md
+
+import kagglehub
+# kagglehub.dataset_download('<owner>/<dataset-slug>')
+
+# CELL 1 code
+from __future__ import annotations
+ 
+import argparse
+import json
+import math
+import os
+import shutil
+import subprocess
+import sys
+import zipfile
+from pathlib import Path
+ 
+# --------------------------------------------------------------------------
+# Constants mirrored from HARNESS_README.md
+# --------------------------------------------------------------------------
+ 
+COMPETITION_MODEL = "gemma-4-31b-it-qat-w4a16-ct"
+MAX_SUBMISSION_BYTES = 3 * 1024 ** 3  
+MAX_CONTEXT_TOKENS = 32_768 
+ 
+ALLOWED_EXTENSIONS = {
+    ".yaml", ".yml",     
+    ".md", ".txt",       
+    ".py",               
+    ".json",            
+    ".safetensors",      
+}
+ 
+
+DEFAULT_TARGET_HOURS = 11.0
+ 
+
+FALLBACK_NUM_TASKS = 300
+ 
+
+MIN_TASK_MINUTES = 5.0
+MAX_TASK_MINUTES = 45.0
+ 
+
+SAFETY_FRACTION = 0.85
+ 
+ 
+# --------------------------------------------------------------------------
+# File contents
+# --------------------------------------------------------------------------
+ 
+AGENT_YAML = """\
+# Root agent config for the Gemma 4 Developer Agent Competition baseline.
+#
+# Zero-shot (no LoRA adapter): one root LlmAgent on the required competition
+# base model, wired to the 5 direct-use tools plus the read-only
+# `code_analyzer` sub-agent (exposed as an AgentTool, per the harness's own
+# best-practice recommendation for isolating exploration context) and the
+# `repo_navigation` skill. The 3 code-graph tools are intentionally left off
+# the direct tool list -- they're only available for repos with pre-built
+# graphs/embeddings, and a baseline shouldn't depend on that being present.
+agent_class: LlmAgent
+name: swegemma_baseline_agent
+model: {model}
+description: >
+  Baseline autonomous software-engineering agent: explores a repository,
+  localizes the reported bug, applies a minimal source fix, verifies it with
+  the in-sandbox test tools, and submits a patch.
+instruction: !include prompts/system.md
+skills:
+  - skills/repo_navigation
+tools:
+  - run_command
+  - read_file
+  - edit_file
+  - write_file
+  - get_status
+  - submit_patch
+  - agent_tool:
+      config_path: sub_agents/code_analyzer.yaml
+      skip_summarization: true
+include_contents: default
+generate_content_config: !include configs/sampling.yaml
+""".format(model=COMPETITION_MODEL)
+ 
+SAMPLING_YAML = """\
+# Generation parameters for the root coder agent.
+# Kept well under the 32,768-token max_model_len shared with prompt + tool
+# history, and under the 32,768 hard ceiling on max_output_tokens /
+# thinking_budget individually.
+temperature: 0.2
+top_p: 0.95
+top_k: 64
+max_output_tokens: 4096
+seed: 0
+thinking_config:
+  include_thoughts: true
+  thinking_budget: 4096
+"""
+ 
+SYSTEM_MD = """\
+# Role
+ 
+You are **swegemma-baseline**, an autonomous software engineering agent built on
+Gemma 4. You operate entirely inside `/workspace`, a checked-out snapshot of a
+real repository at a specific commit. A test suite somewhere in this
+repository is currently failing (or a feature is missing) because of the bug
+described in the problem statement you will receive next. Your job is to
+produce the smallest correct source-code patch that fixes it.
+ 
+You have no internet access. Every dependency you need is already installed.
+Do not attempt `pip install`, `curl`, `wget`, or any other network call.
+ 
+# Strategy (follow in order)
+ 
+1. **Orient yourself.** Skim the workspace layout you were given, then use
+   `run_command` (e.g. `grep -rn`, `find`, `git log -p -1`) and `read_file` to
+   locate the code referenced by the problem statement. Prefer targeted
+   `grep`/`find` searches over reading whole directories blindly. For broad or
+   open-ended exploration ("where does X get called from", "how is this
+   subsystem structured"), delegate to the `code_analyzer` tool instead of
+   reading many files yourself -- it is a read-only sub-agent that does the
+   digging and hands back a short synthesized answer, keeping your own
+   context window free for the actual fix.
+2. **Reproduce before you fix.** Write a small, throwaway repro script under
+   `/tmp` (NOT under `/workspace` -- anything left in `/workspace` becomes part
+   of your patch) or run the relevant failing test with `run_command` to
+   confirm you understand the actual failure mode before editing anything.
+3. **Localize precisely.** Use `read_file` with line ranges to inspect the
+   exact function/class at fault. Do not guess at line numbers -- read the file
+   first, then edit it.
+4. **Apply a minimal, targeted fix.** Use `edit_file` with a short, unique
+   `old_string`/`new_string` pair for each change. Prefer several small,
+   surgical `edit_file` calls over one giant `write_file` rewrite of a file --
+   this keeps the diff reviewable and avoids truncated tool calls. Only use
+   `write_file` for genuinely new files.
+5. **Verify.** Re-run the failing test (and any obviously related tests) with
+   `run_command` (`python3 -m pytest <path> -q`). If it still fails, re-read
+   the traceback, adjust, and re-run. Do not submit a fix you have not
+   verified actually changes the test outcome.
+6. **Clean up.** Remove or move to `/tmp` any scratch/reproduction files you
+   created inside `/workspace`, and double-check you have not modified
+   `pytest.ini` or `conftest.py` at the workspace root -- those are harness
+   files and any change to them will be included in your diff and can hurt
+   your score.
+7. **Submit exactly once, last.** When you are confident the fix is correct
+   and verified, call `submit_patch()` as your final action. It is free (does
+   not consume your tool-call budget) and ends the episode immediately, so
+   only call it when you are truly done. If you are running low on time or
+   tool calls, submit your best verified fix rather than losing everything to
+   a timeout -- a partial, verified patch beats no patch.
+ 
+# Operating rules
+ 
+- Stay inside `/workspace`. Never use absolute paths outside it except for
+  scratch files, which belong in `/tmp`.
+- Keep your reasoning short and directly actionable -- a few sentences at
+  most -- then immediately emit the next tool call. Long, repeated reasoning
+  wastes your limited thinking/output budget and risks the response being cut
+  off mid tool-call.
+- If a tool call returns `"status": "error"`, read `error_message` and
+  `details` carefully before retrying -- don't repeat the same failing call.
+- Call `get_status()` if you are unsure how much budget you have left; it is
+  free and does not count against you.
+- Never fabricate test output or claim verification you did not actually run.
+- Do not modify test files (`test_*.py`, `*_test.py`, files under
+  `tests/`/`test/`/`testing/`) -- the harness resets them before grading, so
+  changes there are wasted effort at best and a wasted patch at worst. Fix the
+  library code, not the tests.
+- You also have a `repo_navigation` skill available with general heuristics
+  for finding your way around unfamiliar codebases quickly -- consult it
+  early if the repository structure isn't obvious from the workspace layout.
+"""
+ 
+CODE_ANALYZER_YAML = """\
+# Read-only code-exploration sub-agent, wired into the root agent as an
+# AgentTool (see agent.yaml -> tools -> agent_tool). Per the harness's own
+# best-practice guidance, delegating broad file exploration to an isolated
+# sub-agent keeps large intermediate read_file/run_command outputs out of the
+# root coder agent's main context history, instead of eating into the same
+# 32,768-token budget the root agent needs for editing and verification.
+#
+# Shares the single competition base model, per the harness's single-model
+# rule (all agents in a submission must declare exactly one base model).
+agent_class: LlmAgent
+name: code_analyzer
+model: {model}
+description: >
+  Read-only repository search assistant. Given a natural-language question
+  about the codebase (e.g. "where is UserSerializer defined and who imports
+  it", "what is the class hierarchy above HTTPConnection", "which tests cover
+  the retry logic in client.py"), searches the workspace with read-only tools
+  and returns a concise, synthesized answer. Never edits files. Call this
+  instead of doing broad exploration yourself when you need a wide search
+  answered without filling up your own context window.
+instruction: !include prompts/analyzer.md
+tools:
+  - read_file
+  - run_command
+  - get_status
+include_contents: none
+generate_content_config: !include configs/sampling.yaml
+""".format(model=COMPETITION_MODEL)
+ 
+ANALYZER_MD = """\
+# Role
+ 
+You are a **read-only code search assistant**. The root coding agent has
+delegated a specific exploration question to you because it wants an answer
+without burning its own context budget reading many files.
+ 
+# Rules
+ 
+- You may use `read_file` and read-only `run_command` calls (e.g. `grep -rn`,
+  `find`, `git log`, `git blame`, `git grep`, `sed -n`, `cat`, `wc -l`) to
+  search `/workspace`.
+- **Never** modify, create, or delete any file -- you have no `edit_file` /
+  `write_file` / `submit_patch` tools for a reason. If you notice a command
+  might mutate the workspace, do not run it.
+- Do not run the test suite or attempt a fix; that is the root agent's job.
+- Answer the specific question you were asked. Do not dump entire file
+  contents back verbatim unless the question genuinely requires the exact
+  text (e.g. "show me the exact signature of this function") -- summarize
+  what you found: file paths, line numbers, and a short synthesis, so the
+  root agent can decide what to read in full itself if needed.
+- Keep your final answer compact. A few bullet points with `path:line`
+  references is usually more useful than a long narrative.
+- If you can't find what was asked after a reasonable number of searches,
+  say so plainly (with what you did check) rather than guessing.
+"""
+ 
+SKILL_MD = """\
+# Repo Navigation
+ 
+A short skill with general heuristics for orienting quickly in an unfamiliar
+repository under `/workspace`, before diving into `read_file` calls.
+ 
+## When to use this
+ 
+Consult this at the very start of a task, especially when the workspace
+layout alone doesn't make it obvious where the relevant code lives, or the
+repository is large/unfamiliar.
+ 
+## Heuristics
+ 
+1. **Start from the error, not the repo root.** If the problem statement
+   includes a traceback, stack trace, error message, or specific function/
+   class name, `grep -rn` for that exact string first -- it is almost always
+   faster than browsing directory structure.
+2. **Use the test suite as a map.** Searching `tests/` (or `test/`) for the
+   symbol/feature under discussion usually turns up a test file whose name
+   and imports point straight at the implementation module.
+3. **Follow imports, not folder names.** Package/module names on disk often
+   diverge from their logical grouping. Once you find one relevant file,
+   `grep -rn "import <module>"` or `grep -rn "from <module> import"` across
+   the repo to find every other place that touches it.
+4. **Check for an existing similar fix.** `git log --oneline -- <path>` or
+   `git log -p -S"<symbol>"` can surface a prior, analogous change in the same
+   area, which is often a strong template for the current one.
+5. **Prefer `scripts/find_definition.py` for symbol lookups** (see
+   `scripts/find_definition.py` in this skill) over ad-hoc `grep` when you
+   want *definitions* specifically (`class X`, `def X`) rather than every
+   occurrence of the name.
+6. **Don't over-read.** `read_file` is capped at 150 lines / 10,000 chars per
+   call -- request a line range around what `grep` found rather than reading
+   a large file from the top.
+ 
+See `resources/navigation_tips.md` for more detail and worked examples.
+"""
+ 
+SKILL_RESOURCE_MD = """\
+# Navigation Tips (detail)
+ 
+## Symbol-first search patterns
+ 
+| You're looking for...        | Try this first                                   |
+| ----------------------------- | ------------------------------------------------- |
+| A function/class definition   | `grep -rn "def <name>("` / `grep -rn "class <name>"` |
+| All call sites of a function  | `grep -rn "<name>("` (then filter out the def itself) |
+| Where an error string comes from | `grep -rn "<exact error text>"`                 |
+| A config value / constant     | `grep -rn "<CONSTANT_NAME>"` across non-test files |
+| Related tests                 | `grep -rln "<name>" tests/ test/ 2>/dev/null`      |
+ 
+## Reading large files efficiently
+ 
+Once `grep -n` gives you a line number, read a small window around it instead
+of the whole file:
+ 
+    read_file(filepath="pkg/module.py", start_line=120, end_line=170)
+ 
+## Distinguishing "the bug" from "a symptom"
+ 
+When a traceback points at a deep call site (e.g. inside a library helper),
+the actual bug is often one or two frames up, in the caller that passed bad
+input. Read the full traceback bottom-to-top before deciding where to edit.
+ 
+## When the repo is genuinely large
+ 
+Delegate the open-ended part of the search to the `code_analyzer` tool with a
+specific question, rather than running many broad `grep`/`find` commands
+yourself -- it keeps its own separate context and only reports back a short
+synthesis.
+"""
+ 
+SKILL_SCRIPT_PY = '''\
+#!/usr/bin/env python3
+"""
+find_definition.py -- locate the *definition* (not every reference) of a
+Python symbol somewhere under the current directory.
+ 
+Intended to be run inside the sandbox via `run_command`, e.g.:
+ 
+    python3 skills/repo_navigation/scripts/find_definition.py UserSerializer
+ 
+It intentionally only depends on the standard library (no network, no third
+-party packages) since the sandbox is offline and dependencies are not
+guaranteed to include anything beyond what the target repo itself needs.
+"""
+import argparse
+import re
+import sys
+from pathlib import Path
+ 
+DEF_PATTERNS = (
+    re.compile(r"^\\s*class\\s+{name}\\b"),
+    re.compile(r"^\\s*def\\s+{name}\\b"),
+    re.compile(r"^\\s*async\\s+def\\s+{name}\\b"),
+)
+ 
+SKIP_DIRS = {".git", "__pycache__", ".pytest_cache", "node_modules", "build", "dist"}
+ 
+ 
+def iter_python_files(root: Path):
+    for p in root.rglob("*.py"):
+        if any(part in SKIP_DIRS for part in p.parts):
+            continue
+        yield p
+ 
+ 
+def find_definitions(root: Path, name: str):
+    patterns = [re.compile(pat.pattern.format(name=re.escape(name))) for pat in DEF_PATTERNS]
+    hits = []
+    for path in iter_python_files(root):
+        try:
+            text = path.read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            continue
+        for lineno, line in enumerate(text.splitlines(), start=1):
+            if any(pat.match(line) for pat in patterns):
+                hits.append((str(path), lineno, line.strip()))
+    return hits
+ 
+ 
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("name", help="Symbol name to search for (class or function).")
+    parser.add_argument("--root", default=".", help="Directory to search (default: cwd).")
+    args = parser.parse_args()
+ 
+    hits = find_definitions(Path(args.root), args.name)
+    if not hits:
+        print(f"No definition of '{args.name}' found under {args.root}.")
+        return 1
+    for path, lineno, line in hits:
+        print(f"{path}:{lineno}: {line}")
+    return 0
+ 
+ 
+if __name__ == "__main__":
+    sys.exit(main())
+'''
+ 
+ADAPTERS_README_MD = """\
+# adapters/ (empty scaffold)
+ 
+This baseline submission is **zero-shot**: no LoRA adapters are included.
+ 
+The competition schema supports optional PEFT LoRA adapters here, one
+directory per adapter, each containing `adapter_config.json` and
+`adapter_model.safetensors`, referenced from any agent via `adapter: <name>`
+in `agent.yaml` / `sub_agents/*.yaml` (see HARNESS_README.md section 3.4).
+ 
+This directory is intentionally left without weight files because generating
+placeholder `.safetensors` content without the real
+`gemma-4-31b-it-qat-w4a16-ct` architecture (hidden size, layer count, target
+module names) would silently produce a submission that fails to load at
+serve time -- every task would error out identically, which is worse than
+simply not declaring an adapter at all.
+ 
+## To add a real trained adapter later
+ 
+1. Train a PEFT LoRA against `gemma-4-31b-it-qat-w4a16-ct` (or the matching
+   unquantized checkpoint) targeting the linear projections
+   (`q_proj`, `k_proj`, `v_proj`, `o_proj`, `gate_proj`, `up_proj`,
+   `down_proj`). Mind the `< 3 GiB` total submission budget when choosing a
+   rank -- see the sizing table in HARNESS_README.md section 3.4
+   (`r=16` -> ~110-220 MB, `r=32` -> ~220-450 MB, `r=64` -> ~450-900 MB,
+   `r=128` -> ~0.9-1.8 GB per adapter).
+2. Use `add_adapter()` in `build_baseline_submission.py` (or the
+   `--add-adapter NAME:PATH` CLI flag) to copy your trained adapter directory
+   (must contain exactly `adapter_config.json` and
+   `adapter_model.safetensors`) into `adapters/<NAME>/`.
+3. Reference it from the agent that should use it:
+ 
+       # e.g. in agent.yaml
+       adapter: NAME
+"""
+ 
+ 
+# --------------------------------------------------------------------------
+# Task-count discovery & budget sizing
+# --------------------------------------------------------------------------
+ 
+def find_task_manifest(dataset_dir: Path) -> Path | None:
+    """Best-effort search for a task manifest (jsonl) under the dataset dir."""
+    if not dataset_dir.is_dir():
+        return None
+    candidates = []
+    for name in ("tasks.jsonl", "test_tasks.jsonl", "train_tasks.jsonl"):
+        p = dataset_dir / name
+        if p.is_file():
+            candidates.append(p)
+    if candidates:
+        return candidates[0]
+    # Fall back to any *.jsonl with "task" in the name, anywhere under the
+    # dataset dir (shallow-ish search to stay fast).
+    for p in dataset_dir.rglob("*.jsonl"):
+        if "task" in p.name.lower():
+            return p
+    return None
+ 
+ 
+def count_tasks(manifest_path: Path) -> int:
+    n = 0
+    with manifest_path.open("r", encoding="utf-8", errors="ignore") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            n += 1
+    return n
+ 
+ 
+def compute_budget(num_tasks: int, target_hours: float) -> dict:
+    """
+    Size per-task budgets so that num_tasks * per_task_minutes stays inside
+    target_hours (with a safety margin), clamped to a sane per-task range.
+    """
+    total_minutes_available = target_hours * 60.0 * SAFETY_FRACTION
+    raw_per_task_minutes = total_minutes_available / max(num_tasks, 1)
+    per_task_minutes = min(MAX_TASK_MINUTES, max(MIN_TASK_MINUTES, raw_per_task_minutes))
+ 
+    
+    max_tool_calls = int(min(80, max(10, round(per_task_minutes * 2))))
+ 
+  
+    max_turns = int(min(150, max(20, max_tool_calls * 2)))
+ 
+    return {
+        "timeout_seconds": 180,          # single-command timeout
+        "max_tool_calls": max_tool_calls,
+        "max_time_minutes": round(per_task_minutes, 1),
+        "max_turns": max_turns,
+    }
+ 
+ 
+def eval_config_yaml(budget: dict, num_tasks: int, target_hours: float) -> str:
+    projected_hours = (budget["max_time_minutes"] * num_tasks) / 60.0
+    return (
+        "# Per-task evaluation budget, auto-sized by build_baseline_submission.py\n"
+        f"# so that {num_tasks} task(s) * {budget['max_time_minutes']} min/task ~= "
+        f"{projected_hours:.2f}h of agent time,\n"
+        f"# comfortably inside the {target_hours:.1f}h target "
+        f"(competition hard limit is 12h, inclusive of sandbox setup,\n"
+        "# excluding Phase 2 patch verification).\n"
+        "evaluation:\n"
+        f"  timeout_seconds: {budget['timeout_seconds']}\n"
+        f"  max_tool_calls: {budget['max_tool_calls']}\n"
+        f"  max_time_minutes: {budget['max_time_minutes']}\n"
+        f"  max_turns: {budget['max_turns']}\n"
+    )
+ 
+ 
+# --------------------------------------------------------------------------
+# Directory build + structural validation
+# --------------------------------------------------------------------------
+ 
+def write_submission_dir(sub_dir: Path, eval_yaml: str) -> None:
+    if sub_dir.exists():
+        shutil.rmtree(sub_dir)
+    (sub_dir / "prompts").mkdir(parents=True)
+    (sub_dir / "configs").mkdir(parents=True)
+    (sub_dir / "sub_agents").mkdir(parents=True)
+    (sub_dir / "skills" / "repo_navigation" / "scripts").mkdir(parents=True)
+    (sub_dir / "skills" / "repo_navigation" / "resources").mkdir(parents=True)
+    (sub_dir / "adapters").mkdir(parents=True)
+ 
+    (sub_dir / "agent.yaml").write_text(AGENT_YAML, encoding="utf-8")
+    (sub_dir / "eval_config.yaml").write_text(eval_yaml, encoding="utf-8")
+    (sub_dir / "configs" / "sampling.yaml").write_text(SAMPLING_YAML, encoding="utf-8")
+    (sub_dir / "prompts" / "system.md").write_text(SYSTEM_MD, encoding="utf-8")
+    (sub_dir / "prompts" / "analyzer.md").write_text(ANALYZER_MD, encoding="utf-8")
+    (sub_dir / "sub_agents" / "code_analyzer.yaml").write_text(CODE_ANALYZER_YAML, encoding="utf-8")
+    (sub_dir / "skills" / "repo_navigation" / "SKILL.md").write_text(SKILL_MD, encoding="utf-8")
+    (sub_dir / "skills" / "repo_navigation" / "resources" / "navigation_tips.md").write_text(
+        SKILL_RESOURCE_MD, encoding="utf-8"
+    )
+    (sub_dir / "skills" / "repo_navigation" / "scripts" / "find_definition.py").write_text(
+        SKILL_SCRIPT_PY, encoding="utf-8"
+    )
+    (sub_dir / "adapters" / "README.md").write_text(ADAPTERS_README_MD, encoding="utf-8")
+ 
+ 
+def add_adapter(sub_dir: Path, name: str, source_dir: Path) -> None:
+    """
+    Copy a real, already-trained PEFT LoRA adapter directory into
+    submission/adapters/<name>/, validating it has exactly the two files the
+    harness expects (adapter_config.json, adapter_model.safetensors).
+ 
+    This is NOT called by default -- only via --add-adapter NAME:PATH, since
+    a baseline submission ships with no adapters (see adapters/README.md for
+    why fabricated weights aren't safe to include here).
+    """
+    required = {"adapter_config.json", "adapter_model.safetensors"}
+    found = {p.name for p in source_dir.glob("*") if p.is_file()}
+    missing = required - found
+    if missing:
+        raise RuntimeError(
+            f"--add-adapter {name}: {source_dir} is missing required file(s): {sorted(missing)}"
+        )
+    extra = found - required
+    if extra:
+        print(f"[add-adapter] WARNING: {source_dir} also contains {sorted(extra)}; "
+              f"only .safetensors/.json files are allowed extensions in the submission.")
+ 
+    dest = sub_dir / "adapters" / name
+    if dest.exists():
+        shutil.rmtree(dest)
+    shutil.copytree(source_dir, dest)
+    print(f"[add-adapter] copied {source_dir} -> {dest}")
+    print(f"[add-adapter] remember to add 'adapter: {name}' to the agent(s) that should use it.")
+ 
+ 
+def validate_submission_dir(sub_dir: Path) -> None:
+    root_configs = [
+        p for p in sub_dir.glob("*")
+        if p.name in ("agent.yaml", "agent.yml", "root_agent.yaml", "root_agent.yml")
+    ]
+    if len(root_configs) == 0:
+        raise RuntimeError("MissingRootConfigError: no agent.yaml at submission root")
+    if len(root_configs) > 1:
+        raise RuntimeError(f"MultipleRootConfigsError: found {root_configs}")
+ 
+    total_bytes = 0
+    file_count = 0
+    for p in sub_dir.rglob("*"):
+        if p.is_dir():
+            continue
+        file_count += 1
+        total_bytes += p.stat().st_size
+        if p.suffix.lower() not in ALLOWED_EXTENSIONS:
+            raise RuntimeError(f"Disallowed file extension in submission: {p}")
+        if p.is_symlink():
+            raise RuntimeError(f"Symlinks are not allowed in submission: {p}")
+        if ".." in p.parts:
+            raise RuntimeError(f"Path traversal component in submission: {p}")
+ 
+    if total_bytes >= MAX_SUBMISSION_BYTES:
+        raise RuntimeError(
+            f"Submission too large: {total_bytes} bytes >= {MAX_SUBMISSION_BYTES} bytes (3 GiB)"
+        )
+ 
+    print(f"[validate] {file_count} files, {total_bytes / (1024**2):.2f} MiB total -- OK")
+ 
+ 
+def zip_submission(sub_dir: Path, zip_path: Path) -> None:
+    if zip_path.exists():
+        zip_path.unlink()
+    with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+        for p in sorted(sub_dir.rglob("*")):
+            if p.is_file():
+                zf.write(p, arcname=p.relative_to(sub_dir))
+    print(f"[zip] wrote {zip_path} ({zip_path.stat().st_size / (1024**2):.2f} MiB)")
+ 
+ 
+# --------------------------------------------------------------------------
+# local smoke test via the `swegemma` CLI
+# --------------------------------------------------------------------------
+ 
+def try_local_smoke_eval(dataset_dir: Path, sub_dir: Path, results_dir: Path) -> None:
+    swegemma_bin = shutil.which("swegemma")
+    if swegemma_bin is None:
+        print("[smoke-eval] 'swegemma' CLI not found on PATH -- skipping local smoke test "
+              "(this is expected outside the Kaggle scoring environment).")
+        return
+ 
+    tasks_path = find_task_manifest(dataset_dir)
+    snapshots_dir = dataset_dir / "snapshots"
+    if tasks_path is None or not snapshots_dir.is_dir():
+        print("[smoke-eval] tasks.jsonl / snapshots/ not found under dataset dir -- skipping.")
+        return
+ 
+    cmd = [
+        swegemma_bin, "eval",
+        "--tasks", str(tasks_path),
+        "--snapshots-dir", str(snapshots_dir),
+        "--submission-dir", str(sub_dir),
+        "--results-dir", str(results_dir),
+        "--sandbox", "docker",
+        "--max-tool-calls", "10",
+        "--max-time-minutes", "5",
+        "--concurrency", "1",
+        "--display", "auto",
+    ]
+    print(f"[smoke-eval] running: {' '.join(cmd)}")
+    try:
+        subprocess.run(cmd, check=False, timeout=15 * 60)
+    except Exception as exc:  # never let this block the actual submission build
+        print(f"[smoke-eval] skipped/failed non-fatally: {exc}")
+ 
+ 
+# --------------------------------------------------------------------------
+# Main
+# --------------------------------------------------------------------------
+ 
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--dataset-dir",
+        default="/kaggle/input/competitions/gemma-4-developer-agent",
+        help="Path to the competition dataset (used only to auto-size the "
+             "per-task time budget from the task count; never required).",
+    )
+    parser.add_argument(
+        "--output-dir",
+        default="/kaggle/working",
+        help="Where to place the submission/ directory and submission.zip.",
+    )
+    parser.add_argument(
+        "--target-hours",
+        type=float,
+        default=DEFAULT_TARGET_HOURS,
+        help="Wall-clock target for the *whole* run across all tasks "
+             "(competition hard limit is 12h; default leaves a 1h margin).",
+    )
+    parser.add_argument(
+        "--num-tasks",
+        type=int,
+        default=None,
+        help="Override the task count directly instead of reading it from "
+             "the dataset (useful for testing this script standalone).",
+    )
+    parser.add_argument(
+        "--skip-smoke-eval",
+        action="store_true",
+        help="Skip the optional local 'swegemma eval' smoke test.",
+    )
+    parser.add_argument(
+        "--add-adapter",
+        action="append",
+        default=[],
+        metavar="NAME:PATH",
+        help="Copy a real trained PEFT LoRA adapter directory (containing "
+             "adapter_config.json + adapter_model.safetensors) into "
+             "adapters/NAME/ after the baseline directory is built. Repeatable. "
+             "Does nothing by default -- the baseline ships with no adapters.",
+    )
+    # Use parse_known_args() rather than parse_args(): when this script is
+    # run inside a notebook (Colab / Kaggle / Jupyter) via `%run script.py`
+    # or `!python script.py`, the kernel launcher appends its own arguments
+    # to sys.argv (typically `-f /root/.../kernel-<id>.json`). parse_args()
+    # would reject that as "unrecognized arguments"; parse_known_args()
+    # simply ignores anything it doesn't recognize, so the same script works
+    # unmodified from a plain terminal, Colab, or a Kaggle notebook cell.
+    args, unknown = parser.parse_known_args()
+    if unknown:
+        print(f"[cli] ignoring unrecognized argument(s) (likely injected by the "
+              f"notebook kernel, not you): {unknown}")
+ 
+    dataset_dir = Path(args.dataset_dir)
+    output_dir = Path(args.output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    sub_dir = output_dir / "submission"
+    zip_path = output_dir / "submission.zip"
+ 
+    # 1. Figure out how many tasks we're budgeting for.
+    if args.num_tasks is not None:
+        num_tasks = args.num_tasks
+        print(f"[budget] using --num-tasks override: {num_tasks}")
+    else:
+        manifest = find_task_manifest(dataset_dir)
+        if manifest is not None:
+            num_tasks = count_tasks(manifest)
+            print(f"[budget] found task manifest at {manifest} -- {num_tasks} tasks")
+        else:
+            num_tasks = FALLBACK_NUM_TASKS
+            print(f"[budget] no task manifest found under {dataset_dir} -- "
+                  f"falling back to an assumed {num_tasks} tasks. Pass "
+                  f"--num-tasks to override once you know the real count.")
+ 
+    # 2. Size the per-task budget so the whole run fits the target.
+    budget = compute_budget(num_tasks, args.target_hours)
+    projected_hours = (budget["max_time_minutes"] * num_tasks) / 60.0
+    print(f"[budget] per-task max_time_minutes={budget['max_time_minutes']} "
+          f"max_tool_calls={budget['max_tool_calls']} max_turns={budget['max_turns']}")
+    print(f"[budget] projected total agent time: {projected_hours:.2f}h "
+          f"(target {args.target_hours:.1f}h, hard cap 12h)")
+    if projected_hours > args.target_hours:
+        print("[budget] WARNING: projected total exceeds the target even after "
+              "clamping to MIN_TASK_MINUTES -- consider running with "
+              "--concurrency > 1 during local eval, or accept some tasks may "
+              "not be attempted before the 12h cutoff.")
+ 
+    # 3. Write the submission directory.
+    eval_yaml = eval_config_yaml(budget, num_tasks, args.target_hours)
+    write_submission_dir(sub_dir, eval_yaml)
+    print(f"[build] wrote submission directory at {sub_dir}")
+ 
+    # 3b. Wire in any real trained adapters requested via --add-adapter.
+    for spec in args.add_adapter:
+        if ":" not in spec:
+            raise SystemExit(f"--add-adapter expects NAME:PATH, got: {spec!r}")
+        name, path_str = spec.split(":", 1)
+        add_adapter(sub_dir, name, Path(path_str))
+ 
+    # 4. Validate structural rules before zipping.
+    validate_submission_dir(sub_dir)
+ 
+    # 5. Zip it.
+    zip_submission(sub_dir, zip_path)
+ 
+  
+    if not args.skip_smoke_eval:
+        try_local_smoke_eval(dataset_dir, sub_dir, output_dir / "smoke_eval_results")
+ 
+    print("\nDone. Submit this file to the competition:")
+    print(f"  {zip_path}")
+ 
+ 
+if __name__ == "__main__":
+    main()
+ 

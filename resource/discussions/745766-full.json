@@ -1,0 +1,58 @@
+{
+  "forumTopic": {
+    "authorId": 37088303,
+    "authorThumbnailName": "default-thumb.png",
+    "authorUserDisplayName": "Vishnu N S",
+    "authorUserName": "eswincha",
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3532635,
+      "postDate": "2026-10-04T08:58:32.507Z",
+      "rawMarkdown": "My Kaggle username is eswincha. On October 4, 2026, six submissions to gemma-4-developer-agent failed immediately with \"Kaggle Error\". Each shows:\n\"A system error. Please try resubmitting to resolve the error and contact Kaggle Support if it persists.\"\n\nThese were notebook Versions 3-8: five submissions of my V4 agent archive and one of V7. The latest attempt was Version 8 at 14:14 IST. No score was produced. The submission dialog still shows 1 submission remaining today.\n\nI rebuilt the V4 submission.zip from scratch. ZIP integrity, root-level agent.yaml, include paths, YAML configuration and compilation with the installed competition tool registry passed. V7 also passed a structural compilation check. These checks do not establish that hidden evaluation succeeds, and I have not identified the cause.\n\nLatest failed version:\nhttps://www.kaggle.com/code/eswincha/eswincha-gemma-agent-development-validation?scriptVersionId=355115263\n\nThe notebook is private. Can you check whether these failures indicate a submission-processing issue, or point me to the next diagnostic step? I can provide the archive and audit if needed.",
+      "content": "<p>My Kaggle username is eswincha. On October 4, 2026, six submissions to gemma-4-developer-agent failed immediately with \"Kaggle Error\". Each shows:\n\"A system error. Please try resubmitting to resolve the error and contact Kaggle Support if it persists.\"</p>\n<p>These were notebook Versions 3-8: five submissions of my V4 agent archive and one of V7. The latest attempt was Version 8 at 14:14 IST. No score was produced. The submission dialog still shows 1 submission remaining today.</p>\n<p>I rebuilt the V4 submission.zip from scratch. ZIP integrity, root-level agent.yaml, include paths, YAML configuration and compilation with the installed competition tool registry passed. V7 also passed a structural compilation check. These checks do not establish that hidden evaluation succeeds, and I have not identified the cause.</p>\n<p>Latest failed version:\n<a href=\"https://www.kaggle.com/code/eswincha/eswincha-gemma-agent-development-validation?scriptVersionId=355115263\" target=\"_blank\">https://www.kaggle.com/code/eswincha/eswincha-gemma-agent-development-validation?scriptVersionId=355115263</a></p>\n<p>The notebook is private. Can you check whether these failures indicate a submission-processing issue, or point me to the next diagnostic step? I can provide the archive and audit if needed.</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Vishnu N S",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+        "url": "/eswincha",
+        "tier": "CONTRIBUTOR",
+        "id": 37088303,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "canUpvote": true
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 481,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Vishnu N S",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/eswincha",
+          "userName": "eswincha",
+          "tier": "CONTRIBUTOR",
+          "id": 37088303,
+          "profileUrl": "/eswincha",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 37088303,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3532635,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 745766,
+    "name": "Six immediate \"Kaggle Error\" submissions in Gemma 4 Developer Agent",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-10-04T08:58:32.506677900Z",
+    "url": "/competitions/gemma-4-developer-agent/discussion/745766",
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

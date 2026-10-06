@@ -1,0 +1,337 @@
+{
+  "forumTopic": {
+    "authorId": 36926417,
+    "authorThumbnailName": "default-thumb.png",
+    "authorUserDisplayName": "Lord Firlefans",
+    "authorUserName": "lordfirlefans",
+    "comments": [
+      {
+        "id": 3528212,
+        "postDate": "2026-09-25T16:42:04.003Z",
+        "rawMarkdown": "Hi @lordfirlefans,\n\nThanks for your feedback. We're working on adding support for the other Gemma 4 dense variants (e2b, e4b, and 12b) and possibly the 26b MoE and diffusion models as well. Those should hopefully be working early next week. We're also providing 4xL4 GPU (4x24GB) machines for competition participants. I hope you'll participate!",
+        "content": "<p>Hi <a href=\"/lordfirlefans\" target=\"_blank\">@lordfirlefans</a>,</p>\n<p>Thanks for your feedback. We're working on adding support for the other Gemma 4 dense variants (e2b, e4b, and 12b) and possibly the 26b MoE and diffusion models as well. Those should hopefully be working early next week. We're also providing 4xL4 GPU (4x24GB) machines for competition participants. I hope you'll participate!</p>",
+        "replies": [
+          {
+            "id": 3528449,
+            "postDate": "2026-09-26T05:00:12.550Z",
+            "rawMarkdown": "Is QLora feasible? I have a 64gb vram rig",
+            "content": "<p>Is QLora feasible? I have a 64gb vram rig</p>",
+            "parent": {},
+            "author": {
+              "displayName": "JohnParkerson",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+              "url": "/johnparkerson",
+              "tier": "CONTRIBUTOR",
+              "id": 36840669,
+              "progressionOptOut": false
+            },
+            "authorType": "COMMENT",
+            "votes": {
+              "canUpvote": true
+            },
+            "kernelVersion": 0,
+            "competitionRanking": 533,
+            "feedbackTrackingData": {},
+            "isThankYou": false,
+            "teamUpInfo": {
+              "teamLeader": {
+                "displayName": "JohnParkerson",
+                "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+                "url": "/johnparkerson",
+                "userName": "johnparkerson",
+                "tier": "CONTRIBUTOR",
+                "id": 36840669,
+                "profileUrl": "/johnparkerson",
+                "performanceTier": "CONTRIBUTOR",
+                "userId": 36840669,
+                "progressionOptOut": false
+              },
+              "intro": ""
+            }
+          }
+        ],
+        "parent": {},
+        "author": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "progressionOptOut": false
+        },
+        "authorType": "ADMIN",
+        "votes": {
+          "totalVotes": 10,
+          "canUpvote": true,
+          "totalUpvotes": 10
+        },
+        "kernelVersion": 0,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "reactions": [
+          {
+            "emoji": "LOVE",
+            "featuredUserNames": [
+              "ankitmishra0",
+              "agrover112",
+              "jazivxt",
+              "skuro0315",
+              "nathanbangwa",
+              "adaluvu"
+            ],
+            "userCount": 6
+          },
+          {
+            "emoji": "YAY",
+            "featuredUserNames": [
+              "agrover112",
+              "jazivxt",
+              "adithyagiri",
+              "skuro0315",
+              "adaluvu",
+              "alisalmanrana",
+              "laoshansong",
+              "raydestar"
+            ],
+            "userCount": 8
+          }
+        ],
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Ryan Holbrook",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+            "url": "/ryanholbrook",
+            "userName": "ryanholbrook",
+            "tier": "STAFF",
+            "id": 2003505,
+            "profileUrl": "/ryanholbrook",
+            "performanceTier": "STAFF",
+            "userId": 2003505,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3528219,
+        "postDate": "2026-09-25T16:49:42.297Z",
+        "rawMarkdown": "1. Kaggle provides free L4x4 and you can also use the TPUs.\n2. 5090 is a consumer GPU.\n3. Competing in this competition does not break your GPU.\n4. You can literally buy like 10 5090s with $65k.",
+        "content": "<ol>\n<li>Kaggle provides free L4x4 and you can also use the TPUs.</li>\n<li>5090 is a consumer GPU.</li>\n<li>Competing in this competition does not break your GPU.</li>\n<li>You can literally buy like 10 5090s with $65k.</li>\n</ol>",
+        "parent": {},
+        "author": {
+          "displayName": "mikelou1",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/mikelou1",
+          "tier": "EXPERT",
+          "id": 32181963,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "totalVotes": 1,
+          "canUpvote": true,
+          "totalUpvotes": 2
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 916,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "reactions": [
+          {
+            "emoji": "LOVE",
+            "featuredUserNames": [
+              "ashrafyaseerrashid",
+              "nathanbangwa"
+            ],
+            "userCount": 2
+          }
+        ],
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "mikelou1",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+            "url": "/mikelou1",
+            "userName": "mikelou1",
+            "tier": "EXPERT",
+            "id": 32181963,
+            "profileUrl": "/mikelou1",
+            "performanceTier": "EXPERT",
+            "userId": 32181963,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3528521,
+        "postDate": "2026-09-26T06:21:55.717Z",
+        "rawMarkdown": "The organizers are backed by Google DeepMind, and Google’s HQ is in Mountain View, California. California is, of course, the homeland of startups. And in surveys of startup/Big Tech developers, macOS often takes the majority. A Mac with 48–64 GB of unified memory can comfortably run gemma-4-31b-it-qat-w4a16-ct with an agent around it. So maybe that’s what “consumer hardware” means in the fine print. 😄",
+        "content": "<p>The organizers are backed by Google DeepMind, and Google’s HQ is in Mountain View, California. California is, of course, the homeland of startups. And in surveys of startup/Big Tech developers, macOS often takes the majority. A Mac with 48–64 GB of unified memory can comfortably run gemma-4-31b-it-qat-w4a16-ct with an agent around it. So maybe that’s what “consumer hardware” means in the fine print. 😄</p>",
+        "parent": {},
+        "author": {
+          "displayName": "Pavel Orlov",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/1275752-kg.jpg",
+          "url": "/sapr3s",
+          "tier": "EXPERT",
+          "id": 1275752,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "totalVotes": -2,
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Pavel Orlov",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/1275752-kg.jpg",
+            "url": "/sapr3s",
+            "userName": "sapr3s",
+            "tier": "EXPERT",
+            "id": 1275752,
+            "profileUrl": "/sapr3s",
+            "performanceTier": "EXPERT",
+            "userId": 1275752,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3528944,
+        "postDate": "2026-09-26T23:47:32.207Z",
+        "rawMarkdown": "1) Well, at least you have a single 16GB GPU! I'm crying over here being GPU-poor. \n\n2) The more challenging, the better. \n\n3) Small models will be supported. The goal of the competition is to have a setup that works for inference on consumer hardware, not about how to train it. ",
+        "content": "<p>1) Well, at least you have a single 16GB GPU! I'm crying over here being GPU-poor. </p>\n<p>2) The more challenging, the better. </p>\n<p>3) Small models will be supported. The goal of the competition is to have a setup that works for inference on consumer hardware, not about how to train it. </p>",
+        "parent": {},
+        "author": {
+          "displayName": "Dat LQ.",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/17180946-kg.jpeg?t=2023-10-22-08-20-33",
+          "url": "/nightfurylqd",
+          "tier": "CONTRIBUTOR",
+          "id": 17180946,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 1410,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Dat LQ.",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/17180946-kg.jpeg?t=2023-10-22-08-20-33",
+            "url": "/nightfurylqd",
+            "userName": "nightfurylqd",
+            "tier": "CONTRIBUTOR",
+            "id": 17180946,
+            "profileUrl": "/nightfurylqd",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 17180946,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3528205,
+      "postDate": "2026-09-25T16:31:29.987Z",
+      "rawMarkdown": "The $65k prize is cheaper than the GPUs you need to win it.\n\nI run a fully local AI stack at home: coding agent, document agent, the whole thing, on a single 16 GB GPU. Exactly the kind of setup this competition claims to be about. So I read the overview with real interest: agents \"offline, on consumer hardware.\" Then I read the rules, and started laughing.\n\nOnly one model is allowed: gemma-4-31b-it-qat-w4a16-ct. Not the small Gemma 4 variants that actually run at home. Only 31B.\n\nHere is what that means for someone like me:\n\nI can't run it. 16–17 GB of weights, even in 4-bit. My card can't even load the only allowed model, let alone run an agent with real context on it. And 16 GB is already more than most home GPUs have.\nI can't train it. LoRA or RL on 31B means 48–80 GB datacenter GPUs or multi-GPU clusters. Nobody I know has those at home. You rent them.\nI can't measure it. One submission per day, 60 public tasks, one task is worth 1.7 points. Without my own GPU farm for local evaluation, I'd be guessing.\n\nSo who wins? Teams with cloud budgets, RL pipelines and datacenter GPUs. That's not \"democratizing coding agents.\" It's a compute contest with a consumer-friendly label on it.\n\nAnd the winners pay twice: first for the compute, then by releasing everything under an open-source license. For $65k, the sponsor gets a crowd-sourced research program on SWE agents.\n\nIf \"consumer hardware\" is more than a slogan, prove it:\n\nA real consumer track with a hard VRAM cap (8GB / 16 GB brackets) and the small lobotimized Gemma 4 variants.\nCompute credits or hosted training for everyone, not just for those who can pay.\nRank efficiency (time, tokens, memory), not just raw solve rate.\n\n...\n\nOr just call it what it is: a GPU-budget competition.",
+      "content": "<p>The $65k prize is cheaper than the GPUs you need to win it.</p>\n<p>I run a fully local AI stack at home: coding agent, document agent, the whole thing, on a single 16 GB GPU. Exactly the kind of setup this competition claims to be about. So I read the overview with real interest: agents \"offline, on consumer hardware.\" Then I read the rules, and started laughing.</p>\n<p>Only one model is allowed: gemma-4-31b-it-qat-w4a16-ct. Not the small Gemma 4 variants that actually run at home. Only 31B.</p>\n<p>Here is what that means for someone like me:</p>\n<p>I can't run it. 16–17 GB of weights, even in 4-bit. My card can't even load the only allowed model, let alone run an agent with real context on it. And 16 GB is already more than most home GPUs have.\nI can't train it. LoRA or RL on 31B means 48–80 GB datacenter GPUs or multi-GPU clusters. Nobody I know has those at home. You rent them.\nI can't measure it. One submission per day, 60 public tasks, one task is worth 1.7 points. Without my own GPU farm for local evaluation, I'd be guessing.</p>\n<p>So who wins? Teams with cloud budgets, RL pipelines and datacenter GPUs. That's not \"democratizing coding agents.\" It's a compute contest with a consumer-friendly label on it.</p>\n<p>And the winners pay twice: first for the compute, then by releasing everything under an open-source license. For $65k, the sponsor gets a crowd-sourced research program on SWE agents.</p>\n<p>If \"consumer hardware\" is more than a slogan, prove it:</p>\n<p>A real consumer track with a hard VRAM cap (8GB / 16 GB brackets) and the small lobotimized Gemma 4 variants.\nCompute credits or hosted training for everyone, not just for those who can pay.\nRank efficiency (time, tokens, memory), not just raw solve rate.</p>\n<p>…</p>\n<p>Or just call it what it is: a GPU-budget competition.</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Lord Firlefans",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+        "url": "/lordfirlefans",
+        "tier": "CONTRIBUTOR",
+        "id": 36926417,
+        "progressionOptOut": true
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": -1,
+        "canUpvote": true,
+        "totalUpvotes": 8
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "reactions": [
+        {
+          "emoji": "LOVE",
+          "featuredUserNames": [
+            "ankitmishra0",
+            "mayukh18",
+            "sid00733",
+            "hlly34",
+            "jazivxt",
+            "vuxxxx",
+            "pamilovedl",
+            "oliviarossi",
+            "spikey12",
+            "jamesnaurot",
+            "mohammedahmedxx12",
+            "jzhpfn",
+            "nathanbangwa",
+            "ashwinisharma0807",
+            "adaluvu",
+            "narendarkumarale",
+            "yashashwanidixit",
+            "zorgis",
+            "francisclyap",
+            "chonkymfer"
+          ],
+          "userCount": 20
+        },
+        {
+          "emoji": "FUNNY",
+          "featuredUserNames": [
+            "jazivxt",
+            "weedoo",
+            "jzhpfn",
+            "ashwinisharma0807",
+            "adaluvu",
+            "francisclyap",
+            "doaimabt"
+          ],
+          "userCount": 7
+        }
+      ],
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Lord Firlefans",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/lordfirlefans",
+          "userName": "lordfirlefans",
+          "tier": "CONTRIBUTOR",
+          "id": 36926417,
+          "profileUrl": "/lordfirlefans",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 36926417,
+          "progressionOptOut": true
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3528205,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 743316,
+    "name": "The $65k prize is cheaper than the GPUs you need to win it...",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-25T16:31:29.988208100Z",
+    "totalVotes": -1,
+    "url": "/competitions/gemma-4-developer-agent/discussion/743316",
+    "totalMessages": 5,
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": true
+  }
+}

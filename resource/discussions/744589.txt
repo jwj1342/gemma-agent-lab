@@ -1,0 +1,5 @@
+# is the harness compatible with TPU build ?
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/744589
+
+## 3530551 /yashashwanidixit TOPIC
+since the free tier 2*t4 GPUs are not good memory and architecture wise , I was thinking to use TPUs to run the harness , does the harness support tpu jax ?

@@ -1,0 +1,9 @@
+# Expose ADK `exit_loop` as an allowed tool for LoopAgent submissions
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/745792
+
+## 3532696 /chengronghuang TOPIC
+I am building a declarative ADK submission with a `SequentialAgent` containing a `LoopAgent` (`max_iterations`) whose children are a `Worker` and a `Solver`.
+
+In `google-adk==1.36.1`, the built-in `exit_loop` tool sets `tool_context.actions.escalate = True`, and `LoopAgent` checks that flag to stop early. However, when I add `tools: [exit_loop]` to the Solver YAML, the local `adk-submission==0.2.12` compiler rejects it because `exit_loop` is not in the tool registry. As a result, the Solver cannot request an early exit through this tool, and the loop runs until `max_iterations`.
+
+Could `exit_loop` be registered in the submission tool allowlist, with an example of how the Solver should declare and call it? A CPU-only harness check could verify both paths: the Solver escalates and the loop exits early; without escalation, the loop runs to `max_iterations`.

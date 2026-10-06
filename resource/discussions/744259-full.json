@@ -1,0 +1,113 @@
+{
+  "forumTopic": {
+    "authorId": 29236084,
+    "authorThumbnailName": "default-thumb.png",
+    "authorUserDisplayName": "Hitesh Kumar",
+    "authorUserName": "erhiteshkumar",
+    "comments": [
+      {
+        "id": 3530086,
+        "postDate": "2026-09-29T14:06:43.420Z",
+        "rawMarkdown": "The tasks in the test set have been more rigorously filtered. I can confirm that a submission with \"gold patches\" validates at 100%. We will work on improving the training set.",
+        "content": "<p>The tasks in the test set have been more rigorously filtered. I can confirm that a submission with \"gold patches\" validates at 100%. We will work on improving the training set.</p>",
+        "parent": {},
+        "author": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "progressionOptOut": false
+        },
+        "authorType": "ADMIN",
+        "votes": {
+          "totalVotes": 1,
+          "canUpvote": true,
+          "totalUpvotes": 1
+        },
+        "kernelVersion": 0,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "reactions": [
+          {
+            "emoji": "THANK_YOU",
+            "featuredUserNames": [
+              "isakatsuyoshi",
+              "erhiteshkumar"
+            ],
+            "userCount": 2
+          }
+        ],
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Ryan Holbrook",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+            "url": "/ryanholbrook",
+            "userName": "ryanholbrook",
+            "tier": "STAFF",
+            "id": 2003505,
+            "profileUrl": "/ryanholbrook",
+            "performanceTier": "STAFF",
+            "userId": 2003505,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3529883,
+      "postDate": "2026-09-29T05:51:35.093Z",
+      "rawMarkdown": "Hi @elanlearns \nIn the public sandbox (Dockerfile.sandbox plus the public wheel cache, with typing_inspection, h11, blinker and greenlet added), the reference patch passes only 18 of our 40 TRAIN tasks (3 of 23 FastAPI). swegemma injects the newest cached wheels (e.g. Starlette 1.6.0), so older FastAPI commits fail collection, and inline_snapshot, dirty_equals and attrs are missing from the cache. We reproduced this on two hosts. Also, one public task (rich_3468) passes with an empty patch. Are hidden tasks filtered to those whose reference patch passes, and whose empty patch fails, in the scoring environment?",
+      "content": "<p>Hi <a href=\"/elanlearns\" target=\"_blank\">@elanlearns</a> \nIn the public sandbox (Dockerfile.sandbox plus the public wheel cache, with typing_inspection, h11, blinker and greenlet added), the reference patch passes only 18 of our 40 TRAIN tasks (3 of 23 FastAPI). swegemma injects the newest cached wheels (e.g. Starlette 1.6.0), so older FastAPI commits fail collection, and inline_snapshot, dirty_equals and attrs are missing from the cache. We reproduced this on two hosts. Also, one public task (rich_3468) passes with an empty patch. Are hidden tasks filtered to those whose reference patch passes, and whose empty patch fails, in the scoring environment?</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Hitesh Kumar",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+        "url": "/erhiteshkumar",
+        "tier": "CONTRIBUTOR",
+        "id": 29236084,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 2,
+        "canUpvote": true,
+        "totalUpvotes": 2
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 619,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Hitesh Kumar",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/erhiteshkumar",
+          "userName": "erhiteshkumar",
+          "tier": "CONTRIBUTOR",
+          "id": 29236084,
+          "profileUrl": "/erhiteshkumar",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 29236084,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3529883,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 744259,
+    "name": "Reference patches fail for most FastAPI tasks in the public sandbox: are hidden tasks filtered?",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-29T05:51:35.093155200Z",
+    "totalVotes": 2,
+    "url": "/competitions/gemma-4-developer-agent/discussion/744259",
+    "totalMessages": 1,
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

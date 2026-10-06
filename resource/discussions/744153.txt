@@ -1,0 +1,12 @@
+# Get an error trying to submit a zip
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/744153
+
+## 3529721 /artemjds TOPIC
+I keep getting this error when I try to submit a zip. Is it somehow related to [this issue]( https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743683)?
+
+![](https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F8213790%2Fdc0aeea3d8b2d4b8a9e15f78f470ea6d%2FScreenshot%202026-09-28%20at%2023.02.55.png?generation=1790625951140196&alt=media)
+
+
+
+## 3530894 /yuanqing98 COMMENT
+very first submission. and just ran into the same problem.

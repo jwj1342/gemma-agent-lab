@@ -1,0 +1,37 @@
+#  Anyone else getting "Notebook Exceeded Allowed Compute" ~2 hours into evaluation?
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743661
+
+## 3528705 /saltice TOPIC
+Hey everyone 👋
+
+I ran my first submission today and after roughly 2–2.5 hours of evaluation, it failed with:
+
+> Notebook Exceeded Allowed Compute
+> "Your notebook has requested more CPU, GPU or TPU resources than are available."
+
+I understand that this is a general compute/constraint error, but I'm trying to understand what specifically might have triggered it in this competition.
+
+My submission.zip was structured as an Agent Config and used:
+
+- Model: gemma-4-31b-it-qat-w4a16-ct
+- LoRA adapters: None
+- Thinking: include_thoughts: false
+- Architecture: Root agent.yaml + one code_analyzer sub-agent via agent_tool
+- Sub-agent model: gemma-4-31b-it-qat-w4a16-ct
+
+Per-task budget:
+
+```yaml
+timeout_seconds: 300
+max_tool_calls: 35
+max_time_minutes: 12
+max_turns: 30
+
+
+Has anyone else encountered this error with a submission containing an agent_tool sub-agent?
+
+## 3528713 /whisperlast COMMENT
+same error after 5 hours of running
+
+## 3528712 /josephadamski91 COMMENT
+Yes, I got this too despite testing on Kaggle GPU first last night after a few hours.

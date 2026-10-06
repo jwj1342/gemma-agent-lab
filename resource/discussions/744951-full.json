@@ -1,0 +1,152 @@
+{
+  "forumTopic": {
+    "authorId": 820904,
+    "authorThumbnailName": "820904-kg.png?t=2023-11-17-02-57-59",
+    "authorUserDisplayName": "Wilmer E. Henao",
+    "authorUserName": "verracodeguacas",
+    "comments": [
+      {
+        "id": 3531258,
+        "postDate": "2026-10-01T15:04:55.670Z",
+        "rawMarkdown": "No, the test set draws from private repositories not available publicly.",
+        "content": "<p>No, the test set draws from private repositories not available publicly.</p>",
+        "replies": [
+          {
+            "id": 3532630,
+            "postDate": "2026-10-04T08:22:28.760Z",
+            "rawMarkdown": "Does this mean that the test set will contain completely different topics from the training tasks, or will it be fastapi, rich, requests and httpx, but in a different proportion? ",
+            "content": "<p>Does this mean that the test set will contain completely different topics from the training tasks, or will it be fastapi, rich, requests and httpx, but in a different proportion? </p>",
+            "parent": {},
+            "author": {
+              "displayName": "Varun Ambadi",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+              "url": "/varunambadi",
+              "tier": "CONTRIBUTOR",
+              "id": 31268718,
+              "progressionOptOut": false
+            },
+            "authorType": "COMMENT",
+            "votes": {
+              "canUpvote": true
+            },
+            "kernelVersion": 0,
+            "competitionRanking": 284,
+            "feedbackTrackingData": {},
+            "isThankYou": false,
+            "teamUpInfo": {
+              "teamLeader": {
+                "displayName": "Varun Ambadi",
+                "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+                "url": "/varunambadi",
+                "userName": "varunambadi",
+                "tier": "CONTRIBUTOR",
+                "id": 31268718,
+                "profileUrl": "/varunambadi",
+                "performanceTier": "CONTRIBUTOR",
+                "userId": 31268718,
+                "progressionOptOut": false
+              },
+              "intro": ""
+            }
+          }
+        ],
+        "parent": {},
+        "author": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "progressionOptOut": false
+        },
+        "authorType": "ADMIN",
+        "votes": {
+          "totalVotes": 2,
+          "canUpvote": true,
+          "totalUpvotes": 2
+        },
+        "kernelVersion": 0,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Ryan Holbrook",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+            "url": "/ryanholbrook",
+            "userName": "ryanholbrook",
+            "tier": "STAFF",
+            "id": 2003505,
+            "profileUrl": "/ryanholbrook",
+            "performanceTier": "STAFF",
+            "userId": 2003505,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3531256,
+      "postDate": "2026-10-01T15:00:33.357Z",
+      "rawMarkdown": "same repositories as the training tasks?\n\nThe training set covers fastapi, rich, requests and httpx. Does the hidden test set draw from the same four repositories (roughly similar proportions?), or does it include additional repositories?",
+      "content": "<p>same repositories as the training tasks?</p>\n<p>The training set covers fastapi, rich, requests and httpx. Does the hidden test set draw from the same four repositories (roughly similar proportions?), or does it include additional repositories?</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Wilmer E. Henao",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/820904-kg.png?t=2023-11-17-02-57-59",
+        "url": "/verracodeguacas",
+        "tier": "GRANDMASTER",
+        "id": 820904,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 1,
+        "canUpvote": true,
+        "totalUpvotes": 1
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 446,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "reactions": [
+        {
+          "emoji": "KAGGLE",
+          "featuredUserNames": [
+            "abdrah"
+          ],
+          "userCount": 1
+        }
+      ],
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Wilmer E. Henao",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/820904-kg.png?t=2023-11-17-02-57-59",
+          "url": "/verracodeguacas",
+          "userName": "verracodeguacas",
+          "tier": "GRANDMASTER",
+          "id": 820904,
+          "profileUrl": "/verracodeguacas",
+          "performanceTier": "GRANDMASTER",
+          "userId": 820904,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3531256,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 744951,
+    "name": "Hidden test set",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-10-01T15:00:33.356360Z",
+    "totalVotes": 1,
+    "url": "/competitions/gemma-4-developer-agent/discussion/744951",
+    "totalMessages": 2,
+    "authorPerformanceTier": "GRANDMASTER",
+    "authorProgressionOptOut": false
+  }
+}

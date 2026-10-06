@@ -1,0 +1,9 @@
+# Possible mismatch between published task base commits and snapshots
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/744078
+
+## 3529588 /drchandrashekar TOPIC
+Hi,
+
+I downloaded tasks.jsonl and the individual archives snapshots/requests_7309.tgz and snapshots/requests_7315.tgz. For requests_7309, the task’s base_commit is 7407309c8a8a73aa2f4337184025d440bbedab7a, but the archive’s main points to 9c4881dc9e15b24186eb7d542752e6c554156222. For requests_7315, the task specifies 6360477c52303c9445b45fa8744b02d05a2f0905, while the archive points to ff2b582d029a3d50ea7bcf39744d2766b7aa99c1. Neither specified commit is present in its archive’s Git objects. The harness guide states that snapshots are built through base_commit. 
+
+Could the organizers confirm whether these archives are expected to match those commits, or whether another reconstruction step or corrected snapshot set is required?  Thanks.

@@ -1,0 +1,1636 @@
+# CELL 0 markdown
+# GemmaLoc: edit-site labels and a Gemma 4 rerank for the Developer Agent tasks
+
+This notebook recomputes every number in the writeup *A 3-second Gemma 4 rerank doubles top-1 bug localisation* from the competition data.
+
+It labels which code-graph nodes each gold patch edits, scores eight retrieval arms against those labels, replays the Gemma 4 rerank from cached answers, and ends with a check that fails if any published headline number moved.
+
+**Inputs.** The competition data, the swegemma wheelhouse, and one dataset with the cached Gemma 4 answers and the outside set (56 SWE-bench Lite tasks from seven repositories, graphs rebuilt with `loc/rebuild.py`). Internet is on to clone the four competition repositories at their public upstream commits.
+
+**Replaying versus rerunning.** Every Gemma 4 answer is cached by a hash of its exact prompt. With `LIVE_URL` empty, the notebook replays them and fails loudly on any cache miss, which would mean a prompt changed. Point `LIVE_URL` at an OpenAI-compatible server running Gemma 4 to rerun the calls instead.
+
+Code: Apache 2.0.
+
+# CELL 1 markdown
+## Setup
+
+# CELL 2 code
+import os, glob, shutil, subprocess, sys
+from pathlib import Path
+
+INPUT = Path(os.environ.get("KAGGLE_INPUT", "/kaggle/input"))
+# Scratch space outside /kaggle/working, so clones and links never land in the saved output.
+WORK = Path(os.environ.get("GEMMALOC_WORK", "/tmp/gemmaloc"))
+RESULTS = Path(os.environ.get("GEMMALOC_RESULTS", "/kaggle/working"))
+WORK.mkdir(parents=True, exist_ok=True)
+LIVE_URL = ""  # e.g. "http://127.0.0.1:8091" to rerun Gemma 4 instead of replaying cached answers
+
+def find(pattern):
+    hits = sorted(glob.glob(str(INPUT / "**" / pattern), recursive=True))
+    assert hits, f"missing input: {pattern}"
+    return Path(hits[0])
+
+# The competition folder is the one holding tasks.jsonl next to graphs/ and embeddings/.
+COMP = next(Path(p).parent for p in sorted(glob.glob(str(INPUT / "**" / "tasks.jsonl"), recursive=True))
+            if (Path(p).parent / "embeddings").is_dir())
+EXTRA = find("gemmaloc-dataset.txt").parent
+os.chdir(WORK)
+print("competition data:", COMP, "\ngemmaloc dataset:", EXTRA)
+
+# CELL 3 code
+import importlib.util, importlib.metadata
+# Only swegemma.graph is used; importing the package itself would pull in the evaluator.
+if importlib.util.find_spec("swegemma") is None:
+    wheels = find("swegemma-*.whl").parent
+    subprocess.run([sys.executable, "-m", "pip", "install", "-q", "--no-deps", str(find("swegemma-*.whl"))], check=True)
+    subprocess.run([sys.executable, "-m", "pip", "install", "-q", "--no-index", "--find-links", str(wheels),
+                    "cachetools", "networkx"], check=False)
+print("swegemma", importlib.metadata.version("swegemma"))
+
+# CELL 4 markdown
+## The code
+
+Each module below is written to `loc/` and imported by the steps that follow.
+
+# CELL 5 code
+Path('loc').mkdir(exist_ok=True)
+Path('loc/__init__.py').write_text('')
+
+# CELL 6 code
+%%writefile loc/harness.py
+"""The competition's own graph tools, loaded without the rest of the harness.
+
+`swegemma/__init__.py` pulls in the ADK and the evaluator; the graph code needs only
+numpy and networkx. A bare `swegemma` package shell lets `swegemma.graph` import as
+shipped, so every call below is the harness code itself (swegemma 0.2.7; see _first_build_resolver).
+"""
+
+import importlib
+import importlib.util
+import sys
+import types
+from pathlib import Path
+
+_root = Path(importlib.util.find_spec("swegemma").submodule_search_locations[0])
+if "swegemma" not in sys.modules:
+    shell = types.ModuleType("swegemma")
+    shell.__path__ = [str(_root)]
+    sys.modules["swegemma"] = shell
+
+_graph = importlib.import_module("swegemma.graph")
+get_graph = _graph.get_graph
+get_neighbor = _graph.get_neighbor
+get_similar_nodes = _graph.get_similar_nodes
+
+
+def _first_build_resolver(target, graph):
+    """Name resolution of the first swegemma 0.2.7 build (exact, then suffix on a '.' or ';'
+    boundary, then case-insensitive, then substring; shortest dotted depth, then shortest
+    name wins). The 30 September re-release of 0.2.7 removed it and anchors only on an exact
+    node name; the arms keep the published definition through this copy."""
+    if not graph:
+        return None
+    query = target.decode("utf-8", errors="replace") if isinstance(target, bytes) else str(target)
+    if query in graph:
+        return query
+    names = [str(n) for n in graph.nodes()]
+    best = lambda found: min(found, key=lambda n: (len(n.split(".")), len(n))) if found else None
+    low = query.lower()
+    return (best([n for n in names if n.endswith(f".{query}") or n.endswith(f";{query}")])
+            or best([n for n in names if n.lower() == low or n.lower().endswith(f".{low}")
+                     or n.lower().endswith(f";{low}")])
+            or best([n for n in names if query in n or low in n.lower()]))
+
+
+resolve_node_name = getattr(_graph, "resolve_node_name", None) or _first_build_resolver
+
+__all__ = ["get_graph", "get_neighbor", "get_similar_nodes", "resolve_node_name"]
+
+
+# CELL 7 code
+%%writefile loc/labels.py
+"""Localisation labels: which graph nodes a reference patch edits.
+
+A task's `patch` is a unified diff against `base_commit`. Every touched pre-image line
+(deleted lines, and the gap where lines are inserted) is attributed to the innermost
+Python definition that contains it, found with `ast` on the file at `base_commit`. The
+result is matched to the competition graph's node ids, and every touched spot gets a
+coverage category so the audit can say what the graph tools cannot reach.
+"""
+
+from __future__ import annotations
+
+import ast
+import re
+from dataclasses import dataclass, field
+
+HUNK = re.compile(r"^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@")
+
+
+@dataclass(frozen=True)
+class Touch:
+    """One edit site in the pre-image: a deleted line, or an insertion before `line`."""
+
+    path: str
+    line: int
+    insertion: bool
+    indent: int = 0  # insertions only: smallest indent of the inserted lines
+
+
+def parse_patch(patch: str) -> list[Touch]:
+    touches: list[Touch] = []
+    gaps: dict[tuple[str, int], int] = {}
+    path = source = None
+    old = 0
+    for raw in patch.splitlines():
+        if raw.startswith("--- "):
+            source = raw[4:].strip()
+            source = None if source == "/dev/null" else re.sub(r"^a/", "", source)
+            continue
+        if raw.startswith("+++ "):
+            target = raw[4:].strip()
+            path = source if target == "/dev/null" else re.sub(r"^b/", "", target)
+            continue
+        if raw.startswith("diff --git"):
+            path = None
+            continue
+        match = HUNK.match(raw)
+        if match:
+            old = int(match.group(1))
+            # "-0,0" (new file) and "-n,0" (pure insertion) point at the line before the gap.
+            if match.group(2) == "0":
+                old += 1
+            continue
+        if path is None or not raw:
+            continue
+        tag = raw[0]
+        if tag == " ":
+            old += 1
+        elif tag == "-":
+            touches.append(Touch(path, old, False))
+            old += 1
+        elif tag == "+" and raw[1:].strip():
+            indent = len(raw[1:]) - len(raw[1:].lstrip())
+            key = (path, old)
+            gaps[key] = min(gaps.get(key, indent), indent)
+    # Consecutive inserted lines share one gap; keep one touch per gap.
+    # A gap right after deleted lines is a replacement: the deletion already locates it.
+    deleted = {(t.path, t.line) for t in touches}
+    touches += [
+        Touch(p, line, True, indent)
+        for (p, line), indent in gaps.items()
+        if (p, line - 1) not in deleted
+    ]
+    return list(dict.fromkeys(touches))
+
+
+def module_name(path: str) -> str | None:
+    if not path.endswith(".py"):
+        return None
+    parts = path[:-3].split("/")
+    if parts[0] in ("src", "docs_src"):
+        parts = parts[1:]
+    if parts[-1] == "__init__":
+        parts = parts[:-1]
+    return ".".join(parts)
+
+
+@dataclass
+class Definition:
+    qualname: str
+    kind: str  # "function" | "class"
+    start: int  # first decorator line
+    end: int
+    column: int
+    flat: str  # the graph's naming: nested functions hang off the nearest class or module
+    tail: int  # last line before the next non-blank line after `end`
+    children: list["Definition"] = field(default_factory=list)
+
+
+def definitions(source: str, module: str) -> list[Definition]:
+    tree = ast.parse(source)
+    lines = source.splitlines()
+
+    def tail(end: int) -> int:
+        while end < len(lines) and not lines[end].strip():
+            end += 1
+        return end
+
+    def walk(body, prefix, flat_prefix):
+        out = []
+        for node in body:
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                start = min([node.lineno] + [d.lineno for d in node.decorator_list])
+                kind = "class" if isinstance(node, ast.ClassDef) else "function"
+                qual, flat = f"{prefix}.{node.name}", f"{flat_prefix}.{node.name}"
+                inner_flat = flat if kind == "class" else flat_prefix
+                out.append(Definition(qual, kind, start, node.end_lineno, node.col_offset,
+                                      flat, tail(node.end_lineno), walk(node.body, qual, inner_flat)))
+            elif isinstance(node, (ast.If, ast.Try, ast.With, ast.AsyncWith)):
+                # Definitions under `if TYPE_CHECKING:` or `try: import` keep the outer prefix.
+                for block in ("body", "orelse", "finalbody"):
+                    out.extend(walk(getattr(node, block, []), prefix, flat_prefix))
+                for handler in getattr(node, "handlers", []):
+                    out.extend(walk(handler.body, prefix, flat_prefix))
+        return out
+
+    return walk(tree.body, module, module)
+
+
+def graph_id(d: Definition, graph_ids: set[str]) -> str | None:
+    if d.qualname in graph_ids:
+        return d.qualname
+    return d.flat if d.flat in graph_ids else None
+
+
+def innermost(defs: list[Definition], touch: Touch) -> list[Definition]:
+    """Chain of definitions containing the touch, outermost first.
+
+    An insertion before `line` is inside a definition when it falls between the
+    definition's first and last line. After the last line (up to the next non-blank
+    line), the inserted code's indent decides: deeper than the `def` means it extends
+    the body, otherwise it is a new sibling.
+    """
+    line = touch.line
+    for d in defs:
+        if touch.insertion:
+            inside = d.start < line <= d.end or (
+                d.end < line <= d.tail + 1 and touch.indent > d.column)
+        else:
+            inside = d.start <= line <= d.end
+        if inside:
+            return [d] + innermost(d.children, touch)
+    return []
+
+
+# Coverage categories for the audit.
+NON_PYTHON = "non_python"
+NEW_FILE = "new_file"
+MODULE_LEVEL = "module_level"  # outside any definition: imports, constants, new top-level defs
+CLASS_BODY = "class_body"  # inside a class but not in any method
+IN_DEFINITION = "in_definition"
+ANCESTOR_ONLY = "ancestor_only"  # innermost definition has no node; an enclosing one does
+NOT_IN_GRAPH = "not_in_graph"  # no enclosing definition or module has a graph node
+
+
+@dataclass
+class Site:
+    touch: Touch
+    category: str
+    node: str | None
+
+
+def label(patch: str, read_source, graph_ids: set[str]) -> list[Site]:
+    """`read_source(path)` returns the file at base_commit, or None if it does not exist."""
+    sites: list[Site] = []
+    cache: dict[str, list[Definition] | None] = {}
+    for touch in parse_patch(patch):
+        module = module_name(touch.path)
+        if module is None:
+            sites.append(Site(touch, NON_PYTHON, None))
+            continue
+        if touch.path not in cache:
+            source = read_source(touch.path)
+            cache[touch.path] = None if source is None else definitions(source, module)
+        defs = cache[touch.path]
+        if defs is None:
+            sites.append(Site(touch, NEW_FILE, None))
+            continue
+        chain = innermost(defs, touch)
+        if not chain:
+            # The competition graphs have no module nodes; keep the id if a graph has one.
+            sites.append(Site(touch, MODULE_LEVEL, module if module in graph_ids else None))
+            continue
+        hit = next((d for d in reversed(chain) if graph_id(d, graph_ids)), None)
+        if hit is None:
+            sites.append(Site(touch, NOT_IN_GRAPH, None))
+        elif hit is not chain[-1]:
+            sites.append(Site(touch, ANCESTOR_ONLY, graph_id(hit, graph_ids)))
+        elif hit.kind == "class":
+            sites.append(Site(touch, CLASS_BODY, graph_id(hit, graph_ids)))
+        else:
+            sites.append(Site(touch, IN_DEFINITION, graph_id(hit, graph_ids)))
+    return sites
+
+
+# CELL 8 code
+%%writefile loc/build_labels.py
+"""Build node-level localisation labels and the coverage audit for all tasks.
+
+    .venv/bin/python -m loc.build_labels data/tasks.jsonl data/graphs data/repos out/
+
+Sources come from the public upstream clones in data/repos (`git show base:path`), so
+the labels can be rebuilt without the competition snapshots.
+"""
+
+from __future__ import annotations
+
+import collections
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+from loc.labels import (ANCESTOR_ONLY, CLASS_BODY, IN_DEFINITION, MODULE_LEVEL, definitions, graph_id,
+                        label, module_name)
+
+REPO_DIR = {"fastapi/fastapi": "fastapi", "Textualize/rich": "rich", "psf/requests": "requests",
+            "encode/httpx": "httpx"}
+REACHABLE = {IN_DEFINITION, CLASS_BODY, MODULE_LEVEL, ANCESTOR_ONLY}
+
+
+def git_reader(repo: Path, commit: str):
+    def read(path: str) -> str | None:
+        done = subprocess.run(["git", "-C", str(repo), "show", f"{commit}:{path}"],
+                              capture_output=True, text=True)
+        return done.stdout if done.returncode == 0 else None
+    return read
+
+
+def main(tasks_path: str, graphs: str, repos: str, out: str) -> None:
+    out_dir = Path(out)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    cats = collections.Counter()
+    tasks_with_node = 0
+    id_match = collections.Counter()
+    rows = []
+    tasks = [json.loads(line) for line in Path(tasks_path).read_text().splitlines() if line.strip()]
+    for task in tasks:
+        # Task-named graph files are hard links the API does not serve; use the commit name.
+        stem = f"{task['repo'].split('/')[1]}_{task['base_commit']}"
+        graph = json.loads((Path(graphs) / f"{stem}.json").read_text())
+        ids = {node["id"] for node in graph["nodes"]}
+        read = git_reader(Path(repos) / REPO_DIR[task["repo"]], task["base_commit"])
+        sites = label(task["patch"], read, ids)
+        nodes = sorted({s.node for s in sites if s.node and s.category in REACHABLE})
+        cats.update(s.category for s in sites)
+        tasks_with_node += bool(nodes)
+        # Naming check: how many ast definitions in the touched files exist as graph ids.
+        for path in {s.touch.path for s in sites}:
+            module, source = module_name(path), read(path)
+            if module and source:
+                stack = definitions(source, module)
+                while stack:
+                    d = stack.pop()
+                    id_match[graph_id(d, ids) is not None] += 1
+                    stack.extend(d.children)
+        rows.append({"instance_id": task["instance_id"], "repo": task["repo"],
+                     "base_commit": task["base_commit"], "nodes": nodes,
+                     "sites": [{"path": s.touch.path, "line": s.touch.line,
+                                "insertion": s.touch.insertion, "category": s.category,
+                                "node": s.node} for s in sites]})
+    with open(out_dir / "labels.jsonl", "w") as fh:
+        for row in rows:
+            fh.write(json.dumps(row) + "\n")
+    summary = {
+        "tasks": len(tasks),
+        "tasks_with_a_graph_node": tasks_with_node,
+        "share_with_a_graph_node": round(tasks_with_node / len(tasks), 3),
+        "site_categories": dict(cats.most_common()),
+        "ast_definitions_found_in_graph": id_match[True],
+        "ast_definitions_missing_from_graph": id_match[False],
+    }
+    (out_dir / "coverage.json").write_text(json.dumps(summary, indent=2) + "\n")
+    print(json.dumps(summary, indent=2))
+
+
+if __name__ == "__main__":
+    main(*sys.argv[1:5])
+
+
+# CELL 9 code
+%%writefile loc/retrieval.py
+"""Localisation arms scored against the gold labels.
+
+    .venv/bin/python -m loc.retrieval out/labels.jsonl out/ [data_dir]
+
+`data_dir` defaults to the competition data; `data/outside` runs the rebuilt SWE-bench
+Lite graphs, which carry no embeddings, so the embedding arms return only their seeds.
+
+Each arm ranks graph nodes for a task from its issue text alone. Scores: hit@k (any
+edited node in the top k) and the reading budget, in tokens of node source read in rank
+order before the first edited node appears. Tokens are characters / 4.
+"""
+
+from __future__ import annotations
+
+import json
+import math
+import re
+import sys
+from collections import Counter
+from pathlib import Path
+
+import numpy as np
+
+from loc.harness import get_similar_nodes, resolve_node_name
+
+DATA = Path("data")
+# The importable library packages each repository ships; everything else in a graph is
+# tests, docs examples, benchmarks or tooling.
+PACKAGES = {"fastapi/fastapi": ["fastapi"], "Textualize/rich": ["rich"],
+            "psf/requests": ["requests"], "encode/httpx": ["httpx"],
+            "pytest-dev/pytest": ["_pytest", "pytest"], "sphinx-doc/sphinx": ["sphinx"],
+            "pylint-dev/pylint": ["pylint"], "pydata/xarray": ["xarray"],
+            "mwaskom/seaborn": ["seaborn"], "pallets/flask": ["flask"],
+            "astropy/astropy": ["astropy"]}
+KS = (1, 3, 5, 10, 20, 50)
+BUDGETS = (1000, 2000, 4000, 8000, 16000)
+IDENT = re.compile(r"`([^`\n]{2,80})`|\b([A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)+)\b"
+                   r"|\b([A-Z][a-z0-9]+(?:[A-Z][a-z0-9]*)+)\b|\b([a-z0-9]+(?:_[a-z0-9]+)+)\b")
+WORD = re.compile(r"[A-Za-z][a-z0-9]*|[0-9]+")
+
+
+def tokens(text: str) -> list[str]:
+    return [w.lower() for w in WORD.findall(text.replace("_", " ")) if len(w) > 1]
+
+
+def identifiers(issue: str) -> list[str]:
+    """Names an agent could pass to the graph tools, in order of appearance."""
+    out = []
+    for match in IDENT.finditer(issue):
+        name = next(g for g in match.groups() if g)
+        name = name.strip().rstrip("()").split("(")[0].strip()
+        if re.fullmatch(r"[A-Za-z_][\w.]*", name) and name not in out:
+            out.append(name)
+    return out
+
+
+class Repo:
+    def __init__(self, stem: str, repo_name: str, data: Path = DATA):
+        graph = json.loads((data / "graphs" / f"{stem}.json").read_text())
+        self.stem = stem
+        self.data = data
+        self.packages = set(PACKAGES[repo_name])
+        self.text = {n["id"]: n.get("text") or "" for n in graph["nodes"]}
+        self.ids = list(self.text)
+        self.adj: dict[str, set[str]] = {i: set() for i in self.ids}
+        self.calls: dict[str, set[str]] = {i: set() for i in self.ids}
+        for e in graph["edges"]:
+            if e["source"] in self.adj and e["target"] in self.adj:
+                self.adj[e["source"]].add(e["target"])
+                self.adj[e["target"]].add(e["source"])
+                self.calls[e["source"]].add(e["target"])
+        docs = [tokens(i + " " + self.text[i]) for i in self.ids]
+        self.df = Counter(t for d in docs for t in set(d))
+        self.tf = [Counter(d) for d in docs]
+        self.len = np.array([len(d) for d in docs], dtype=float)
+        self.row, self.keys = {}, []
+        npz = data / "embeddings" / f"{stem}.npz"
+        if npz.exists():
+            emb = np.load(npz)
+            keys = [k for k in self.ids if k in emb.files]
+            mat = np.stack([emb[k] for k in keys]).astype(np.float64)
+            mat -= mat.mean(axis=0)
+            self.centered = mat / np.maximum(np.linalg.norm(mat, axis=1, keepdims=True), 1e-9)
+            self.row = {k: i for i, k in enumerate(keys)}
+            self.keys = keys
+        self._graph = None
+
+    def bm25(self, query: str, k1: float = 1.2, b: float = 0.75) -> np.ndarray:
+        n, avg = len(self.ids), self.len.mean()
+        scores = np.zeros(n)
+        # Sorted terms: a fixed summation order keeps scores bit-identical across runs.
+        for term in sorted(set(tokens(query))):
+            df = self.df.get(term)
+            if not df:
+                continue
+            idf = math.log(1 + (n - df + 0.5) / (df + 0.5))
+            tf = np.array([d.get(term, 0) for d in self.tf], dtype=float)
+            scores += idf * tf * (k1 + 1) / (tf + k1 * (1 - b + b * self.len / avg))
+        return scores
+
+    def graph(self):
+        if self._graph is None:
+            from loc.harness import get_graph
+            self._graph = get_graph(self.stem, graph_dir=str(self.data / "graphs"),
+                                    embeddings_dir=str(self.data / "embeddings"))
+        return self._graph
+
+    def seeds(self, issue: str) -> list[str]:
+        out = []
+        for name in identifiers(issue):
+            node = resolve_node_name(name, self.graph())
+            if node and node not in out:
+                out.append(node)
+        return out
+
+    def tool_neighbours(self, seed: str, k: int = 10) -> list[str]:
+        if not self.row:
+            return []
+        res = get_similar_nodes(seed, repo_name=self.stem, k=k, graph_dir=str(self.data / "graphs"),
+                                embeddings_dir=str(self.data / "embeddings"))
+        return [r["node_name"] for r in res]
+
+    def centered_neighbours(self, seed: str, k: int = 10) -> list[str]:
+        if seed not in self.row:
+            return []
+        sims = self.centered @ self.centered[self.row[seed]]
+        order = np.argsort(-sims, kind="stable")
+        return [self.keys[i] for i in order if self.keys[i] != seed][:k]
+
+
+def interleave(seeds: list[str], lists: list[list[str]]) -> list[str]:
+    out = list(dict.fromkeys(seeds))
+    for rank in range(max((len(x) for x in lists), default=0)):
+        for x in lists:
+            if rank < len(x) and x[rank] not in out:
+                out.append(x[rank])
+    return out
+
+
+def arms(repo: Repo, issue: str) -> dict[str, list[str]]:
+    bm = repo.bm25(issue)
+    # Stable sort: tied scores keep graph order, the same on every numpy build and CPU.
+    bm_rank = [repo.ids[i] for i in np.argsort(-bm, kind="stable")]
+    score = dict(zip(repo.ids, bm))
+    seeds = repo.seeds(issue)
+    expand = {n for s in seeds for n in repo.adj.get(s, ())} - set(seeds)
+    top = bm_rank[:5]
+    hop = {n for s in top for n in repo.adj.get(s, ())} - set(top)
+    src = [n for n in bm_rank if n.split(".")[0] in repo.packages]
+    src_seeds = [n for n in seeds if n.split(".")[0] in repo.packages]
+    ranked = {
+        "bm25": bm_rank,
+        "seeds": seeds,
+        "tool_similar": interleave(seeds, [repo.tool_neighbours(s) for s in seeds]),
+        "centered_similar": interleave(seeds, [repo.centered_neighbours(s) for s in seeds]),
+        "seeds_1hop": seeds + sorted(expand, key=lambda n: -score[n]),
+        "bm25_1hop": list(dict.fromkeys(top + sorted(hop, key=lambda n: -score[n]) + bm_rank)),
+        # Library code only: drops tests, docs examples, benchmarks and tools from the ranking.
+        "bm25_src": src,
+        "seeds_then_bm25_src": list(dict.fromkeys(src_seeds + src)),
+    }
+    return ranked
+
+
+def evaluate(ranking: list[str], gold: set[str], text: dict[str, str]) -> dict:
+    first = next((i for i, n in enumerate(ranking) if n in gold), None)
+    spent = sum(len(text.get(n, "")) for n in ranking[: (first + 1 if first is not None else 0)]) / 4
+    return {"first_rank": first, "tokens_to_first": spent if first is not None else None,
+            **{f"hit@{k}": first is not None and first < k for k in KS}}
+
+
+def bootstrap(values: list[float], reps: int = 2000, seed: int = 0) -> tuple[float, float, float]:
+    arr = np.asarray(values, dtype=float)
+    rng = np.random.default_rng(seed)
+    means = arr[rng.integers(0, len(arr), (reps, len(arr)))].mean(axis=1)
+    return float(arr.mean()), float(np.percentile(means, 2.5)), float(np.percentile(means, 97.5))
+
+
+def main(labels: str, out: str, data: str = str(DATA)) -> None:
+    data_dir = Path(data)
+    tasks = {json.loads(l)["instance_id"]: json.loads(l) for l in (data_dir / "tasks.jsonl").open()}
+    rows = [json.loads(l) for l in Path(labels).open()]
+    rows = [r for r in rows if r["nodes"]]
+    repos: dict[str, Repo] = {}
+    per_task = []
+    for r in rows:
+        stem = f"{r['repo'].split('/')[1]}_{r['base_commit']}"
+        repo = repos.setdefault(stem, Repo(stem, r["repo"], data_dir))
+        issue = tasks[r["instance_id"]]["problem_statement"]
+        gold = set(r["nodes"])
+        result = {"instance_id": r["instance_id"], "n_identifiers": len(identifiers(issue))}
+        for name, ranking in arms(repo, issue).items():
+            result[name] = evaluate(ranking, gold, repo.text)
+        per_task.append(result)
+        if len(repos) > 8:  # graphs are large; keep memory bounded
+            repos.pop(next(iter(repos)))
+    names = [k for k in per_task[0] if isinstance(per_task[0][k], dict)]
+    summary = {"tasks": len(per_task),
+               "tasks_with_resolvable_identifier": sum(bool(t["seeds"]["first_rank"] is not None
+                                                           or t["n_identifiers"]) for t in per_task)}
+    for name in names:
+        s = {}
+        for k in KS:
+            s[f"hit@{k}"] = [round(x, 3) for x in bootstrap([t[name][f"hit@{k}"] for t in per_task])]
+        for budget in BUDGETS:
+            s[f"found_within_{budget}_tokens"] = [round(x, 3) for x in bootstrap(
+                [t[name]["tokens_to_first"] is not None and t[name]["tokens_to_first"] <= budget
+                 for t in per_task])]
+        summary[name] = s
+    for name in names:
+        # Paired difference in hit@10 against BM25, same resampled tasks.
+        diff = [(t[name]["hit@10"]) - (t["bm25"]["hit@10"]) for t in per_task]
+        summary[name]["delta_hit@10_vs_bm25"] = [round(x, 3) for x in bootstrap(diff)]
+    Path(out).mkdir(parents=True, exist_ok=True)
+    (Path(out) / "retrieval_per_task.jsonl").write_text("\n".join(json.dumps(t) for t in per_task) + "\n")
+    (Path(out) / "retrieval.json").write_text(json.dumps(summary, indent=1) + "\n")
+    print(json.dumps(summary, indent=1))
+
+
+if __name__ == "__main__":
+    main(*sys.argv[1:4])
+
+
+# CELL 10 code
+%%writefile loc/sweep.py
+"""BM25 k1/b grid on the labelled tasks: plain BM25 and library-only BM25, hit@10.
+
+    .venv/bin/python -m loc.sweep out/labels.jsonl data > results-bm25-sweep.txt
+
+The grid is scored on the evaluation tasks themselves, so its best cell is an oracle
+upper bound for the baseline, not a tuned setting.
+"""
+
+from __future__ import annotations
+
+import json
+import sys
+from pathlib import Path
+
+import numpy as np
+
+from loc.retrieval import Repo, evaluate
+
+GRID = [(k1, b) for k1 in (0.6, 0.9, 1.2, 1.5, 2.0) for b in (0.3, 0.5, 0.75, 0.9)]
+
+
+def main(labels: str, data: str) -> None:
+    data_dir = Path(data)
+    tasks = {json.loads(l)["instance_id"]: json.loads(l) for l in (data_dir / "tasks.jsonl").open()}
+    rows = [r for r in (json.loads(l) for l in open(labels)) if r["nodes"]]
+    hits = {g: [] for g in GRID}
+    repo = None
+    for r in rows:
+        stem = f"{r['repo'].split('/')[1]}_{r['base_commit']}"
+        if repo is None or repo.stem != stem:
+            repo = Repo(stem, r["repo"], data_dir)
+        issue = tasks[r["instance_id"]]["problem_statement"]
+        gold = set(r["nodes"])
+        for g in GRID:
+            rank = [repo.ids[i] for i in np.argsort(-repo.bm25(issue, *g), kind="stable")]
+            src = [n for n in rank if n.split(".")[0] in repo.packages]
+            hits[g].append((evaluate(rank, gold, repo.text)["hit@10"],
+                            evaluate(src, gold, repo.text)["hit@10"]))
+    print("k1 b bm25_hit@10 bm25_src_hit@10")
+    for g in GRID:
+        plain, src = np.asarray(hits[g], dtype=float).mean(axis=0)
+        print(f"{g[0]} {g[1]} {plain:.3f} {src:.3f}")
+
+
+if __name__ == "__main__":
+    main(*sys.argv[1:3])
+
+
+# CELL 11 code
+%%writefile loc/anisotropy.py
+"""Geometry of the shipped node embeddings, one file per repository.
+
+    .venv/bin/python -m loc.anisotropy data/embeddings
+
+For the first embedding file of each repository: the median cosine between node pairs
+(20,000 random pairs, seed 0) and the share of variance on the first principal component.
+"""
+
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+import numpy as np
+
+
+def geometry(path: Path, pairs: int = 20_000, seed: int = 0) -> tuple[int, float, float]:
+    emb = np.load(path)
+    mat = np.stack([emb[k] for k in emb.files]).astype(np.float64)
+    unit = mat / np.linalg.norm(mat, axis=1, keepdims=True)
+    rng = np.random.default_rng(seed)
+    i, j = rng.integers(0, len(unit), (2, pairs))
+    keep = i != j
+    median_cos = float(np.median(np.sum(unit[i[keep]] * unit[j[keep]], axis=1)))
+    centred = mat - mat.mean(axis=0)
+    sv = np.linalg.svd(centred, compute_uv=False)
+    pc1 = float(sv[0] ** 2 / np.sum(sv ** 2))
+    return len(unit), median_cos, pc1
+
+
+def main(embeddings: str) -> None:
+    first: dict[str, Path] = {}
+    for path in sorted(Path(embeddings).glob("*.npz")):
+        first.setdefault(path.stem.split("_")[0], path)
+    print("repo nodes median_cosine pc1_share")
+    for repo, path in sorted(first.items()):
+        n, cos, pc1 = geometry(path)
+        print(f"{repo} {n} {cos:.3f} {pc1:.3f}")
+
+
+if __name__ == "__main__":
+    main(sys.argv[1])
+
+
+# CELL 12 code
+%%writefile loc/toolcheck.py
+"""What `search_similar_code` returns for a sentence, a common word and a symbol.
+
+    .venv/bin/python -m loc.toolcheck data
+
+Calls the harness's own resolver and neighbour search on the first Requests graph, the
+example quoted in the writeup.
+"""
+
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+from loc.harness import get_graph, get_similar_nodes, resolve_node_name
+
+QUERIES = ["retry on connection reset", "timeout", "session", "send"]
+
+
+def main(data: str) -> None:
+    root = Path(data)
+    stem = sorted((root / "graphs").glob("requests_*.json"))[0].stem
+    graph = get_graph(stem, graph_dir=str(root / "graphs"), embeddings_dir=str(root / "embeddings"))
+    print("graph:", stem)
+    for query in QUERIES:
+        anchor = resolve_node_name(query, graph)
+        hits = get_similar_nodes(query, repo_name=stem, k=3, graph_dir=str(root / "graphs"),
+                                 embeddings_dir=str(root / "embeddings"))
+        shown = ", ".join(f"{h['node_name']} ({h['similarity']:.3f})" for h in hits) or "[]"
+        print(f"{query!r}: anchor {anchor}; neighbours {shown}")
+
+
+if __name__ == "__main__":
+    main(sys.argv[1])
+
+
+# CELL 13 code
+%%writefile loc/rerank.py
+"""Gemma 4 reranks the top candidates of the best cheap arm.
+
+    .venv/bin/python -m loc.rerank out/labels.jsonl out/ --url http://127.0.0.1:8091 [--limit N]
+
+The model sees the issue and a numbered list of candidate symbols with the first lines
+of each one's source, and returns the numbers of the likely edit sites, best first.
+Candidates it leaves out keep their original order after the ones it picked. Every
+response is cached by prompt hash, so a rerun costs nothing and the numbers reproduce.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import time
+import urllib.request
+from pathlib import Path
+
+from loc.retrieval import DATA, KS, BUDGETS, Repo, arms, bootstrap, evaluate
+
+TOP = 30
+SNIPPET_LINES = 12
+ISSUE_CHARS = 6000
+
+PROMPT = """You are localising a bug fix in the Python repository {repo}.
+
+Issue:
+<issue>
+{issue}
+</issue>
+
+Candidate definitions (qualified name, then the first lines of source):
+{candidates}
+
+Which candidates would a correct fix edit? Return JSON with the candidate numbers,
+most likely first, at most 10, for example {{"candidates": [7, 2, 15]}}."""
+
+# Decoding is constrained to this schema, so the model cannot drift into prose.
+SCHEMA = {"type": "object", "additionalProperties": False, "required": ["candidates"],
+          "properties": {"candidates": {"type": "array", "maxItems": 10,
+                                        "items": {"type": "integer", "minimum": 1}}}}
+
+
+EDGE_NAMES = 6
+
+CLOSED_PROMPT = """You are localising a bug fix in the Python repository {repo}.
+
+Issue:
+<issue>
+{issue}
+</issue>
+
+Without seeing the code, name the functions or methods a correct fix would edit, as fully
+qualified Python names (package.module.Class.method), most likely first, at most 5.
+Return JSON, for example {{"names": ["pkg.mod.Class.method"]}}."""
+
+CLOSED_SCHEMA = {"type": "object", "additionalProperties": False, "required": ["names"],
+                 "properties": {"names": {"type": "array", "maxItems": 5,
+                                          "items": {"type": "string", "maxLength": 200}}}}
+
+
+def snippet(text: str) -> str:
+    lines = text.splitlines()[:SNIPPET_LINES]
+    return "\n".join("    " + line for line in lines)
+
+
+def edge_line(node: str, calls: dict[str, set[str]], called_by: dict[str, set[str]],
+              candidates: list[str]) -> str:
+    """Call edges written as text, candidate targets first, short names to save tokens."""
+    def names(targets: set[str]) -> str:
+        ordered = sorted(targets, key=lambda n: (n not in candidates, n))[:EDGE_NAMES]
+        return ", ".join(n.rsplit(".", 1)[-1] for n in ordered) or "-"
+    return f"    calls: {names(calls.get(node, set()))} | called by: {names(called_by.get(node, set()))}"
+
+
+def build_prompt(repo_name: str, issue: str, candidates: list[str], text: dict[str, str],
+                 calls: dict[str, set[str]] | None = None) -> str:
+    called_by: dict[str, set[str]] = {}
+    for src, targets in (calls or {}).items():
+        for t in targets:
+            called_by.setdefault(t, set()).add(src)
+    body = "\n".join(
+        f"[{i + 1}] {c}\n{snippet(text.get(c, ''))}"
+        + (f"\n{edge_line(c, calls, called_by, candidates)}" if calls is not None else "")
+        for i, c in enumerate(candidates))
+    return PROMPT.format(repo=repo_name, issue=issue[:ISSUE_CHARS], candidates=body)
+
+
+def parse_names(answer: str) -> list[str]:
+    try:
+        names = json.loads(answer)["names"]
+    except (ValueError, KeyError, TypeError):
+        return []
+    return [n.strip().rstrip("()") for n in names if isinstance(n, str) and n.strip()]
+
+
+def name_hits(names: list[str], gold: set[str]) -> bool:
+    """A named definition matches a gold node exactly or as its dotted suffix."""
+    return any(g == n or g.endswith("." + n) for n in names for g in gold)
+
+
+def parse_choice(answer: str, n: int) -> list[int]:
+    """Candidate indices from the JSON answer; anything unparsable means no pick."""
+    try:
+        numbers = json.loads(answer)["candidates"]
+    except (ValueError, KeyError, TypeError):
+        return []
+    picked = []
+    for m in numbers:
+        i = int(m) - 1
+        if 0 <= i < n and i not in picked:
+            picked.append(i)
+    return picked
+
+
+def ask(url: str, prompt: str, cache: Path, thinking: bool, schema: dict = SCHEMA) -> tuple[str, float]:
+    key = hashlib.sha256(f"thinking={thinking}\n{prompt}".encode()).hexdigest()[:24]
+    hit = cache / f"{key}.json"
+    if hit.exists():
+        data = json.loads(hit.read_text())
+        return data["answer"], data["seconds"]
+    payload = {"messages": [{"role": "user", "content": prompt}], "temperature": 0,
+               # Names need more room than numbers; 96 is the budget the committed reranks ran with.
+               "max_tokens": 1024 if thinking else (96 if schema is SCHEMA else 200),
+               "response_format": {"type": "json_schema", "json_schema": {"schema": schema}},
+               "cache_prompt": False,
+               # Gemma 4 thinks by default and spends the whole answer budget on it.
+               "chat_template_kwargs": {"enable_thinking": thinking}}
+    req = urllib.request.Request(f"{url}/v1/chat/completions", json.dumps(payload).encode(),
+                                 {"Content-Type": "application/json"})
+    start = time.time()
+    with urllib.request.urlopen(req, timeout=1800) as resp:
+        body = json.loads(resp.read())
+    seconds = time.time() - start
+    answer = body["choices"][0]["message"]["content"] or ""
+    hit.write_text(json.dumps({"answer": answer, "seconds": seconds, "usage": body.get("usage")}))
+    return answer, seconds
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("labels")
+    ap.add_argument("out")
+    ap.add_argument("--url", default="http://127.0.0.1:8091")
+    ap.add_argument("--limit", type=int, default=0)
+    ap.add_argument("--base", default="seeds_then_bm25_src")
+    ap.add_argument("--thinking", action="store_true")
+    ap.add_argument("--data", default=str(DATA))
+    ap.add_argument("--edges", action="store_true", help="write each candidate's call edges")
+    ap.add_argument("--closed", action="store_true",
+                    help="memorisation probe: name the edit sites from the issue alone")
+    args = ap.parse_args()
+    out = Path(args.out)
+    cache = out / "rerank_cache"
+    cache.mkdir(parents=True, exist_ok=True)
+    data = Path(args.data)
+    tasks = {json.loads(l)["instance_id"]: json.loads(l) for l in (data / "tasks.jsonl").open()}
+    rows = [json.loads(l) for l in Path(args.labels).open()]
+    rows = [r for r in rows if r["nodes"]]
+    if args.limit:
+        rows = rows[: args.limit]
+    per_task, repos = [], {}
+    for n, r in enumerate(rows, 1):
+        stem = f"{r['repo'].split('/')[1]}_{r['base_commit']}"
+        repo = repos.setdefault(stem, Repo(stem, r["repo"], data))
+        if len(repos) > 8:
+            repos.pop(next(iter(repos)))
+        issue = tasks[r["instance_id"]]["problem_statement"]
+        gold = set(r["nodes"])
+        if args.closed:
+            prompt = CLOSED_PROMPT.format(repo=r["repo"], issue=issue[:ISSUE_CHARS])
+            answer, seconds = ask(args.url, prompt, cache, args.thinking, CLOSED_SCHEMA)
+            names = parse_names(answer)
+            per_task.append({"instance_id": r["instance_id"], "seconds": round(seconds, 1),
+                             "names": names, "closed_hit": name_hits(names, gold),
+                             "seeds_hit@5": bool(set(repo.seeds(issue)[:5]) & gold)})
+            print(f"{n}/{len(rows)} {r['instance_id']} closed={per_task[-1]['closed_hit']} "
+                  f"seeds={per_task[-1]['seeds_hit@5']} {names[:2]}", flush=True)
+            continue
+        base = arms(repo, issue)[args.base]
+        top = base[:TOP]
+        prompt = build_prompt(r["repo"], issue, top, repo.text, repo.calls if args.edges else None)
+        answer, seconds = ask(args.url, prompt, cache, args.thinking)
+        picked = parse_choice(answer, len(top))
+        reranked = [top[i] for i in picked] + [c for j, c in enumerate(top) if j not in picked] + base[TOP:]
+        per_task.append({"instance_id": r["instance_id"], "seconds": round(seconds, 1),
+                         "answer": answer.strip()[:200],
+                         "base": evaluate(base, gold, repo.text),
+                         "rerank": evaluate(reranked, gold, repo.text)})
+        print(f"{n}/{len(rows)} {r['instance_id']} {seconds:.0f}s picked={picked[:5]} "
+              f"base@1={per_task[-1]['base']['hit@1']} rerank@1={per_task[-1]['rerank']['hit@1']}",
+              flush=True)
+    if args.closed:
+        summary = {"tasks": len(per_task), "probe": "closed-book",
+                   "closed_hit@5": [round(x, 3) for x in bootstrap([t["closed_hit"] for t in per_task])],
+                   "seeds_hit@5": [round(x, 3) for x in bootstrap([t["seeds_hit@5"] for t in per_task])],
+                   "closed_minus_seeds": [round(x, 3) for x in bootstrap(
+                       [t["closed_hit"] - t["seeds_hit@5"] for t in per_task])]}
+        (out / "closed_per_task.jsonl").write_text("\n".join(json.dumps(t) for t in per_task) + "\n")
+        (out / "closed.json").write_text(json.dumps(summary, indent=1) + "\n")
+        print(json.dumps(summary, indent=1))
+        return
+    summary = {"tasks": len(per_task), "base_arm": args.base, "top": TOP, "thinking": args.thinking,
+               "edges": args.edges,
+               "median_seconds": sorted(t["seconds"] for t in per_task)[len(per_task) // 2]}
+    for name in ("base", "rerank"):
+        s = {f"hit@{k}": [round(x, 3) for x in bootstrap([t[name][f"hit@{k}"] for t in per_task])]
+             for k in KS}
+        for budget in BUDGETS:
+            s[f"found_within_{budget}_tokens"] = [round(x, 3) for x in bootstrap(
+                [t[name]["tokens_to_first"] is not None and t[name]["tokens_to_first"] <= budget
+                 for t in per_task])]
+        summary[name] = s
+    for k in (1, 5, 10):
+        summary[f"delta_hit@{k}"] = [round(x, 3) for x in bootstrap(
+            [t["rerank"][f"hit@{k}"] - t["base"][f"hit@{k}"] for t in per_task])]
+    (out / "rerank_per_task.jsonl").write_text("\n".join(json.dumps(t) for t in per_task) + "\n")
+    (out / "rerank.json").write_text(json.dumps(summary, indent=1) + "\n")
+    print(json.dumps({k: v for k, v in summary.items() if not isinstance(v, dict)}, indent=1))
+
+
+if __name__ == "__main__":
+    main()
+
+
+# CELL 14 code
+%%writefile loc/rebuild.py
+"""Rebuild competition-style graphs for SWE-bench Lite tasks in other repositories.
+
+    .venv/bin/python -m loc.rebuild data/swebench-lite/data/test-00000-of-00001.parquet data/outside
+
+The competition does not ship its graph builder, so this one follows the published
+schema and the naming measured on the provided graphs: `src/` and `docs_src/` dropped,
+nested functions flattened onto the enclosing class or module, no module nodes, and
+`calls` edges. A call edge links a definition to every definition whose short name
+matches the called name when that name is unique in the repository. No embeddings:
+the builder of the provided ones is not public.
+
+Writes <out>/tasks.jsonl (competition task fields), <out>/graphs/<stem>.json and
+<out>/labels.jsonl from the same label mapper as the competition tasks.
+"""
+
+from __future__ import annotations
+
+import ast
+import json
+import subprocess
+import sys
+from collections import defaultdict
+from pathlib import Path
+
+import pyarrow.parquet as pq
+
+from loc.labels import definitions, label, module_name
+
+REPOS = {
+    "pytest-dev/pytest": ("pytest", ["_pytest", "pytest"]),
+    "sphinx-doc/sphinx": ("sphinx", ["sphinx"]),
+    "pylint-dev/pylint": ("pylint", ["pylint"]),
+    "pydata/xarray": ("xarray", ["xarray"]),
+    "mwaskom/seaborn": ("seaborn", ["seaborn"]),
+    "pallets/flask": ("flask", ["flask"]),
+    "astropy/astropy": ("astropy", ["astropy"]),
+}
+REPO_ROOT = Path("data/repos")
+
+
+def git(repo: Path, *args: str) -> str:
+    return subprocess.run(["git", "-C", str(repo), *args], capture_output=True, text=True,
+                          check=True).stdout
+
+
+def python_files(repo: Path, commit: str) -> dict[str, str]:
+    paths = [p for p in git(repo, "ls-tree", "-r", "--name-only", commit).splitlines()
+             if p.endswith(".py")]
+    # One batch read: a partial clone fetches the missing blobs in a single round trip.
+    spec = "".join(f"{commit}:{p}\n" for p in paths).encode()
+    raw = subprocess.run(["git", "-C", str(repo), "cat-file", "--batch"], input=spec,
+                         capture_output=True, check=True).stdout
+    out, pos = {}, 0
+    for path in paths:
+        header_end = raw.index(b"\n", pos)
+        size = int(raw[pos:header_end].split()[2])
+        body = raw[header_end + 1: header_end + 1 + size]
+        pos = header_end + 1 + size + 1
+        out[path] = body.decode("utf-8", errors="replace")
+    return out
+
+
+def build_graph(files: dict[str, str]) -> dict:
+    nodes, calls = {}, defaultdict(set)
+    for path, source in files.items():
+        module = module_name(path)
+        if module is None:
+            continue
+        try:
+            tree = ast.parse(source)
+            defs = definitions(source, module)
+        except (SyntaxError, ValueError):
+            continue
+        lines = source.splitlines()
+        stack = list(defs)
+        while stack:
+            d = stack.pop()
+            nodes[d.flat] = "\n".join(lines[d.start - 1: d.end])
+            stack.extend(d.children)
+        # Called names per flattened definition, from the innermost enclosing def.
+        spans = []
+        stack = list(defs)
+        while stack:
+            d = stack.pop()
+            spans.append(d)
+            stack.extend(d.children)
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Call):
+                func = node.func
+                name = func.attr if isinstance(func, ast.Attribute) else getattr(func, "id", None)
+                if not name:
+                    continue
+                inside = [d for d in spans if d.start <= node.lineno <= d.end]
+                if inside:
+                    owner = min(inside, key=lambda d: d.end - d.start)
+                    calls[owner.flat].add(name)
+    by_short = defaultdict(list)
+    for node_id in nodes:
+        by_short[node_id.rsplit(".", 1)[-1]].append(node_id)
+    edges = []
+    for source_id, names in calls.items():
+        for name in sorted(names):
+            targets = by_short.get(name, [])
+            if len(targets) == 1 and targets[0] != source_id:
+                edges.append({"source": source_id, "target": targets[0], "type": "calls", "key": 0})
+    return {"directed": True, "multigraph": True, "graph": {},
+            "nodes": [{"id": i, "name": i, "text": t} for i, t in nodes.items()], "edges": edges}
+
+
+def main(parquet: str, out: str) -> None:
+    out_dir = Path(out)
+    (out_dir / "graphs").mkdir(parents=True, exist_ok=True)
+    rows = [r for r in pq.read_table(parquet).to_pylist() if r["repo"] in REPOS]
+    with open(out_dir / "tasks.jsonl", "w") as tasks, open(out_dir / "labels.jsonl", "w") as labels:
+        for n, r in enumerate(rows, 1):
+            short, _ = REPOS[r["repo"]]
+            repo = REPO_ROOT / short
+            stem = f"{short}_{r['base_commit']}"
+            graph_path = out_dir / "graphs" / f"{stem}.json"
+            files = python_files(repo, r["base_commit"])
+            if not graph_path.exists():
+                graph_path.write_text(json.dumps(build_graph(files)))
+            graph = json.loads(graph_path.read_text())
+            ids = {node["id"] for node in graph["nodes"]}
+            sites = label(r["patch"], files.get, ids)
+            nodes = sorted({s.node for s in sites if s.node})
+            tasks.write(json.dumps({k: r[k] for k in ("instance_id", "repo", "base_commit",
+                                                      "problem_statement", "patch")}) + "\n")
+            labels.write(json.dumps({"instance_id": r["instance_id"], "repo": r["repo"],
+                                     "base_commit": r["base_commit"], "nodes": nodes,
+                                     "sites": [{"path": s.touch.path, "category": s.category,
+                                                "node": s.node} for s in sites]}) + "\n")
+            print(f"{n}/{len(rows)} {r['instance_id']} nodes={len(ids)} gold={nodes[:3]}", flush=True)
+
+
+if __name__ == "__main__":
+    main(*sys.argv[1:3])
+
+
+# CELL 15 code
+%%writefile loc/report.py
+"""Every number in writeup A, recomputed from the run outputs under one directory.
+
+    .venv/bin/python -m loc.report out
+
+Reads the retrieval, rerank, closed-book and grid outputs that the other modules write,
+prints the writeup's tables, and exits non-zero if a headline number moved.
+"""
+
+from __future__ import annotations
+
+import json
+import sys
+from collections import defaultdict
+from pathlib import Path
+
+from loc.retrieval import bootstrap
+
+# Headline numbers as published in the writeup: (file, dotted key) -> value.
+EXPECTED = {
+    ("retrieval", "seeds_then_bm25_src.delta_hit@10_vs_bm25"): [0.186, 0.119, 0.263],
+    ("rerank-31b", "delta_hit@1"): [0.237, 0.153, 0.322],
+    ("rerank-26b", "delta_hit@1"): [0.195, 0.11, 0.28],
+    ("outside/retrieval", "seeds_then_bm25_src.delta_hit@10_vs_bm25"): [0.071, -0.018, 0.161],
+    ("outside/rerank-31b", "delta_hit@1"): [0.286, 0.179, 0.411],
+    ("outside/rerank-26b", "delta_hit@1"): [0.304, 0.179, 0.429],
+}
+RERANKS = [("Competition", "rerank-31b", "31B"), ("Competition", "rerank-26b", "26B-A4B"),
+           ("Outside", "outside/rerank-31b", "31B"), ("Outside", "outside/rerank-26b", "26B-A4B")]
+TABLE1 = [("bm25", "`bm25` over node source"), ("seeds", "`seeds`"),
+          ("tool_similar", "`seeds` + `search_similar_code` neighbours"),
+          ("seeds_1hop", "`seeds` + one call-graph hop"), ("bm25_src", "`bm25_src`"),
+          ("seeds_then_bm25_src", "`seeds`, then `bm25_src`")]
+
+
+def load(path: Path) -> dict:
+    return json.loads(path.read_text())
+
+
+def rows(path: Path) -> dict[str, dict]:
+    return {r["instance_id"]: r for r in map(json.loads, path.read_text().splitlines()) if r}
+
+
+def pts(ci: list[float]) -> str:
+    m, lo, hi = (round(100 * x, 1) for x in ci)
+    return f"{m:+.1f} [{lo:+.1f}, {hi:+.1f}]"
+
+
+def repo_of(instance_id: str) -> str:
+    return instance_id.split("__")[1].split("-")[0] if "__" in instance_id else instance_id.split("_")[0]
+
+
+def main(out: str) -> None:
+    root = Path(out)
+    retrieval = load(root / "retrieval" / "retrieval.json")
+    per_task = list(rows(root / "retrieval" / "retrieval_per_task.jsonl").values())
+
+    def mean(arm: str, k: int) -> float:
+        # From the per-task rows: the summary JSON is already rounded to three places.
+        return sum(t[arm][f"hit@{k}"] for t in per_task) / len(per_task)
+
+    print(f"Table 1. Competition set, {retrieval['tasks']} tasks.\n")
+    print("| Arm | hit@1 | hit@10 | hit@50 | Δ hit@10 vs bm25 [95% CI] |")
+    for key, name in TABLE1:
+        s = retrieval[key]
+        delta = "—" if key == "bm25" else pts(s["delta_hit@10_vs_bm25"])
+        print(f"| {name} | {mean(key, 1):.2f} | {mean(key, 10):.2f} | {mean(key, 50):.2f} | {delta} |")
+    moved_k = [k for k in (1, 3, 5, 10, 20, 50) if mean("tool_similar", k) != mean("centered_similar", k)]
+    print("\nMean-centring moves hit@k at k =", moved_k or "none",
+          [f"{mean('tool_similar', k):.3f} -> {mean('centered_similar', k):.3f}" for k in moved_k])
+    print(f"`bm25_1hop` Δ hit@10: {pts(retrieval['bm25_1hop']['delta_hit@10_vs_bm25'])}")
+
+    for label, sweep in (("Competition", "sweep.txt"), ("Outside", "outside/sweep.txt")):
+        grid = [line.split() for line in (root / sweep).read_text().splitlines()[1:]]
+        gains = [float(src) - float(plain) for _, _, plain, src in grid]
+        best = max(float(plain) for _, _, plain, _ in grid)
+        print(f"{label} BM25 grid ({len(grid)} cells): library filter adds {min(gains):+.3f} to "
+              f"{max(gains):+.3f}; best plain cell {best:.3f}")
+
+    print("\nTable 2. Rerank of the top 30.\n")
+    print("| Set | Model | hit@1 base → rerank | Δ hit@1 | Δ hit@5 | Median s/task |")
+    for label, name, model in RERANKS:
+        s = load(root / name / "rerank.json")
+        print(f"| {label} ({s['tasks']}) | {model} | {s['base']['hit@1'][0]:.2f} → "
+              f"{s['rerank']['hit@1'][0]:.2f} | {pts(s['delta_hit@1'])} | {pts(s['delta_hit@5'])} | "
+              f"{s['median_seconds']} |")
+
+    print("\nPer repository, hit@1 base -> rerank:")
+    for _, name, model in RERANKS:
+        by = defaultdict(lambda: [0, 0, 0])
+        for t in rows(root / name / "rerank_per_task.jsonl").values():
+            b = by[repo_of(t["instance_id"])]
+            b[0] += 1
+            b[1] += t["base"]["hit@1"]
+            b[2] += t["rerank"]["hit@1"]
+        cells = "  ".join(f"{k} {v[1]}->{v[2]}/{v[0]}" for k, v in sorted(by.items()))
+        print(f"  {name} ({model}): {cells}")
+
+    for name in ("rerank-31b", "outside/rerank-31b"):
+        per = rows(root / name / "rerank_per_task.jsonl").values()
+        within = [t for t in per if t["base"]["first_rank"] is not None and t["base"]["first_rank"] < 30]
+        first = sum(t["rerank"]["first_rank"] == 0 for t in within)
+        print(f"{name}: edited node in top 30 for {len(within)} of {len(per)}; "
+              f"ranked first after rerank {first} of {len(within)}")
+        tok = [t["rerank"]["tokens_to_first"] is not None and t["rerank"]["tokens_to_first"] <= 4000
+               for t in per]
+        base_tok = [t["base"]["tokens_to_first"] is not None and t["base"]["tokens_to_first"] <= 4000
+                    for t in per]
+        print(f"  first edited node within 4,000 tokens: {sum(base_tok) / len(per):.2f} -> "
+              f"{sum(tok) / len(per):.2f}")
+
+    print("\nCall edges in the prompt, 26B-A4B, Δ hit@1 over the plain prompt:")
+    for plain, edges in (("rerank-26b", "edges-26b"), ("outside/rerank-26b", "outside/edges-26b")):
+        a, b = rows(root / plain / "rerank_per_task.jsonl"), rows(root / edges / "rerank_per_task.jsonl")
+        print(f"  {edges}: {pts(bootstrap([b[k]['rerank']['hit@1'] - a[k]['rerank']['hit@1'] for k in a]))}")
+
+    print("\nMemorisation probe, 26B-A4B, issue only:")
+    for closed, rerank in (("closed-26b", "rerank-26b"), ("outside/closed-26b", "outside/rerank-26b")):
+        s = load(root / closed / "closed.json")
+        c, r = rows(root / closed / "closed_per_task.jsonl"), rows(root / rerank / "rerank_per_task.jsonl")
+        miss = [k for k in r if not c[k]["closed_hit"]]
+        gain = bootstrap([r[k]["rerank"]["hit@1"] - r[k]["base"]["hit@1"] for k in miss])
+        print(f"  {closed}: closed-book hit@5 {s['closed_hit@5'][0]:.3f}, issue identifiers "
+              f"{s['seeds_hit@5'][0]:.3f}, difference {pts(s['closed_minus_seeds'])}; rerank gain on "
+              f"the {len(miss)} tasks it cannot name {pts(gain)}")
+
+    moved = []
+    for (name, key), want in EXPECTED.items():
+        path = root / name / ("retrieval.json" if name.endswith("retrieval") else "rerank.json")
+        got = load(path)
+        for part in key.split("."):
+            got = got[part]
+        if got != want:
+            moved.append(f"{name} {key}: published {want}, recomputed {got}")
+    print("\nHeadline check:", "all published numbers reproduced" if not moved else "\n".join(moved))
+    if moved:
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main(sys.argv[1])
+
+
+# CELL 16 code
+%%writefile loc/paired.py
+"""Paired differences between the search arms, and per-repository counts, from per-task rows.
+
+    python -m loc.paired OUT_DIR results-paired.json
+
+OUT_DIR holds the run outputs: retrieval/, rerank-31b/, rerank-26b/ and outside/ with the
+same layout. Differences use the bootstrap of loc.retrieval (2,000 resamples, seed 0).
+The committed BM25 grids (results-bm25-sweep.txt, results-outside-bm25-sweep.txt) are read
+from the directory of the output file, and the prompt sizes from each rerank_cache.
+"""
+
+from __future__ import annotations
+
+import json
+import sys
+from collections import defaultdict
+from pathlib import Path
+
+from loc.retrieval import bootstrap
+
+PAIRS = [("seeds", "tool_similar"), ("seeds", "seeds_1hop")]
+SETS = {"competition": ("retrieval", "rerank-31b", "rerank-26b", "edges-26b", "closed-26b"),
+        "outside": ("outside/retrieval", "outside/rerank-31b", "outside/rerank-26b",
+                    "outside/edges-26b", "outside/closed-26b")}
+
+
+def rows(path: Path) -> dict[str, dict]:
+    return {r["instance_id"]: r for r in map(json.loads, path.read_text().splitlines()) if r}
+
+
+def repo_of(instance_id: str) -> str:
+    return instance_id.split("__")[1].split("-")[0] if "__" in instance_id else instance_id.split("_")[0]
+
+
+def sweep_summary(path: Path) -> dict:
+    grid = [line.split() for line in path.read_text().splitlines()[1:]]
+    gains = [float(src) - float(plain) for _, _, plain, src in grid]
+    best = max(grid, key=lambda g: float(g[2]))
+    best_src = max(grid, key=lambda g: float(g[3]))
+    return {"cells": len(grid), "k1_range": [min(float(g[0]) for g in grid), max(float(g[0]) for g in grid)],
+            "b_range": [min(float(g[1]) for g in grid), max(float(g[1]) for g in grid)],
+            "filter_gain_min": round(min(gains), 3), "filter_gain_max": round(max(gains), 3),
+            "best_plain": {"k1": float(best[0]), "b": float(best[1]), "hit@10": float(best[2])},
+            "best_filtered": {"k1": float(best_src[0]), "b": float(best_src[1]), "hit@10": float(best_src[3])}}
+
+
+def prompt_tokens(cache: Path) -> dict:
+    usage = [json.loads(f.read_text()).get("usage") or {} for f in cache.glob("*.json")]
+    prompt = sorted(u["prompt_tokens"] for u in usage if "prompt_tokens" in u)
+    out = sorted(u["completion_tokens"] for u in usage if "completion_tokens" in u)
+    return {"calls": len(prompt), "median_prompt_tokens": prompt[len(prompt) // 2],
+            "median_completion_tokens": out[len(out) // 2]}
+
+
+def main(out: str, dest: str) -> None:
+    root, result = Path(out), {}
+    for label, (retrieval, r31, r26, edges, closed) in SETS.items():
+        per = rows(root / retrieval / "retrieval_per_task.jsonl")
+        block = {"tasks": len(per), "pairs": {}}
+        for a, b in PAIRS:
+            cell = {}
+            for k in (10, 50):
+                diff = [t[b][f"hit@{k}"] - t[a][f"hit@{k}"] for t in per.values()]
+                cell[f"hit@{k}"] = {
+                    a: round(sum(t[a][f"hit@{k}"] for t in per.values()) / len(per), 3),
+                    b: round(sum(t[b][f"hit@{k}"] for t in per.values()) / len(per), 3),
+                    "delta": [round(x, 3) for x in bootstrap(diff)]}
+            block["pairs"][f"{b}_minus_{a}"] = cell
+        block["per_repo_hit@1"] = {}
+        for name in (r31, r26):
+            by = defaultdict(lambda: [0, 0, 0])
+            for t in rows(root / name / "rerank_per_task.jsonl").values():
+                c = by[repo_of(t["instance_id"])]
+                c[0] += 1
+                c[1] += int(t["base"]["hit@1"])
+                c[2] += int(t["rerank"]["hit@1"])
+            block.setdefault("prompt_tokens", {})[name.split("/")[-1]] = prompt_tokens(root / name / "rerank_cache")
+            block["per_repo_hit@1"][name.split("/")[-1]] = {
+                k: {"n": v[0], "base": v[1], "rerank": v[2]} for k, v in sorted(by.items())}
+        plain, with_edges = rows(root / r26 / "rerank_per_task.jsonl"), rows(root / edges / "rerank_per_task.jsonl")
+        block["edges_minus_plain_26b_hit@1"] = [round(x, 3) for x in bootstrap(
+            [with_edges[k]["rerank"]["hit@1"] - plain[k]["rerank"]["hit@1"] for k in plain])]
+        per31 = rows(root / r31 / "rerank_per_task.jsonl")
+        within = [t for t in per31.values() if t["base"]["first_rank"] is not None and t["base"]["first_rank"] < 30]
+        first = sum(t["rerank"]["first_rank"] == 0 for t in within)
+        block["candidate_recall_31b"] = {"tasks": len(per31), "edited_node_in_top30": len(within),
+                                         "first_after_rerank": first, "share_first": round(first / len(within), 3)}
+        closed_rows = rows(root / closed / "closed_per_task.jsonl")
+        cannot = [k for k in per31 if not closed_rows[k]["closed_hit"]]
+        block["rerank_gain_where_26b_cannot_name_26b_hit@1"] = {
+            "tasks": len(cannot), "delta": [round(x, 3) for x in bootstrap(
+                [plain[k]["rerank"]["hit@1"] - plain[k]["base"]["hit@1"] for k in cannot])]}
+        if label == "outside":
+            block["first_three_by_id"] = {
+                k: {"base_rank": per31[k]["base"]["first_rank"] + 1, "rerank_31b_rank": per31[k]["rerank"]["first_rank"] + 1}
+                for k in sorted(per31)[:3]}
+        sweep = "results-bm25-sweep.txt" if label == "competition" else "results-outside-bm25-sweep.txt"
+        block["bm25_grid"] = sweep_summary(Path(dest).parent / sweep)
+        result[label] = block
+    Path(dest).write_text(json.dumps(result, indent=1) + "\n")
+    print(json.dumps(result, indent=1))
+
+
+if __name__ == "__main__":
+    main(*sys.argv[1:3])
+
+
+# CELL 17 code
+%%writefile loc/crossencoder.py
+"""Non-LLM control for the Gemma 4 rerank: a cross-encoder orders the same 30 candidates.
+
+    CUDA_VISIBLE_DEVICES= python -m loc.crossencoder results-crossencoder.json \
+        --set competition out/labels.jsonl data out/rerank-31b out/rerank-26b \
+        --set outside data/outside/labels.jsonl data/outside out/outside/rerank-31b out/outside/rerank-26b
+
+Each candidate is scored against the issue with `cross-encoder/ms-marco-MiniLM-L-6-v2`.
+The candidate text is the one the LLM saw (qualified name, then its first 12 lines), cut to
+CANDIDATE_CHARS; the model's 512-token window then truncates the issue, which is a
+limit of the control that the LLM prompt does not have. Candidates are sorted by score,
+ties keeping base order; ranks beyond 30 are the base order. Differences are paired
+bootstraps from loc.retrieval (2,000 resamples, seed 0).
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+from pathlib import Path
+
+import numpy as np
+
+from loc.rerank import ISSUE_CHARS, TOP, snippet
+from loc.retrieval import KS, Repo, arms, bootstrap, evaluate
+
+MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+CANDIDATE_CHARS = 1200
+BASE_ARM = "seeds_then_bm25_src"
+
+
+def candidate_text(name: str, text: dict[str, str]) -> str:
+    return f"{name}\n{snippet(text.get(name, ''))}"[:CANDIDATE_CHARS]
+
+
+def order_by_score(top: list[str], scores: list[float]) -> list[str]:
+    """Highest score first; equal scores keep their base order."""
+    return [top[i] for i in sorted(range(len(top)), key=lambda i: (-scores[i], i))]
+
+
+def score_pairs(tok, model, issue: str, texts: list[str]) -> list[float]:
+    import torch
+    batch = tok([issue[:ISSUE_CHARS]] * len(texts), texts, truncation="only_first",
+                max_length=512, padding=True, return_tensors="pt")
+    with torch.no_grad():
+        return model(**batch).logits[:, 0].tolist()
+
+
+def run_set(label: str, labels: str, data: Path, rerank_dirs: dict[str, Path], tok, model) -> dict:
+    tasks = {json.loads(l)["instance_id"]: json.loads(l) for l in (data / "tasks.jsonl").open()}
+    rows = [r for r in map(json.loads, Path(labels).open()) if r["nodes"]]
+    llm = {name: {t["instance_id"]: t for t in map(json.loads, (d / "rerank_per_task.jsonl").open())}
+           for name, d in rerank_dirs.items()}
+    per_task, repos = [], {}
+    for n, r in enumerate(rows, 1):
+        stem = f"{r['repo'].split('/')[1]}_{r['base_commit']}"
+        repo = repos.setdefault(stem, Repo(stem, r["repo"], data))
+        if len(repos) > 8:
+            repos.pop(next(iter(repos)))
+        issue = tasks[r["instance_id"]]["problem_statement"]
+        gold = set(r["nodes"])
+        base = arms(repo, issue)[BASE_ARM]
+        top = base[:TOP]
+        scores = score_pairs(tok, model, issue, [candidate_text(c, repo.text) for c in top])
+        ranked = order_by_score(top, scores) + base[TOP:]
+        row = {"instance_id": r["instance_id"], "base": evaluate(base, gold, repo.text),
+               "crossencoder": evaluate(ranked, gold, repo.text)}
+        for name, rows_by_id in llm.items():
+            assert rows_by_id[r["instance_id"]]["base"] == row["base"], "candidate lists differ"
+            row[name] = rows_by_id[r["instance_id"]]["rerank"]
+        per_task.append(row)
+        print(f"{label} {n}/{len(rows)} {r['instance_id']} base@1={row['base']['hit@1']} "
+              f"ce@1={row['crossencoder']['hit@1']}", flush=True)
+    summary = {"tasks": len(per_task), "model": MODEL, "top": TOP, "candidate_chars": CANDIDATE_CHARS}
+    for arm in ("base", "crossencoder", *llm):
+        summary[arm] = {f"hit@{k}": [round(x, 3) for x in bootstrap([t[arm][f"hit@{k}"] for t in per_task])]
+                        for k in KS}
+    for other in ("base", *llm):
+        summary[f"crossencoder_minus_{other}"] = {
+            f"hit@{k}": [round(x, 3) for x in bootstrap(
+                [t["crossencoder"][f"hit@{k}"] - t[other][f"hit@{k}"] for t in per_task])]
+            for k in (1, 5, 10)}
+    summary["per_task_first_rank"] = {t["instance_id"]: {a: t[a]["first_rank"] for a in ("base", "crossencoder", *llm)}
+                                      for t in per_task}
+    return summary
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("dest")
+    ap.add_argument("--set", nargs=5, action="append", required=True,
+                    metavar=("LABEL", "LABELS", "DATA", "RERANK_31B", "RERANK_26B"))
+    args = ap.parse_args()
+    os.environ.setdefault("CUDA_VISIBLE_DEVICES", "")
+    from transformers import AutoModelForSequenceClassification, AutoTokenizer
+    tok = AutoTokenizer.from_pretrained(MODEL)
+    model = AutoModelForSequenceClassification.from_pretrained(MODEL).eval()
+    result = {}
+    for label, labels, data, r31, r26 in args.set:
+        result[label] = run_set(label, labels, Path(data), {"rerank_31b": Path(r31), "rerank_26b": Path(r26)},
+                                tok, model)
+    Path(args.dest).write_text(json.dumps(result, indent=1) + "\n")
+
+
+if __name__ == "__main__":
+    main()
+
+
+# CELL 18 markdown
+## Data
+
+The competition's tasks, graphs and embeddings are linked in place; the four repositories are cloned at their public upstream history.
+
+# CELL 19 code
+data = WORK / "data"
+data.mkdir(exist_ok=True)
+for name in ("tasks.jsonl", "graphs", "embeddings"):
+    link = data / name
+    if not link.exists():
+        link.symlink_to(COMP / name)
+if not (data / "outside").exists():
+    (data / "outside").symlink_to(EXTRA / "outside")
+
+# Upstream clones give the source at each task's base commit, for mapping patch lines to definitions.
+UPSTREAM = {"fastapi": "https://github.com/fastapi/fastapi.git", "rich": "https://github.com/Textualize/rich.git",
+            "requests": "https://github.com/psf/requests.git", "httpx": "https://github.com/encode/httpx.git"}
+(data / "repos").mkdir(exist_ok=True)
+for name, url in UPSTREAM.items():
+    dest = data / "repos" / name
+    if not dest.exists():
+        local = os.environ.get("GEMMALOC_REPOS")
+        if local:
+            dest.symlink_to(Path(local) / name)
+        else:
+            # requests has historical objects that fail git's fsck; they are never read here.
+            subprocess.run(["git", "-c", "transfer.fsckObjects=false", "-c", "fetch.fsckObjects=false",
+                            "clone", "-q", url, str(dest)], check=True)
+print(sorted(p.name for p in (data / "repos").iterdir()))
+
+# CELL 20 markdown
+## Edit-site labels
+
+Every line a gold patch touches is mapped to the innermost definition around it at the base commit. A task is labelled when at least one edited definition exists as a graph node.
+
+# CELL 21 code
+!{sys.executable} -m loc.build_labels data/tasks.jsonl data/graphs data/repos out/ | tail -20
+
+# CELL 22 markdown
+## What `search_similar_code` returns
+
+The harness's own resolver and neighbour search, called on a sentence, two common words and a symbol.
+
+# CELL 23 code
+!{sys.executable} -m loc.toolcheck data
+
+# CELL 24 markdown
+## Embedding geometry
+
+# CELL 25 code
+!{sys.executable} -m loc.anisotropy data/embeddings
+
+# CELL 26 markdown
+## Retrieval arms
+
+Eight arms on the competition set and on the outside set. The outside graphs have no embeddings, so the two embedding arms there only repeat the seeds.
+
+# CELL 27 code
+!{sys.executable} -m loc.retrieval out/labels.jsonl out/retrieval data > /dev/null
+!{sys.executable} -m loc.retrieval data/outside/labels.jsonl out/outside/retrieval data/outside > /dev/null
+
+# CELL 28 markdown
+## BM25 grid
+
+k1 and b scored on the evaluation tasks themselves: the best cell is an oracle upper bound for the baseline.
+
+# CELL 29 code
+!{sys.executable} -m loc.sweep out/labels.jsonl data > out/sweep.txt
+!{sys.executable} -m loc.sweep data/outside/labels.jsonl data/outside > out/outside/sweep.txt
+
+# CELL 30 markdown
+## Gemma 4 rerank, call-edge variant and memorisation probe
+
+# CELL 31 code
+import json
+OUT = WORK / "out"
+for target, source in json.loads((EXTRA / "caches.json").read_text()).items():
+    dest = OUT / target / "rerank_cache"
+    if not dest.exists():
+        shutil.copytree(EXTRA / "caches" / source, dest)
+print(len(list(OUT.glob("**/rerank_cache/*.json"))), "cached Gemma 4 answers")
+
+# CELL 32 code
+URL = LIVE_URL or "http://127.0.0.1:9"  # port 9 refuses at once, so a cache miss fails loudly
+runs = [
+    ("out/labels.jsonl", "out/rerank-31b", []),
+    ("out/labels.jsonl", "out/rerank-26b", []),
+    ("out/labels.jsonl", "out/edges-26b", ["--edges"]),
+    ("out/labels.jsonl", "out/closed-26b", ["--closed"]),
+    ("data/outside/labels.jsonl", "out/outside/rerank-31b", ["--data", "data/outside"]),
+    ("data/outside/labels.jsonl", "out/outside/rerank-26b", ["--data", "data/outside"]),
+    ("data/outside/labels.jsonl", "out/outside/edges-26b", ["--edges", "--data", "data/outside"]),
+    ("data/outside/labels.jsonl", "out/outside/closed-26b", ["--closed", "--data", "data/outside"]),
+]
+for labels, out, extra in runs:
+    done = subprocess.run([sys.executable, "-m", "loc.rerank", labels, out, "--url", URL, *extra],
+                          capture_output=True, text=True)
+    print(out, "ok" if done.returncode == 0 else "FAILED\n" + done.stderr[-2000:])
+    assert done.returncode == 0
+
+# CELL 33 markdown
+## Every number in the writeup
+
+# CELL 34 code
+!{sys.executable} -m loc.report out | tee out/report.txt
+for f in ["out/report.txt", "out/coverage.json", *glob.glob("out/**/*.json", recursive=True)]:
+    if "rerank_cache" not in f:
+        (RESULTS / f).parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy(f, RESULTS / f)
+assert "all published numbers reproduced" in Path("out/report.txt").read_text()
+
+# CELL 35 markdown
+## Paired differences and a non-LLM control
+
+Paired bootstrap differences between arms, per-repository counts, and `cross-encoder/ms-marco-MiniLM-L-6-v2` reordering the same 30 candidates the LLM saw (CPU, downloaded from the Hugging Face Hub). Both are compared with the committed results.
+
+# CELL 36 code
+EXPECTED = {"results-paired.json": {"competition": {"tasks": 118, "pairs": {"tool_similar_minus_seeds": {"hit@10": {"seeds": 0.237, "tool_similar": 0.254, "delta": [0.017, 0.0, 0.042]}, "hit@50": {"seeds": 0.237, "tool_similar": 0.288, "delta": [0.051, 0.017, 0.093]}}, "seeds_1hop_minus_seeds": {"hit@10": {"seeds": 0.237, "seeds_1hop": 0.254, "delta": [0.017, 0.0, 0.042]}, "hit@50": {"seeds": 0.237, "seeds_1hop": 0.28, "delta": [0.042, 0.008, 0.085]}}}, "per_repo_hit@1": {"rerank-31b": {"fastapi": {"n": 60, "base": 8, "rerank": 21}, "httpx": {"n": 1, "base": 1, "rerank": 1}, "requests": {"n": 12, "base": 6, "rerank": 11}, "rich": {"n": 45, "base": 10, "rerank": 20}}, "rerank-26b": {"fastapi": {"n": 60, "base": 8, "rerank": 21}, "httpx": {"n": 1, "base": 1, "rerank": 1}, "requests": {"n": 12, "base": 6, "rerank": 10}, "rich": {"n": 45, "base": 10, "rerank": 16}}}, "prompt_tokens": {"rerank-31b": {"calls": 118, "median_prompt_tokens": 3978, "median_completion_tokens": 15}, "rerank-26b": {"calls": 118, "median_prompt_tokens": 3978, "median_completion_tokens": 13}}, "edges_minus_plain_26b_hit@1": [0.017, -0.017, 0.059], "candidate_recall_31b": {"tasks": 118, "edited_node_in_top30": 70, "first_after_rerank": 53, "share_first": 0.757}, "rerank_gain_where_26b_cannot_name_26b_hit@1": {"tasks": 95, "delta": [0.168, 0.074, 0.253]}, "bm25_grid": {"cells": 20, "k1_range": [0.6, 2.0], "b_range": [0.3, 0.9], "filter_gain_min": 0.093, "filter_gain_max": 0.127, "best_plain": {"k1": 2.0, "b": 0.9, "hit@10": 0.364}, "best_filtered": {"k1": 2.0, "b": 0.9, "hit@10": 0.466}}}, "outside": {"tasks": 56, "pairs": {"tool_similar_minus_seeds": {"hit@10": {"seeds": 0.125, "tool_similar": 0.125, "delta": [0.0, 0.0, 0.0]}, "hit@50": {"seeds": 0.125, "tool_similar": 0.125, "delta": [0.0, 0.0, 0.0]}}, "seeds_1hop_minus_seeds": {"hit@10": {"seeds": 0.125, "seeds_1hop": 0.161, "delta": [0.036, 0.0, 0.089]}, "hit@50": {"seeds": 0.125, "seeds_1hop": 0.214, "delta": [0.089, 0.018, 0.179]}}}, "per_repo_hit@1": {"rerank-31b": {"astropy": {"n": 6, "base": 0, "rerank": 4}, "flask": {"n": 3, "base": 0, "rerank": 1}, "pylint": {"n": 6, "base": 1, "rerank": 3}, "pytest": {"n": 16, "base": 2, "rerank": 6}, "seaborn": {"n": 4, "base": 0, "rerank": 2}, "sphinx": {"n": 16, "base": 0, "rerank": 3}, "xarray": {"n": 5, "base": 1, "rerank": 1}}, "rerank-26b": {"astropy": {"n": 6, "base": 0, "rerank": 5}, "flask": {"n": 3, "base": 0, "rerank": 1}, "pylint": {"n": 6, "base": 1, "rerank": 3}, "pytest": {"n": 16, "base": 2, "rerank": 5}, "seaborn": {"n": 4, "base": 0, "rerank": 2}, "sphinx": {"n": 16, "base": 0, "rerank": 4}, "xarray": {"n": 5, "base": 1, "rerank": 1}}}, "prompt_tokens": {"rerank-31b": {"calls": 56, "median_prompt_tokens": 4936, "median_completion_tokens": 15}, "rerank-26b": {"calls": 56, "median_prompt_tokens": 4936, "median_completion_tokens": 13}}, "edges_minus_plain_26b_hit@1": [-0.018, -0.089, 0.036], "candidate_recall_31b": {"tasks": 56, "edited_node_in_top30": 30, "first_after_rerank": 20, "share_first": 0.667}, "rerank_gain_where_26b_cannot_name_26b_hit@1": {"tasks": 50, "delta": [0.26, 0.14, 0.38]}, "first_three_by_id": {"astropy__astropy-12907": {"base_rank": 62, "rerank_31b_rank": 62}, "astropy__astropy-14182": {"base_rank": 3, "rerank_31b_rank": 1}, "astropy__astropy-14365": {"base_rank": 16, "rerank_31b_rank": 2}}, "bm25_grid": {"cells": 20, "k1_range": [0.6, 2.0], "b_range": [0.3, 0.9], "filter_gain_min": 0.0, "filter_gain_max": 0.071, "best_plain": {"k1": 1.2, "b": 0.9, "hit@10": 0.429}, "best_filtered": {"k1": 1.2, "b": 0.9, "hit@10": 0.464}}}}, "results-crossencoder.json": {"competition": {"tasks": 118, "model": "cross-encoder/ms-marco-MiniLM-L-6-v2", "top": 30, "candidate_chars": 1200, "base": {"hit@1": [0.212, 0.144, 0.288], "hit@3": [0.347, 0.271, 0.441], "hit@5": [0.415, 0.331, 0.5], "hit@10": [0.475, 0.39, 0.559], "hit@20": [0.508, 0.424, 0.593], "hit@50": [0.653, 0.568, 0.737]}, "crossencoder": {"hit@1": [0.169, 0.11, 0.237], "hit@3": [0.271, 0.195, 0.356], "hit@5": [0.339, 0.263, 0.424], "hit@10": [0.432, 0.347, 0.525], "hit@20": [0.525, 0.441, 0.61], "hit@50": [0.653, 0.568, 0.737]}, "rerank_31b": {"hit@1": [0.449, 0.364, 0.542], "hit@3": [0.508, 0.415, 0.602], "hit@5": [0.525, 0.432, 0.61], "hit@10": [0.534, 0.441, 0.619], "hit@20": [0.534, 0.441, 0.619], "hit@50": [0.653, 0.568, 0.737]}, "rerank_26b": {"hit@1": [0.407, 0.322, 0.492], "hit@3": [0.466, 0.381, 0.551], "hit@5": [0.492, 0.407, 0.576], "hit@10": [0.525, 0.432, 0.61], "hit@20": [0.534, 0.441, 0.619], "hit@50": [0.653, 0.568, 0.737]}, "crossencoder_minus_base": {"hit@1": [-0.042, -0.119, 0.025], "hit@5": [-0.076, -0.161, 0.017], "hit@10": [-0.042, -0.119, 0.034]}, "crossencoder_minus_rerank_31b": {"hit@1": [-0.28, -0.364, -0.195], "hit@5": [-0.186, -0.263, -0.11], "hit@10": [-0.102, -0.169, -0.034]}, "crossencoder_minus_rerank_26b": {"hit@1": [-0.237, -0.322, -0.161], "hit@5": [-0.153, -0.229, -0.076], "hit@10": [-0.093, -0.161, -0.025]}}, "outside": {"tasks": 56, "model": "cross-encoder/ms-marco-MiniLM-L-6-v2", "top": 30, "candidate_chars": 1200, "base": {"hit@1": [0.071, 0.018, 0.143], "hit@3": [0.179, 0.089, 0.286], "hit@5": [0.25, 0.143, 0.357], "hit@10": [0.429, 0.304, 0.554], "hit@20": [0.518, 0.375, 0.643], "hit@50": [0.589, 0.464, 0.714]}, "crossencoder": {"hit@1": [0.125, 0.054, 0.214], "hit@3": [0.232, 0.125, 0.339], "hit@5": [0.339, 0.214, 0.464], "hit@10": [0.446, 0.321, 0.571], "hit@20": [0.518, 0.375, 0.643], "hit@50": [0.589, 0.464, 0.714]}, "rerank_31b": {"hit@1": [0.357, 0.232, 0.482], "hit@3": [0.464, 0.339, 0.589], "hit@5": [0.482, 0.357, 0.607], "hit@10": [0.5, 0.375, 0.625], "hit@20": [0.536, 0.411, 0.661], "hit@50": [0.589, 0.464, 0.714]}, "rerank_26b": {"hit@1": [0.375, 0.25, 0.5], "hit@3": [0.429, 0.304, 0.554], "hit@5": [0.446, 0.321, 0.571], "hit@10": [0.518, 0.393, 0.643], "hit@20": [0.536, 0.411, 0.661], "hit@50": [0.589, 0.464, 0.714]}, "crossencoder_minus_base": {"hit@1": [0.054, -0.054, 0.161], "hit@5": [0.089, -0.054, 0.232], "hit@10": [0.018, -0.089, 0.125]}, "crossencoder_minus_rerank_31b": {"hit@1": [-0.232, -0.375, -0.089], "hit@5": [-0.143, -0.268, -0.036], "hit@10": [-0.054, -0.161, 0.036]}, "crossencoder_minus_rerank_26b": {"hit@1": [-0.25, -0.393, -0.107], "hit@5": [-0.107, -0.232, 0.018], "hit@10": [-0.071, -0.161, 0.0]}}}}
+import json
+shutil.copy("out/sweep.txt", "out/results-bm25-sweep.txt")
+shutil.copy("out/outside/sweep.txt", "out/results-outside-bm25-sweep.txt")
+!{sys.executable} -m loc.paired out out/results-paired.json
+!{sys.executable} -m loc.crossencoder out/results-crossencoder.json --set competition out/labels.jsonl data out/rerank-31b out/rerank-26b --set outside data/outside/labels.jsonl data/outside out/outside/rerank-31b out/outside/rerank-26b > /dev/null
+
+def leaves(x, path=""):
+    if isinstance(x, dict):
+        for k, v in x.items():
+            yield from leaves(v, f"{path}/{k}")
+    elif isinstance(x, list):
+        for i, v in enumerate(x):
+            yield from leaves(v, f"{path}/{i}")
+    else:
+        yield path, round(x, 4) if isinstance(x, float) else x
+
+moved = []
+for name, want in EXPECTED.items():
+    got = json.loads(Path("out", name).read_text())
+    for block in got.values():
+        block.pop("per_task_first_rank", None)
+    got_leaves, want_leaves = dict(leaves(got)), dict(leaves(want))
+    moved += [(name, k, want_leaves[k], got_leaves.get(k)) for k in want_leaves if got_leaves.get(k) != want_leaves[k]]
+    shutil.copy(Path("out", name), RESULTS / name)
+for row in moved[:20]:
+    print("MOVED", *row)
+assert not moved, f"{len(moved)} control numbers moved"
+print("paired differences and cross-encoder control reproduced")

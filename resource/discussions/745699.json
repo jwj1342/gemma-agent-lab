@@ -1,0 +1,11 @@
+{
+  "messages": [
+    {
+      "id": 3532508,
+      "postDate": "2026-10-03T19:03:06.430Z",
+      "content": "<p>I’m getting a ServerStartupError when starting the vLLM server in the Gemma 4 Developer Agent competition environment.</p>\n<p>Link: <a href=\"https://www.kaggle.com/code/ryanholbrook/getting-started-gemma-4-developer-agent/notebook\" target=\"_blank\">https://www.kaggle.com/code/ryanholbrook/getting-started-gemma-4-developer-agent/notebook</a></p>\n<p>The error is:</p>\n<p>ImportError: …/vllm/_C.abi3.so: undefined symbol: _ZN3c1013MessageLoggerC1EPKciib</p>\n<p>My environment is using Python 3.13.15 and vLLM 0.19.1 from the competition wheelhouse.</p>\n<p>It looks like there may be a compatibility issue between the vLLM wheel, PyTorch, and Python 3.13.</p>\n<p>Could someone please confirm whether the competition is expected to run on Python 3.12 or lower, and if so, how we can use that Python version in Kaggle?</p>",
+      "rawMarkdown": "I’m getting a ServerStartupError when starting the vLLM server in the Gemma 4 Developer Agent competition environment.\n\nLink: https://www.kaggle.com/code/ryanholbrook/getting-started-gemma-4-developer-agent/notebook\n\nThe error is:\n\nImportError: .../vllm/_C.abi3.so: undefined symbol: _ZN3c1013MessageLoggerC1EPKciib\n\nMy environment is using Python 3.13.15 and vLLM 0.19.1 from the competition wheelhouse.\n\nIt looks like there may be a compatibility issue between the vLLM wheel, PyTorch, and Python 3.13.\n\nCould someone please confirm whether the competition is expected to run on Python 3.12 or lower, and if so, how we can use that Python version in Kaggle?",
+      "votes": 4
+    }
+  ]
+}

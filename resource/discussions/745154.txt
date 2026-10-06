@@ -1,0 +1,6 @@
+# Adapters / LoRA
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/745154
+
+## 3531741 /tammamalasha TOPIC
+Are adapters placed in the adapters/ directory definitely loaded and applied to the Gemma 4 checkpoint during official evaluation?
+If yes, are there any restrictions on adapter architecture, rank, size, or training method?

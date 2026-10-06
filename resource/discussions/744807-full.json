@@ -1,0 +1,926 @@
+{
+  "forumTopic": {
+    "authorId": 1360812,
+    "authorThumbnailName": "1360812-kg.jpg?t=2026-10-02-17-02-06",
+    "authorUserDisplayName": "Asim Ersoy",
+    "authorUserName": "asemokby",
+    "comments": [
+      {
+        "id": 3531130,
+        "postDate": "2026-10-01T10:33:59.770Z",
+        "rawMarkdown": "Yes this is an issue. My submission id: 56747946\n\nAlso I think if the daily submission limit is 1, we should only count it towards a successful submission. Anything that's infra related should not be counted towards a submission.\n\n2ndly It would be nice to know what's the underlying stack that's running:\n- does inference recover itself in case it goes down?\n- does sandboxes have retries as well?\n\nI think a bit more clarity on how the infrastructure is designed/wired together will help.",
+        "content": "<p>Yes this is an issue. My submission id: 56747946</p>\n<p>Also I think if the daily submission limit is 1, we should only count it towards a successful submission. Anything that's infra related should not be counted towards a submission.</p>\n<p>2ndly It would be nice to know what's the underlying stack that's running:</p>\n<ul>\n<li>does inference recover itself in case it goes down?</li>\n<li>does sandboxes have retries as well?</li>\n</ul>\n<p>I think a bit more clarity on how the infrastructure is designed/wired together will help.</p>",
+        "parent": {},
+        "author": {
+          "displayName": "Ayush Thakur",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2212893-kg.jpg?t=2023-09-12-07-15-57",
+          "url": "/ayuraj",
+          "tier": "MASTER",
+          "id": 2212893,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "totalVotes": 5,
+          "canUpvote": true,
+          "totalUpvotes": 5
+        },
+        "kernelVersion": 0,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Ayush Thakur",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2212893-kg.jpg?t=2023-09-12-07-15-57",
+            "url": "/ayuraj",
+            "userName": "ayuraj",
+            "tier": "MASTER",
+            "id": 2212893,
+            "profileUrl": "/ayuraj",
+            "performanceTier": "MASTER",
+            "userId": 2212893,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3530948,
+        "postDate": "2026-10-01T03:57:48.207Z",
+        "rawMarkdown": "Same here: submission 56726945 (2026-10-01 00:06 UTC) ended with \"Your notebook hit an unhandled error while rerunning your code\" and no score. It validates locally with the Sep 30 wheelhouse.\n\n@ryanholbrook could you check what raised, and let us know when it is safe to resubmit? Thanks!",
+        "content": "<p>Same here: submission 56726945 (2026-10-01 00:06 UTC) ended with \"Your notebook hit an unhandled error while rerunning your code\" and no score. It validates locally with the Sep 30 wheelhouse.</p>\n<p><a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a> could you check what raised, and let us know when it is safe to resubmit? Thanks!</p>",
+        "parent": {},
+        "author": {
+          "displayName": "Lasme",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/7911643-kg.png?t=2026-09-24-09-11-00",
+          "url": "/sslasme",
+          "tier": "CONTRIBUTOR",
+          "id": 7911643,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "totalVotes": 3,
+          "canUpvote": true,
+          "totalUpvotes": 3
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 2,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Lasme",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/7911643-kg.png?t=2026-09-24-09-11-00",
+            "url": "/sslasme",
+            "userName": "sslasme",
+            "tier": "CONTRIBUTOR",
+            "id": 7911643,
+            "profileUrl": "/sslasme",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 7911643,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3531241,
+        "postDate": "2026-10-01T14:45:21.513Z",
+        "rawMarkdown": "We had a GPU outage overnight. Resolved now, and submissions should be working again.",
+        "content": "<p>We had a GPU outage overnight. Resolved now, and submissions should be working again.</p>",
+        "replies": [
+          {
+            "id": 3531299,
+            "postDate": "2026-10-01T16:37:35.270Z",
+            "rawMarkdown": "would be great if the failed runs are started again or the daily limit be reset!",
+            "content": "<p>would be great if the failed runs are started again or the daily limit be reset!</p>",
+            "parent": {},
+            "author": {
+              "displayName": "Chandram Dutta",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/14027805-kg.jpg?t=2026-04-05-06-32-03",
+              "url": "/chandramdutta",
+              "tier": "CONTRIBUTOR",
+              "id": 14027805,
+              "progressionOptOut": false
+            },
+            "authorType": "COMMENT",
+            "votes": {
+              "totalVotes": 5,
+              "canUpvote": true,
+              "totalUpvotes": 5
+            },
+            "kernelVersion": 0,
+            "competitionRanking": 188,
+            "feedbackTrackingData": {},
+            "isThankYou": false,
+            "reactions": [
+              {
+                "emoji": "LOVE",
+                "featuredUserNames": [
+                  "ahmedalmarwani"
+                ],
+                "userCount": 1
+              }
+            ],
+            "teamUpInfo": {
+              "teamLeader": {
+                "displayName": "Chandram Dutta",
+                "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/14027805-kg.jpg?t=2026-04-05-06-32-03",
+                "url": "/chandramdutta",
+                "userName": "chandramdutta",
+                "tier": "CONTRIBUTOR",
+                "id": 14027805,
+                "profileUrl": "/chandramdutta",
+                "performanceTier": "CONTRIBUTOR",
+                "userId": 14027805,
+                "progressionOptOut": false
+              },
+              "intro": ""
+            }
+          },
+          {
+            "id": 3532001,
+            "postDate": "2026-10-03T01:43:27.737Z",
+            "rawMarkdown": "Hi @ryanholbrook, same issue on Oct 3. Both notebooks ran COMPLETE (344s / 679s, local validator passed, model `gemma-4-31b-it-qat-w4a16-ct`), but both submissions ended as `SubmissionStatus.ERROR` with only the generic \"A system error. Please try resubmitting to resolve the error and contact Kaggle Support if it persists.\" and no score:\n- 56784230 (Getting Started notebook, 2026-10-03T00:00:13Z)\n- 56785158 (Gemma 4 SuperAgent, 2026-10-03T00:16:03Z)\nBundles validate locally (UTF-8 clean, no BOM, agent.yaml at zip root). Could you please check if these were hit by the same backend issue, and rerun them / restore the daily slot if so? Thanks!",
+            "content": "<p>Hi <a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a>, same issue on Oct 3. Both notebooks ran COMPLETE (344s / 679s, local validator passed, model <code>gemma-4-31b-it-qat-w4a16-ct</code>), but both submissions ended as <code>SubmissionStatus.ERROR</code> with only the generic \"A system error. Please try resubmitting to resolve the error and contact Kaggle Support if it persists.\" and no score:</p>\n<ul>\n<li>56784230 (Getting Started notebook, 2026-10-03T00:00:13Z)</li>\n<li>56785158 (Gemma 4 SuperAgent, 2026-10-03T00:16:03Z)\nBundles validate locally (UTF-8 clean, no BOM, agent.yaml at zip root). Could you please check if these were hit by the same backend issue, and rerun them / restore the daily slot if so? Thanks!</li>\n</ul>",
+            "parent": {},
+            "author": {
+              "displayName": "Neo Juan",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+              "url": "/neojuan",
+              "tier": "CONTRIBUTOR",
+              "id": 29196489,
+              "progressionOptOut": false
+            },
+            "authorType": "COMMENT",
+            "votes": {
+              "canUpvote": true
+            },
+            "kernelVersion": 0,
+            "competitionRanking": 764,
+            "feedbackTrackingData": {},
+            "isThankYou": false,
+            "teamUpInfo": {
+              "teamLeader": {
+                "displayName": "Neo Juan",
+                "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+                "url": "/neojuan",
+                "userName": "neojuan",
+                "tier": "CONTRIBUTOR",
+                "id": 29196489,
+                "profileUrl": "/neojuan",
+                "performanceTier": "CONTRIBUTOR",
+                "userId": 29196489,
+                "progressionOptOut": false
+              },
+              "intro": ""
+            }
+          }
+        ],
+        "parent": {},
+        "author": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "progressionOptOut": false
+        },
+        "authorType": "ADMIN",
+        "votes": {
+          "totalVotes": 2,
+          "canUpvote": true,
+          "totalUpvotes": 2
+        },
+        "kernelVersion": 0,
+        "feedbackTrackingData": {},
+        "isPinned": true,
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Ryan Holbrook",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+            "url": "/ryanholbrook",
+            "userName": "ryanholbrook",
+            "tier": "STAFF",
+            "id": 2003505,
+            "profileUrl": "/ryanholbrook",
+            "performanceTier": "STAFF",
+            "userId": 2003505,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3531117,
+        "postDate": "2026-10-01T10:02:34.347Z",
+        "rawMarkdown": "Same here.\n\nI re-uploaded a byte-identical submission for rescoring: same four files, verified by sha256 per file against the archive that scored normally on 25 Sep. Nothing changed on my side.\n\nSince you offered to rerun the affected submissions in #743683 so people wouldn't lose a slot, would the same apply to these? \n\nHappy to supply submission ids or anything else useful.",
+        "content": "<p>Same here.</p>\n<p>I re-uploaded a byte-identical submission for rescoring: same four files, verified by sha256 per file against the archive that scored normally on 25 Sep. Nothing changed on my side.</p>\n<p>Since you offered to rerun the affected submissions in #743683 so people wouldn't lose a slot, would the same apply to these? </p>\n<p>Happy to supply submission ids or anything else useful.</p>",
+        "parent": {},
+        "author": {
+          "displayName": "Radek Maciaszek",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/1052744-gr.jpg",
+          "url": "/rathko",
+          "tier": "CONTRIBUTOR",
+          "id": 1052744,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "totalVotes": 1,
+          "canUpvote": true,
+          "totalUpvotes": 1
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 183,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Radek Maciaszek",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/1052744-gr.jpg",
+            "url": "/rathko",
+            "userName": "rathko",
+            "tier": "CONTRIBUTOR",
+            "id": 1052744,
+            "profileUrl": "/rathko",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 1052744,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3531111,
+        "postDate": "2026-10-01T09:55:44.573Z",
+        "rawMarkdown": "@ryanholbrook, could you check what broke? If it’s on the scorer side, could 56745031 be rerun or the daily allowance restored? And please let us know when it’s safe to resubmit. Thanks!",
+        "content": "<p><a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a>, could you check what broke? If it’s on the scorer side, could 56745031 be rerun or the daily allowance restored? And please let us know when it’s safe to resubmit. Thanks!</p>",
+        "parent": {},
+        "author": {
+          "displayName": "Chandram Dutta",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/14027805-kg.jpg?t=2026-04-05-06-32-03",
+          "url": "/chandramdutta",
+          "tier": "CONTRIBUTOR",
+          "id": 14027805,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "totalVotes": 1,
+          "canUpvote": true,
+          "totalUpvotes": 1
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 188,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Chandram Dutta",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/14027805-kg.jpg?t=2026-04-05-06-32-03",
+            "url": "/chandramdutta",
+            "userName": "chandramdutta",
+            "tier": "CONTRIBUTOR",
+            "id": 14027805,
+            "profileUrl": "/chandramdutta",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 14027805,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3531107,
+        "postDate": "2026-10-01T09:44:35.153Z",
+        "rawMarkdown": "Same here: submission 56732762 (2026-10-01 00:17 UTC) ended with \"Notebook Threw Exception\" about 5 minutes after submitting, with no score.\n\nIt is byte-identical to our submission 56574678 (same zip, sha256 e4e62d2d…), which scored 0.10 on 2026-09-26. The packaging notebook is a CPU script that writes an embedded 4-file zip (agent.yaml, prompt, sampling, eval_config; no adapters or skills) and reads nothing from /kaggle/input.\n\nThe same zip runs fine on 4x L4 with the current wheelhouse (adk-submission 0.2.12): vLLM 0.19.1 starts with the new --reasoning-config and --no-scheduler-reserve-full-isl flags in about 340 s, and the agent jobs complete. So the failure seems to happen earlier in the scoring pipeline.\n\n@ryanholbrook could you check what raised, rerun it or restore the daily allowance, and let us know when it is safe to resubmit? Thanks!",
+        "content": "<p>Same here: submission 56732762 (2026-10-01 00:17 UTC) ended with \"Notebook Threw Exception\" about 5 minutes after submitting, with no score.</p>\n<p>It is byte-identical to our submission 56574678 (same zip, sha256 e4e62d2d…), which scored 0.10 on 2026-09-26. The packaging notebook is a CPU script that writes an embedded 4-file zip (agent.yaml, prompt, sampling, eval_config; no adapters or skills) and reads nothing from /kaggle/input.</p>\n<p>The same zip runs fine on 4x L4 with the current wheelhouse (adk-submission 0.2.12): vLLM 0.19.1 starts with the new --reasoning-config and --no-scheduler-reserve-full-isl flags in about 340 s, and the agent jobs complete. So the failure seems to happen earlier in the scoring pipeline.</p>\n<p><a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a> could you check what raised, rerun it or restore the daily allowance, and let us know when it is safe to resubmit? Thanks!</p>",
+        "parent": {},
+        "author": {
+          "displayName": "Pavel Nasovich",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/21563806-gr.jpg",
+          "url": "/forcewake",
+          "tier": "CONTRIBUTOR",
+          "id": 21563806,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "totalVotes": 1,
+          "canUpvote": true,
+          "totalUpvotes": 1
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 494,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Pavel Nasovich",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/21563806-gr.jpg",
+            "url": "/forcewake",
+            "userName": "forcewake",
+            "tier": "CONTRIBUTOR",
+            "id": 21563806,
+            "profileUrl": "/forcewake",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 21563806,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3531054,
+        "postDate": "2026-10-01T08:10:18.653Z",
+        "rawMarkdown": "Same issue: submission 56746524 (2026-10-01 07:39 UTC) ended after ~12 minutes with \"Notebook Threw Exception\". The same zip ran cleanly in an offline 4xL4 notebook with the current wheelhouse a few hours earlier.\n@ryanholbrook could you check what raised and, if it's on the scorer side, rerun it or restore the allowance? Thanks!",
+        "content": "<p>Same issue: submission 56746524 (2026-10-01 07:39 UTC) ended after ~12 minutes with \"Notebook Threw Exception\". The same zip ran cleanly in an offline 4xL4 notebook with the current wheelhouse a few hours earlier.\n<a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a> could you check what raised and, if it's on the scorer side, rerun it or restore the allowance? Thanks!</p>",
+        "parent": {},
+        "author": {
+          "displayName": "Ahmed Almarwani",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/18419427-kg.png?t=2026-09-28-02-23-50",
+          "url": "/ahmedalmarwani",
+          "tier": "CONTRIBUTOR",
+          "id": 18419427,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "totalVotes": 1,
+          "canUpvote": true,
+          "totalUpvotes": 1
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 207,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Ahmed Almarwani",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/18419427-kg.png?t=2026-09-28-02-23-50",
+            "url": "/ahmedalmarwani",
+            "userName": "ahmedalmarwani",
+            "tier": "CONTRIBUTOR",
+            "id": 18419427,
+            "profileUrl": "/ahmedalmarwani",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 18419427,
+            "progressionOptOut": false
+          },
+          "intro": "Building a Gemma 4 SWE agent: ADK config, a read-only code-analyzer sub-agent, and prompts tuned for small-context patching. Looking for teammates with GPU access and LoRA/RL fine-tuning experience (TRL, PEFT, vLLM) to train adapters on agent trajectories"
+        }
+      },
+      {
+        "id": 3531033,
+        "postDate": "2026-10-01T07:28:36.730Z",
+        "rawMarkdown": "Hi @ryanholbrook, I am also experiencing this issue with submission 56740062, submitted on Oct 1 at 01:04:37 UTC. It ended with “Notebook Threw Exception” and no score.\n\nMy packaging notebook (version 10) completed normally. I downloaded the actual submitted ZIP and confirmed that it is byte-identical to the bundle tested with the official Evaluator on Kaggle 4×L4. Both public development cases passed verification, with 40 tests passing in total.\n\nThe bundle uses the required Gemma model and no LoRA adapters. The packaging notebook only writes an embedded ZIP; it does not run inference or read task data. It uses CPU and a 300-second session timeout. I have not established the root cause of the scoring failure.\n\nCould you inspect the underlying exception for submission 56740062? If this was a scoring infrastructure issue, could the submission be rerun or the daily allowance restored? This failed submission used my only allowance today.\n\nPlease also let us know when it is safe to resubmit. Thank you!",
+        "content": "<p>Hi <a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a>, I am also experiencing this issue with submission 56740062, submitted on Oct 1 at 01:04:37 UTC. It ended with “Notebook Threw Exception” and no score.</p>\n<p>My packaging notebook (version 10) completed normally. I downloaded the actual submitted ZIP and confirmed that it is byte-identical to the bundle tested with the official Evaluator on Kaggle 4×L4. Both public development cases passed verification, with 40 tests passing in total.</p>\n<p>The bundle uses the required Gemma model and no LoRA adapters. The packaging notebook only writes an embedded ZIP; it does not run inference or read task data. It uses CPU and a 300-second session timeout. I have not established the root cause of the scoring failure.</p>\n<p>Could you inspect the underlying exception for submission 56740062? If this was a scoring infrastructure issue, could the submission be rerun or the daily allowance restored? This failed submission used my only allowance today.</p>\n<p>Please also let us know when it is safe to resubmit. Thank you!</p>",
+        "parent": {},
+        "author": {
+          "displayName": "yuchen1g hu",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/22286095-kg.jpg?t=2025-12-10-02-55-15",
+          "url": "/yuchen1ghu",
+          "tier": "CONTRIBUTOR",
+          "id": 22286095,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "totalVotes": 1,
+          "canUpvote": true,
+          "totalUpvotes": 1
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 1248,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "yuchen1g hu",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/22286095-kg.jpg?t=2025-12-10-02-55-15",
+            "url": "/yuchen1ghu",
+            "userName": "yuchen1ghu",
+            "tier": "CONTRIBUTOR",
+            "id": 22286095,
+            "profileUrl": "/yuchen1ghu",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 22286095,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3531010,
+        "postDate": "2026-10-01T06:52:04.637Z",
+        "rawMarkdown": "Hi, my submission also failed with \"Notebook Threw Exception\" today (submitted around 04:45 UTC on 1 Oct). The same agent.yaml and prompt scored 0.05 on 30 Sep. Only eval_config.yaml values changed (max_time_minutes 10, max_tool_calls 60).\n\nTwo questions:\n\nIs the wheelhouse issue fixed now, so new submissions will run normally?\nWill daily submission slots lost to this error be restored?",
+        "content": "<p>Hi, my submission also failed with \"Notebook Threw Exception\" today (submitted around 04:45 UTC on 1 Oct). The same agent.yaml and prompt scored 0.05 on 30 Sep. Only eval_config.yaml values changed (max_time_minutes 10, max_tool_calls 60).</p>\n<p>Two questions:</p>\n<p>Is the wheelhouse issue fixed now, so new submissions will run normally?\nWill daily submission slots lost to this error be restored?</p>",
+        "parent": {},
+        "author": {
+          "displayName": "GopalKAI",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/gopalkai",
+          "tier": "CONTRIBUTOR",
+          "id": 16182836,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "totalVotes": 1,
+          "canUpvote": true,
+          "totalUpvotes": 1
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 110,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "GopalKAI",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+            "url": "/gopalkai",
+            "userName": "gopalkai",
+            "tier": "CONTRIBUTOR",
+            "id": 16182836,
+            "profileUrl": "/gopalkai",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 16182836,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3530976,
+        "postDate": "2026-10-01T05:29:50.567Z",
+        "rawMarkdown": "hello @ryanholbrook,\nSame issue facing with my latest submission `id:56741974`, getting status as failed. It is passing in local bench like previous submission.\n",
+        "content": "<p>hello <a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a>,\nSame issue facing with my latest submission <code>id:56741974</code>, getting status as failed. It is passing in local bench like previous submission.</p>",
+        "parent": {},
+        "author": {
+          "displayName": "parmanu",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/16568582-kg.png?t=2026-09-25-09-15-20",
+          "url": "/ankurcoplugdata",
+          "tier": "CONTRIBUTOR",
+          "id": 16568582,
+          "progressionOptOut": true
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "totalVotes": 1,
+          "canUpvote": true,
+          "totalUpvotes": 1
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 68,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "parmanu",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/16568582-kg.png?t=2026-09-25-09-15-20",
+            "url": "/ankurcoplugdata",
+            "userName": "ankurcoplugdata",
+            "tier": "CONTRIBUTOR",
+            "id": 16568582,
+            "profileUrl": "/ankurcoplugdata",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 16568582,
+            "progressionOptOut": true
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3530975,
+        "postDate": "2026-10-01T05:29:33.487Z",
+        "rawMarkdown": "It happened to me too, and it cancelled my submission.",
+        "content": "<p>It happened to me too, and it cancelled my submission.</p>",
+        "parent": {},
+        "author": {
+          "displayName": "Yehuda Rubin",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/yehudarubin",
+          "tier": "CONTRIBUTOR",
+          "id": 34636403,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "totalVotes": 1,
+          "canUpvote": true,
+          "totalUpvotes": 1
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 1055,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Yehuda Rubin",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+            "url": "/yehudarubin",
+            "userName": "yehudarubin",
+            "tier": "CONTRIBUTOR",
+            "id": 34636403,
+            "profileUrl": "/yehudarubin",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 34636403,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3530925,
+        "postDate": "2026-10-01T02:28:41.063Z",
+        "rawMarkdown": "Same issue with submission 56722759. The only change from my previous submission, which scored normally before the wheelhouse update, was the time budget in eval_config.yaml.",
+        "content": "<p>Same issue with submission 56722759. The only change from my previous submission, which scored normally before the wheelhouse update, was the time budget in eval_config.yaml.</p>",
+        "parent": {},
+        "author": {
+          "displayName": "Hira Norm",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/25458429-kg.png?t=2026-09-28-14-05-26",
+          "url": "/hiranorm",
+          "tier": "EXPERT",
+          "id": 25458429,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "totalVotes": 1,
+          "canUpvote": true,
+          "totalUpvotes": 1
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 96,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Hira Norm",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/25458429-kg.png?t=2026-09-28-14-05-26",
+            "url": "/hiranorm",
+            "userName": "hiranorm",
+            "tier": "EXPERT",
+            "id": 25458429,
+            "profileUrl": "/hiranorm",
+            "performanceTier": "EXPERT",
+            "userId": 25458429,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3530939,
+        "postDate": "2026-10-01T03:09:23.087Z",
+        "rawMarkdown": "Same here — submission 56739457 (Oct 1, 00:30 UTC): a prompt-only bundle (no adapters), validated locally against the official harness + wheelhouse on all 129 public tasks. It died with \"Notebook Threw Exception\". Our previous prompt-only submission (Sep 30, 04:21 UTC) scored normally (0.10), so nothing on our side changed except the scoring environment. Thanks for looking into it!",
+        "content": "<p>Same here — submission 56739457 (Oct 1, 00:30 UTC): a prompt-only bundle (no adapters), validated locally against the official harness + wheelhouse on all 129 public tasks. It died with \"Notebook Threw Exception\". Our previous prompt-only submission (Sep 30, 04:21 UTC) scored normally (0.10), so nothing on our side changed except the scoring environment. Thanks for looking into it!</p>",
+        "parent": {},
+        "author": {
+          "displayName": "David Martinez",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/32120173-kg.jpeg?t=2026-10-01-10-03-27",
+          "url": "/tongjoye",
+          "tier": "CONTRIBUTOR",
+          "id": 32120173,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "totalVotes": 2,
+          "canUpvote": true,
+          "totalUpvotes": 2
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 603,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "David Martinez",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/32120173-kg.jpeg?t=2026-10-01-10-03-27",
+            "url": "/tongjoye",
+            "userName": "tongjoye",
+            "tier": "CONTRIBUTOR",
+            "id": 32120173,
+            "profileUrl": "/tongjoye",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 32120173,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3530933,
+        "postDate": "2026-10-01T02:49:28.260Z",
+        "rawMarkdown": "Same error here. Submission 56741570 (Oct 1, 02:33 UTC) failed about 7 minutes after submitting with \"Your notebook hit an unhandled error while rerunning your code\". The notebook only writes a 4-file submission.zip (agent.yaml, prompts/system.md, configs/sampling.yaml, eval_config.yaml; no adapters or skills) from strings embedded in the notebook, and reads nothing from /kaggle/input. The same agent files ran without errors on 40 public tasks in an eval notebook on the 4x L4 machine, with the wheelhouse dataset attached on Oct 1. Our earlier submission 56719705 (Sep 30, 21:57 UTC) failed with the same message.",
+        "content": "<p>Same error here. Submission 56741570 (Oct 1, 02:33 UTC) failed about 7 minutes after submitting with \"Your notebook hit an unhandled error while rerunning your code\". The notebook only writes a 4-file submission.zip (agent.yaml, prompts/system.md, configs/sampling.yaml, eval_config.yaml; no adapters or skills) from strings embedded in the notebook, and reads nothing from /kaggle/input. The same agent files ran without errors on 40 public tasks in an eval notebook on the 4x L4 machine, with the wheelhouse dataset attached on Oct 1. Our earlier submission 56719705 (Sep 30, 21:57 UTC) failed with the same message.</p>",
+        "parent": {},
+        "author": {
+          "displayName": "Noah Sabaj",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/noahsabaj",
+          "tier": "CONTRIBUTOR",
+          "id": 36427869,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "totalVotes": 2,
+          "canUpvote": true,
+          "totalUpvotes": 2
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 18,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Noah Sabaj",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+            "url": "/noahsabaj",
+            "userName": "noahsabaj",
+            "tier": "CONTRIBUTOR",
+            "id": 36427869,
+            "profileUrl": "/noahsabaj",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 36427869,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3530923,
+        "postDate": "2026-10-01T02:19:19.413Z",
+        "rawMarkdown": "Similar issues with submission 56740906. Previous uploads before the wheelhouse update was all working fine\n",
+        "content": "<p>Similar issues with submission 56740906. Previous uploads before the wheelhouse update was all working fine</p>",
+        "replies": [
+          {
+            "id": 3531610,
+            "postDate": "2026-10-02T08:01:36.773Z",
+            "rawMarkdown": "The submission was made with the kaggle CLI uploading a submission.zip containing an agent.yaml, subagents and role divisions, configs,.yaml files, no lora adapters yet. other participants are seeing the same issue, this might not be isolated. ",
+            "content": "<p>The submission was made with the kaggle CLI uploading a submission.zip containing an agent.yaml, subagents and role divisions, configs,.yaml files, no lora adapters yet. other participants are seeing the same issue, this might not be isolated. </p>",
+            "parent": {},
+            "author": {
+              "displayName": "hsiaosuan",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/25207474-kg.PNG?t=2025-06-25-05-59-19",
+              "url": "/hsiaosuan",
+              "tier": "EXPERT",
+              "id": 25207474,
+              "progressionOptOut": false
+            },
+            "authorType": "COMMENT",
+            "votes": {
+              "canUpvote": true
+            },
+            "kernelVersion": 0,
+            "competitionRanking": 141,
+            "feedbackTrackingData": {},
+            "isThankYou": false,
+            "teamUpInfo": {
+              "teamLeader": {
+                "displayName": "hsiaosuan",
+                "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/25207474-kg.PNG?t=2025-06-25-05-59-19",
+                "url": "/hsiaosuan",
+                "userName": "hsiaosuan",
+                "tier": "EXPERT",
+                "id": 25207474,
+                "profileUrl": "/hsiaosuan",
+                "performanceTier": "EXPERT",
+                "userId": 25207474,
+                "progressionOptOut": false
+              },
+              "intro": ""
+            }
+          }
+        ],
+        "parent": {},
+        "author": {
+          "displayName": "hsiaosuan",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/25207474-kg.PNG?t=2025-06-25-05-59-19",
+          "url": "/hsiaosuan",
+          "tier": "EXPERT",
+          "id": 25207474,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "totalVotes": 2,
+          "canUpvote": true,
+          "totalUpvotes": 2
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 141,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "hsiaosuan",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/25207474-kg.PNG?t=2025-06-25-05-59-19",
+            "url": "/hsiaosuan",
+            "userName": "hsiaosuan",
+            "tier": "EXPERT",
+            "id": 25207474,
+            "profileUrl": "/hsiaosuan",
+            "performanceTier": "EXPERT",
+            "userId": 25207474,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3531348,
+        "postDate": "2026-10-01T17:59:31.803Z",
+        "rawMarkdown": "Hi @ryanholbrook, thanks for confirming the GPU outage was resolved.\n\nOur submission 56747846 (2026-10-01 08:52 UTC, prompt-only bundle, no adapters, same Gemma model) ended after about 5 minutes with \"Your notebook hit an unhandled error while rerunning your code\" and no score. The same archive ran 20 public tasks cleanly on a 4×L4 notebook with the current wheelhouse a few hours earlier, so we believe the failure was the overnight outage, not the submission.\n\nThat failure used our daily allowance (a retry today is refused: \"daily Submission allowance (1) used\"). Could it be rerun, or the allowance restored for the affected submissions? Thanks!",
+        "content": "<p>Hi <a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a>, thanks for confirming the GPU outage was resolved.</p>\n<p>Our submission 56747846 (2026-10-01 08:52 UTC, prompt-only bundle, no adapters, same Gemma model) ended after about 5 minutes with \"Your notebook hit an unhandled error while rerunning your code\" and no score. The same archive ran 20 public tasks cleanly on a 4×L4 notebook with the current wheelhouse a few hours earlier, so we believe the failure was the overnight outage, not the submission.</p>\n<p>That failure used our daily allowance (a retry today is refused: \"daily Submission allowance (1) used\"). Could it be rerun, or the allowance restored for the affected submissions? Thanks!</p>",
+        "parent": {},
+        "author": {
+          "displayName": "Med Mongi Benyaiche",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/6587275-kg.jpg",
+          "url": "/medmongibenyaiche",
+          "tier": "CONTRIBUTOR",
+          "id": 6587275,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 36,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Med Mongi Benyaiche",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/6587275-kg.jpg",
+            "url": "/medmongibenyaiche",
+            "userName": "medmongibenyaiche",
+            "tier": "CONTRIBUTOR",
+            "id": 6587275,
+            "profileUrl": "/medmongibenyaiche",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 6587275,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3531188,
+        "postDate": "2026-10-01T13:04:28.843Z",
+        "rawMarkdown": "Same here, and it was my first submission :/",
+        "content": "<p>Same here, and it was my first submission :/</p>",
+        "parent": {},
+        "author": {
+          "displayName": "Hamed Seyed-allaei",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/193104-kg.jpg",
+          "url": "/pinocchio",
+          "tier": "EXPERT",
+          "id": 193104,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 1426,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Hamed Seyed-allaei",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/193104-kg.jpg",
+            "url": "/pinocchio",
+            "userName": "pinocchio",
+            "tier": "EXPERT",
+            "id": 193104,
+            "profileUrl": "/pinocchio",
+            "performanceTier": "EXPERT",
+            "userId": 193104,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3531184,
+        "postDate": "2026-10-01T12:59:46.703Z",
+        "rawMarkdown": "Same. My submission 56740087 (2026-10-01 01:06 UTC) ended with \"Notebook Threw Exception\" and no score. It's a prompt-only bundle (no adapters) that differs from my previous submission 56691354 only in max_output_tokens ",
+        "content": "<p>Same. My submission 56740087 (2026-10-01 01:06 UTC) ended with \"Notebook Threw Exception\" and no score. It's a prompt-only bundle (no adapters) that differs from my previous submission 56691354 only in max_output_tokens </p>",
+        "parent": {},
+        "author": {
+          "displayName": "Avery Wright",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/14047490-kg.png?t=2026-03-20-15-50-47",
+          "url": "/averywright",
+          "tier": "CONTRIBUTOR",
+          "id": 14047490,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 730,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Avery Wright",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/14047490-kg.png?t=2026-03-20-15-50-47",
+            "url": "/averywright",
+            "userName": "averywright",
+            "tier": "CONTRIBUTOR",
+            "id": 14047490,
+            "profileUrl": "/averywright",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 14047490,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3530914,
+      "postDate": "2026-10-01T02:01:14.843Z",
+      "rawMarkdown": "Hello @ryanholbrook, \n\nMy submission, 56722615, stopped after about 20 minutes with \"Your notebook hit an unhandled error while rerunning your code.\" It's my first upload since the September 30 wheelhouse update. My earlier submissions scored normally, and this one validates and runs fine locally. Any idea what went wrong? ",
+      "content": "<p>Hello <a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a>, </p>\n<p>My submission, 56722615, stopped after about 20 minutes with \"Your notebook hit an unhandled error while rerunning your code.\" It's my first upload since the September 30 wheelhouse update. My earlier submissions scored normally, and this one validates and runs fine locally. Any idea what went wrong? </p>",
+      "parent": {},
+      "author": {
+        "displayName": "Asim Ersoy",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/1360812-kg.jpg?t=2026-10-02-17-02-06",
+        "url": "/asemokby",
+        "tier": "CONTRIBUTOR",
+        "id": 1360812,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 20,
+        "canUpvote": true,
+        "totalUpvotes": 20
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 22,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "reactions": [
+        {
+          "emoji": "LOVE",
+          "featuredUserNames": [
+            "rathko",
+            "aatiffraz",
+            "bloodymonday",
+            "sslasme",
+            "averywright",
+            "riyazurrehman",
+            "forcewake",
+            "artificialjosh",
+            "hsiaosuan",
+            "hiranorm",
+            "azureyu",
+            "orionch"
+          ],
+          "userCount": 12
+        }
+      ],
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Asim Ersoy",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/1360812-kg.jpg?t=2026-10-02-17-02-06",
+          "url": "/asemokby",
+          "userName": "asemokby",
+          "tier": "CONTRIBUTOR",
+          "id": 1360812,
+          "profileUrl": "/asemokby",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 1360812,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3530914,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 744807,
+    "name": "Submission errors after the Sep 30 wheelhouse update",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-10-01T02:01:14.842503600Z",
+    "totalVotes": 20,
+    "url": "/competitions/gemma-4-developer-agent/discussion/744807",
+    "totalMessages": 21,
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

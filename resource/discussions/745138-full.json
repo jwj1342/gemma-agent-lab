@@ -1,0 +1,58 @@
+{
+  "forumTopic": {
+    "authorId": 31027446,
+    "authorThumbnailName": "31027446-kg.jpg?t=2026-03-13-03-58-07",
+    "authorUserDisplayName": "D A M",
+    "authorUserName": "adesolanke",
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3531711,
+      "postDate": "2026-10-02T13:30:50.603Z",
+      "rawMarkdown": "Hi @ryanholbrook,\n\nWhile building a local stand-in for the scoring server, we compared vLLM 0.19.1's Gemma 4 tool parser (the `gemma4_tool_parser.py` from the competition wheel) against a reimplementation on 60,000 fuzzed call strings. On 85 of them, `_parse_gemma4_args` never returns. All 85 are array arguments where a string delimiter breaks the bracket matching. Minimal examples (run in a subprocess with a timeout):\n\n```\nx:[a<|\"|>]\nx:[a<|\"|>]<|\"|>]\nx:[btrue<|\"|>-1]1<|\"|>:\\n{\n```\n\n`x:[<|\"|>a]b<|\"|>]` parses fine (`{'x': ['a]b']}`), so the trigger is a delimiter that opens inside an array item and never closes before the bracket. The loop sits in the array branch: an item position whose next character is `]` never advances the index.\n\nWhy it might matter on the scorer: the parser runs inside the API server, so a single generation like this could stall that request until the task's time limit, or longer if the server's event loop is blocked. None of our own runs has produced such a call (our tools take no array arguments), but agents that expose array-typed tools, such as lists of symbols for the code-graph tools, could hit it.\n\nA guard that raises on a non-advancing index (or a timeout around tool parsing) would turn it into an ordinary parse failure. Repro script: a few lines, happy to share.\n",
+      "content": "<p>Hi <a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a>,</p>\n<p>While building a local stand-in for the scoring server, we compared vLLM 0.19.1's Gemma 4 tool parser (the <code>gemma4_tool_parser.py</code> from the competition wheel) against a reimplementation on 60,000 fuzzed call strings. On 85 of them, <code>_parse_gemma4_args</code> never returns. All 85 are array arguments where a string delimiter breaks the bracket matching. Minimal examples (run in a subprocess with a timeout):</p>\n<pre><code>x:[a&lt;|\"|&gt;]\nx:[a&lt;|\"|&gt;]&lt;|\"|&gt;]\nx:[btrue&lt;|\"|&gt;-1]1&lt;|\"|&gt;:\\n{\n</code></pre>\n<p><code>x:[&lt;|\"|&gt;a]b&lt;|\"|&gt;]</code> parses fine (<code>{'x': ['a]b']}</code>), so the trigger is a delimiter that opens inside an array item and never closes before the bracket. The loop sits in the array branch: an item position whose next character is <code>]</code> never advances the index.</p>\n<p>Why it might matter on the scorer: the parser runs inside the API server, so a single generation like this could stall that request until the task's time limit, or longer if the server's event loop is blocked. None of our own runs has produced such a call (our tools take no array arguments), but agents that expose array-typed tools, such as lists of symbols for the code-graph tools, could hit it.</p>\n<p>A guard that raises on a non-advancing index (or a timeout around tool parsing) would turn it into an ordinary parse failure. Repro script: a few lines, happy to share.</p>",
+      "parent": {},
+      "author": {
+        "displayName": "D A M",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/31027446-kg.jpg?t=2026-03-13-03-58-07",
+        "url": "/adesolanke",
+        "tier": "CONTRIBUTOR",
+        "id": 31027446,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "canUpvote": true
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 552,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "D A M",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/31027446-kg.jpg?t=2026-03-13-03-58-07",
+          "url": "/adesolanke",
+          "userName": "adesolanke",
+          "tier": "CONTRIBUTOR",
+          "id": 31027446,
+          "profileUrl": "/adesolanke",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 31027446,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3531711,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 745138,
+    "name": "vLLM's Gemma 4 tool-argument parser can loop forever on some malformed array arguments",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-10-02T13:30:50.604109900Z",
+    "url": "/competitions/gemma-4-developer-agent/discussion/745138",
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

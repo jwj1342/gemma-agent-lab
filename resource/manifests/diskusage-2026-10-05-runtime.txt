@@ -1,0 +1,6 @@
+                            Description                Space         # of files
+                       /home (user jwj)      6094MiB/ 100GiB          96K/1000K
+                    /scratch (user jwj)        81GiB/  25TiB        4885 /  10M
+        /project (project def-zhouyang)         0  B/1024GiB           4 /2000K
+--
+On some clusters, a break down per user may be available by adding the option '--per_user'.

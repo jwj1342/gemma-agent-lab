@@ -1,0 +1,157 @@
+{
+  "recorded_at": "2026-10-05T06:15:38.090817+00:00",
+  "run_dir": "runs/hpc-smoke-20261005-r4",
+  "task_id": "rich_3454",
+  "agent": "configs/baseline, no LoRA",
+  "job": {
+    "id": 1033882,
+    "state": "COMPLETED",
+    "exit_code": "0:0",
+    "elapsed": "00:05:49",
+    "node": "trig0001",
+    "gpu": "1 x NVIDIA H100 80GB",
+    "cpus": 24
+  },
+  "checks": {
+    "checked_at": "2026-10-05T06:06:41.954960+00:00",
+    "task_id": "rich_3454",
+    "checks": {
+      "empty_patch_fails_tests": true,
+      "gold_patch_passes_tests": true,
+      "official_compiler_passed": true,
+      "real_nonempty_prediction": true,
+      "llm_was_called": true,
+      "agent_tests_executed": true
+    },
+    "controls_valid": true,
+    "agent_resolved": true,
+    "inference_seconds": 83.85255151498131,
+    "pipeline_executed": true,
+    "scope": "One public task. Not a benchmark score, training validation, L4 timing result, or Kaggle submission."
+  },
+  "test_counts": {
+    "empty": {
+      "failed": 1,
+      "passed": 82
+    },
+    "gold": {
+      "failed": 0,
+      "passed": 83
+    },
+    "agent": {
+      "failed": 0,
+      "passed": 84,
+      "added_by_agent": 1
+    }
+  },
+  "inference": {
+    "duration_seconds": 83.85255151498131,
+    "tool_calls": 12,
+    "llm_calls": 19,
+    "error": null
+  },
+  "patch_bytes": 1161,
+  "hardware": {
+    "torch": "2.10.0+cu129",
+    "cuda": "12.9",
+    "cuda_visible_devices": "0",
+    "tensor_parallel_size": 1,
+    "devices": [
+      {
+        "index": 0,
+        "name": "NVIDIA H100 80GB HBM3",
+        "total_memory_bytes": 85017493504
+      }
+    ]
+  },
+  "agent_archive_sha256": "02bb939095ded0c970088fc9d19634e203e2d3119a36a5feff20bad55c9343fc",
+  "competition_submission_ref": 56844353,
+  "scope": "One public task only; no training, aggregate benchmark, L4 timing or hidden score verified",
+  "evidence": [
+    {
+      "path": "runs/hpc-smoke-20261005-r4/run-manifest.json",
+      "sha256": "be58c780be2bfdf5d6c38b25069214d5a5903a3aacbdd2ab40c01880546be304",
+      "bytes": 712
+    },
+    {
+      "path": "runs/hpc-smoke-20261005-r4/slurm-submission.json",
+      "sha256": "b40723493e288c52682c6cd0df31e40c05b1ae03892ac9eb2c5346c39f13ae56",
+      "bytes": 1196
+    },
+    {
+      "path": "runs/hpc-smoke-20261005-r4/slurm-final-state.txt",
+      "sha256": "877ddd510d2d27e3b6a9c6fdc0bcd91a82d3bdee5aaab10996071afac6306634",
+      "bytes": 171
+    },
+    {
+      "path": "runs/hpc-smoke-20261005-r4/smoke-summary.json",
+      "sha256": "50f8548821bf868c9c3857681b8b540b7618e11a1130030911aa8612cbeb2c0d",
+      "bytes": 549
+    },
+    {
+      "path": "runs/hpc-smoke-20261005-r4/compile/validation.json",
+      "sha256": "4180e71d9691ef98d1b908066842cbc2705113916cb7b97b47cb1b9a0c6fc8fa",
+      "bytes": 699
+    },
+    {
+      "path": "runs/hpc-smoke-20261005-r4/compile/runtime-filesystem.json",
+      "sha256": "47dd9356b9ac62008786f0a28d71643166c90df5205a7634b4bdb2e28dc513b0",
+      "bytes": 732
+    },
+    {
+      "path": "runs/hpc-smoke-20261005-r4/infer/prediction.json",
+      "sha256": "742d016424bda21f4e4ca6d918ba4f37c1082d71059b06bf9b9276b3885098d1",
+      "bytes": 1464
+    },
+    {
+      "path": "runs/hpc-smoke-20261005-r4/infer/results/hardware.json",
+      "sha256": "0dad7111add96a7895b2ab240ee871fd2d7a109eb1299310b0524937f1ac3ef0",
+      "bytes": 237
+    },
+    {
+      "path": "runs/hpc-smoke-20261005-r4/infer/results/vllm.log",
+      "sha256": "ffa7d0125277bc9dcf6bde696db876d45eceb9d0e243cf2b923c5d4e99e76f4e",
+      "bytes": 23547
+    },
+    {
+      "path": "runs/hpc-smoke-20261005-r4/infer/results/traces/trace_rich_3454.json",
+      "sha256": "e477283ff75df5763b21b38348370abc1d664dae0e8bcfa97bca5d004354d440",
+      "bytes": 55790
+    },
+    {
+      "path": "runs/hpc-smoke-20261005-r4/verify/empty/result.json",
+      "sha256": "6881af20508d8da42f4b8cf7ed2cda9307eb5fb2ac254150bbfce9e1d94bda74",
+      "bytes": 2113
+    },
+    {
+      "path": "runs/hpc-smoke-20261005-r4/verify/empty/tests.log",
+      "sha256": "28974c3f674ce3b7d13af91ff9c4cd3526d98ccf76990f370c9ec18bac2e24bf",
+      "bytes": 1461
+    },
+    {
+      "path": "runs/hpc-smoke-20261005-r4/verify/gold/result.json",
+      "sha256": "09ae9ae9774c0782497a5600acefb0db1f441bfb4ce13f32366672c805791471",
+      "bytes": 1545
+    },
+    {
+      "path": "runs/hpc-smoke-20261005-r4/verify/gold/tests.log",
+      "sha256": "8088271820283d1f219b2e735482c7cea5195ff9fbc2934b15f755d5b9a2b97d",
+      "bytes": 301
+    },
+    {
+      "path": "runs/hpc-smoke-20261005-r4/verify/agent/result.json",
+      "sha256": "3303e0a4bd0eb44b8cc7dd067fa8ad26f18a30aadd42f90b7212691bf209478a",
+      "bytes": 2174
+    },
+    {
+      "path": "runs/hpc-smoke-20261005-r4/verify/agent/tests.log",
+      "sha256": "a51a53f9f2f11c3d244ff989a542d894ef55057786240cabcd15d035223f56df",
+      "bytes": 301
+    },
+    {
+      "path": "runs/hpc-smoke-20261005-r4/competition-submission.json",
+      "sha256": "187e3bf09176a0aacbe50903ef47a505aff38d26dd58c9588ddc29fe44a95fe8",
+      "bytes": 1377
+    }
+  ]
+}

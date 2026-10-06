@@ -1,0 +1,15 @@
+# Six immediate "Kaggle Error" submissions in Gemma 4 Developer Agent
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/745766
+
+## 3532635 /eswincha TOPIC
+My Kaggle username is eswincha. On October 4, 2026, six submissions to gemma-4-developer-agent failed immediately with "Kaggle Error". Each shows:
+"A system error. Please try resubmitting to resolve the error and contact Kaggle Support if it persists."
+
+These were notebook Versions 3-8: five submissions of my V4 agent archive and one of V7. The latest attempt was Version 8 at 14:14 IST. No score was produced. The submission dialog still shows 1 submission remaining today.
+
+I rebuilt the V4 submission.zip from scratch. ZIP integrity, root-level agent.yaml, include paths, YAML configuration and compilation with the installed competition tool registry passed. V7 also passed a structural compilation check. These checks do not establish that hidden evaluation succeeds, and I have not identified the cause.
+
+Latest failed version:
+https://www.kaggle.com/code/eswincha/eswincha-gemma-agent-development-validation?scriptVersionId=355115263
+
+The notebook is private. Can you check whether these failures indicate a submission-processing issue, or point me to the next diagnostic step? I can provide the archive and audit if needed.

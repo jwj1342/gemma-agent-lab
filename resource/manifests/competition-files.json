@@ -1,0 +1,2628 @@
+{
+  "competition": "gemma-4-developer-agent",
+  "retrieved_at": "2026-10-05T03:31:01.254997+00:00",
+  "file_count": 524,
+  "total_bytes": 22416766904,
+  "files": [
+    {
+      "name": "HARNESS_README.md",
+      "bytes": 49356,
+      "created_at": "2026-09-25 18:36:31.703000"
+    },
+    {
+      "name": "docker/Dockerfile.public",
+      "bytes": 988,
+      "created_at": "2026-09-25 18:40:03.553000"
+    },
+    {
+      "name": "docker/Dockerfile.sandbox",
+      "bytes": 773,
+      "created_at": "2026-09-25 18:40:03.552000"
+    },
+    {
+      "name": "docker/imp.py",
+      "bytes": 834,
+      "created_at": "2026-09-25 18:40:03.567000"
+    },
+    {
+      "name": "docker/telnetlib.py",
+      "bytes": 23336,
+      "created_at": "2026-09-25 18:40:03.564000"
+    },
+    {
+      "name": "embeddings/fastapi_016ab760faba1813ba235d5582a014a58bd2f417.npz",
+      "bytes": 5556876,
+      "created_at": "2026-09-25 18:40:05.657000"
+    },
+    {
+      "name": "embeddings/fastapi_08924400c2c75533685148b029defcf6913f1def.npz",
+      "bytes": 5605067,
+      "created_at": "2026-09-25 18:40:10.023000"
+    },
+    {
+      "name": "embeddings/fastapi_08b09e5236e315b6f10265ed229f130d4befb4ea.npz",
+      "bytes": 4902251,
+      "created_at": "2026-09-25 18:40:05.413000"
+    },
+    {
+      "name": "embeddings/fastapi_0bdc3ca3732e3742e094bea2b320e9774659ac38.npz",
+      "bytes": 4151965,
+      "created_at": "2026-09-25 18:40:06.347000"
+    },
+    {
+      "name": "embeddings/fastapi_0dd42b746e17d33a74ea267a62eace9ccdccf345.npz",
+      "bytes": 5634862,
+      "created_at": "2026-09-25 18:40:11.177000"
+    },
+    {
+      "name": "embeddings/fastapi_16d75d90eb96976a57b94cc24e4018859cd54c4d.npz",
+      "bytes": 4136978,
+      "created_at": "2026-09-25 18:40:10.233000"
+    },
+    {
+      "name": "embeddings/fastapi_1b3bea8b6be2220cc1544653ea785d2134fcb35b.npz",
+      "bytes": 5943801,
+      "created_at": "2026-09-25 18:40:03.871000"
+    },
+    {
+      "name": "embeddings/fastapi_1e78a36b7310003f0ff634627d8a7bc53c6ccdee.npz",
+      "bytes": 5324217,
+      "created_at": "2026-09-25 18:40:07.977000"
+    },
+    {
+      "name": "embeddings/fastapi_1fcec88ad2df4541b6a81c4786c4d039dc745e1e.npz",
+      "bytes": 5764174,
+      "created_at": "2026-09-25 18:40:06.625000"
+    },
+    {
+      "name": "embeddings/fastapi_202b2d2f5f331db9102b5dbcef071a9e09bed10e.npz",
+      "bytes": 5677823,
+      "created_at": "2026-09-25 18:40:06.286000"
+    },
+    {
+      "name": "embeddings/fastapi_22b02e26f9e8c7e32bd8266e2b0ebe8bb3a0db2b.npz",
+      "bytes": 5520986,
+      "created_at": "2026-09-25 18:40:09.120000"
+    },
+    {
+      "name": "embeddings/fastapi_27c0f7e75fc0ce26ca75295d455eb36f0ca033d3.npz",
+      "bytes": 4233984,
+      "created_at": "2026-09-25 18:40:10.362000"
+    },
+    {
+      "name": "embeddings/fastapi_2b212ddd7604891d42e2ffbafe764c334230bdb7.npz",
+      "bytes": 5505596,
+      "created_at": "2026-09-25 18:40:11.427000"
+    },
+    {
+      "name": "embeddings/fastapi_2cf04ee30db9df2db04a5b1e0d2c625dfbf1a211.npz",
+      "bytes": 4632223,
+      "created_at": "2026-09-25 18:40:10.738000"
+    },
+    {
+      "name": "embeddings/fastapi_2f9c914d440e99fe8b62646b51e4d24c5bcd858b.npz",
+      "bytes": 5383400,
+      "created_at": "2026-09-25 18:40:11.101000"
+    },
+    {
+      "name": "embeddings/fastapi_3b4b5ab8c819dce27fbaf0aa0a9c74b7f3255ec0.npz",
+      "bytes": 4780937,
+      "created_at": "2026-09-25 18:40:09.341000"
+    },
+    {
+      "name": "embeddings/fastapi_3c54a8f07b70cdd40e3d81ea319e9fcccd2481d2.npz",
+      "bytes": 4798947,
+      "created_at": "2026-09-25 18:40:12.043000"
+    },
+    {
+      "name": "embeddings/fastapi_3fe6522aaed4d36d6a38175a4a8137ee0fc62451.npz",
+      "bytes": 5774482,
+      "created_at": "2026-09-25 18:40:04.711000"
+    },
+    {
+      "name": "embeddings/fastapi_425a4c5bb1d1a8e00007e82e5188fc4d30585767.npz",
+      "bytes": 4636165,
+      "created_at": "2026-09-25 18:40:03.756000"
+    },
+    {
+      "name": "embeddings/fastapi_464c359bb03f7ba72330198cc9f44df36194837d.npz",
+      "bytes": 5615524,
+      "created_at": "2026-09-25 18:40:06.177000"
+    },
+    {
+      "name": "embeddings/fastapi_48d58ae3b6ef4ded5a4794618c00345667256d98.npz",
+      "bytes": 5438653,
+      "created_at": "2026-09-25 18:40:11.293000"
+    },
+    {
+      "name": "embeddings/fastapi_4976568fc7cb7501729d8f84d946cde1e91299cd.npz",
+      "bytes": 4813443,
+      "created_at": "2026-09-25 18:40:10.504000"
+    },
+    {
+      "name": "embeddings/fastapi_4a98a66778987648d2195155c9cbe0824d67b02a.npz",
+      "bytes": 5039660,
+      "created_at": "2026-09-25 18:40:12.547000"
+    },
+    {
+      "name": "embeddings/fastapi_5126e099bdda51f261fd5a101b5f914991d31897.npz",
+      "bytes": 4813238,
+      "created_at": "2026-09-25 18:40:04.406000"
+    },
+    {
+      "name": "embeddings/fastapi_516169428d2fa189d34318ebc469a082c49c1189.npz",
+      "bytes": 4902366,
+      "created_at": "2026-09-25 18:40:07.784000"
+    },
+    {
+      "name": "embeddings/fastapi_5265c4f5cb4d8fb4fb5015bccf1a6de8f3fc6044.npz",
+      "bytes": 4722236,
+      "created_at": "2026-09-25 18:40:08.538000"
+    },
+    {
+      "name": "embeddings/fastapi_54f8aeeb9a15e4d5a12401ec5549840966df0087.npz",
+      "bytes": 5636069,
+      "created_at": "2026-09-25 18:40:06.066000"
+    },
+    {
+      "name": "embeddings/fastapi_566e3157a5517784c741dbf36e39687af326fe90.npz",
+      "bytes": 4711131,
+      "created_at": "2026-09-25 18:40:04.255000"
+    },
+    {
+      "name": "embeddings/fastapi_5c1f87c56387a96dbdddb2b1c4ec9ba48dcebc4e.npz",
+      "bytes": 4137038,
+      "created_at": "2026-09-25 18:40:08.142000"
+    },
+    {
+      "name": "embeddings/fastapi_603df6e36f59cc4a3e189f506b8f36d1e816c3ac.npz",
+      "bytes": 4882416,
+      "created_at": "2026-09-25 18:40:09.956000"
+    },
+    {
+      "name": "embeddings/fastapi_60699f306b67dc1f4918ebea17f04d7a48cda645.npz",
+      "bytes": 5033312,
+      "created_at": "2026-09-25 18:40:05.484000"
+    },
+    {
+      "name": "embeddings/fastapi_63d7a2b9978258d13dfc22664e60fc2110d30e20.npz",
+      "bytes": 4747689,
+      "created_at": "2026-09-25 18:40:04.817000"
+    },
+    {
+      "name": "embeddings/fastapi_6513d4daa16a536d17743de6a292f49bd06388a4.npz",
+      "bytes": 5498524,
+      "created_at": "2026-09-25 18:40:07.634000"
+    },
+    {
+      "name": "embeddings/fastapi_6b53786f626db95a42fd0f66afd360bab161f4b1.npz",
+      "bytes": 5944975,
+      "created_at": "2026-09-25 18:40:12.294000"
+    },
+    {
+      "name": "embeddings/fastapi_6cf40df24d1d199fd25d034fc87fcae284fc23a2.npz",
+      "bytes": 4789751,
+      "created_at": "2026-09-25 18:40:04.301000"
+    },
+    {
+      "name": "embeddings/fastapi_6e49dc029541aaa896fa63c47647ccd3f066df67.npz",
+      "bytes": 4599208,
+      "created_at": "2026-09-25 18:40:05.734000"
+    },
+    {
+      "name": "embeddings/fastapi_6ee87478d821171139264cd9cd17cbd2232934ce.npz",
+      "bytes": 5507276,
+      "created_at": "2026-09-25 18:40:09.504000"
+    },
+    {
+      "name": "embeddings/fastapi_7132a690461c2367f22556eb87c2b5eb7d9cfb45.npz",
+      "bytes": 4621730,
+      "created_at": "2026-09-25 18:40:09.828000"
+    },
+    {
+      "name": "embeddings/fastapi_71a17b5932e38bcf798fcd05c5bb384e6d4db5bf.npz",
+      "bytes": 5023494,
+      "created_at": "2026-09-25 18:40:05.198000"
+    },
+    {
+      "name": "embeddings/fastapi_740ec2787b25e59f7aa9e3df1db09d4489c22718.npz",
+      "bytes": 4783377,
+      "created_at": "2026-09-25 18:40:06.482000"
+    },
+    {
+      "name": "embeddings/fastapi_811fa898752e7f5697733a2958ff79ad8dfb5276.npz",
+      "bytes": 4877106,
+      "created_at": "2026-09-25 18:40:08.708000"
+    },
+    {
+      "name": "embeddings/fastapi_861b22c40897a03d2d7e5926923d962121ed5e2e.npz",
+      "bytes": 4168617,
+      "created_at": "2026-09-25 18:40:07.796000"
+    },
+    {
+      "name": "embeddings/fastapi_8e50c55fd90c4433ddc9096ff439da9498a8314a.npz",
+      "bytes": 5647236,
+      "created_at": "2026-09-25 18:40:07.556000"
+    },
+    {
+      "name": "embeddings/fastapi_930b27e5fa32ce150ddcea61f0c913435ae71c83.npz",
+      "bytes": 4822061,
+      "created_at": "2026-09-25 18:40:11.595000"
+    },
+    {
+      "name": "embeddings/fastapi_94a1ee749e63591e6e275b726a66e07a25f6c407.npz",
+      "bytes": 5352567,
+      "created_at": "2026-09-25 18:40:07.107000"
+    },
+    {
+      "name": "embeddings/fastapi_972a967d5d3fa24d450637c36c6b7ad1f1d8c1b6.npz",
+      "bytes": 4695858,
+      "created_at": "2026-09-25 18:40:11.626000"
+    },
+    {
+      "name": "embeddings/fastapi_9a9c4ad5d06f5fe8ee6775a5aeaa2f83c854f263.npz",
+      "bytes": 5673752,
+      "created_at": "2026-09-25 18:40:09.641000"
+    },
+    {
+      "name": "embeddings/fastapi_a456e92a21d5b94a67d6d0fd070218df09444443.npz",
+      "bytes": 5605121,
+      "created_at": "2026-09-25 18:40:08.973000"
+    },
+    {
+      "name": "embeddings/fastapi_a7f2dbe976bf72703376f0cd04487bfc4a849f83.npz",
+      "bytes": 4158644,
+      "created_at": "2026-09-25 18:40:05.955000"
+    },
+    {
+      "name": "embeddings/fastapi_aee8e78078e8a7f2736d3cab7a1cb7197356951c.npz",
+      "bytes": 4828543,
+      "created_at": "2026-09-25 18:40:10.576000"
+    },
+    {
+      "name": "embeddings/fastapi_bc06e4296d588f39f38c7ac2fc96d3913c565962.npz",
+      "bytes": 5335920,
+      "created_at": "2026-09-25 18:40:10.976000"
+    },
+    {
+      "name": "embeddings/fastapi_c0836dc1b7f4ba91e9563c8c4ccd0ebe655bc914.npz",
+      "bytes": 5437394,
+      "created_at": "2026-09-25 18:40:07.287000"
+    },
+    {
+      "name": "embeddings/fastapi_c57ac7bdf3613798c94caceff562a41fa16d4a2d.npz",
+      "bytes": 4843839,
+      "created_at": "2026-09-25 18:40:12.470000"
+    },
+    {
+      "name": "embeddings/fastapi_c6487ed632056e450d844846a1b63be551a3cbc6.npz",
+      "bytes": 4745010,
+      "created_at": "2026-09-25 18:40:05.080000"
+    },
+    {
+      "name": "embeddings/fastapi_cb83b83dcf78eab4ea17d504db5abcda705fbdc4.npz",
+      "bytes": 5517153,
+      "created_at": "2026-09-25 18:40:07.426000"
+    },
+    {
+      "name": "embeddings/fastapi_cd31576d5704b6aef1bdadc43770238cd88aad2b.npz",
+      "bytes": 5647403,
+      "created_at": "2026-09-25 18:40:11.489000"
+    },
+    {
+      "name": "embeddings/fastapi_cff2236dacb7aedcaf2d2de0873cfbc9bb2b897a.npz",
+      "bytes": 4820869,
+      "created_at": "2026-09-25 18:40:06.782000"
+    },
+    {
+      "name": "embeddings/fastapi_d2c17b603d2f986d5f3800d3bf24acba8e1f485b.npz",
+      "bytes": 5308669,
+      "created_at": "2026-09-25 18:40:11.833000"
+    },
+    {
+      "name": "embeddings/fastapi_e2354a0a063f2fcb890ec568f1a98e136a39fd25.npz",
+      "bytes": 4722407,
+      "created_at": "2026-09-25 18:40:05.878000"
+    },
+    {
+      "name": "embeddings/fastapi_e94028ab60d18080810910352bc9129e8046c92d.npz",
+      "bytes": 5648696,
+      "created_at": "2026-09-25 18:40:12.170000"
+    },
+    {
+      "name": "embeddings/fastapi_eacbce24c9d299c6a28110d9fc8ac50f53cddb08.npz",
+      "bytes": 5605060,
+      "created_at": "2026-09-25 18:40:12.882000"
+    },
+    {
+      "name": "embeddings/fastapi_eaf611f9ee56de4f16c837d4f487a4b9fca507c4.npz",
+      "bytes": 4706085,
+      "created_at": "2026-09-25 18:40:06.942000"
+    },
+    {
+      "name": "embeddings/fastapi_eb1d50479ba0ac873e4ffa08a824b1d822ca3a17.npz",
+      "bytes": 4887682,
+      "created_at": "2026-09-25 18:40:12.736000"
+    },
+    {
+      "name": "embeddings/fastapi_ee22a4b8ca46dcce26c8c183afc4992a888d8be2.npz",
+      "bytes": 5526374,
+      "created_at": "2026-09-25 18:40:12.425000"
+    },
+    {
+      "name": "embeddings/fastapi_eead41bf4cf8587b4d86091dd3eabbb85796e717.npz",
+      "bytes": 4804220,
+      "created_at": "2026-09-25 18:40:12.656000"
+    },
+    {
+      "name": "embeddings/fastapi_f1d750fddad90e2faad6c3cc5c85c7687b787e89.npz",
+      "bytes": 5704586,
+      "created_at": "2026-09-25 18:40:04.901000"
+    },
+    {
+      "name": "embeddings/fastapi_f2687dc1bb01f4cb62eee90e656b61c38c2aaf6a.npz",
+      "bytes": 5533418,
+      "created_at": "2026-09-25 18:40:07.188000"
+    },
+    {
+      "name": "embeddings/httpx_4acf5c2c37714cc63b5cf71b3e284fca83c90311.npz",
+      "bytes": 900710,
+      "created_at": "2026-09-25 18:40:08.271000"
+    },
+    {
+      "name": "embeddings/requests_0b401c76b6e80a4eecf3c690085b2553f6e261ca.npz",
+      "bytes": 939693,
+      "created_at": "2026-09-25 18:40:08.280000"
+    },
+    {
+      "name": "embeddings/requests_0b4d494192de489701d3a2e32acef8fb5d3f042e.npz",
+      "bytes": 885713,
+      "created_at": "2026-09-25 18:40:08.566000"
+    },
+    {
+      "name": "embeddings/requests_0e322af87745eff34caffe4df68456ebc20d9068.npz",
+      "bytes": 910058,
+      "created_at": "2026-09-25 18:40:08.528000"
+    },
+    {
+      "name": "embeddings/requests_1b40fdd004bfc8ba5301bcf8a6908264e9b6b877.npz",
+      "bytes": 912884,
+      "created_at": "2026-09-25 18:40:04.579000"
+    },
+    {
+      "name": "embeddings/requests_382fc2c0c6c0ef0874bc65bc1175f97c073e5086.npz",
+      "bytes": 889584,
+      "created_at": "2026-09-25 18:40:08.337000"
+    },
+    {
+      "name": "embeddings/requests_6360477c52303c9445b45fa8744b02d05a2f0905.npz",
+      "bytes": 914222,
+      "created_at": "2026-09-25 18:40:04.912000"
+    },
+    {
+      "name": "embeddings/requests_661970d171d9c3e12e4c789c4768db647d8c4da0.npz",
+      "bytes": 944710,
+      "created_at": "2026-09-25 18:40:10.372000"
+    },
+    {
+      "name": "embeddings/requests_6f205ff422bccd5e4c4fc0b64c5f3e7df5181db6.npz",
+      "bytes": 945985,
+      "created_at": "2026-09-25 18:40:05.180000"
+    },
+    {
+      "name": "embeddings/requests_7407309c8a8a73aa2f4337184025d440bbedab7a.npz",
+      "bytes": 914151,
+      "created_at": "2026-09-25 18:40:03.985000"
+    },
+    {
+      "name": "embeddings/requests_7a13c041dbef42f9f3feb14110f02626f6892e9a.npz",
+      "bytes": 886984,
+      "created_at": "2026-09-25 18:40:12.416000"
+    },
+    {
+      "name": "embeddings/requests_b684dcb9bbf3aa557d1238e72062c4a29737dd1c.npz",
+      "bytes": 938543,
+      "created_at": "2026-09-25 18:40:11.051000"
+    },
+    {
+      "name": "embeddings/requests_cbce031327be4f1b4b5fd041ff4dcaa8efa2ce53.npz",
+      "bytes": 914234,
+      "created_at": "2026-09-25 18:40:04.362000"
+    },
+    {
+      "name": "embeddings/rich_01b85ac116c4635b6ddb8b488be8254be6df2a84.npz",
+      "bytes": 2365562,
+      "created_at": "2026-09-25 18:40:08.253000"
+    },
+    {
+      "name": "embeddings/rich_05ff970926cbd0b5d0acb6fc18cdbd1fc971e582.npz",
+      "bytes": 2465207,
+      "created_at": "2026-09-25 18:40:12.562000"
+    },
+    {
+      "name": "embeddings/rich_0ba607dc080c9f102b5ae5346bcdb70d6e9c969d.npz",
+      "bytes": 2406501,
+      "created_at": "2026-09-25 18:40:04.009000"
+    },
+    {
+      "name": "embeddings/rich_0c8bb032ad3b54a32fdb8a43f5ab457c8cd6dcb1.npz",
+      "bytes": 2366723,
+      "created_at": "2026-09-25 18:40:07.470000"
+    },
+    {
+      "name": "embeddings/rich_0f2f51b872d14588de3a65968f5cdde6fb5694a3.npz",
+      "bytes": 2421010,
+      "created_at": "2026-09-25 18:40:08.074000"
+    },
+    {
+      "name": "embeddings/rich_19c67b9a3479841e9133bea94607c89ee931d3fc.npz",
+      "bytes": 2483792,
+      "created_at": "2026-09-25 18:40:03.910000"
+    },
+    {
+      "name": "embeddings/rich_1ad6f73a4d1d3b40ac3f879feccfaad66412bd1d.npz",
+      "bytes": 2375068,
+      "created_at": "2026-09-25 18:40:08.173000"
+    },
+    {
+      "name": "embeddings/rich_1d402e0c59f8765e420a5a4440eb2fca7465d1ae.npz",
+      "bytes": 2472802,
+      "created_at": "2026-09-25 18:40:06.793000"
+    },
+    {
+      "name": "embeddings/rich_1fc7cb210ae52eb099df39818ddb9569e5b14c7b.npz",
+      "bytes": 2476239,
+      "created_at": "2026-09-25 18:40:10.791000"
+    },
+    {
+      "name": "embeddings/rich_27701029082052c6541031b6f139097230253900.npz",
+      "bytes": 2475317,
+      "created_at": "2026-09-25 18:40:09.157000"
+    },
+    {
+      "name": "embeddings/rich_2809954800af15b4027364cebf82390fe23dc194.npz",
+      "bytes": 2431034,
+      "created_at": "2026-09-25 18:40:08.531000"
+    },
+    {
+      "name": "embeddings/rich_2b5d648b2c62960deb6439f4204ed8fa6eb3cf7b.npz",
+      "bytes": 2421189,
+      "created_at": "2026-09-25 18:40:12.087000"
+    },
+    {
+      "name": "embeddings/rich_368e8ad77c95a6bef8f9d332039091d1417296bc.npz",
+      "bytes": 2364221,
+      "created_at": "2026-09-25 18:40:05.767000"
+    },
+    {
+      "name": "embeddings/rich_36fe3f7ca9becca4777861d5e6e625f5a4a37545.npz",
+      "bytes": 2471549,
+      "created_at": "2026-09-25 18:40:12.285000"
+    },
+    {
+      "name": "embeddings/rich_3b70db5a2997de191f7db3e422dbe4da35ca1c95.npz",
+      "bytes": 2433518,
+      "created_at": "2026-09-25 18:40:11.892000"
+    },
+    {
+      "name": "embeddings/rich_4101991898ee7a09fe1706daca24af5e1e054862.npz",
+      "bytes": 2414133,
+      "created_at": "2026-09-25 18:40:11.750000"
+    },
+    {
+      "name": "embeddings/rich_49117ced6648a432d85951f72dce777038f6ce09.npz",
+      "bytes": 2432379,
+      "created_at": "2026-09-25 18:40:06.810000"
+    },
+    {
+      "name": "embeddings/rich_4c5d305bb902ce97011666ada19e48d0b27b49e1.npz",
+      "bytes": 2398817,
+      "created_at": "2026-09-25 18:40:12.924000"
+    },
+    {
+      "name": "embeddings/rich_4d6d631a3d2deddf8405522d4b8c976a6d35726c.npz",
+      "bytes": 2440903,
+      "created_at": "2026-09-25 18:40:05.734000"
+    },
+    {
+      "name": "embeddings/rich_53757bc234cf18977cade41a5b64f3abaccb0b85.npz",
+      "bytes": 2441057,
+      "created_at": "2026-09-25 18:40:08.431000"
+    },
+    {
+      "name": "embeddings/rich_577def22dd83b999c5937cb2bf2ed49600943325.npz",
+      "bytes": 2388887,
+      "created_at": "2026-09-25 18:40:08.355000"
+    },
+    {
+      "name": "embeddings/rich_58ac15120fe254886c10d6253667733c83604cb4.npz",
+      "bytes": 2478788,
+      "created_at": "2026-09-25 18:40:06.663000"
+    },
+    {
+      "name": "embeddings/rich_5ba9cb56e68dcdf2db50c214d8f1412c8a50761b.npz",
+      "bytes": 2419956,
+      "created_at": "2026-09-25 18:40:10.053000"
+    },
+    {
+      "name": "embeddings/rich_610fd75c433c3dfcd9c296e8b91363979127b9fa.npz",
+      "bytes": 2394962,
+      "created_at": "2026-09-25 18:40:11.925000"
+    },
+    {
+      "name": "embeddings/rich_66074922edabeac684434b4d87ee994fb97b0627.npz",
+      "bytes": 2421421,
+      "created_at": "2026-09-25 18:40:04.249000"
+    },
+    {
+      "name": "embeddings/rich_6764b24739b580c0c32ff5ef0b971ed4cfcf4f75.npz",
+      "bytes": 2455282,
+      "created_at": "2026-09-25 18:40:08.223000"
+    },
+    {
+      "name": "embeddings/rich_720800e6930d85ad027b1e9bd0cbb96b5e994ce3.npz",
+      "bytes": 2375310,
+      "created_at": "2026-09-25 18:40:04.086000"
+    },
+    {
+      "name": "embeddings/rich_7a168a27c5097805b3bafa495f35e3955004ff4a.npz",
+      "bytes": 2378926,
+      "created_at": "2026-09-25 18:40:03.943000"
+    },
+    {
+      "name": "embeddings/rich_7d36119f8378b36129502c3281a7faffef837e02.npz",
+      "bytes": 2438357,
+      "created_at": "2026-09-25 18:40:06.971000"
+    },
+    {
+      "name": "embeddings/rich_8a616de8e25db3c93abaaa220c493d80878de69d.npz",
+      "bytes": 2366606,
+      "created_at": "2026-09-25 18:40:09.768000"
+    },
+    {
+      "name": "embeddings/rich_96dd4b60e3a7c647c43a85ad375afa690b3bb85b.npz",
+      "bytes": 2457774,
+      "created_at": "2026-09-25 18:40:06.395000"
+    },
+    {
+      "name": "embeddings/rich_9cb198944f8184df92217efc8b20d3fffa4b4fa0.npz",
+      "bytes": 2477407,
+      "created_at": "2026-09-25 18:40:05.098000"
+    },
+    {
+      "name": "embeddings/rich_9ec419154102acce7363e3958bec6c261864d7fb.npz",
+      "bytes": 2409971,
+      "created_at": "2026-09-25 18:40:12.922000"
+    },
+    {
+      "name": "embeddings/rich_9f620dc50c0008c35e9f8493f198e6e593574a70.npz",
+      "bytes": 2378908,
+      "created_at": "2026-09-25 18:40:08.751000"
+    },
+    {
+      "name": "embeddings/rich_aca9467ec6a482b3bed1ba7d2e3de72271c5f817.npz",
+      "bytes": 2359068,
+      "created_at": "2026-09-25 18:40:05.291000"
+    },
+    {
+      "name": "embeddings/rich_ae15db600976a7999d21653002f338d0761b180c.npz",
+      "bytes": 2401617,
+      "created_at": "2026-09-25 18:40:08.067000"
+    },
+    {
+      "name": "embeddings/rich_b6f2f7aa5b27f612f391cd28212aff51ad0d42d1.npz",
+      "bytes": 2407541,
+      "created_at": "2026-09-25 18:40:10.354000"
+    },
+    {
+      "name": "embeddings/rich_c478588f3c228a4e86741a057c42b452d7bc6bce.npz",
+      "bytes": 2405293,
+      "created_at": "2026-09-25 18:40:12.760000"
+    },
+    {
+      "name": "embeddings/rich_c595fa95068dd2c5095d25446b2f0571bc0b3995.npz",
+      "bytes": 2470157,
+      "created_at": "2026-09-25 18:40:06.840000"
+    },
+    {
+      "name": "embeddings/rich_d0de442c08df8793c5ff36d9ad322ca5c47fc38c.npz",
+      "bytes": 2411369,
+      "created_at": "2026-09-25 18:40:07.822000"
+    },
+    {
+      "name": "embeddings/rich_e1e6d745f670ff3df6b8f47377c0a4006cb74066.npz",
+      "bytes": 2400238,
+      "created_at": "2026-09-25 18:40:11.689000"
+    },
+    {
+      "name": "embeddings/rich_e2a982d5ea747f0deb7f78e8eaa5b4be7d9194cf.npz",
+      "bytes": 2406467,
+      "created_at": "2026-09-25 18:40:04.941000"
+    },
+    {
+      "name": "embeddings/rich_e76f3c3ea78481342e21a7b3328075462ab69c2b.npz",
+      "bytes": 2379075,
+      "created_at": "2026-09-25 18:40:04.729000"
+    },
+    {
+      "name": "embeddings/rich_edc6b0a39b6df1c0e26d409bb5c5eda7149b2de6.npz",
+      "bytes": 2422339,
+      "created_at": "2026-09-25 18:40:04.691000"
+    },
+    {
+      "name": "embeddings/rich_fc41075a3206d2a5fd846c6f41c4d2becab814fa.npz",
+      "bytes": 2476322,
+      "created_at": "2026-09-25 18:40:03.687000"
+    },
+    {
+      "name": "embeddings/rich_fde5d6eee3b0437eaecdcbf6f8b11aeab3a5d503.npz",
+      "bytes": 2400077,
+      "created_at": "2026-09-25 18:40:05.275000"
+    },
+    {
+      "name": "embeddings/rich_fe55a131c2780fa856464ad04d7d6dc8a1079b72.npz",
+      "bytes": 2459344,
+      "created_at": "2026-09-25 18:40:04.441000"
+    },
+    {
+      "name": "graphs/fastapi_016ab760faba1813ba235d5582a014a58bd2f417.json",
+      "bytes": 4989713,
+      "created_at": "2026-09-25 18:40:02.826000"
+    },
+    {
+      "name": "graphs/fastapi_08924400c2c75533685148b029defcf6913f1def.json",
+      "bytes": 4666874,
+      "created_at": "2026-09-25 18:39:58.721000"
+    },
+    {
+      "name": "graphs/fastapi_08b09e5236e315b6f10265ed229f130d4befb4ea.json",
+      "bytes": 4419006,
+      "created_at": "2026-09-25 18:39:58.126000"
+    },
+    {
+      "name": "graphs/fastapi_0bdc3ca3732e3742e094bea2b320e9774659ac38.json",
+      "bytes": 3784903,
+      "created_at": "2026-09-25 18:40:01.176000"
+    },
+    {
+      "name": "graphs/fastapi_0dd42b746e17d33a74ea267a62eace9ccdccf345.json",
+      "bytes": 4726946,
+      "created_at": "2026-09-25 18:40:03.605000"
+    },
+    {
+      "name": "graphs/fastapi_16d75d90eb96976a57b94cc24e4018859cd54c4d.json",
+      "bytes": 3776619,
+      "created_at": "2026-09-25 18:40:01.249000"
+    },
+    {
+      "name": "graphs/fastapi_1b3bea8b6be2220cc1544653ea785d2134fcb35b.json",
+      "bytes": 5168721,
+      "created_at": "2026-09-25 18:40:00.546000"
+    },
+    {
+      "name": "graphs/fastapi_1e78a36b7310003f0ff634627d8a7bc53c6ccdee.json",
+      "bytes": 4807863,
+      "created_at": "2026-09-25 18:40:01.141000"
+    },
+    {
+      "name": "graphs/fastapi_1fcec88ad2df4541b6a81c4786c4d039dc745e1e.json",
+      "bytes": 4854586,
+      "created_at": "2026-09-25 18:39:59.689000"
+    },
+    {
+      "name": "graphs/fastapi_202b2d2f5f331db9102b5dbcef071a9e09bed10e.json",
+      "bytes": 5101182,
+      "created_at": "2026-09-25 18:40:01.848000"
+    },
+    {
+      "name": "graphs/fastapi_22b02e26f9e8c7e32bd8266e2b0ebe8bb3a0db2b.json",
+      "bytes": 4957460,
+      "created_at": "2026-09-25 18:40:00.105000"
+    },
+    {
+      "name": "graphs/fastapi_27c0f7e75fc0ce26ca75295d455eb36f0ca033d3.json",
+      "bytes": 3822801,
+      "created_at": "2026-09-25 18:40:01.448000"
+    },
+    {
+      "name": "graphs/fastapi_2b212ddd7604891d42e2ffbafe764c334230bdb7.json",
+      "bytes": 4750556,
+      "created_at": "2026-09-25 18:40:02.486000"
+    },
+    {
+      "name": "graphs/fastapi_2cf04ee30db9df2db04a5b1e0d2c625dfbf1a211.json",
+      "bytes": 4275565,
+      "created_at": "2026-09-25 18:39:58.479000"
+    },
+    {
+      "name": "graphs/fastapi_2f9c914d440e99fe8b62646b51e4d24c5bcd858b.json",
+      "bytes": 4842674,
+      "created_at": "2026-09-25 18:40:00.447000"
+    },
+    {
+      "name": "graphs/fastapi_3b4b5ab8c819dce27fbaf0aa0a9c74b7f3255ec0.json",
+      "bytes": 4353280,
+      "created_at": "2026-09-25 18:40:00.502000"
+    },
+    {
+      "name": "graphs/fastapi_3c54a8f07b70cdd40e3d81ea319e9fcccd2481d2.json",
+      "bytes": 4359700,
+      "created_at": "2026-09-25 18:40:01.989000"
+    },
+    {
+      "name": "graphs/fastapi_3fe6522aaed4d36d6a38175a4a8137ee0fc62451.json",
+      "bytes": 4865822,
+      "created_at": "2026-09-25 18:40:00.110000"
+    },
+    {
+      "name": "graphs/fastapi_425a4c5bb1d1a8e00007e82e5188fc4d30585767.json",
+      "bytes": 4277439,
+      "created_at": "2026-09-25 18:39:58.853000"
+    },
+    {
+      "name": "graphs/fastapi_464c359bb03f7ba72330198cc9f44df36194837d.json",
+      "bytes": 4715159,
+      "created_at": "2026-09-25 18:40:02.028000"
+    },
+    {
+      "name": "graphs/fastapi_48d58ae3b6ef4ded5a4794618c00345667256d98.json",
+      "bytes": 4886755,
+      "created_at": "2026-09-25 18:39:59.421000"
+    },
+    {
+      "name": "graphs/fastapi_4976568fc7cb7501729d8f84d946cde1e91299cd.json",
+      "bytes": 4367941,
+      "created_at": "2026-09-25 18:40:01.024000"
+    },
+    {
+      "name": "graphs/fastapi_4a98a66778987648d2195155c9cbe0824d67b02a.json",
+      "bytes": 4503528,
+      "created_at": "2026-09-25 18:39:58.752000"
+    },
+    {
+      "name": "graphs/fastapi_5126e099bdda51f261fd5a101b5f914991d31897.json",
+      "bytes": 4367465,
+      "created_at": "2026-09-25 18:40:02.410000"
+    },
+    {
+      "name": "graphs/fastapi_516169428d2fa189d34318ebc469a082c49c1189.json",
+      "bytes": 4418832,
+      "created_at": "2026-09-25 18:39:59.456000"
+    },
+    {
+      "name": "graphs/fastapi_5265c4f5cb4d8fb4fb5015bccf1a6de8f3fc6044.json",
+      "bytes": 4320639,
+      "created_at": "2026-09-25 18:40:00.693000"
+    },
+    {
+      "name": "graphs/fastapi_54f8aeeb9a15e4d5a12401ec5549840966df0087.json",
+      "bytes": 4727949,
+      "created_at": "2026-09-25 18:39:59.893000"
+    },
+    {
+      "name": "graphs/fastapi_566e3157a5517784c741dbf36e39687af326fe90.json",
+      "bytes": 4313697,
+      "created_at": "2026-09-25 18:40:00.983000"
+    },
+    {
+      "name": "graphs/fastapi_5c1f87c56387a96dbdddb2b1c4ec9ba48dcebc4e.json",
+      "bytes": 3776559,
+      "created_at": "2026-09-25 18:40:03.049000"
+    },
+    {
+      "name": "graphs/fastapi_603df6e36f59cc4a3e189f506b8f36d1e816c3ac.json",
+      "bytes": 4396130,
+      "created_at": "2026-09-25 18:40:03.457000"
+    },
+    {
+      "name": "graphs/fastapi_60699f306b67dc1f4918ebea17f04d7a48cda645.json",
+      "bytes": 4499620,
+      "created_at": "2026-09-25 18:40:00.867000"
+    },
+    {
+      "name": "graphs/fastapi_63d7a2b9978258d13dfc22664e60fc2110d30e20.json",
+      "bytes": 4337018,
+      "created_at": "2026-09-25 18:40:00.266000"
+    },
+    {
+      "name": "graphs/fastapi_6513d4daa16a536d17743de6a292f49bd06388a4.json",
+      "bytes": 4740600,
+      "created_at": "2026-09-25 18:39:59.743000"
+    },
+    {
+      "name": "graphs/fastapi_6b53786f626db95a42fd0f66afd360bab161f4b1.json",
+      "bytes": 5176175,
+      "created_at": "2026-09-25 18:40:00.364000"
+    },
+    {
+      "name": "graphs/fastapi_6cf40df24d1d199fd25d034fc87fcae284fc23a2.json",
+      "bytes": 4355704,
+      "created_at": "2026-09-25 18:40:03.253000"
+    },
+    {
+      "name": "graphs/fastapi_6e49dc029541aaa896fa63c47647ccd3f066df67.json",
+      "bytes": 4259866,
+      "created_at": "2026-09-25 18:39:59.026000"
+    },
+    {
+      "name": "graphs/fastapi_6ee87478d821171139264cd9cd17cbd2232934ce.json",
+      "bytes": 4952123,
+      "created_at": "2026-09-25 18:39:58.623000"
+    },
+    {
+      "name": "graphs/fastapi_7132a690461c2367f22556eb87c2b5eb7d9cfb45.json",
+      "bytes": 4266237,
+      "created_at": "2026-09-25 18:39:58.396000"
+    },
+    {
+      "name": "graphs/fastapi_71a17b5932e38bcf798fcd05c5bb384e6d4db5bf.json",
+      "bytes": 4491732,
+      "created_at": "2026-09-25 18:39:59.516000"
+    },
+    {
+      "name": "graphs/fastapi_740ec2787b25e59f7aa9e3df1db09d4489c22718.json",
+      "bytes": 4354003,
+      "created_at": "2026-09-25 18:39:58.556000"
+    },
+    {
+      "name": "graphs/fastapi_811fa898752e7f5697733a2958ff79ad8dfb5276.json",
+      "bytes": 4393596,
+      "created_at": "2026-09-25 18:40:00.225000"
+    },
+    {
+      "name": "graphs/fastapi_861b22c40897a03d2d7e5926923d962121ed5e2e.json",
+      "bytes": 3790752,
+      "created_at": "2026-09-25 18:39:59.760000"
+    },
+    {
+      "name": "graphs/fastapi_8e50c55fd90c4433ddc9096ff439da9498a8314a.json",
+      "bytes": 4731426,
+      "created_at": "2026-09-25 18:40:03.210000"
+    },
+    {
+      "name": "graphs/fastapi_930b27e5fa32ce150ddcea61f0c913435ae71c83.json",
+      "bytes": 4371605,
+      "created_at": "2026-09-25 18:40:03.020000"
+    },
+    {
+      "name": "graphs/fastapi_94a1ee749e63591e6e275b726a66e07a25f6c407.json",
+      "bytes": 4827245,
+      "created_at": "2026-09-25 18:39:59.374000"
+    },
+    {
+      "name": "graphs/fastapi_972a967d5d3fa24d450637c36c6b7ad1f1d8c1b6.json",
+      "bytes": 4306296,
+      "created_at": "2026-09-25 18:40:02.289000"
+    },
+    {
+      "name": "graphs/fastapi_9a9c4ad5d06f5fe8ee6775a5aeaa2f83c854f263.json",
+      "bytes": 5093134,
+      "created_at": "2026-09-25 18:39:59.633000"
+    },
+    {
+      "name": "graphs/fastapi_a456e92a21d5b94a67d6d0fd070218df09444443.json",
+      "bytes": 4666874,
+      "created_at": "2026-09-25 18:40:02.590000"
+    },
+    {
+      "name": "graphs/fastapi_a7f2dbe976bf72703376f0cd04487bfc4a849f83.json",
+      "bytes": 3787549,
+      "created_at": "2026-09-25 18:40:02.744000"
+    },
+    {
+      "name": "graphs/fastapi_aee8e78078e8a7f2736d3cab7a1cb7197356951c.json",
+      "bytes": 4374512,
+      "created_at": "2026-09-25 18:40:01.654000"
+    },
+    {
+      "name": "graphs/fastapi_bc06e4296d588f39f38c7ac2fc96d3913c565962.json",
+      "bytes": 4815103,
+      "created_at": "2026-09-25 18:40:03.308000"
+    },
+    {
+      "name": "graphs/fastapi_c0836dc1b7f4ba91e9563c8c4ccd0ebe655bc914.json",
+      "bytes": 4885251,
+      "created_at": "2026-09-25 18:40:00.815000"
+    },
+    {
+      "name": "graphs/fastapi_c57ac7bdf3613798c94caceff562a41fa16d4a2d.json",
+      "bytes": 4379401,
+      "created_at": "2026-09-25 18:40:01.495000"
+    },
+    {
+      "name": "graphs/fastapi_c6487ed632056e450d844846a1b63be551a3cbc6.json",
+      "bytes": 4336199,
+      "created_at": "2026-09-25 18:39:59.228000"
+    },
+    {
+      "name": "graphs/fastapi_cb83b83dcf78eab4ea17d504db5abcda705fbdc4.json",
+      "bytes": 4955411,
+      "created_at": "2026-09-25 18:39:59.196000"
+    },
+    {
+      "name": "graphs/fastapi_cd31576d5704b6aef1bdadc43770238cd88aad2b.json",
+      "bytes": 4884844,
+      "created_at": "2026-09-25 18:40:03.509000"
+    },
+    {
+      "name": "graphs/fastapi_cff2236dacb7aedcaf2d2de0873cfbc9bb2b897a.json",
+      "bytes": 4370047,
+      "created_at": "2026-09-25 18:39:58.985000"
+    },
+    {
+      "name": "graphs/fastapi_d2c17b603d2f986d5f3800d3bf24acba8e1f485b.json",
+      "bytes": 4792664,
+      "created_at": "2026-09-25 18:39:58.167000"
+    },
+    {
+      "name": "graphs/fastapi_e2354a0a063f2fcb890ec568f1a98e136a39fd25.json",
+      "bytes": 4320639,
+      "created_at": "2026-09-25 18:40:01.647000"
+    },
+    {
+      "name": "graphs/fastapi_e94028ab60d18080810910352bc9129e8046c92d.json",
+      "bytes": 4887384,
+      "created_at": "2026-09-25 18:39:58.539000"
+    },
+    {
+      "name": "graphs/fastapi_eacbce24c9d299c6a28110d9fc8ac50f53cddb08.json",
+      "bytes": 4666769,
+      "created_at": "2026-09-25 18:40:01.427000"
+    },
+    {
+      "name": "graphs/fastapi_eaf611f9ee56de4f16c837d4f487a4b9fca507c4.json",
+      "bytes": 4310615,
+      "created_at": "2026-09-25 18:39:59.109000"
+    },
+    {
+      "name": "graphs/fastapi_eb1d50479ba0ac873e4ffa08a824b1d822ca3a17.json",
+      "bytes": 4401197,
+      "created_at": "2026-09-25 18:39:59.833000"
+    },
+    {
+      "name": "graphs/fastapi_ee22a4b8ca46dcce26c8c183afc4992a888d8be2.json",
+      "bytes": 4960351,
+      "created_at": "2026-09-25 18:40:00"
+    },
+    {
+      "name": "graphs/fastapi_eead41bf4cf8587b4d86091dd3eabbb85796e717.json",
+      "bytes": 4363789,
+      "created_at": "2026-09-25 18:39:59.102000"
+    },
+    {
+      "name": "graphs/fastapi_f1d750fddad90e2faad6c3cc5c85c7687b787e89.json",
+      "bytes": 5118738,
+      "created_at": "2026-09-25 18:39:58.793000"
+    },
+    {
+      "name": "graphs/fastapi_f2687dc1bb01f4cb62eee90e656b61c38c2aaf6a.json",
+      "bytes": 4603932,
+      "created_at": "2026-09-25 18:40:03.534000"
+    },
+    {
+      "name": "graphs/httpx_4acf5c2c37714cc63b5cf71b3e284fca83c90311.json",
+      "bytes": 591348,
+      "created_at": "2026-09-25 18:39:59.248000"
+    },
+    {
+      "name": "graphs/requests_0b401c76b6e80a4eecf3c690085b2553f6e261ca.json",
+      "bytes": 831049,
+      "created_at": "2026-09-25 18:40:01.542000"
+    },
+    {
+      "name": "graphs/requests_0b4d494192de489701d3a2e32acef8fb5d3f042e.json",
+      "bytes": 752260,
+      "created_at": "2026-09-25 18:40:02.018000"
+    },
+    {
+      "name": "graphs/requests_0e322af87745eff34caffe4df68456ebc20d9068.json",
+      "bytes": 788479,
+      "created_at": "2026-09-25 18:39:59.610000"
+    },
+    {
+      "name": "graphs/requests_1b40fdd004bfc8ba5301bcf8a6908264e9b6b877.json",
+      "bytes": 793126,
+      "created_at": "2026-09-25 18:40:02.301000"
+    },
+    {
+      "name": "graphs/requests_382fc2c0c6c0ef0874bc65bc1175f97c073e5086.json",
+      "bytes": 755380,
+      "created_at": "2026-09-25 18:39:58.582000"
+    },
+    {
+      "name": "graphs/requests_6360477c52303c9445b45fa8744b02d05a2f0905.json",
+      "bytes": 794350,
+      "created_at": "2026-09-25 18:40:00.452000"
+    },
+    {
+      "name": "graphs/requests_661970d171d9c3e12e4c789c4768db647d8c4da0.json",
+      "bytes": 833151,
+      "created_at": "2026-09-25 18:39:58.355000"
+    },
+    {
+      "name": "graphs/requests_6f205ff422bccd5e4c4fc0b64c5f3e7df5181db6.json",
+      "bytes": 833906,
+      "created_at": "2026-09-25 18:40:00.766000"
+    },
+    {
+      "name": "graphs/requests_7407309c8a8a73aa2f4337184025d440bbedab7a.json",
+      "bytes": 794300,
+      "created_at": "2026-09-25 18:39:59.043000"
+    },
+    {
+      "name": "graphs/requests_7a13c041dbef42f9f3feb14110f02626f6892e9a.json",
+      "bytes": 753363,
+      "created_at": "2026-09-25 18:39:59.130000"
+    },
+    {
+      "name": "graphs/requests_b684dcb9bbf3aa557d1238e72062c4a29737dd1c.json",
+      "bytes": 829720,
+      "created_at": "2026-09-25 18:40:02.804000"
+    },
+    {
+      "name": "graphs/requests_cbce031327be4f1b4b5fd041ff4dcaa8efa2ce53.json",
+      "bytes": 794350,
+      "created_at": "2026-09-25 18:40:01.531000"
+    },
+    {
+      "name": "graphs/rich_01b85ac116c4635b6ddb8b488be8254be6df2a84.json",
+      "bytes": 2220510,
+      "created_at": "2026-09-25 18:40:02.701000"
+    },
+    {
+      "name": "graphs/rich_05ff970926cbd0b5d0acb6fc18cdbd1fc971e582.json",
+      "bytes": 2343118,
+      "created_at": "2026-09-25 18:40:00.823000"
+    },
+    {
+      "name": "graphs/rich_0ba607dc080c9f102b5ae5346bcdb70d6e9c969d.json",
+      "bytes": 2267169,
+      "created_at": "2026-09-25 18:40:01.455000"
+    },
+    {
+      "name": "graphs/rich_0c8bb032ad3b54a32fdb8a43f5ab457c8cd6dcb1.json",
+      "bytes": 2221729,
+      "created_at": "2026-09-25 18:39:58.222000"
+    },
+    {
+      "name": "graphs/rich_0f2f51b872d14588de3a65968f5cdde6fb5694a3.json",
+      "bytes": 2286933,
+      "created_at": "2026-09-25 18:40:00.599000"
+    },
+    {
+      "name": "graphs/rich_19c67b9a3479841e9133bea94607c89ee931d3fc.json",
+      "bytes": 2357663,
+      "created_at": "2026-09-25 18:39:58.327000"
+    },
+    {
+      "name": "graphs/rich_1ad6f73a4d1d3b40ac3f879feccfaad66412bd1d.json",
+      "bytes": 2226461,
+      "created_at": "2026-09-25 18:39:59.887000"
+    },
+    {
+      "name": "graphs/rich_1d402e0c59f8765e420a5a4440eb2fca7465d1ae.json",
+      "bytes": 2346299,
+      "created_at": "2026-09-25 18:40:03.039000"
+    },
+    {
+      "name": "graphs/rich_1fc7cb210ae52eb099df39818ddb9569e5b14c7b.json",
+      "bytes": 2352777,
+      "created_at": "2026-09-25 18:39:59.418000"
+    },
+    {
+      "name": "graphs/rich_27701029082052c6541031b6f139097230253900.json",
+      "bytes": 2347771,
+      "created_at": "2026-09-25 18:40:02.885000"
+    },
+    {
+      "name": "graphs/rich_2809954800af15b4027364cebf82390fe23dc194.json",
+      "bytes": 2303228,
+      "created_at": "2026-09-25 18:40:01.231000"
+    },
+    {
+      "name": "graphs/rich_2b5d648b2c62960deb6439f4204ed8fa6eb3cf7b.json",
+      "bytes": 2287445,
+      "created_at": "2026-09-25 18:40:03.475000"
+    },
+    {
+      "name": "graphs/rich_368e8ad77c95a6bef8f9d332039091d1417296bc.json",
+      "bytes": 2218917,
+      "created_at": "2026-09-25 18:39:58.214000"
+    },
+    {
+      "name": "graphs/rich_36fe3f7ca9becca4777861d5e6e625f5a4a37545.json",
+      "bytes": 2345687,
+      "created_at": "2026-09-25 18:40:00.852000"
+    },
+    {
+      "name": "graphs/rich_3b70db5a2997de191f7db3e422dbe4da35ca1c95.json",
+      "bytes": 2307355,
+      "created_at": "2026-09-25 18:39:58.827000"
+    },
+    {
+      "name": "graphs/rich_4101991898ee7a09fe1706daca24af5e1e054862.json",
+      "bytes": 2275659,
+      "created_at": "2026-09-25 18:40:01.305000"
+    },
+    {
+      "name": "graphs/rich_49117ced6648a432d85951f72dce777038f6ce09.json",
+      "bytes": 2305624,
+      "created_at": "2026-09-25 18:40:01.126000"
+    },
+    {
+      "name": "graphs/rich_4c5d305bb902ce97011666ada19e48d0b27b49e1.json",
+      "bytes": 2258809,
+      "created_at": "2026-09-25 18:39:59.913000"
+    },
+    {
+      "name": "graphs/rich_4d6d631a3d2deddf8405522d4b8c976a6d35726c.json",
+      "bytes": 2315763,
+      "created_at": "2026-09-25 18:39:58.563000"
+    },
+    {
+      "name": "graphs/rich_53757bc234cf18977cade41a5b64f3abaccb0b85.json",
+      "bytes": 2315763,
+      "created_at": "2026-09-25 18:39:59.592000"
+    },
+    {
+      "name": "graphs/rich_577def22dd83b999c5937cb2bf2ed49600943325.json",
+      "bytes": 2244567,
+      "created_at": "2026-09-25 18:39:58.906000"
+    },
+    {
+      "name": "graphs/rich_58ac15120fe254886c10d6253667733c83604cb4.json",
+      "bytes": 2355072,
+      "created_at": "2026-09-25 18:40:00.641000"
+    },
+    {
+      "name": "graphs/rich_5ba9cb56e68dcdf2db50c214d8f1412c8a50761b.json",
+      "bytes": 2285212,
+      "created_at": "2026-09-25 18:40:01.671000"
+    },
+    {
+      "name": "graphs/rich_610fd75c433c3dfcd9c296e8b91363979127b9fa.json",
+      "bytes": 2253855,
+      "created_at": "2026-09-25 18:39:58.370000"
+    },
+    {
+      "name": "graphs/rich_66074922edabeac684434b4d87ee994fb97b0627.json",
+      "bytes": 2286862,
+      "created_at": "2026-09-25 18:39:58.974000"
+    },
+    {
+      "name": "graphs/rich_6764b24739b580c0c32ff5ef0b971ed4cfcf4f75.json",
+      "bytes": 2331267,
+      "created_at": "2026-09-25 18:39:58.225000"
+    },
+    {
+      "name": "graphs/rich_720800e6930d85ad027b1e9bd0cbb96b5e994ce3.json",
+      "bytes": 2226482,
+      "created_at": "2026-09-25 18:39:59.098000"
+    },
+    {
+      "name": "graphs/rich_7a168a27c5097805b3bafa495f35e3955004ff4a.json",
+      "bytes": 2234134,
+      "created_at": "2026-09-25 18:40:03.408000"
+    },
+    {
+      "name": "graphs/rich_7d36119f8378b36129502c3281a7faffef837e02.json",
+      "bytes": 2310559,
+      "created_at": "2026-09-25 18:40:00.364000"
+    },
+    {
+      "name": "graphs/rich_8a616de8e25db3c93abaaa220c493d80878de69d.json",
+      "bytes": 2221729,
+      "created_at": "2026-09-25 18:40:02.161000"
+    },
+    {
+      "name": "graphs/rich_96dd4b60e3a7c647c43a85ad375afa690b3bb85b.json",
+      "bytes": 2336058,
+      "created_at": "2026-09-25 18:39:58.158000"
+    },
+    {
+      "name": "graphs/rich_9cb198944f8184df92217efc8b20d3fffa4b4fa0.json",
+      "bytes": 2353568,
+      "created_at": "2026-09-25 18:40:02.075000"
+    },
+    {
+      "name": "graphs/rich_9ec419154102acce7363e3958bec6c261864d7fb.json",
+      "bytes": 2270863,
+      "created_at": "2026-09-25 18:40:00.144000"
+    },
+    {
+      "name": "graphs/rich_9f620dc50c0008c35e9f8493f198e6e593574a70.json",
+      "bytes": 2234046,
+      "created_at": "2026-09-25 18:40:00.319000"
+    },
+    {
+      "name": "graphs/rich_aca9467ec6a482b3bed1ba7d2e3de72271c5f817.json",
+      "bytes": 2214352,
+      "created_at": "2026-09-25 18:39:59.291000"
+    },
+    {
+      "name": "graphs/rich_ae15db600976a7999d21653002f338d0761b180c.json",
+      "bytes": 2262808,
+      "created_at": "2026-09-25 18:40:01.049000"
+    },
+    {
+      "name": "graphs/rich_b6f2f7aa5b27f612f391cd28212aff51ad0d42d1.json",
+      "bytes": 2269212,
+      "created_at": "2026-09-25 18:40:00.159000"
+    },
+    {
+      "name": "graphs/rich_c478588f3c228a4e86741a057c42b452d7bc6bce.json",
+      "bytes": 2265654,
+      "created_at": "2026-09-25 18:40:00.908000"
+    },
+    {
+      "name": "graphs/rich_c595fa95068dd2c5095d25446b2f0571bc0b3995.json",
+      "bytes": 2348444,
+      "created_at": "2026-09-25 18:39:58.513000"
+    },
+    {
+      "name": "graphs/rich_d0de442c08df8793c5ff36d9ad322ca5c47fc38c.json",
+      "bytes": 2271828,
+      "created_at": "2026-09-25 18:40:02.497000"
+    },
+    {
+      "name": "graphs/rich_e1e6d745f670ff3df6b8f47377c0a4006cb74066.json",
+      "bytes": 2261410,
+      "created_at": "2026-09-25 18:40:00.569000"
+    },
+    {
+      "name": "graphs/rich_e2a982d5ea747f0deb7f78e8eaa5b4be7d9194cf.json",
+      "bytes": 2267543,
+      "created_at": "2026-09-25 18:40:03.525000"
+    },
+    {
+      "name": "graphs/rich_e76f3c3ea78481342e21a7b3328075462ab69c2b.json",
+      "bytes": 2234134,
+      "created_at": "2026-09-25 18:40:02.092000"
+    },
+    {
+      "name": "graphs/rich_edc6b0a39b6df1c0e26d409bb5c5eda7149b2de6.json",
+      "bytes": 2288451,
+      "created_at": "2026-09-25 18:40:01.700000"
+    },
+    {
+      "name": "graphs/rich_fc41075a3206d2a5fd846c6f41c4d2becab814fa.json",
+      "bytes": 2349928,
+      "created_at": "2026-09-25 18:39:58.853000"
+    },
+    {
+      "name": "graphs/rich_fde5d6eee3b0437eaecdcbf6f8b11aeab3a5d503.json",
+      "bytes": 2260044,
+      "created_at": "2026-09-25 18:39:58.630000"
+    },
+    {
+      "name": "graphs/rich_fe55a131c2780fa856464ad04d7d6dc8a1079b72.json",
+      "bytes": 2337800,
+      "created_at": "2026-09-25 18:39:58.362000"
+    },
+    {
+      "name": "sample_submission/adapters/main_lora/adapter_config.json",
+      "bytes": 664,
+      "created_at": "2026-09-25 18:40:12.890000"
+    },
+    {
+      "name": "sample_submission/adapters/main_lora/adapter_model.safetensors",
+      "bytes": 217672,
+      "created_at": "2026-09-25 18:40:12.900000"
+    },
+    {
+      "name": "sample_submission/adapters/tool_lora/adapter_config.json",
+      "bytes": 664,
+      "created_at": "2026-09-25 18:40:12.906000"
+    },
+    {
+      "name": "sample_submission/adapters/tool_lora/adapter_model.safetensors",
+      "bytes": 217672,
+      "created_at": "2026-09-25 18:40:12.903000"
+    },
+    {
+      "name": "sample_submission/agent.yaml",
+      "bytes": 438,
+      "created_at": "2026-09-25 18:40:12.903000"
+    },
+    {
+      "name": "sample_submission/configs/sampling.yaml",
+      "bytes": 120,
+      "created_at": "2026-09-25 18:40:12.892000"
+    },
+    {
+      "name": "sample_submission/eval_config.yaml",
+      "bytes": 232,
+      "created_at": "2026-09-25 18:40:12.920000"
+    },
+    {
+      "name": "sample_submission/prompts/analyzer.md",
+      "bytes": 527,
+      "created_at": "2026-09-25 18:40:12.922000"
+    },
+    {
+      "name": "sample_submission/prompts/system.md",
+      "bytes": 3888,
+      "created_at": "2026-09-25 18:40:12.896000"
+    },
+    {
+      "name": "sample_submission/sub_agents/code_analyzer.yaml",
+      "bytes": 361,
+      "created_at": "2026-09-25 18:40:12.901000"
+    },
+    {
+      "name": "sandbox/setup.py",
+      "bytes": 13883,
+      "created_at": "2026-09-25 18:39:57.975000"
+    },
+    {
+      "name": "snapshots/fastapi_11194.tgz",
+      "bytes": 214241984,
+      "created_at": "2026-09-25 18:38:16.840000"
+    },
+    {
+      "name": "snapshots/fastapi_11355.tgz",
+      "bytes": 229097851,
+      "created_at": "2026-09-25 18:38:15.624000"
+    },
+    {
+      "name": "snapshots/fastapi_12942.tgz",
+      "bytes": 218214164,
+      "created_at": "2026-09-25 18:36:56.424000"
+    },
+    {
+      "name": "snapshots/fastapi_13207.tgz",
+      "bytes": 227913371,
+      "created_at": "2026-09-25 18:40:02.707000"
+    },
+    {
+      "name": "snapshots/fastapi_13537.tgz",
+      "bytes": 226662828,
+      "created_at": "2026-09-25 18:38:19.464000"
+    },
+    {
+      "name": "snapshots/fastapi_13713.tgz",
+      "bytes": 211447276,
+      "created_at": "2026-09-25 18:39:01.682000"
+    },
+    {
+      "name": "snapshots/fastapi_13786.tgz",
+      "bytes": 225016644,
+      "created_at": "2026-09-25 18:38:09.404000"
+    },
+    {
+      "name": "snapshots/fastapi_13920.tgz",
+      "bytes": 254969544,
+      "created_at": "2026-09-25 18:39:33.182000"
+    },
+    {
+      "name": "snapshots/fastapi_14077.tgz",
+      "bytes": 211008588,
+      "created_at": "2026-09-25 18:39:21.811000"
+    },
+    {
+      "name": "snapshots/fastapi_14099.tgz",
+      "bytes": 215392126,
+      "created_at": "2026-09-25 18:37:57.110000"
+    },
+    {
+      "name": "snapshots/fastapi_14186.tgz",
+      "bytes": 219855457,
+      "created_at": "2026-09-25 18:39:51.599000"
+    },
+    {
+      "name": "snapshots/fastapi_14246.tgz",
+      "bytes": 220889275,
+      "created_at": "2026-09-25 18:37:42.364000"
+    },
+    {
+      "name": "snapshots/fastapi_14258.tgz",
+      "bytes": 259958390,
+      "created_at": "2026-09-25 18:36:39.917000"
+    },
+    {
+      "name": "snapshots/fastapi_14262.tgz",
+      "bytes": 222274864,
+      "created_at": "2026-09-25 18:38:28.782000"
+    },
+    {
+      "name": "snapshots/fastapi_14266.tgz",
+      "bytes": 221646802,
+      "created_at": "2026-09-25 18:37:20.478000"
+    },
+    {
+      "name": "snapshots/fastapi_14297.tgz",
+      "bytes": 227517412,
+      "created_at": "2026-09-25 18:38:24.498000"
+    },
+    {
+      "name": "snapshots/fastapi_14301.tgz",
+      "bytes": 222669293,
+      "created_at": "2026-09-25 18:40:01.248000"
+    },
+    {
+      "name": "snapshots/fastapi_14303.tgz",
+      "bytes": 226787652,
+      "created_at": "2026-09-25 18:36:52.733000"
+    },
+    {
+      "name": "snapshots/fastapi_14306.tgz",
+      "bytes": 229743707,
+      "created_at": "2026-09-25 18:38:57.426000"
+    },
+    {
+      "name": "snapshots/fastapi_14349.tgz",
+      "bytes": 223856841,
+      "created_at": "2026-09-25 18:39:54.335000"
+    },
+    {
+      "name": "snapshots/fastapi_14356.tgz",
+      "bytes": 226792257,
+      "created_at": "2026-09-25 18:39:17.813000"
+    },
+    {
+      "name": "snapshots/fastapi_14360.tgz",
+      "bytes": 227632117,
+      "created_at": "2026-09-25 18:38:50.656000"
+    },
+    {
+      "name": "snapshots/fastapi_14361.tgz",
+      "bytes": 224901584,
+      "created_at": "2026-09-25 18:39:41.224000"
+    },
+    {
+      "name": "snapshots/fastapi_14371.tgz",
+      "bytes": 231949199,
+      "created_at": "2026-09-25 18:39:20.725000"
+    },
+    {
+      "name": "snapshots/fastapi_14372.tgz",
+      "bytes": 224505516,
+      "created_at": "2026-09-25 18:39:35.960000"
+    },
+    {
+      "name": "snapshots/fastapi_14419.tgz",
+      "bytes": 225512591,
+      "created_at": "2026-09-25 18:39:59.927000"
+    },
+    {
+      "name": "snapshots/fastapi_14430.tgz",
+      "bytes": 228424590,
+      "created_at": "2026-09-25 18:38:38.687000"
+    },
+    {
+      "name": "snapshots/fastapi_14448.tgz",
+      "bytes": 228973594,
+      "created_at": "2026-09-25 18:37:50.097000"
+    },
+    {
+      "name": "snapshots/fastapi_14455.tgz",
+      "bytes": 229232979,
+      "created_at": "2026-09-25 18:37:07.387000"
+    },
+    {
+      "name": "snapshots/fastapi_14458.tgz",
+      "bytes": 229629718,
+      "created_at": "2026-09-25 18:37:52.692000"
+    },
+    {
+      "name": "snapshots/fastapi_14459.tgz",
+      "bytes": 229365288,
+      "created_at": "2026-09-25 18:36:42.452000"
+    },
+    {
+      "name": "snapshots/fastapi_14463.tgz",
+      "bytes": 240910100,
+      "created_at": "2026-09-25 18:38:48.353000"
+    },
+    {
+      "name": "snapshots/fastapi_14479.tgz",
+      "bytes": 238286014,
+      "created_at": "2026-09-25 18:37:46.540000"
+    },
+    {
+      "name": "snapshots/fastapi_14482.tgz",
+      "bytes": 230406330,
+      "created_at": "2026-09-25 18:38:44.488000"
+    },
+    {
+      "name": "snapshots/fastapi_14485.tgz",
+      "bytes": 230519032,
+      "created_at": "2026-09-25 18:39:00.107000"
+    },
+    {
+      "name": "snapshots/fastapi_14487.tgz",
+      "bytes": 230764426,
+      "created_at": "2026-09-25 18:39:39.963000"
+    },
+    {
+      "name": "snapshots/fastapi_14492.tgz",
+      "bytes": 243895110,
+      "created_at": "2026-09-25 18:38:35.400000"
+    },
+    {
+      "name": "snapshots/fastapi_14512.tgz",
+      "bytes": 231808786,
+      "created_at": "2026-09-25 18:39:13.813000"
+    },
+    {
+      "name": "snapshots/fastapi_14583.tgz",
+      "bytes": 237596118,
+      "created_at": "2026-09-25 18:39:39.066000"
+    },
+    {
+      "name": "snapshots/fastapi_14605.tgz",
+      "bytes": 239213208,
+      "created_at": "2026-09-25 18:39:24.524000"
+    },
+    {
+      "name": "snapshots/fastapi_14609.tgz",
+      "bytes": 239496537,
+      "created_at": "2026-09-25 18:39:25.922000"
+    },
+    {
+      "name": "snapshots/fastapi_14616.tgz",
+      "bytes": 255373219,
+      "created_at": "2026-09-25 18:37:36.139000"
+    },
+    {
+      "name": "snapshots/fastapi_14786.tgz",
+      "bytes": 248914133,
+      "created_at": "2026-09-25 18:37:41.405000"
+    },
+    {
+      "name": "snapshots/fastapi_14791.tgz",
+      "bytes": 246206202,
+      "created_at": "2026-09-25 18:39:57.300000"
+    },
+    {
+      "name": "snapshots/fastapi_14794.tgz",
+      "bytes": 254845131,
+      "created_at": "2026-09-25 18:38:41.729000"
+    },
+    {
+      "name": "snapshots/fastapi_14851.tgz",
+      "bytes": 256304456,
+      "created_at": "2026-09-25 18:36:50.167000"
+    },
+    {
+      "name": "snapshots/fastapi_14873.tgz",
+      "bytes": 259451539,
+      "created_at": "2026-09-25 18:38:56.006000"
+    },
+    {
+      "name": "snapshots/fastapi_14953.tgz",
+      "bytes": 269768423,
+      "created_at": "2026-09-25 18:37:39.445000"
+    },
+    {
+      "name": "snapshots/fastapi_14962.tgz",
+      "bytes": 270901588,
+      "created_at": "2026-09-25 18:37:31.792000"
+    },
+    {
+      "name": "snapshots/fastapi_14964.tgz",
+      "bytes": 271065089,
+      "created_at": "2026-09-25 18:39:28.941000"
+    },
+    {
+      "name": "snapshots/fastapi_14978.tgz",
+      "bytes": 272975619,
+      "created_at": "2026-09-25 18:39:06.167000"
+    },
+    {
+      "name": "snapshots/fastapi_14986.tgz",
+      "bytes": 273518890,
+      "created_at": "2026-09-25 18:37:56.554000"
+    },
+    {
+      "name": "snapshots/fastapi_15023.tgz",
+      "bytes": 275792435,
+      "created_at": "2026-09-25 18:39:16.614000"
+    },
+    {
+      "name": "snapshots/fastapi_15030.tgz",
+      "bytes": 276171027,
+      "created_at": "2026-09-25 18:37:15.752000"
+    },
+    {
+      "name": "snapshots/fastapi_15280.tgz",
+      "bytes": 294245445,
+      "created_at": "2026-09-25 18:38:35.028000"
+    },
+    {
+      "name": "snapshots/fastapi_15588.tgz",
+      "bytes": 316036548,
+      "created_at": "2026-09-25 18:38:09.011000"
+    },
+    {
+      "name": "snapshots/fastapi_15589.tgz",
+      "bytes": 316167392,
+      "created_at": "2026-09-25 18:39:49.093000"
+    },
+    {
+      "name": "snapshots/fastapi_15661.tgz",
+      "bytes": 319678174,
+      "created_at": "2026-09-25 18:39:52.057000"
+    },
+    {
+      "name": "snapshots/fastapi_15745.tgz",
+      "bytes": 326518082,
+      "created_at": "2026-09-25 18:37:46.785000"
+    },
+    {
+      "name": "snapshots/fastapi_15763.tgz",
+      "bytes": 326855675,
+      "created_at": "2026-09-25 18:37:06.529000"
+    },
+    {
+      "name": "snapshots/fastapi_15785.tgz",
+      "bytes": 333340626,
+      "created_at": "2026-09-25 18:39:12.709000"
+    },
+    {
+      "name": "snapshots/fastapi_15800.tgz",
+      "bytes": 334879209,
+      "created_at": "2026-09-25 18:38:02.712000"
+    },
+    {
+      "name": "snapshots/fastapi_5077.tgz",
+      "bytes": 228535317,
+      "created_at": "2026-09-25 18:37:23.327000"
+    },
+    {
+      "name": "snapshots/fastapi_5624.tgz",
+      "bytes": 225380859,
+      "created_at": "2026-09-25 18:38:52.898000"
+    },
+    {
+      "name": "snapshots/fastapi_9425.tgz",
+      "bytes": 214010987,
+      "created_at": "2026-09-25 18:38:46.314000"
+    },
+    {
+      "name": "snapshots/fastapi_9555.tgz",
+      "bytes": 228029286,
+      "created_at": "2026-09-25 18:39:11.144000"
+    },
+    {
+      "name": "snapshots/fastapi_9753.tgz",
+      "bytes": 228854936,
+      "created_at": "2026-09-25 18:36:44.963000"
+    },
+    {
+      "name": "snapshots/httpx_3672.tgz",
+      "bytes": 1576322,
+      "created_at": "2026-09-25 18:38:12.694000"
+    },
+    {
+      "name": "snapshots/requests_6589.tgz",
+      "bytes": 36361445,
+      "created_at": "2026-09-25 18:37:24.699000"
+    },
+    {
+      "name": "snapshots/requests_6592.tgz",
+      "bytes": 36265394,
+      "created_at": "2026-09-25 18:38:46.992000"
+    },
+    {
+      "name": "snapshots/requests_6629.tgz",
+      "bytes": 36361445,
+      "created_at": "2026-09-25 18:38:14.115000"
+    },
+    {
+      "name": "snapshots/requests_6644.tgz",
+      "bytes": 36385820,
+      "created_at": "2026-09-25 18:38:20.537000"
+    },
+    {
+      "name": "snapshots/requests_6757.tgz",
+      "bytes": 36843122,
+      "created_at": "2026-09-25 18:37:42.702000"
+    },
+    {
+      "name": "snapshots/requests_7205.tgz",
+      "bytes": 37402474,
+      "created_at": "2026-09-25 18:39:24.617000"
+    },
+    {
+      "name": "snapshots/requests_7309.tgz",
+      "bytes": 37530773,
+      "created_at": "2026-09-25 18:38:34.640000"
+    },
+    {
+      "name": "snapshots/requests_7315.tgz",
+      "bytes": 37602543,
+      "created_at": "2026-09-25 18:38:37.887000"
+    },
+    {
+      "name": "snapshots/requests_7328.tgz",
+      "bytes": 37608316,
+      "created_at": "2026-09-25 18:38:27.970000"
+    },
+    {
+      "name": "snapshots/requests_7427.tgz",
+      "bytes": 37176965,
+      "created_at": "2026-09-25 18:39:09.950000"
+    },
+    {
+      "name": "snapshots/requests_7433.tgz",
+      "bytes": 37233814,
+      "created_at": "2026-09-25 18:37:25.349000"
+    },
+    {
+      "name": "snapshots/requests_7502.tgz",
+      "bytes": 37463957,
+      "created_at": "2026-09-25 18:37:11.882000"
+    },
+    {
+      "name": "snapshots/requests_7505.tgz",
+      "bytes": 37499757,
+      "created_at": "2026-09-25 18:36:48.286000"
+    },
+    {
+      "name": "snapshots/rich_2725.tgz",
+      "bytes": 91680984,
+      "created_at": "2026-09-25 18:38:18.569000"
+    },
+    {
+      "name": "snapshots/rich_2943.tgz",
+      "bytes": 92032925,
+      "created_at": "2026-09-25 18:39:51.823000"
+    },
+    {
+      "name": "snapshots/rich_3006.tgz",
+      "bytes": 90866513,
+      "created_at": "2026-09-25 18:37:45.179000"
+    },
+    {
+      "name": "snapshots/rich_3043.tgz",
+      "bytes": 90818810,
+      "created_at": "2026-09-25 18:39:31.427000"
+    },
+    {
+      "name": "snapshots/rich_3052.tgz",
+      "bytes": 91355224,
+      "created_at": "2026-09-25 18:39:39.023000"
+    },
+    {
+      "name": "snapshots/rich_3061.tgz",
+      "bytes": 90568092,
+      "created_at": "2026-09-25 18:38:30.054000"
+    },
+    {
+      "name": "snapshots/rich_3063.tgz",
+      "bytes": 90756400,
+      "created_at": "2026-09-25 18:38:55.649000"
+    },
+    {
+      "name": "snapshots/rich_3064.tgz",
+      "bytes": 90783135,
+      "created_at": "2026-09-25 18:37:48.601000"
+    },
+    {
+      "name": "snapshots/rich_3067.tgz",
+      "bytes": 90917632,
+      "created_at": "2026-09-25 18:39:29.986000"
+    },
+    {
+      "name": "snapshots/rich_3105.tgz",
+      "bytes": 91309571,
+      "created_at": "2026-09-25 18:39:15.598000"
+    },
+    {
+      "name": "snapshots/rich_3130.tgz",
+      "bytes": 90997385,
+      "created_at": "2026-09-25 18:36:55.890000"
+    },
+    {
+      "name": "snapshots/rich_3180.tgz",
+      "bytes": 91337117,
+      "created_at": "2026-09-25 18:38:33.633000"
+    },
+    {
+      "name": "snapshots/rich_3278.tgz",
+      "bytes": 92497686,
+      "created_at": "2026-09-25 18:38:08.024000"
+    },
+    {
+      "name": "snapshots/rich_3296.tgz",
+      "bytes": 92558409,
+      "created_at": "2026-09-25 18:39:26.730000"
+    },
+    {
+      "name": "snapshots/rich_3454.tgz",
+      "bytes": 92751017,
+      "created_at": "2026-09-25 18:37:45.811000"
+    },
+    {
+      "name": "snapshots/rich_3468.tgz",
+      "bytes": 92821190,
+      "created_at": "2026-09-25 18:39:11.065000"
+    },
+    {
+      "name": "snapshots/rich_3469.tgz",
+      "bytes": 92897559,
+      "created_at": "2026-09-25 18:38:14.653000"
+    },
+    {
+      "name": "snapshots/rich_3470.tgz",
+      "bytes": 92924508,
+      "created_at": "2026-09-25 18:36:54.741000"
+    },
+    {
+      "name": "snapshots/rich_3471.tgz",
+      "bytes": 92976607,
+      "created_at": "2026-09-25 18:38:08.840000"
+    },
+    {
+      "name": "snapshots/rich_3472.tgz",
+      "bytes": 93097751,
+      "created_at": "2026-09-25 18:37:58.695000"
+    },
+    {
+      "name": "snapshots/rich_3480.tgz",
+      "bytes": 93133075,
+      "created_at": "2026-09-25 18:39:26.258000"
+    },
+    {
+      "name": "snapshots/rich_3486.tgz",
+      "bytes": 93287898,
+      "created_at": "2026-09-25 18:37:11.686000"
+    },
+    {
+      "name": "snapshots/rich_3506.tgz",
+      "bytes": 93416675,
+      "created_at": "2026-09-25 18:38:13.972000"
+    },
+    {
+      "name": "snapshots/rich_3518.tgz",
+      "bytes": 94172517,
+      "created_at": "2026-09-25 18:39:40.151000"
+    },
+    {
+      "name": "snapshots/rich_3521.tgz",
+      "bytes": 94207629,
+      "created_at": "2026-09-25 18:37:59.445000"
+    },
+    {
+      "name": "snapshots/rich_3535.tgz",
+      "bytes": 94267814,
+      "created_at": "2026-09-25 18:39:14.873000"
+    },
+    {
+      "name": "snapshots/rich_3675.tgz",
+      "bytes": 94441088,
+      "created_at": "2026-09-25 18:38:19.793000"
+    },
+    {
+      "name": "snapshots/rich_3676.tgz",
+      "bytes": 94371134,
+      "created_at": "2026-09-25 18:38:26.903000"
+    },
+    {
+      "name": "snapshots/rich_3718.tgz",
+      "bytes": 95464718,
+      "created_at": "2026-09-25 18:38:24.097000"
+    },
+    {
+      "name": "snapshots/rich_3772.tgz",
+      "bytes": 95103715,
+      "created_at": "2026-09-25 18:37:21.573000"
+    },
+    {
+      "name": "snapshots/rich_3777.tgz",
+      "bytes": 95182145,
+      "created_at": "2026-09-25 18:38:38.980000"
+    },
+    {
+      "name": "snapshots/rich_3782.tgz",
+      "bytes": 95297176,
+      "created_at": "2026-09-25 18:39:54.780000"
+    },
+    {
+      "name": "snapshots/rich_3882.tgz",
+      "bytes": 95693148,
+      "created_at": "2026-09-25 18:38:06.928000"
+    },
+    {
+      "name": "snapshots/rich_3894.tgz",
+      "bytes": 95693148,
+      "created_at": "2026-09-25 18:39:27.274000"
+    },
+    {
+      "name": "snapshots/rich_3905.tgz",
+      "bytes": 96035198,
+      "created_at": "2026-09-25 18:37:12.892000"
+    },
+    {
+      "name": "snapshots/rich_3930.tgz",
+      "bytes": 95699504,
+      "created_at": "2026-09-25 18:36:43.251000"
+    },
+    {
+      "name": "snapshots/rich_3934.tgz",
+      "bytes": 95882565,
+      "created_at": "2026-09-25 18:39:27.865000"
+    },
+    {
+      "name": "snapshots/rich_3935.tgz",
+      "bytes": 96117313,
+      "created_at": "2026-09-25 18:39:25.204000"
+    },
+    {
+      "name": "snapshots/rich_3938.tgz",
+      "bytes": 96312539,
+      "created_at": "2026-09-25 18:38:23.296000"
+    },
+    {
+      "name": "snapshots/rich_3942.tgz",
+      "bytes": 96416233,
+      "created_at": "2026-09-25 18:39:40.991000"
+    },
+    {
+      "name": "snapshots/rich_3944.tgz",
+      "bytes": 96523552,
+      "created_at": "2026-09-25 18:39:17.953000"
+    },
+    {
+      "name": "snapshots/rich_3953.tgz",
+      "bytes": 96570158,
+      "created_at": "2026-09-25 18:39:20.255000"
+    },
+    {
+      "name": "snapshots/rich_4006.tgz",
+      "bytes": 96611558,
+      "created_at": "2026-09-25 18:37:44.566000"
+    },
+    {
+      "name": "snapshots/rich_4070.tgz",
+      "bytes": 96686753,
+      "created_at": "2026-09-25 18:37:05.876000"
+    },
+    {
+      "name": "snapshots/rich_4075.tgz",
+      "bytes": 96979228,
+      "created_at": "2026-09-25 18:39:03.136000"
+    },
+    {
+      "name": "snapshots/rich_4076.tgz",
+      "bytes": 97039154,
+      "created_at": "2026-09-25 18:39:30.965000"
+    },
+    {
+      "name": "snapshots/rich_4077.tgz",
+      "bytes": 97076310,
+      "created_at": "2026-09-25 18:37:57.935000"
+    },
+    {
+      "name": "snapshots/rich_4079.tgz",
+      "bytes": 97102322,
+      "created_at": "2026-09-25 18:38:17.758000"
+    },
+    {
+      "name": "tasks.jsonl",
+      "bytes": 1984455,
+      "created_at": "2026-09-25 18:36:31.761000"
+    },
+    {
+      "name": "wheels/Flask-2.2.5-py3-none-any.whl",
+      "bytes": 101817,
+      "created_at": "2026-09-25 18:40:13.198000"
+    },
+    {
+      "name": "wheels/annotated_types-0.7.0-py3-none-any.whl",
+      "bytes": 13643,
+      "created_at": "2026-09-25 18:40:13.102000"
+    },
+    {
+      "name": "wheels/annotated_types-0.8.0-py3-none-any.whl",
+      "bytes": 13427,
+      "created_at": "2026-09-25 18:40:13.358000"
+    },
+    {
+      "name": "wheels/anyio-4.14.1-py3-none-any.whl",
+      "bytes": 124875,
+      "created_at": "2026-09-25 18:40:13.249000"
+    },
+    {
+      "name": "wheels/anyio-4.14.2-py3-none-any.whl",
+      "bytes": 125813,
+      "created_at": "2026-09-25 18:40:13.165000"
+    },
+    {
+      "name": "wheels/certifi-2026.6.17-py3-none-any.whl",
+      "bytes": 133289,
+      "created_at": "2026-09-25 18:40:13.138000"
+    },
+    {
+      "name": "wheels/certifi-2026.7.22-py3-none-any.whl",
+      "bytes": 136983,
+      "created_at": "2026-09-25 18:40:13.167000"
+    },
+    {
+      "name": "wheels/charset_normalizer-3.4.7-py3-none-any.whl",
+      "bytes": 61958,
+      "created_at": "2026-09-25 18:40:13.305000"
+    },
+    {
+      "name": "wheels/charset_normalizer-3.4.9-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl",
+      "bytes": 223149,
+      "created_at": "2026-09-25 18:40:13.174000"
+    },
+    {
+      "name": "wheels/charset_normalizer-3.5.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl",
+      "bytes": 248801,
+      "created_at": "2026-09-25 18:40:13.127000"
+    },
+    {
+      "name": "wheels/click-8.2.1-py3-none-any.whl",
+      "bytes": 102215,
+      "created_at": "2026-09-25 18:40:13.112000"
+    },
+    {
+      "name": "wheels/click-8.4.2-py3-none-any.whl",
+      "bytes": 119243,
+      "created_at": "2026-09-25 18:40:13.203000"
+    },
+    {
+      "name": "wheels/colorama-0.4.6-py2.py3-none-any.whl",
+      "bytes": 25335,
+      "created_at": "2026-09-25 18:40:13.284000"
+    },
+    {
+      "name": "wheels/editables-0.6-py3-none-any.whl",
+      "bytes": 5438,
+      "created_at": "2026-09-25 18:40:13.062000"
+    },
+    {
+      "name": "wheels/fastapi-0.141.1-py3-none-any.whl",
+      "bytes": 131954,
+      "created_at": "2026-09-25 18:40:13.292000"
+    },
+    {
+      "name": "wheels/flask-2.3.3-py3-none-any.whl",
+      "bytes": 96112,
+      "created_at": "2026-09-25 18:40:13.118000"
+    },
+    {
+      "name": "wheels/flask-3.1.3-py3-none-any.whl",
+      "bytes": 103424,
+      "created_at": "2026-09-25 18:40:13.094000"
+    },
+    {
+      "name": "wheels/flit_core-3.12.0-py3-none-any.whl",
+      "bytes": 45594,
+      "created_at": "2026-09-25 18:40:12.924000"
+    },
+    {
+      "name": "wheels/hatchling-1.30.1-py3-none-any.whl",
+      "bytes": 77489,
+      "created_at": "2026-09-25 18:40:13.116000"
+    },
+    {
+      "name": "wheels/httpcore-1.0.9-py3-none-any.whl",
+      "bytes": 78784,
+      "created_at": "2026-09-25 18:40:13.295000"
+    },
+    {
+      "name": "wheels/httpx-0.28.1-py3-none-any.whl",
+      "bytes": 73517,
+      "created_at": "2026-09-25 18:40:13.295000"
+    },
+    {
+      "name": "wheels/idna-3.18-py3-none-any.whl",
+      "bytes": 65455,
+      "created_at": "2026-09-25 18:40:13.013000"
+    },
+    {
+      "name": "wheels/idna-3.19-py3-none-any.whl",
+      "bytes": 68550,
+      "created_at": "2026-09-25 18:40:12.907000"
+    },
+    {
+      "name": "wheels/iniconfig-2.3.0-py3-none-any.whl",
+      "bytes": 7484,
+      "created_at": "2026-09-25 18:40:13.379000"
+    },
+    {
+      "name": "wheels/itsdangerous-2.2.0-py3-none-any.whl",
+      "bytes": 16234,
+      "created_at": "2026-09-25 18:40:13.132000"
+    },
+    {
+      "name": "wheels/jinja2-3.1.6-py3-none-any.whl",
+      "bytes": 134899,
+      "created_at": "2026-09-25 18:40:13.194000"
+    },
+    {
+      "name": "wheels/markdown_it_py-4.2.0-py3-none-any.whl",
+      "bytes": 91687,
+      "created_at": "2026-09-25 18:40:13.061000"
+    },
+    {
+      "name": "wheels/markupsafe-3.0.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl",
+      "bytes": 22947,
+      "created_at": "2026-09-25 18:40:13.237000"
+    },
+    {
+      "name": "wheels/markupsafe-3.0.3-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl",
+      "bytes": 22980,
+      "created_at": "2026-09-25 18:40:13.265000"
+    },
+    {
+      "name": "wheels/mdurl-0.1.2-py3-none-any.whl",
+      "bytes": 9979,
+      "created_at": "2026-09-25 18:40:13.208000"
+    },
+    {
+      "name": "wheels/packaging-26.2-py3-none-any.whl",
+      "bytes": 100195,
+      "created_at": "2026-09-25 18:40:13.013000"
+    },
+    {
+      "name": "wheels/packaging-26.3-py3-none-any.whl",
+      "bytes": 129956,
+      "created_at": "2026-09-25 18:40:13.331000"
+    },
+    {
+      "name": "wheels/pdm_backend-2.4.9-py3-none-any.whl",
+      "bytes": 115770,
+      "created_at": "2026-09-25 18:40:13.136000"
+    },
+    {
+      "name": "wheels/pluggy-1.6.0-py3-none-any.whl",
+      "bytes": 20538,
+      "created_at": "2026-09-25 18:40:13.020000"
+    },
+    {
+      "name": "wheels/poetry_core-2.4.1-py3-none-any.whl",
+      "bytes": 374834,
+      "created_at": "2026-09-25 18:40:13.142000"
+    },
+    {
+      "name": "wheels/pydantic-1.10.15-py3-none-any.whl",
+      "bytes": 159931,
+      "created_at": "2026-09-25 18:40:13.140000"
+    },
+    {
+      "name": "wheels/pydantic-2.13.4-py3-none-any.whl",
+      "bytes": 472262,
+      "created_at": "2026-09-25 18:40:13.243000"
+    },
+    {
+      "name": "wheels/pydantic_core-2.46.4-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "bytes": 2094516,
+      "created_at": "2026-09-25 18:40:12.971000"
+    },
+    {
+      "name": "wheels/pydantic_core-2.46.4-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "bytes": 2094467,
+      "created_at": "2026-09-25 18:40:13.284000"
+    },
+    {
+      "name": "wheels/pygments-2.20.0-py3-none-any.whl",
+      "bytes": 1231151,
+      "created_at": "2026-09-25 18:40:13.203000"
+    },
+    {
+      "name": "wheels/pygments-2.21.0-py3-none-any.whl",
+      "bytes": 1250147,
+      "created_at": "2026-09-25 18:40:13.031000"
+    },
+    {
+      "name": "wheels/pytest-6.2.5-py3-none-any.whl",
+      "bytes": 280654,
+      "created_at": "2026-09-25 18:40:13.139000"
+    },
+    {
+      "name": "wheels/pytest-8.3.4-py3-none-any.whl",
+      "bytes": 343083,
+      "created_at": "2026-09-25 18:40:13.322000"
+    },
+    {
+      "name": "wheels/pytest-9.1.1-py3-none-any.whl",
+      "bytes": 386536,
+      "created_at": "2026-09-25 18:40:13.196000"
+    },
+    {
+      "name": "wheels/requests-2.33.0-py3-none-any.whl",
+      "bytes": 65017,
+      "created_at": "2026-09-25 18:40:13.137000"
+    },
+    {
+      "name": "wheels/requests-2.34.2-py3-none-any.whl",
+      "bytes": 73075,
+      "created_at": "2026-09-25 18:40:13.097000"
+    },
+    {
+      "name": "wheels/rich-15.0.0-py3-none-any.whl",
+      "bytes": 310654,
+      "created_at": "2026-09-25 18:40:13.131000"
+    },
+    {
+      "name": "wheels/setuptools-82.0.1-py3-none-any.whl",
+      "bytes": 1006223,
+      "created_at": "2026-09-25 18:40:13.142000"
+    },
+    {
+      "name": "wheels/setuptools-83.0.0-py3-none-any.whl",
+      "bytes": 1008090,
+      "created_at": "2026-09-25 18:40:13.335000"
+    },
+    {
+      "name": "wheels/sniffio-1.3.1-py3-none-any.whl",
+      "bytes": 10235,
+      "created_at": "2026-09-25 18:40:13.159000"
+    },
+    {
+      "name": "wheels/sqlalchemy-2.0.51-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl",
+      "bytes": 3302756,
+      "created_at": "2026-09-25 18:40:12.998000"
+    },
+    {
+      "name": "wheels/sqlalchemy-2.0.51-py3-none-any.whl",
+      "bytes": 1944334,
+      "created_at": "2026-09-25 18:40:13.327000"
+    },
+    {
+      "name": "wheels/sqlalchemy-2.0.52-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl",
+      "bytes": 3398577,
+      "created_at": "2026-09-25 18:40:13.119000"
+    },
+    {
+      "name": "wheels/sqlmodel-0.0.24-py3-none-any.whl",
+      "bytes": 28622,
+      "created_at": "2026-09-25 18:40:12.917000"
+    },
+    {
+      "name": "wheels/sqlmodel-0.0.25-py3-none-any.whl",
+      "bytes": 28893,
+      "created_at": "2026-09-25 18:40:13.379000"
+    },
+    {
+      "name": "wheels/sqlmodel-0.0.27-py3-none-any.whl",
+      "bytes": 29131,
+      "created_at": "2026-09-25 18:40:13.333000"
+    },
+    {
+      "name": "wheels/sqlmodel-0.0.31-py3-none-any.whl",
+      "bytes": 27093,
+      "created_at": "2026-09-25 18:40:13.174000"
+    },
+    {
+      "name": "wheels/sqlmodel-0.0.39-py3-none-any.whl",
+      "bytes": 29680,
+      "created_at": "2026-09-25 18:40:13.202000"
+    },
+    {
+      "name": "wheels/starlette-0.19.0-py3-none-any.whl",
+      "bytes": 60781,
+      "created_at": "2026-09-25 18:40:13.325000"
+    },
+    {
+      "name": "wheels/starlette-0.20.0-py3-none-any.whl",
+      "bytes": 61857,
+      "created_at": "2026-09-25 18:40:12.904000"
+    },
+    {
+      "name": "wheels/starlette-0.21.0-py3-none-any.whl",
+      "bytes": 64044,
+      "created_at": "2026-09-25 18:40:12.912000"
+    },
+    {
+      "name": "wheels/starlette-0.22.0-py3-none-any.whl",
+      "bytes": 64327,
+      "created_at": "2026-09-25 18:40:13.306000"
+    },
+    {
+      "name": "wheels/starlette-0.23.0-py3-none-any.whl",
+      "bytes": 64540,
+      "created_at": "2026-09-25 18:40:13.006000"
+    },
+    {
+      "name": "wheels/starlette-0.24.0-py3-none-any.whl",
+      "bytes": 65780,
+      "created_at": "2026-09-25 18:40:13.132000"
+    },
+    {
+      "name": "wheels/starlette-0.25.0-py3-none-any.whl",
+      "bytes": 66410,
+      "created_at": "2026-09-25 18:40:13.074000"
+    },
+    {
+      "name": "wheels/starlette-0.26.0-py3-none-any.whl",
+      "bytes": 66843,
+      "created_at": "2026-09-25 18:40:13.264000"
+    },
+    {
+      "name": "wheels/starlette-0.27.0-py3-none-any.whl",
+      "bytes": 66978,
+      "created_at": "2026-09-25 18:40:12.997000"
+    },
+    {
+      "name": "wheels/starlette-0.28.0-py3-none-any.whl",
+      "bytes": 68948,
+      "created_at": "2026-09-25 18:40:13.282000"
+    },
+    {
+      "name": "wheels/starlette-0.30.0-py3-none-any.whl",
+      "bytes": 68824,
+      "created_at": "2026-09-25 18:40:13.282000"
+    },
+    {
+      "name": "wheels/starlette-0.31.0-py3-none-any.whl",
+      "bytes": 69834,
+      "created_at": "2026-09-25 18:40:13.170000"
+    },
+    {
+      "name": "wheels/starlette-0.32.0-py3-none-any.whl",
+      "bytes": 69953,
+      "created_at": "2026-09-25 18:40:13.071000"
+    },
+    {
+      "name": "wheels/starlette-0.35.0-py3-none-any.whl",
+      "bytes": 71012,
+      "created_at": "2026-09-25 18:40:13.226000"
+    },
+    {
+      "name": "wheels/starlette-0.36.0-py3-none-any.whl",
+      "bytes": 71421,
+      "created_at": "2026-09-25 18:40:13.061000"
+    },
+    {
+      "name": "wheels/starlette-0.37.0-py3-none-any.whl",
+      "bytes": 71969,
+      "created_at": "2026-09-25 18:40:13.299000"
+    },
+    {
+      "name": "wheels/starlette-0.38.0-py3-none-any.whl",
+      "bytes": 72053,
+      "created_at": "2026-09-25 18:40:12.973000"
+    },
+    {
+      "name": "wheels/starlette-0.38.1-py3-none-any.whl",
+      "bytes": 72004,
+      "created_at": "2026-09-25 18:40:13.119000"
+    },
+    {
+      "name": "wheels/starlette-0.38.2-py3-none-any.whl",
+      "bytes": 72020,
+      "created_at": "2026-09-25 18:40:13.146000"
+    },
+    {
+      "name": "wheels/starlette-0.38.3-py3-none-any.whl",
+      "bytes": 72130,
+      "created_at": "2026-09-25 18:40:13.238000"
+    },
+    {
+      "name": "wheels/starlette-0.38.4-py3-none-any.whl",
+      "bytes": 71427,
+      "created_at": "2026-09-25 18:40:13.098000"
+    },
+    {
+      "name": "wheels/starlette-0.38.5-py3-none-any.whl",
+      "bytes": 71447,
+      "created_at": "2026-09-25 18:40:13.031000"
+    },
+    {
+      "name": "wheels/starlette-0.38.6-py3-none-any.whl",
+      "bytes": 71451,
+      "created_at": "2026-09-25 18:40:13.305000"
+    },
+    {
+      "name": "wheels/starlette-0.39.0-py3-none-any.whl",
+      "bytes": 73034,
+      "created_at": "2026-09-25 18:40:13.053000"
+    },
+    {
+      "name": "wheels/starlette-0.39.1-py3-none-any.whl",
+      "bytes": 73125,
+      "created_at": "2026-09-25 18:40:13.260000"
+    },
+    {
+      "name": "wheels/starlette-0.39.2-py3-none-any.whl",
+      "bytes": 73219,
+      "created_at": "2026-09-25 18:40:13.313000"
+    },
+    {
+      "name": "wheels/starlette-0.40.0-py3-none-any.whl",
+      "bytes": 73303,
+      "created_at": "2026-09-25 18:40:13.024000"
+    },
+    {
+      "name": "wheels/starlette-0.41.0-py3-none-any.whl",
+      "bytes": 73216,
+      "created_at": "2026-09-25 18:40:12.919000"
+    },
+    {
+      "name": "wheels/starlette-0.41.1-py3-none-any.whl",
+      "bytes": 73229,
+      "created_at": "2026-09-25 18:40:13.023000"
+    },
+    {
+      "name": "wheels/starlette-0.41.2-py3-none-any.whl",
+      "bytes": 73259,
+      "created_at": "2026-09-25 18:40:13.241000"
+    },
+    {
+      "name": "wheels/starlette-0.41.3-py3-none-any.whl",
+      "bytes": 73225,
+      "created_at": "2026-09-25 18:40:13.239000"
+    },
+    {
+      "name": "wheels/starlette-0.42.0-py3-none-any.whl",
+      "bytes": 73356,
+      "created_at": "2026-09-25 18:40:13.299000"
+    },
+    {
+      "name": "wheels/starlette-0.43.0-py3-none-any.whl",
+      "bytes": 73291,
+      "created_at": "2026-09-25 18:40:13.162000"
+    },
+    {
+      "name": "wheels/starlette-0.44.0-py3-none-any.whl",
+      "bytes": 73412,
+      "created_at": "2026-09-25 18:40:13.326000"
+    },
+    {
+      "name": "wheels/starlette-0.45.0-py3-none-any.whl",
+      "bytes": 71795,
+      "created_at": "2026-09-25 18:40:13.173000"
+    },
+    {
+      "name": "wheels/starlette-0.45.1-py3-none-any.whl",
+      "bytes": 71488,
+      "created_at": "2026-09-25 18:40:13.124000"
+    },
+    {
+      "name": "wheels/starlette-0.45.2-py3-none-any.whl",
+      "bytes": 71505,
+      "created_at": "2026-09-25 18:40:13.042000"
+    },
+    {
+      "name": "wheels/starlette-0.45.3-py3-none-any.whl",
+      "bytes": 71507,
+      "created_at": "2026-09-25 18:40:13.127000"
+    },
+    {
+      "name": "wheels/starlette-0.46.0-py3-none-any.whl",
+      "bytes": 71991,
+      "created_at": "2026-09-25 18:40:13.226000"
+    },
+    {
+      "name": "wheels/starlette-0.46.1-py3-none-any.whl",
+      "bytes": 71995,
+      "created_at": "2026-09-25 18:40:13.223000"
+    },
+    {
+      "name": "wheels/starlette-0.46.2-py3-none-any.whl",
+      "bytes": 72037,
+      "created_at": "2026-09-25 18:40:13.210000"
+    },
+    {
+      "name": "wheels/starlette-0.47.0-py3-none-any.whl",
+      "bytes": 72796,
+      "created_at": "2026-09-25 18:40:13.179000"
+    },
+    {
+      "name": "wheels/starlette-0.47.1-py3-none-any.whl",
+      "bytes": 72747,
+      "created_at": "2026-09-25 18:40:13.010000"
+    },
+    {
+      "name": "wheels/starlette-0.47.2-py3-none-any.whl",
+      "bytes": 72984,
+      "created_at": "2026-09-25 18:40:12.899000"
+    },
+    {
+      "name": "wheels/starlette-0.47.3-py3-none-any.whl",
+      "bytes": 72991,
+      "created_at": "2026-09-25 18:40:13.314000"
+    },
+    {
+      "name": "wheels/starlette-0.48.0-py3-none-any.whl",
+      "bytes": 73736,
+      "created_at": "2026-09-25 18:40:13.290000"
+    },
+    {
+      "name": "wheels/starlette-0.49.0-py3-none-any.whl",
+      "bytes": 74057,
+      "created_at": "2026-09-25 18:40:13.006000"
+    },
+    {
+      "name": "wheels/starlette-0.49.1-py3-none-any.whl",
+      "bytes": 74175,
+      "created_at": "2026-09-25 18:40:13.127000"
+    },
+    {
+      "name": "wheels/starlette-0.49.2-py3-none-any.whl",
+      "bytes": 74208,
+      "created_at": "2026-09-25 18:40:13.013000"
+    },
+    {
+      "name": "wheels/starlette-0.49.3-py3-none-any.whl",
+      "bytes": 74340,
+      "created_at": "2026-09-25 18:40:13.276000"
+    },
+    {
+      "name": "wheels/starlette-0.50.0-py3-none-any.whl",
+      "bytes": 74033,
+      "created_at": "2026-09-25 18:40:13.031000"
+    },
+    {
+      "name": "wheels/starlette-0.51.0-py3-none-any.whl",
+      "bytes": 74133,
+      "created_at": "2026-09-25 18:40:13.219000"
+    },
+    {
+      "name": "wheels/starlette-0.52.0-py3-none-any.whl",
+      "bytes": 74238,
+      "created_at": "2026-09-25 18:40:13.378000"
+    },
+    {
+      "name": "wheels/starlette-0.52.1-py3-none-any.whl",
+      "bytes": 74272,
+      "created_at": "2026-09-25 18:40:13.302000"
+    },
+    {
+      "name": "wheels/starlette-1.3.1-py3-none-any.whl",
+      "bytes": 73632,
+      "created_at": "2026-09-25 18:40:13.142000"
+    },
+    {
+      "name": "wheels/starlette-1.6.0-py3-none-any.whl",
+      "bytes": 75969,
+      "created_at": "2026-09-25 18:40:13.151000"
+    },
+    {
+      "name": "wheels/tqdm-4.70.0-py3-none-any.whl",
+      "bytes": 80184,
+      "created_at": "2026-09-25 18:40:12.905000"
+    },
+    {
+      "name": "wheels/typer-0.16.0-py3-none-any.whl",
+      "bytes": 46317,
+      "created_at": "2026-09-25 18:40:13.309000"
+    },
+    {
+      "name": "wheels/typer-0.21.1-py3-none-any.whl",
+      "bytes": 47381,
+      "created_at": "2026-09-25 18:40:13.230000"
+    },
+    {
+      "name": "wheels/typer-0.26.7-py3-none-any.whl",
+      "bytes": 122456,
+      "created_at": "2026-09-25 18:40:13.181000"
+    },
+    {
+      "name": "wheels/typing_extensions-4.15.0-py3-none-any.whl",
+      "bytes": 44614,
+      "created_at": "2026-09-25 18:40:13.020000"
+    },
+    {
+      "name": "wheels/typing_extensions-4.16.0-py3-none-any.whl",
+      "bytes": 45571,
+      "created_at": "2026-09-25 18:40:13.194000"
+    },
+    {
+      "name": "wheels/urllib3-2.7.0-py3-none-any.whl",
+      "bytes": 131087,
+      "created_at": "2026-09-25 18:40:13.291000"
+    },
+    {
+      "name": "wheels/werkzeug-2.3.8-py3-none-any.whl",
+      "bytes": 242332,
+      "created_at": "2026-09-25 18:40:13.321000"
+    },
+    {
+      "name": "wheels/werkzeug-3.1.8-py3-none-any.whl",
+      "bytes": 226459,
+      "created_at": "2026-09-25 18:40:13.162000"
+    },
+    {
+      "name": "wheels/wheel-0.47.0-py3-none-any.whl",
+      "bytes": 32218,
+      "created_at": "2026-09-25 18:40:12.909000"
+    }
+  ]
+}

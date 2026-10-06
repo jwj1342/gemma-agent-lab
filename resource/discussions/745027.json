@@ -1,0 +1,11 @@
+{
+  "messages": [
+    {
+      "id": 3531428,
+      "postDate": "2026-10-01T20:35:22.853Z",
+      "content": "<hr>\n<h2>Feedback We Are Seeking From the Community</h2>\n<p>We would greatly appreciate feedback on the following methodological aspects:</p>\n<ol>\n<li><strong>Hidden Browser Oracles vs. Unit Tests:</strong> For legacy monoliths without unit suites, does Dockerized MariaDB snapshotting + Playwright E2E testing feel like a convincing paradigm for SWE benchmarking?</li>\n<li><strong>Statistical Transparency:</strong> At $N=33$, detecting a +6.8 pt lift requires $N \\ge 95$ for $\\alpha = 0.05$. We reported $p \\approx 0.11$ honestly rather than claiming statistical significance. How can we best present this trade-off between costly E2E verification depth and statistical sample size?</li>\n<li><strong>Reward Hacking Guards:</strong> Has anyone else observed 30%+ verifier gaming when bootstrapping agents with model-generated tests? What programmatic guards do you recommend?</li>\n</ol>\n<p><em>All code, docker environments, traces, and datasets are open-source under Apache-2.0.</em></p>",
+      "rawMarkdown": "---\n\n## Feedback We Are Seeking From the Community\n\nWe would greatly appreciate feedback on the following methodological aspects:\n\n1. **Hidden Browser Oracles vs. Unit Tests:** For legacy monoliths without unit suites, does Dockerized MariaDB snapshotting + Playwright E2E testing feel like a convincing paradigm for SWE benchmarking?\n2. **Statistical Transparency:** At $N=33$, detecting a +6.8 pt lift requires $N \\ge 95$ for $\\alpha = 0.05$. We reported $p \\approx 0.11$ honestly rather than claiming statistical significance. How can we best present this trade-off between costly E2E verification depth and statistical sample size?\n3. **Reward Hacking Guards:** Has anyone else observed 30%+ verifier gaming when bootstrapping agents with model-generated tests? What programmatic guards do you recommend?\n\n*All code, docker environments, traces, and datasets are open-source under Apache-2.0.*",
+      "votes": 1
+    }
+  ]
+}

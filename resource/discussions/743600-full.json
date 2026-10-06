@@ -1,0 +1,224 @@
+{
+  "forumTopic": {
+    "authorId": 15559822,
+    "authorThumbnailName": "15559822-kg.png?t=2026-08-13-14-46-51",
+    "authorUserDisplayName": "parthenos",
+    "authorUserName": "nihilisticneuralnet",
+    "comments": [
+      {
+        "id": 3529170,
+        "postDate": "2026-09-27T15:06:58.580Z",
+        "rawMarkdown": "Adding a data point: two 4x L4 batch sessions (script kernels, competition + wheelhouse + model attached) have been queued for about 4 hours without starting, and an earlier one sat queued for ~5 hours before I cancelled it. CPU sessions start immediately.\n\nCould the hosts share whether 4x L4 capacity is currently constrained, and whether there's a recommended way to run local evaluation in the meantime? Thanks!",
+        "content": "<p>Adding a data point: two 4x L4 batch sessions (script kernels, competition + wheelhouse + model attached) have been queued for about 4 hours without starting, and an earlier one sat queued for ~5 hours before I cancelled it. CPU sessions start immediately.</p>\n<p>Could the hosts share whether 4x L4 capacity is currently constrained, and whether there's a recommended way to run local evaluation in the meantime? Thanks!</p>",
+        "replies": [
+          {
+            "id": 3529175,
+            "postDate": "2026-09-27T15:13:41.693Z",
+            "rawMarkdown": "yeah the capacity for L4x4 and TPUs are bad.\nall my runs are still queued\n\n![](https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F14027805%2F94ff6e1b309ae96a18e4f0de1d592093%2FScreenshot%202026-09-27%20at%208.44.35PM.png?generation=1790522112646557&alt=media)",
+            "content": "<p>yeah the capacity for L4x4 and TPUs are bad.\nall my runs are still queued</p>\n<p><img src=\"https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F14027805%2F94ff6e1b309ae96a18e4f0de1d592093%2FScreenshot%202026-09-27%20at%208.44.35PM.png?generation=1790522112646557&amp;alt=media\" alt=\"\"></p>",
+            "parent": {},
+            "author": {
+              "displayName": "Chandram Dutta",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/14027805-kg.jpg?t=2026-04-05-06-32-03",
+              "url": "/chandramdutta",
+              "tier": "CONTRIBUTOR",
+              "id": 14027805,
+              "progressionOptOut": false
+            },
+            "authorType": "COMMENT",
+            "votes": {
+              "canUpvote": true
+            },
+            "kernelVersion": 0,
+            "competitionRanking": 188,
+            "feedbackTrackingData": {},
+            "isThankYou": false,
+            "teamUpInfo": {
+              "teamLeader": {
+                "displayName": "Chandram Dutta",
+                "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/14027805-kg.jpg?t=2026-04-05-06-32-03",
+                "url": "/chandramdutta",
+                "userName": "chandramdutta",
+                "tier": "CONTRIBUTOR",
+                "id": 14027805,
+                "profileUrl": "/chandramdutta",
+                "performanceTier": "CONTRIBUTOR",
+                "userId": 14027805,
+                "progressionOptOut": false
+              },
+              "intro": ""
+            }
+          }
+        ],
+        "parent": {},
+        "author": {
+          "displayName": "Kinance",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/kinance",
+          "tier": "CONTRIBUTOR",
+          "id": 624482,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "totalVotes": 3,
+          "canUpvote": true,
+          "totalUpvotes": 3
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 522,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Kinance",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+            "url": "/kinance",
+            "userName": "kinance",
+            "tier": "CONTRIBUTOR",
+            "id": 624482,
+            "profileUrl": "/kinance",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 624482,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3529197,
+        "postDate": "2026-09-27T15:55:51.817Z",
+        "rawMarkdown": "same, I have been waiting in queue for 4+ hours <br>\nI had previously suggested providing RTX PROs for this competition, those gpus would be much much better",
+        "content": "<p>same, I have been waiting in queue for 4+ hours <br>\nI had previously suggested providing RTX PROs for this competition, those gpus would be much much better</p>",
+        "parent": {},
+        "author": {
+          "displayName": "Penguin",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/penguin069",
+          "tier": "CONTRIBUTOR",
+          "id": 33714352,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "totalVotes": 2,
+          "canUpvote": true,
+          "totalUpvotes": 2
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 418,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Penguin",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+            "url": "/penguin069",
+            "userName": "penguin069",
+            "tier": "CONTRIBUTOR",
+            "id": 33714352,
+            "profileUrl": "/penguin069",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 33714352,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3528652,
+        "postDate": "2026-09-26T09:24:46.770Z",
+        "rawMarkdown": "yeah my l4x4 and tpu runs are in queue for 3 hrs now, altho it doesnt fail",
+        "content": "<p>yeah my l4x4 and tpu runs are in queue for 3 hrs now, altho it doesnt fail</p>",
+        "parent": {},
+        "author": {
+          "displayName": "Chandram Dutta",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/14027805-kg.jpg?t=2026-04-05-06-32-03",
+          "url": "/chandramdutta",
+          "tier": "CONTRIBUTOR",
+          "id": 14027805,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "totalVotes": 1,
+          "canUpvote": true,
+          "totalUpvotes": 1
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 188,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Chandram Dutta",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/14027805-kg.jpg?t=2026-04-05-06-32-03",
+            "url": "/chandramdutta",
+            "userName": "chandramdutta",
+            "tier": "CONTRIBUTOR",
+            "id": 14027805,
+            "profileUrl": "/chandramdutta",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 14027805,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3528625,
+      "postDate": "2026-09-26T09:13:18.133Z",
+      "rawMarkdown": "![](https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F15559822%2F728686c1b4eed76e32d0b7bdd5cbf8ef%2FScreenshot%202026-09-26%20144147.png?generation=1790413923245395&alt=media)\n\nAs soon as i hit submit, submission fails with system error+ gpu l4 are being queued for a long time. \n\nis it just me or other people are also experiencing simialr issue??",
+      "content": "<p><img src=\"https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F15559822%2F728686c1b4eed76e32d0b7bdd5cbf8ef%2FScreenshot%202026-09-26%20144147.png?generation=1790413923245395&amp;alt=media\" alt=\"\"></p>\n<p>As soon as i hit submit, submission fails with system error+ gpu l4 are being queued for a long time. </p>\n<p>is it just me or other people are also experiencing simialr issue??</p>",
+      "parent": {},
+      "author": {
+        "displayName": "parthenos",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/15559822-kg.png?t=2026-08-13-14-46-51",
+        "url": "/nihilisticneuralnet",
+        "tier": "MASTER",
+        "id": 15559822,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 11,
+        "canUpvote": true,
+        "totalUpvotes": 11
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 466,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "parthenos",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/15559822-kg.png?t=2026-08-13-14-46-51",
+          "url": "/nihilisticneuralnet",
+          "userName": "nihilisticneuralnet",
+          "tier": "MASTER",
+          "id": 15559822,
+          "profileUrl": "/nihilisticneuralnet",
+          "performanceTier": "MASTER",
+          "userId": 15559822,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3528625,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 743600,
+    "name": "Getting gpu l4*4 queued and system errror",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-26T09:13:18.132115200Z",
+    "totalVotes": 11,
+    "url": "/competitions/gemma-4-developer-agent/discussion/743600",
+    "totalMessages": 4,
+    "authorPerformanceTier": "MASTER",
+    "authorProgressionOptOut": false
+  }
+}

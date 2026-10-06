@@ -1,0 +1,120 @@
+# CELL 0 markdown
+# Gemma 4 SWE: task map and 12-hour budget calculator
+
+The [Gemma 4 Developer Agent Competition](https://www.kaggle.com/competitions/gemma-4-developer-agent) scores code patches against hidden tests. Its agent has **12 hours total** for all issues, including sandbox setup. This notebook profiles the released **training tasks** and gives a small calculator for choosing a per-task cap. It reads only official competition data and needs no GPU or internet.
+
+The task counts below describe the training file. They do not reveal the private evaluation mix or predict a leaderboard score.
+
+
+# CELL 1 code
+from pathlib import Path
+import json
+import os
+import re
+
+import matplotlib.pyplot as plt
+import pandas as pd
+
+override = os.environ.get("GEMMA_TASKS_PATH")
+candidates = [Path(override)] if override else list(Path("/kaggle/input").rglob("tasks.jsonl"))
+paths = [p for p in candidates if p.is_file()]
+if not paths:
+    raise FileNotFoundError("Attach the competition data or set GEMMA_TASKS_PATH to tasks.jsonl")
+tasks_path = next((p for p in paths if "gemma-4-developer-agent" in str(p)), paths[0])
+tasks = [json.loads(line) for line in tasks_path.read_text(encoding="utf-8").splitlines() if line]
+print(f"Loaded {len(tasks)} training tasks from {tasks_path}")
+print("Fields:", ", ".join(tasks[0]))
+
+
+# CELL 2 markdown
+## Measure issues and reference patch size
+
+The file includes a reference patch and a test patch for each training issue. I count added and deleted lines in the reference patch as a **rough size proxy**, not as a measure of reasoning difficulty. The test patch is never used to recommend an answer for an individual task.
+
+
+# CELL 3 code
+def changed_lines(patch):
+    return sum(
+        (line.startswith("+") and not line.startswith("+++"))
+        or (line.startswith("-") and not line.startswith("---"))
+        for line in patch.splitlines()
+    )
+
+
+def changed_paths(patch):
+    return set(re.findall(r"^\+\+\+ b/(.+)$", patch, flags=re.MULTILINE))
+
+
+df = pd.DataFrame(
+    {
+        "instance_id": task["instance_id"],
+        "repo": task["repo"],
+        "issue_chars": len(task["problem_statement"]),
+        "reference_changed_lines": changed_lines(task["patch"]),
+        "test_changed_lines": changed_lines(task["test_patch"]),
+        "reference_files": len(changed_paths(task["patch"])),
+    }
+    for task in tasks
+)
+summary = (
+    df.groupby("repo")
+    .agg(
+        tasks=("instance_id", "size"),
+        median_issue_chars=("issue_chars", "median"),
+        median_changed_lines=("reference_changed_lines", "median"),
+        p90_changed_lines=("reference_changed_lines", lambda s: s.quantile(0.9)),
+        median_files=("reference_files", "median"),
+    )
+    .sort_values("tasks", ascending=False)
+)
+display(summary.round(1))
+print("Spearman correlation: issue length vs. patch size =", round(df["issue_chars"].rank().corr(df["reference_changed_lines"].rank()), 3))
+
+
+# CELL 4 code
+fig, axes = plt.subplots(1, 2, figsize=(12, 4))
+summary["tasks"].sort_values().plot.barh(ax=axes[0], color="#2663a6")
+axes[0].set(title="Training tasks by repository", xlabel="Tasks", ylabel="")
+summary["median_changed_lines"].sort_values().plot.barh(ax=axes[1], color="#db7c24")
+axes[1].set(title="Median reference patch size", xlabel="Added + deleted lines", ylabel="")
+plt.tight_layout()
+plt.show()
+
+
+# CELL 5 markdown
+**What this suggests for agent design:** Requests has many small reference patches, while FastAPI has a wider size range. The length of the issue text is a weak proxy for patch size in this training file. A long PR template should not automatically receive more time; use named symbols, a focused search, and the remaining budget to decide when to patch.
+
+The figures cannot tell us which issues a model will solve. Patch size, verification time, repository layout, and model behavior all matter.
+
+
+# CELL 6 markdown
+## Translate a global limit into a per-task cap
+
+The competition's 12-hour limit is **720 minutes** of agent work and sandbox setup. This calculator is an illustration using the training set size; change `evaluation_tasks` when the actual evaluation count is known. Reserve setup time and a margin for slower tasks. A cap is a ceiling, not a target duration.
+
+
+# CELL 7 code
+total_minutes = 12 * 60
+evaluation_tasks = len(df)  # Scenario only: training task count is not the hidden count.
+setup_reserve_minutes = 90
+caps = [2, 3, 4, 4.5, 5]
+budget = pd.DataFrame(
+    {
+        "per_task_cap_min": caps,
+        "max_agent_minutes": [evaluation_tasks * cap for cap in caps],
+        "minutes_after_setup": [total_minutes - setup_reserve_minutes - evaluation_tasks * cap for cap in caps],
+    }
+)
+display(budget)
+print(f"Scenario: {evaluation_tasks} issues, {setup_reserve_minutes} minutes reserved for setup")
+
+
+# CELL 8 markdown
+## A practical first submission
+
+1. Follow the [official harness guide in the competition data](https://www.kaggle.com/competitions/gemma-4-developer-agent/data): `agent.yaml` at ZIP root, required model `gemma-4-31b-it-qat-w4a16-ct`, and an optional `eval_config.yaml`.
+2. Start with a single agent: locate the named implementation, make a minimal source change, run one targeted check, and call `submit_patch()`.
+3. Use `get_status()` to watch time and tool calls. Keep scratch files in `/tmp`, since untracked files in `/workspace` can enter the submitted diff.
+4. Record each submission's public score and diagnostics. Change one major variable at a time, such as time cap or search strategy. The public score is only a selection signal; the final private score can differ.
+
+This notebook uses the published training data for aggregate analysis. It contains no hidden-test results and makes no claim of a medal or prize.

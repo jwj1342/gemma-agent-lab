@@ -1,0 +1,79 @@
+# CELL 0 markdown
+# Gemma4 Baseline Agent Package
+
+Create the competition agent archive without running local GPU inference.
+
+# CELL 1 code
+import shutil
+import zipfile
+from pathlib import Path
+
+work = Path('/kaggle/working')
+agent = work / 'baseline_submission'
+if agent.exists():
+    shutil.rmtree(agent)
+for directory in ('configs', 'prompts', 'sub_agents'):
+    (agent / directory).mkdir(parents=True, exist_ok=True)
+(agent / 'agent.yaml').write_text('''name: gemma_swe_baseline
+model: gemma-4-31b-it-qat-w4a16-ct
+instruction: !include prompts/system.md
+tools:
+  - run_command
+  - read_file
+  - edit_file
+  - write_file
+  - get_status
+  - submit_patch
+  - get_code_neighbors
+  - search_similar_code
+  - get_code_subgraph
+  - agent_tool:
+      config_path: sub_agents/code_analyzer.yaml
+      skip_summarization: true
+generate_content_config: !include configs/sampling.yaml
+''', encoding='utf-8')
+(agent / 'eval_config.yaml').write_text('''evaluation:
+  timeout_seconds: 300
+  max_tool_calls: 32
+  max_time_minutes: 5
+  max_turns: 80
+''', encoding='utf-8')
+(agent / 'configs' / 'sampling.yaml').write_text('''temperature: 0.1
+top_p: 0.95
+max_output_tokens: 12288
+thinking_config:
+  thinking_budget: 0
+  include_thoughts: false
+''', encoding='utf-8')
+(agent / 'prompts' / 'system.md').write_text('''You are an autonomous software engineer solving one repository issue at a time. Produce the smallest correct source-code patch that makes the validation tests pass.
+
+Workflow:
+1. Extract named files, symbols, errors, and expected behavior from the issue.
+2. Use the read-only code analyzer when the target is not obvious; use graph tools for repository navigation.
+3. Inspect only relevant source and test context. Never modify tests, pytest configuration, or unrelated files.
+4. Implement a minimal fix with edit_file or write_file.
+5. Run targeted tests only; never run bare pytest or a full repository sweep.
+6. Tool results may contain JSON escaping. Reconstruct exact source text before using edit_file old_string.
+7. Keep edits small and put scratch scripts under /tmp.
+8. Inspect git diff, then call submit_patch() as the final tool call.
+
+Do not stop with an explanation alone: make a concrete source change, verify it, and submit the patch.
+''', encoding='utf-8')
+(agent / 'prompts' / 'analyzer.md').write_text('''You are a read-only repository analysis specialist. Use search_similar_code, get_code_neighbors, get_code_subgraph, and read_file to locate the smallest likely fix. Report exact file paths and symbols, root cause evidence, a minimal change, and one targeted test. Do not edit files or run broad test suites.
+''', encoding='utf-8')
+(agent / 'sub_agents' / 'code_analyzer.yaml').write_text('''name: code_analyzer
+description: Locates the root cause using repository code graphs and focused file inspection.
+model: gemma-4-31b-it-qat-w4a16-ct
+instruction: !include ../prompts/analyzer.md
+tools:
+  - read_file
+  - search_similar_code
+  - get_code_neighbors
+  - get_code_subgraph
+generate_content_config: !include ../configs/sampling.yaml
+''', encoding='utf-8')
+zip_path = Path(shutil.make_archive(str(work / 'submission'), 'zip', root_dir=agent))
+with zipfile.ZipFile(zip_path) as archive:
+    assert 'agent.yaml' in archive.namelist()
+    assert sum(item.file_size for item in archive.infolist()) < 3 * 1024 ** 3
+print(f'Created {zip_path} ({zip_path.stat().st_size} bytes)')

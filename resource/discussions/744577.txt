@@ -1,0 +1,38 @@
+# ONLY ONE search_similar_code call can blow your context up
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/744577
+
+## 3530530 /whisperlast TOPIC
+While going through our local runs (official swegemma 0.2.7 + vLLM 0.19.1) we found that a single `search_similar_code` call can end a task on the spot. Sharing it here in case it saves someone a few lost tasks, plus a small question for the organizers at the end.
+
+**What happens**
+
+`run_command` and `read_file` cut their output at 5,000 characters, but `search_similar_code` returns the full source of each of its k (default 10) nodes with no limit. On FastAPI a few nodes are huge because the parameter docs live in the code: `fastapi.applications.FastAPI` is about 130,000 characters and `fastapi.routing.APIRouter` about 110,000. If one of them lands in the top 10, the tool response alone is bigger than the 32,768-token context, and the next model request fails with `ContextWindowExceededError`, which ends the task.
+
+Across 246 `search_similar_code` calls in our runs:
+
+| response size | calls |
+|---|---|
+| > 5,000 chars | 107 |
+| > 20,000 chars | 21 |
+| > 50,000 chars | 11 |
+| > 100,000 chars | 6 |
+
+All 6 calls above 100k characters ended their task with `ContextWindowExceededError` (queries `APIRoute`, `FastAPI`, `APIRouter`, and `Body` three times). Note that the query does not have to name the big class: `Body` returned `APIRouter` first.
+
+**If you use the graph tools**
+
+- Query specific function or method names rather than broad class names (`FastAPI`, `APIRouter`, `Body`, ...).
+- `k` only limits the number of results, not the size of one node, so a smaller `k` does not fully protect you.
+- `get_code_neighbors` returns node names only, without code (in our few calls the responses stayed under 400 characters), so it looks like a safer first step.
+
+**Question for the organizers**
+
+Would it fit the design to cap the `code` field per result (say the first 1,500-2,000 characters, with a note that it was cut) or to apply the same `max_stdout_chars` limit as the other tools? We don't know whether the hidden repositories contain classes of this size, so it may matter more or less there. @ryanholbrook 
+
+Thanks for the tools - the graph neighbours in particular have been handy.
+
+## 3530710 /ryanholbrook ADMIN
+Thanks for the heads up. I will limit to `max_stdout_chars` like other tools. Glad you're liking the graph tools!
+
+## 3530724 /atomstack001 COMMENT
+How we can limit in our local setup ?

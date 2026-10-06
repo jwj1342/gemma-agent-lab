@@ -1,0 +1,24 @@
+# swegemma 0.2.7: unpacked-wheel cache ignores the wheel set, so added wheels have no effect locally
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/744029
+
+## 3529468 /francescosimone TOPIC
+If you add wheels to your local wheels directory (for example `typing_inspection`, `inline_snapshot` or `dirty_equals`, which the public `wheels/` folder lacks and which many FastAPI tests import), a local `swegemma` run may keep failing with the same `ModuleNotFoundError` as before. The cause is the cache that `swegemma` uses for unpacked wheels.
+
+The code is in `swegemma/harness/container_setup.py`, `_build_unpacked_wheels_tar()`:
+
+```python
+cache_dir = Path(tempfile.gettempdir()) / 'swegemma_sp_cache_v8'
+tar_path = cache_dir / f'{cache_name}.tar'
+if tar_path.exists() and tar_path.stat().st_size > 0:
+    return tar_path
+```
+
+It is called with `cache_name='sp_base'` for all small wheels and `f'sp_whl_{pkg_norm}'` for each large one. Neither key depends on the wheels directory, on which wheels were selected, or on their versions. After the first run, every later run in the same `$TMPDIR` reuses the old tar, whatever `wheels_dir` you pass.
+
+To reproduce:
+
+1. Run a gold-patch check on a FastAPI task, e.g. `fastapi_15588`, with the public `wheels/`. Collection fails with `ModuleNotFoundError: No module named 'typing_inspection'`.
+2. Copy `wheels/` to a new folder, add `typing_inspection-0.4.4-py3-none-any.whl`, and rerun with `wheels_dir` pointing to the new folder. Same error.
+3. `rm -rf "$TMPDIR/swegemma_sp_cache_v8"` and rerun. The gold patch passes (24 tests) and the empty patch now fails for the right reason (exit 1 instead of a collection error).
+
+Workaround: clear `$TMPDIR/swegemma_sp_cache_v8` whenever you change the wheel set, or run each wheel set with its own `TMPDIR`. A fix on the harness side could put a digest of the selected wheel file names and sizes into `cache_name`, e.g. `sp_base_<sha1>`.

@@ -1,0 +1,160 @@
+{
+  "forumTopic": {
+    "authorId": 19641724,
+    "authorThumbnailName": "19641724-kg.png?t=2026-09-29-07-48-18",
+    "authorUserDisplayName": "Whisper Last",
+    "authorUserName": "whisperlast",
+    "comments": [
+      {
+        "id": 3530710,
+        "postDate": "2026-09-30T18:33:13.853Z",
+        "rawMarkdown": "Thanks for the heads up. I will limit to `max_stdout_chars` like other tools. Glad you're liking the graph tools!",
+        "content": "<p>Thanks for the heads up. I will limit to <code>max_stdout_chars</code> like other tools. Glad you're liking the graph tools!</p>",
+        "replies": [
+          {
+            "id": 3530724,
+            "postDate": "2026-09-30T19:06:50.233Z",
+            "rawMarkdown": "How we can limit in our local setup ?",
+            "content": "<p>How we can limit in our local setup ?</p>",
+            "parent": {},
+            "author": {
+              "displayName": "RISHAV KUMAR",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/12607271-kg.png?t=2026-04-07-19-13-07",
+              "url": "/atomstack001",
+              "tier": "CONTRIBUTOR",
+              "id": 12607271,
+              "progressionOptOut": false
+            },
+            "authorType": "COMMENT",
+            "votes": {
+              "canUpvote": true
+            },
+            "kernelVersion": 0,
+            "feedbackTrackingData": {},
+            "isThankYou": false,
+            "teamUpInfo": {
+              "enabled": true,
+              "teamLeader": {
+                "displayName": "RISHAV KUMAR",
+                "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/12607271-kg.png?t=2026-04-07-19-13-07",
+                "url": "/atomstack001",
+                "userName": "atomstack001",
+                "tier": "CONTRIBUTOR",
+                "id": 12607271,
+                "profileUrl": "/atomstack001",
+                "performanceTier": "CONTRIBUTOR",
+                "userId": 12607271,
+                "progressionOptOut": false
+              },
+              "intro": ""
+            }
+          }
+        ],
+        "parent": {},
+        "author": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "progressionOptOut": false
+        },
+        "authorType": "ADMIN",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "reactions": [
+          {
+            "emoji": "THANK_YOU",
+            "featuredUserNames": [
+              "atomstack001"
+            ],
+            "userCount": 1
+          }
+        ],
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Ryan Holbrook",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+            "url": "/ryanholbrook",
+            "userName": "ryanholbrook",
+            "tier": "STAFF",
+            "id": 2003505,
+            "profileUrl": "/ryanholbrook",
+            "performanceTier": "STAFF",
+            "userId": 2003505,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3530530,
+      "postDate": "2026-09-30T11:02:21.027Z",
+      "rawMarkdown": "While going through our local runs (official swegemma 0.2.7 + vLLM 0.19.1) we found that a single `search_similar_code` call can end a task on the spot. Sharing it here in case it saves someone a few lost tasks, plus a small question for the organizers at the end.\n\n**What happens**\n\n`run_command` and `read_file` cut their output at 5,000 characters, but `search_similar_code` returns the full source of each of its k (default 10) nodes with no limit. On FastAPI a few nodes are huge because the parameter docs live in the code: `fastapi.applications.FastAPI` is about 130,000 characters and `fastapi.routing.APIRouter` about 110,000. If one of them lands in the top 10, the tool response alone is bigger than the 32,768-token context, and the next model request fails with `ContextWindowExceededError`, which ends the task.\n\nAcross 246 `search_similar_code` calls in our runs:\n\n| response size | calls |\n|---|---|\n| > 5,000 chars | 107 |\n| > 20,000 chars | 21 |\n| > 50,000 chars | 11 |\n| > 100,000 chars | 6 |\n\nAll 6 calls above 100k characters ended their task with `ContextWindowExceededError` (queries `APIRoute`, `FastAPI`, `APIRouter`, and `Body` three times). Note that the query does not have to name the big class: `Body` returned `APIRouter` first.\n\n**If you use the graph tools**\n\n- Query specific function or method names rather than broad class names (`FastAPI`, `APIRouter`, `Body`, ...).\n- `k` only limits the number of results, not the size of one node, so a smaller `k` does not fully protect you.\n- `get_code_neighbors` returns node names only, without code (in our few calls the responses stayed under 400 characters), so it looks like a safer first step.\n\n**Question for the organizers**\n\nWould it fit the design to cap the `code` field per result (say the first 1,500-2,000 characters, with a note that it was cut) or to apply the same `max_stdout_chars` limit as the other tools? We don't know whether the hidden repositories contain classes of this size, so it may matter more or less there. @ryanholbrook \n\nThanks for the tools - the graph neighbours in particular have been handy.",
+      "content": "<p>While going through our local runs (official swegemma 0.2.7 + vLLM 0.19.1) we found that a single <code>search_similar_code</code> call can end a task on the spot. Sharing it here in case it saves someone a few lost tasks, plus a small question for the organizers at the end.</p>\n<p><strong>What happens</strong></p>\n<p><code>run_command</code> and <code>read_file</code> cut their output at 5,000 characters, but <code>search_similar_code</code> returns the full source of each of its k (default 10) nodes with no limit. On FastAPI a few nodes are huge because the parameter docs live in the code: <code>fastapi.applications.FastAPI</code> is about 130,000 characters and <code>fastapi.routing.APIRouter</code> about 110,000. If one of them lands in the top 10, the tool response alone is bigger than the 32,768-token context, and the next model request fails with <code>ContextWindowExceededError</code>, which ends the task.</p>\n<p>Across 246 <code>search_similar_code</code> calls in our runs:</p>\n<table>\n<thead>\n<tr>\n<th>response size</th>\n<th>calls</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>&gt; 5,000 chars</td>\n<td>107</td>\n</tr>\n<tr>\n<td>&gt; 20,000 chars</td>\n<td>21</td>\n</tr>\n<tr>\n<td>&gt; 50,000 chars</td>\n<td>11</td>\n</tr>\n<tr>\n<td>&gt; 100,000 chars</td>\n<td>6</td>\n</tr>\n</tbody>\n</table>\n<p>All 6 calls above 100k characters ended their task with <code>ContextWindowExceededError</code> (queries <code>APIRoute</code>, <code>FastAPI</code>, <code>APIRouter</code>, and <code>Body</code> three times). Note that the query does not have to name the big class: <code>Body</code> returned <code>APIRouter</code> first.</p>\n<p><strong>If you use the graph tools</strong></p>\n<ul>\n<li>Query specific function or method names rather than broad class names (<code>FastAPI</code>, <code>APIRouter</code>, <code>Body</code>, …).</li>\n<li><code>k</code> only limits the number of results, not the size of one node, so a smaller <code>k</code> does not fully protect you.</li>\n<li><code>get_code_neighbors</code> returns node names only, without code (in our few calls the responses stayed under 400 characters), so it looks like a safer first step.</li>\n</ul>\n<p><strong>Question for the organizers</strong></p>\n<p>Would it fit the design to cap the <code>code</code> field per result (say the first 1,500-2,000 characters, with a note that it was cut) or to apply the same <code>max_stdout_chars</code> limit as the other tools? We don't know whether the hidden repositories contain classes of this size, so it may matter more or less there. <a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a> </p>\n<p>Thanks for the tools - the graph neighbours in particular have been handy.</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Whisper Last",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/19641724-kg.png?t=2026-09-29-07-48-18",
+        "url": "/whisperlast",
+        "tier": "CONTRIBUTOR",
+        "id": 19641724,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 1,
+        "canUpvote": true,
+        "totalUpvotes": 1
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 194,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "reactions": [
+        {
+          "emoji": "THANK_YOU",
+          "featuredUserNames": [
+            "cuongduc",
+            "aatiffraz"
+          ],
+          "userCount": 2
+        }
+      ],
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Whisper Last",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/19641724-kg.png?t=2026-09-29-07-48-18",
+          "url": "/whisperlast",
+          "userName": "whisperlast",
+          "tier": "CONTRIBUTOR",
+          "id": 19641724,
+          "profileUrl": "/whisperlast",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 19641724,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3530530,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 744577,
+    "name": "ONLY ONE search_similar_code call can blow your context up",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-30T11:02:21.025882600Z",
+    "totalVotes": 1,
+    "url": "/competitions/gemma-4-developer-agent/discussion/744577",
+    "totalMessages": 2,
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

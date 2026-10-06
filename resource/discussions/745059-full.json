@@ -1,0 +1,102 @@
+{
+  "forumTopic": {
+    "authorId": 690886,
+    "authorThumbnailName": "690886-kg.jpeg?t=2023-10-04-05-19-36",
+    "authorUserDisplayName": "Anthony Chiu",
+    "authorUserName": "kingychiu",
+    "comments": [
+      {
+        "id": 3532303,
+        "postDate": "2026-10-03T09:08:31.697Z",
+        "rawMarkdown": "Thanks for reporting this, I also found this issue this afternoon when I was reviewing \"metric/gemma-4-developer-agent-wheelhouss/adk_submission-0.2.12-py3-none-any.whl/adk_submission/resolvers/generation.py\", hope your suggestion can be supported promptly.",
+        "content": "<p>Thanks for reporting this, I also found this issue this afternoon when I was reviewing \"metric/gemma-4-developer-agent-wheelhouss/adk_submission-0.2.12-py3-none-any.whl/adk_submission/resolvers/generation.py\", hope your suggestion can be supported promptly.</p>",
+        "parent": {},
+        "author": {
+          "displayName": "Syurolh",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/zhouhengyuu",
+          "tier": "CONTRIBUTOR",
+          "id": 26112392,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 700,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Syurolh",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+            "url": "/zhouhengyuu",
+            "userName": "zhouhengyuu",
+            "tier": "CONTRIBUTOR",
+            "id": 26112392,
+            "profileUrl": "/zhouhengyuu",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 26112392,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3531507,
+      "postDate": "2026-10-02T00:48:44.100Z",
+      "rawMarkdown": "Hi organizers,\n\nThanks for fixing reasoning persistence and `thinking_budget` forwarding. I found a remaining semantic mismatch in `adk_submission 0.2.12`.\n\nGoogle’s [`ThinkingConfig`](https://googleapis.github.io/js-genai/release_docs/interfaces/types.ThinkingConfig.html) defines:\n\n- `thinking_budget`: controls the reasoning-token budget.\n- `include_thoughts`: controls whether generated thoughts are included in the response.\n\nvLLM separately uses `enable_thinking` to control whether Gemma 4 generates reasoning at all.\n\nHowever, the current bridge maps:\n\n```text\ninclude_thoughts: false\n        ↓\nenable_thinking: false\n        ↓\nno reasoning generated\n```\n\nTherefore, this configuration does not provide private reasoning:\n\n```yaml\nthinking_config:\n  thinking_budget: 4096\n  include_thoughts: false\n```\n\nBecause thinking is disabled, the positive budget is effectively unused. Competitors can currently choose between:\n\n1. No reasoning.\n2. Reasoning generated, returned, and retained during tool-call continuations.\n\nThere is no mode that generates reasoning for the current inference while omitting it from subsequent request context.\n\n## Why this matters\n\n[Gemma’s prompt-formatting documentation](https://ai.google.dev/gemma/docs/core/prompt-formatting-gemma4#managing-thought-context-between-turns) recommends preserving thoughts within a function-calling turn, so stripping them is not necessarily better. However, long coding-agent tool chains can accumulate reasoning and approach the 32K context limit. Separate controls would let competitors evaluate that tradeoff.\n\nCould the harness expose separate controls for:\n\n- Whether reasoning is generated.\n- Whether reasoning is returned by the inference server.\n- Whether returned reasoning is retained in subsequent ADK requests.\n\nAt minimum, could `include_thoughts: false` avoid setting `enable_thinking: false`, so that the configuration above means “generate reasoning, but do not return it”?\n\n## Potential implementation\n\nA minimal fix appears possible in the `adk-submission` package, primarily in:\n\n`adk_submission/resolvers/generation.py`\n\n1. In `apply_thinking_config_to_model()`, derive vLLM’s `enable_thinking` only from `thinking_budget` or `thinking_level`. Do not use `include_thoughts` to disable generation:\n\n   - `thinking_budget > 0` → `enable_thinking: true`\n   - `thinking_budget <= 0` or `thinking_level: none` → `enable_thinking: false`\n\n2. In `install_litellm_reasoning_patch()`, handle `include_thoughts` independently on the response path:\n\n   - `include_thoughts: true` → preserve reasoning parts.\n   - `include_thoughts: false` → remove `Part(thought=True)` before the response enters ADK session history.\n   - Always preserve visible text, function calls, usage metadata, errors, and final-response metadata.\n\nThis would support all three configurations:\n\n```yaml\n# 1. No reasoning\nthinking_config:\n  thinking_budget: 0\n  include_thoughts: false\n\n# 2. Reasoning generated and retained\nthinking_config:\n  thinking_budget: 4096\n  include_thoughts: true\n\n# 3. Reasoning generated but not retained\nthinking_config:\n  thinking_budget: 4096\n  include_thoughts: false\n```\n\nThanks!",
+      "content": "<p>Hi organizers,</p>\n<p>Thanks for fixing reasoning persistence and <code>thinking_budget</code> forwarding. I found a remaining semantic mismatch in <code>adk_submission 0.2.12</code>.</p>\n<p>Google’s <a href=\"https://googleapis.github.io/js-genai/release_docs/interfaces/types.ThinkingConfig.html\" target=\"_blank\"><code>ThinkingConfig</code></a> defines:</p>\n<ul>\n<li><code>thinking_budget</code>: controls the reasoning-token budget.</li>\n<li><code>include_thoughts</code>: controls whether generated thoughts are included in the response.</li>\n</ul>\n<p>vLLM separately uses <code>enable_thinking</code> to control whether Gemma 4 generates reasoning at all.</p>\n<p>However, the current bridge maps:</p>\n<pre><code>include_thoughts: false\n        ↓\nenable_thinking: false\n        ↓\nno reasoning generated\n</code></pre>\n<p>Therefore, this configuration does not provide private reasoning:</p>\n<pre><code>thinking_config:\n  thinking_budget: 4096\n  include_thoughts: false\n</code></pre>\n<p>Because thinking is disabled, the positive budget is effectively unused. Competitors can currently choose between:</p>\n<ol>\n<li>No reasoning.</li>\n<li>Reasoning generated, returned, and retained during tool-call continuations.</li>\n</ol>\n<p>There is no mode that generates reasoning for the current inference while omitting it from subsequent request context.</p>\n<h2>Why this matters</h2>\n<p><a href=\"https://ai.google.dev/gemma/docs/core/prompt-formatting-gemma4#managing-thought-context-between-turns\" target=\"_blank\">Gemma’s prompt-formatting documentation</a> recommends preserving thoughts within a function-calling turn, so stripping them is not necessarily better. However, long coding-agent tool chains can accumulate reasoning and approach the 32K context limit. Separate controls would let competitors evaluate that tradeoff.</p>\n<p>Could the harness expose separate controls for:</p>\n<ul>\n<li>Whether reasoning is generated.</li>\n<li>Whether reasoning is returned by the inference server.</li>\n<li>Whether returned reasoning is retained in subsequent ADK requests.</li>\n</ul>\n<p>At minimum, could <code>include_thoughts: false</code> avoid setting <code>enable_thinking: false</code>, so that the configuration above means “generate reasoning, but do not return it”?</p>\n<h2>Potential implementation</h2>\n<p>A minimal fix appears possible in the <code>adk-submission</code> package, primarily in:</p>\n<p><code>adk_submission/resolvers/generation.py</code></p>\n<ol>\n<li><p>In <code>apply_thinking_config_to_model()</code>, derive vLLM’s <code>enable_thinking</code> only from <code>thinking_budget</code> or <code>thinking_level</code>. Do not use <code>include_thoughts</code> to disable generation:</p>\n<ul>\n<li><code>thinking_budget &gt; 0</code> → <code>enable_thinking: true</code></li>\n<li><code>thinking_budget &lt;= 0</code> or <code>thinking_level: none</code> → <code>enable_thinking: false</code></li></ul></li>\n<li><p>In <code>install_litellm_reasoning_patch()</code>, handle <code>include_thoughts</code> independently on the response path:</p>\n<ul>\n<li><code>include_thoughts: true</code> → preserve reasoning parts.</li>\n<li><code>include_thoughts: false</code> → remove <code>Part(thought=True)</code> before the response enters ADK session history.</li>\n<li>Always preserve visible text, function calls, usage metadata, errors, and final-response metadata.</li></ul></li>\n</ol>\n<p>This would support all three configurations:</p>\n<pre><code># 1. No reasoning\nthinking_config:\n  thinking_budget: 0\n  include_thoughts: false\n\n# 2. Reasoning generated and retained\nthinking_config:\n  thinking_budget: 4096\n  include_thoughts: true\n\n# 3. Reasoning generated but not retained\nthinking_config:\n  thinking_budget: 4096\n  include_thoughts: false\n</code></pre>\n<p>Thanks!</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Anthony Chiu",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/690886-kg.jpeg?t=2023-10-04-05-19-36",
+        "url": "/kingychiu",
+        "tier": "GRANDMASTER",
+        "id": 690886,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 3,
+        "canUpvote": true,
+        "totalUpvotes": 3
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 1401,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Anthony Chiu",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/690886-kg.jpeg?t=2023-10-04-05-19-36",
+          "url": "/kingychiu",
+          "userName": "kingychiu",
+          "tier": "GRANDMASTER",
+          "id": 690886,
+          "profileUrl": "/kingychiu",
+          "performanceTier": "GRANDMASTER",
+          "userId": 690886,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3531507,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 745059,
+    "name": "include_thoughts currently disables reasoning instead of only hiding it [adk_submission 0.2.12]",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-10-02T00:48:44.099622200Z",
+    "totalVotes": 3,
+    "url": "/competitions/gemma-4-developer-agent/discussion/745059",
+    "totalMessages": 1,
+    "authorPerformanceTier": "GRANDMASTER",
+    "authorProgressionOptOut": false
+  }
+}

@@ -1,0 +1,62 @@
+# With LoRA enabled, the 4xL4 KV cache shrinks to ~7.6k tokens; requests longer than that hang
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/744331
+
+## 3530043 /adithyagiri TOPIC
+Hi @ryanholbrook,
+
+We measured this on a Kaggle notebook with the L4x4 accelerator, using the getting-started notebook's install cell and its exact VllmConfig (TP=4, max_model_len 32768, gpu_memory_utilization 0.90, enable_lora=True, max_loras=8, max_lora_rank=128), launched via VllmServer.build_cmd():
+
+- No adapters in the submission (no LoRA flags emitted): GPU KV cache = 46,048 tokens.
+- Only the sample main_lora adapter (rank 4): GPU KV cache = 7,600 tokens (1.74 GiB free per GPU). vLLM preallocates LoRA buffers for max_loras x max_lora_rank, so the adapter's own size doesn't matter, and build_cmd() passes --max-loras max(8, number of adapters) and --max-lora-rank 128, so a submission cannot lower them.
+- With that server, a ~6.9k-token prompt completes, but a ~20.7k-token prompt never starts (vLLM logs "Running: 0 reqs, Waiting: 1 reqs" for 600 s). This happens for both the base model name and the adapter name.
+
+Agent conversations routinely exceed 7.6k tokens, so any submission that carries an adapter would stall on most tasks.
+
+1. Does the scoring environment use these same LoRA settings?
+2. If so, could the scorer use smaller values (e.g. max_loras = the number of adapters actually submitted, and/or a lower max_lora_rank), or otherwise reserve more KV cache?
+
+Thanks!
+
+## 3532667 /pierreb4 COMMENT
+Here's what Claude has to say, below. I hope that it helps.
+
+> With wheelhouse v28 on 4xL4 (util 0.80, TP 4, vllm 0.19.1), a single rank-16 adapter now loads and serves. Prompts of 28k
+> tokens complete and agent runs reach 25k-token prompts, so the 744331 hang is fixed. The KV cache still drops from 36,432 to
+> 27,712 tokens (0.76x, 8.34 -> 6.34 GiB per GPU). Almost all of the loss is CUDA-graph specialization: with LoRA, vLLM
+> captures every graph twice (PIECEWISE 51 -> 102, FULL 35 -> 70; graph memory 2.19 -> 4.07 GiB estimated). The rank-16
+> buffers themselves cost about 0.1 GiB. A bundle with an adapter sends every request to that adapter, so the no-LoRA graphs
+> are never used. Could the scorer pass `compilation_config={"cudagraph_specialize_lora": False}` when `--enable-lora` is set?
+> We measured this on the same 4xL4 stack, adding the flag through `VllmConfig.extra_args`. The adapter run then keeps 34,288
+> of the base's 36,432 tokens (0.94x, 7.85 vs 8.34 GiB), with 51/35 graphs instead of 102/70. The 16k and 28k prompts and an
+> agent task through the adapter run normally.
+
+I can share logs if needed. Just let me know.
+
+
+## 3530648 /ryanholbrook ADMIN
+Thanks for the report. I will patch to set the `loras` parameters based on the submission. It looks like a bug in our vLLM version is causing the hang, but I think I have a workaround.
+
+## 3530845 /whoamircc COMMENT
+A related data point: our adapter submission 56719837 (sent 2026-09-30 22:04 UTC) completed after about 30 minutes with no score and "Your notebook hit an unhandled error while rerunning your code." The bundle is identical to our submission 56659914, which scored 0.06, plus adapters/trained_lora/ (PEFT LoRA, r=64, lora_alpha=64, target_modules q/k/v/o/gate/up/down_proj, 980 MB safetensors). It's referenced as adapter: trained_lora on the root agent and on both AgentTool sub-agents. It is within the HARNESS_README limits, and it compiles with the v25 wheels. An adapter of the same shape loaded and served ~4K-token prompts through VllmServer in a Kaggle 4xL4 notebook. Could you check what raised in this run, and whether it's related to the loras patch? If it was on the scorer side, a rerun once the fix is live would be much appreciated.
+
+## 3530588 /whoamircc COMMENT
+Independent confirmation with a trained rank-64 adapter, same setup (Kaggle L4x4, wheelhouse v25, the getting-started `VllmConfig` launched through `VllmServer.build_cmd()`: `--enable-lora --max-loras 8 --max-lora-rank 128`, `--max-model-len 32768`, `--gpu-memory-utilization 0.9`, TP 4).
+
+Startup log with the adapter mounted:
+- `Available KV cache memory: 1.74 GiB` (per GPU)
+- `GPU KV cache size: 7,600 tokens`
+- `Maximum concurrency for 32,768 tokens per request: 1.43x` (misleading, see below)
+
+Chat completions, 64 output tokens:
+- ~4,000-token prompt: served by the base model (7.9 s) and by the adapter (5.4 s).
+- ~14,000-token prompt: **never returns**, for the base model name and the adapter name alike (900 s read timeout each). No error; the request stays in the waiting queue. With `scheduler_reserve_full_isl` (default true) the scheduler waits for KV space that can never be freed, so the request hangs until `max_time_minutes` ends the task.
+
+This narrows your bound: the limit sits between ~4K and ~14K, consistent with the 7,600-token figure. The arithmetic also matches: this model stores ~246 kB of KV per token per GPU at TP 4 (16 KV heads x 256 head_dim x 60 layers, bf16), so 1.74 GiB holds 7,600 tokens and 46,048 tokens need ~10.5 GiB. Mounting one adapter under the defaults removes ~8.8 GiB of KV per GPU, while a single rank-64 adapter's weights are ~0.2 GB per GPU.
+
+In our evaluation runs under the notebook's compaction settings, 99% of episodes exceed 7,600 prompt tokens, so a submission that ships an adapter would time out on nearly every task regardless of the adapter's quality. Submissions without an adapter never get `--enable-lora` and are unaffected.
+
+Two changes on the scoring side would fix it:
+1. Size the LoRA slots to the submission: `max_loras=1` and `max_lora_rank` equal to the shipped adapter's rank (or a higher `gpu_memory_utilization`), which restores the KV cache.
+2. Fail fast on requests that cannot fit (or disable `scheduler_reserve_full_isl` for this hybrid-attention model), so an oversized prompt returns an error instead of consuming the whole task time limit.
+
+@ryanholbrook could you confirm which `VllmConfig` the private scorer uses when an adapter is present? If it is the notebook default, LoRA submissions are currently scored under a 7,600-token context.

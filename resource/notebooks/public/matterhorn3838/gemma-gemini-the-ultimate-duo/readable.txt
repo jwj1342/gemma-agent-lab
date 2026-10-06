@@ -1,0 +1,2218 @@
+# CELL 0 markdown
+<div style="background:linear-gradient(120deg,#0b1f3a 0%,#1A73E8 45%,#6A3DE8 75%,#1baf7a 100%);padding:30px 32px;border-radius:16px;color:#fff">
+  <div style="font-size:13px;letter-spacing:2px;opacity:.85;color:#fff">GOOGLE · THE GEMMA 4 DEVELOPER AGENT COMPETITION</div>
+  <h1 style="color:#fff;margin:6px 0 4px 0;font-size:34px">🧬 Evidence-First Starter: EDA → Localization → ADK Agent → <code style="background:rgba(255,255,255,.18);color:#fff;padding:2px 8px;border-radius:6px">submission.zip</code></h1>
+  <p style="font-size:16px;margin:10px 0 0 0;color:#fff;opacity:.95">One config cell · Run-All safe · verified harness facts · scored bundles reproduced byte for byte · one change per submission</p>
+</div>
+
+<br>
+
+**The task in one sentence:** build a software-engineering agent on **Gemma 4 31B** that reads a real GitHub issue, edits a Python repository inside a sandbox and submits a patch that makes hidden tests pass. You do not submit code: you submit a small **declarative bundle** (YAML + prompts) that the harness compiles into an agent.
+
+This notebook merges the strongest ideas of three public notebooks into the framework of the first one:
+
+| Source notebook | What we kept |
+|:--|:--|
+| 🤖 **GEMMA: EDA, Baseline for a start** (romanrozen, public 0.12 / copy 0.15) | The framework and section order, the runtime-verified harness facts, the diff parser, localization signals, the TF-IDF Hit@k baseline, the `edit_file` simulator, the patch checker, and the **top-scoring bundle itself** |
+| 🧭 **Pathfinder Agent** (mizeroluckygall) | The benchmark-in-numbers prompt rules, the fix for empty task-named graph/embedding files, the `search_similar_code` replay study, runtime budget arithmetic, round-trip validation |
+| 🐈‍⬛ **Black Cat SWE Agent** | The leaderboard-noise measurement, the file-by-file bundle comparison, the "short prompt wins" lesson, hash-verified fallbacks, the stricter validator, the one-change-per-version rule |
+
+> **Quick start:** attach the competition data (*Add Input*) → leave `CFG` as it is for the evidence-backed baseline → **Run All** → submit `/kaggle/working/submission.zip`.
+
+# CELL 1 markdown
+### 🗺️ Contents
+0. [📏 Leaderboard evidence](#evidence) : what the scores say, and how noisy they are
+1. [⚙️ Config](#config) : the only cell you need to edit
+2. [📦 Data discovery](#discovery) : locate the data, inventory it, read the harness README
+3. [🧰 Tool verification](#tools) : which agent tools really exist, and the sandbox facts that matter
+4. [📊 Task EDA](#eda) : repositories, patch anatomy, difficulty, and the rules they imply
+5. [🧭 Localization signals](#signals) : what the issue text tells us about *where* to edit
+6. [🕸️ Code intelligence](#graphs) : graphs, embeddings, and a replay of `search_similar_code`
+7. [🎯 Localization baseline](#baseline) : lexical retrieval Hit@k
+8. [✂️ Edit mechanics & patch safety](#edit) : the classic `edit_file` pitfalls
+9. [🧠 Prompts, context & runtime budget](#prompts) : why shorter won, and the arithmetic of 12 hours
+10. [🏗️ Agent bundle builder](#bundle) : scored bundles verbatim, or one controlled change
+11. [🛡️ Validator & packaging](#validate) : `submission.zip`
+12. [🚀 Playbook & experiment log](#playbook) : what to try next, one change at a time
+
+# CELL 2 markdown
+<a id="evidence"></a>
+# 📏 0. Leaderboard evidence: read it before you change anything
+
+Everything below is **self-reported by the three source notebooks** (public scores on the competition leaderboard at the time they were written). It is the only ground truth available for design decisions, because the hidden test set cannot be run locally.
+
+| Bundle / version | What it is | Public score |
+|:--|:--|:-:|
+| 🤖 romanrozen's bundle | Short generic prompt, coder + read-only analyzer, no `eval_config.yaml` (scorer defaults), 8,192 output tokens | **0.12** |
+| 🤖 kozykappa's copy | The same source and a byte-identical `submission.zip`, submitted later | **0.15** |
+| 🐈‍⬛ Black Cat v2 · first strike | One agent, default budget | 0.06 |
+| 🐈‍⬛ Black Cat v5 · compact | One agent, 4 min · 24 calls | 0.08 |
+| 🐈‍⬛ Black Cat v6 · analyzer ("anchor") | Coder + analyzer, 5 min · 40 calls | **0.10** (twice, byte-identical archive) |
+| 🐈‍⬛ Black Cat "lab-tuned" | One lean agent, temperature 1.0, many lab-derived rules | 0.06 |
+| 🐈‍⬛ Black Cat v8 · Pack Instinct | Anchor design + top-bundle budget + long list of lab-derived rules | 0.05 |
+| 🧭 Pathfinder v1 | Coder + analyzer, short data-driven prompts, **hard 4-minute self-limit** | 0.08 |
+
+### What the evidence supports
+
+1. **The score is noisy.** The same archive scored 0.10 and 0.10 (Black Cat), while the same top bundle scored 0.12 and 0.15. A swing of about **0.03** is a few tasks. (The sources disagree on the hidden-set size, about 60 in one and about 120 in the other, so treat "a few tasks" as the safe wording.) One submission can only detect a *large* effect.
+2. **A short, generic prompt beat long rule lists.** Black Cat's v8 used the same budget and token limit as the top bundle and still scored 0.05. The remaining difference was a long list of rules distilled from four public repositories. Every rule matched a real failure, but together they seem to have cost more on the hidden repositories than they saved.
+3. **Hard time caps hurt.** Both Pathfinder v1 (4-minute self-limit) and Black Cat v5 (4 minutes, 24 calls) landed at 0.08. Cutting hard tasks short costs more than it saves.
+4. **The analyzer should receive the full issue.** A navigator cannot find what it was not told about.
+5. **Hidden reasoning stays out of the context window.** `include_thoughts: false` on every agent, in all the scoring bundles.
+
+The practical consequence drives the whole notebook: **start from the best-evidenced bundle, and change exactly one thing per submission.**
+
+# CELL 3 markdown
+<a id="config"></a>
+# ⚙️ 1. Config
+Everything tunable lives here. `None` means *auto-detect from the competition files*.
+
+`profile` picks what ships:
+
+| profile | What it is | Evidence |
+|:--|:--|:--|
+| `top_bundle` *(default)* | The public top bundle, file for file, **SHA-256 verified** | 0.12 / 0.15 |
+| `anchor` | Black Cat's v6 bundle, verified byte for byte | 0.10 ×2 |
+| `compact` | Black Cat's compact single-agent bundle, verified byte for byte | 0.08 |
+| `custom` | The top bundle plus the toggles below. **Each toggle that differs from its default counts as one change** | none yet |
+
+# CELL 4 code
+CFG = {
+    # ── what to ship ───────────────────────────────────────────────────────
+    "profile": "top_bundle",             # "top_bundle" | "anchor" | "compact" | "custom"
+
+    # ── toggles that only apply when profile == "custom" ───────────────────
+    # Change ONE of these per submission, so the score tells you something.
+    "architecture": "analyzer+coder",    # "analyzer+coder" | "single"
+    "issue_rules": False,                # add the Pathfinder issue-reading rules (exact names, skip PR boilerplate, docs_src)
+    "analyzer_search_similar": True,     # False = keep search_similar_code away from the analyzer (huge outputs)
+    "temperature": 0.2,
+    "top_p": 0.95,
+    "top_k": 40,
+    "max_output_tokens": 8192,
+    "thinking_budget": 4096,             # thoughts are always hidden (include_thoughts: false)
+    "ship_eval_config": False,           # copy the official sample's eval_config.yaml unchanged
+
+    # ── environment ────────────────────────────────────────────────────────
+    "model_alias": None,                 # None → detected from sample_submission
+    "fallback_model_alias": "gemma-4-31b-it-qat-w4a16-ct",
+    "context_limit": None,               # None → detected from HARNESS_README.md
+    "fallback_context_limit": 32768,
+
+    # ── analysis ───────────────────────────────────────────────────────────
+    "localization_max_tasks": 200,
+    "graph_study_max_commits": 60,
+    "time_budget_s": 240,                # soft cap per heavy analysis loop
+    "seed": 42,
+
+    # ── output ─────────────────────────────────────────────────────────────
+    "bundle_dir": "submission_bundle",
+    "zip_name": "submission.zip",
+    "package_fallbacks": True,           # also write anchor_submission.zip and fallback_submission.zip
+}
+assert CFG["profile"] in ("top_bundle", "anchor", "compact", "custom"), "unknown profile"
+
+# CELL 5 markdown
+<a id="discovery"></a>
+# 📦 2. Setup & data discovery
+
+# CELL 6 code
+import os, re, sys, json, gzip, time, html, difflib, shutil, tarfile, zipfile, hashlib, textwrap, warnings, posixpath, ast
+from pathlib import Path
+from collections import Counter, defaultdict
+from contextlib import contextmanager
+from datetime import datetime, timezone
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import yaml
+from IPython.display import display, HTML, Markdown
+
+try:
+    import networkx as nx
+except Exception:                       # only the neighbourhood plot needs it
+    nx = None
+
+from pandas.io.formats.style import Styler
+if not hasattr(Styler, "map"):          # pandas < 2.1 compatibility
+    Styler.map = Styler.applymap
+
+warnings.filterwarnings("ignore")
+np.random.seed(CFG["seed"])
+pd.set_option("display.max_colwidth", 90)
+
+# ── visual identity ─────────────────────────────────────────────────────────
+PAL = ["#4285F4", "#EA4335", "#FBBC04", "#34A853", "#A142F4", "#24C1E0", "#F538A0", "#5F6368"]
+BLUE, ORANGE, AQUA, NAVY, INK, MUTED, GRID = "#2a78d6", "#eb6834", "#1baf7a", "#0b1f3a", "#1f2328", "#5f6368", "#e6e5e1"
+plt.rcParams.update({
+    "figure.dpi": 110, "axes.titleweight": "bold", "axes.titlesize": 12, "axes.labelsize": 10,
+    "axes.spines.top": False, "axes.spines.right": False, "axes.edgecolor": MUTED, "axes.grid": True,
+    "grid.color": GRID, "grid.linewidth": 0.8, "axes.axisbelow": True, "font.size": 10,
+})
+
+def esc(s):
+    return html.escape(str(s))
+
+def callout(msg, kind="info"):
+    bg, bd, icon = {"info": ("#E8F0FE", "#4285F4", "💡"), "ok": ("#E6F4EA", "#34A853", "✅"),
+                    "warn": ("#FEF7E0", "#F9AB00", "⚠️"), "err": ("#FCE8E6", "#EA4335", "⛔"),
+                    "idea": ("#f3effd", "#6b4fd8", "🧭")}[kind]
+    display(HTML(f'<div style="background:{bg};border-left:5px solid {bd};padding:10px 14px;'
+                 f'border-radius:6px;margin:6px 0;color:#202124">{icon} {msg}</div>'))
+
+def kpis(items, accent="#1A73E8"):
+    # items: (label, value[, note])
+    cards = ""
+    for item in items:
+        label, value, note = (list(item) + [""])[:3]
+        cards += (f'<div style="flex:1;min-width:130px;background:#fff;border:1px solid #DADCE0;border-radius:12px;'
+                  f'padding:10px 14px;margin:4px;box-shadow:0 1px 2px rgba(60,64,67,.15)">'
+                  f'<div style="font-size:12px;color:#5F6368">{esc(label)}</div>'
+                  f'<div style="font-size:{22 if len(str(value)) <= 12 else 17}px;font-weight:700;color:{accent}">{esc(value)}</div>'
+                  + (f'<div style="font-size:11px;color:#5F6368">{esc(note)}</div>' if note else "") + "</div>")
+    display(HTML(f'<div style="display:flex;flex-wrap:wrap;margin:4px 0 10px 0">{cards}</div>'))
+
+def pre(text, max_lines=80):
+    lines = str(text).splitlines()
+    more = f"\n… ({len(lines) - max_lines} more lines)" if len(lines) > max_lines else ""
+    return ('<pre style="font-size:12px;background:#F8F9FA;color:#202124;padding:10px;border-radius:8px;overflow-x:auto;white-space:pre-wrap">'
+            + esc("\n".join(lines[:max_lines]) + more) + "</pre>")
+
+def details(summary, body_html, open_=False):
+    display(HTML(f'<details style="margin:4px 0" {"open" if open_ else ""}><summary style="cursor:pointer;font-weight:600">{esc(summary)}</summary>{body_html}</details>'))
+
+def human_bytes(n):
+    for unit in ["B", "KB", "MB", "GB", "TB"]:
+        if n < 1024:
+            return f"{n:,.1f} {unit}" if unit != "B" else f"{n} B"
+        n /= 1024
+    return f"{n:.1f} PB"
+
+@contextmanager
+def safe(name):
+    """Run a section; on failure show a warning instead of crashing Run All."""
+    try:
+        yield
+    except Exception as e:
+        callout(f"<b>{esc(name)}</b> skipped: <code>{esc(type(e).__name__)}: {esc(e)}</code>", "warn")
+
+WORK = Path(os.environ.get("GEMMA_OUTPUT_ROOT") or ("/kaggle/working" if Path("/kaggle/working").exists() else "."))
+WORK = WORK.resolve(); WORK.mkdir(parents=True, exist_ok=True)
+print(f"Python {sys.version.split()[0]} · pandas {pd.__version__} · working dir: {WORK}")
+
+# CELL 7 markdown
+### 🔎 Locating the competition data
+No hard-coded personal paths: we check the standard Kaggle mount points, then search `/kaggle/input` for `tasks.jsonl`. Set `GEMMA_AGENT_DATA=/path/to/data` to run locally. If several copies exist, the one that also has a `graphs/` folder wins.
+
+# CELL 8 code
+def limited_walk(root, max_depth):
+    root = Path(root)
+    if not root.exists():
+        return
+    stack = [(root, 0)]
+    while stack:
+        d, depth = stack.pop()
+        try:
+            entries = sorted(os.scandir(d), key=lambda e: e.name)
+        except (PermissionError, FileNotFoundError, NotADirectoryError):
+            continue
+        for e in entries:
+            yield Path(e.path)
+            if e.is_dir(follow_symlinks=False) and depth < max_depth:
+                stack.append((Path(e.path), depth + 1))
+
+def find_data_dir():
+    explicit = os.environ.get("GEMMA_AGENT_DATA") or os.environ.get("GEMMA_DATA_DIR")
+    if explicit and (Path(explicit) / "tasks.jsonl").exists():
+        return Path(explicit)
+    for c in [Path("/kaggle/input/competitions/gemma-4-developer-agent"), Path("/kaggle/input/gemma-4-developer-agent"),
+              Path("competition_data"), Path("../competition_data")]:
+        if (c / "tasks.jsonl").exists():
+            return c
+    found = sorted({p.parent for root in (Path("/kaggle/input"), Path(".")) for p in limited_walk(root, 3) if p.name == "tasks.jsonl"})
+    good = [p for p in found if (p / "graphs").is_dir()]
+    return (good or found or [None])[0]
+
+DATA_DIR = find_data_dir()
+DEMO_MODE = DATA_DIR is None
+if DEMO_MODE:
+    callout("Competition data not found → <b>demo mode</b> on a tiny synthetic sample. The analysis sections degrade gracefully "
+            "and the submission is still built. Attach the dataset (<i>Add Input → Competitions</i>) for real results.", "warn")
+else:
+    callout(f"Data directory: <code>{esc(DATA_DIR)}</code>", "ok")
+
+# CELL 9 code
+def dir_stats(path, max_files=200_000):
+    n, size, exts, truncated = 0, 0, Counter(), False
+    for dp, _, fns in os.walk(path):
+        for f in fns:
+            n += 1
+            try:
+                size += os.path.getsize(os.path.join(dp, f))
+            except OSError:
+                pass
+            name = f.lower()
+            exts[".tar.gz" if name.endswith(".tar.gz") else (Path(f).suffix.lower() or "(none)")] += 1
+            if n >= max_files:
+                truncated = True
+                break
+        if truncated:
+            break
+    return n, size, exts, truncated
+
+if not DEMO_MODE:
+    rows = []
+    for e in sorted(DATA_DIR.iterdir()):
+        if e.is_dir():
+            n, s, exts, tr = dir_stats(e); kind = "📁"
+        else:
+            n, s, exts, tr = 1, e.stat().st_size, Counter({e.suffix or "(none)": 1}), False; kind = "📄"
+        rows.append({"": kind, "entry": e.name, "files": f"{n:,}{'+' if tr else ''}", "size": human_bytes(s),
+                     "top extensions": ", ".join(f"{k} ×{v}" for k, v in exts.most_common(4))})
+    display(pd.DataFrame(rows).style.hide(axis="index").set_properties(**{"text-align": "left"}))
+
+# CELL 10 markdown
+### 📜 The harness README is the source of truth
+Key facts are extracted **together with the line they came from**, so every claim can be checked at a glance. The allowed file types, the size limit and any rule about `..` in includes are parsed here too, because they feed the validator in section 11.
+
+# CELL 11 code
+README_PATH = None
+if not DEMO_MODE:
+    README_PATH = next((p for p in [DATA_DIR / "HARNESS_README.md", *sorted(DATA_DIR.glob("*README*"))] if p.exists()), None)
+README = README_PATH.read_text(encoding="utf-8", errors="replace") if README_PATH else ""
+
+def readme_lines(pattern, max_hits=3):
+    hits = []
+    for line in README.splitlines():
+        if re.search(pattern, line, flags=re.I) and line.strip():
+            hits.append(textwrap.shorten(line.strip(), 170))
+            if len(hits) >= max_hits:
+                break
+    return hits
+
+def detect_context_limit(text):
+    pats = [r"max[_ -]?model[_ -]?len\D{0,20}?(\d{1,3}(?:[,_]\d{3})+|\d{4,7})",
+            r"context(?:[ -]window|[ -]length|[ -]limit|[ -]ceiling)?\D{0,40}?(\d{1,3}(?:[,_]\d{3})+|\d{4,7})\s*(?:tokens)?"]
+    for pat in pats:
+        for line in text.splitlines():
+            m = re.search(pat, line, flags=re.I)
+            if m:
+                v = int(re.sub(r"[,_]", "", m.group(1)))
+                if 2048 <= v <= 2_000_000:
+                    return v, line.strip()
+    return None, None
+
+def readme_extensions():
+    for line in README.splitlines():
+        if re.search(r"allowed|permitted|extension", line, re.I):
+            exts = set(re.findall(r"(?<![\w/])\.(yaml|yml|md|txt|py|json|safetensors|bin|toml|jinja|j2)\b", line, re.I))
+            if len(exts) >= 3:
+                return {"." + e.lower() for e in exts}, line.strip()
+    return None, None
+
+def readme_size_limit():
+    for line in README.splitlines():
+        if re.search(r"size|archive|limit|uncompressed", line, re.I):
+            m = re.search(r"(\d+(?:\.\d+)?)\s*(GiB|GB|MiB|MB)\b", line)
+            if m:
+                mult = {"gib": 1024**3, "gb": 1024**3, "mib": 1024**2, "mb": 1024**2}[m.group(2).lower()]
+                return int(float(m.group(1)) * mult), line.strip()
+    return None, None
+
+ctx_value, ctx_evidence = detect_context_limit(README)
+CONTEXT_LIMIT = CFG["context_limit"] or ctx_value or CFG["fallback_context_limit"]
+ctx_source = "CFG override" if CFG["context_limit"] else ("HARNESS_README.md" if ctx_value else "fallback (not found in README)")
+_exts, _ext_line = readme_extensions()
+ALLOWED_EXTS = _exts or {".yaml", ".yml", ".md", ".txt", ".py", ".json", ".safetensors"}
+_size, _size_line = readme_size_limit()
+MAX_BYTES = _size or 3 * 1024**3
+DOTDOT_LINES = readme_lines(r"\.\.|parent director|outside the (bundle|archive)", 3)
+
+facts = []
+for topic, pat in [("Context / tokens", r"max_model_len|context|token"), ("Turn / call budget", r"turn|budget|max[_ ]?calls?"),
+                   ("Time limits", r"timeout|wall|second|minute|hour"), ("Hardware", r"\bGPU|L4|A100|H100|TPU|vLLM"),
+                   ("Submission rules", r"submission|archive|\.zip|extension|adapter|LoRA"),
+                   ("Scoring", r"score|metric|pass|resolved|pytest")]:
+    for line in readme_lines(pat):
+        facts.append({"topic": topic, "evidence (README line)": line})
+
+if README:
+    callout(f"Context limit used by this notebook: <b>{CONTEXT_LIMIT:,} tokens</b> (source: {esc(ctx_source)})"
+            + (f"<br><small>evidence: <code>{esc(ctx_evidence)}</code></small>" if ctx_evidence else ""), "info")
+    if facts:
+        display(pd.DataFrame(facts).style.hide(axis="index").set_properties(**{"text-align": "left"}))
+    details(f"📖 Show full {README_PATH.name} ({len(README.splitlines())} lines)", pre(README, 400))
+else:
+    callout(f"No harness README found. Using fallback context limit {CONTEXT_LIMIT:,}.", "warn")
+
+# CELL 12 markdown
+<a id="tools"></a>
+# 🧰 3. Tool verification
+Community notebooks list nine sandbox tools. Rather than trusting any list (including this one), we **grep the harness files** for each tool name. The custom bundle only uses tools that were actually found, so a typo or a renamed tool cannot silently break a submission.
+
+# CELL 13 code
+EXPECTED_TOOLS = {
+    "run_command": "execution", "submit_patch": "execution", "get_status": "execution",
+    "read_file": "filesystem", "edit_file": "filesystem", "write_file": "filesystem",
+    "search_similar_code": "code intelligence", "get_code_neighbors": "code intelligence", "get_code_subgraph": "code intelligence",
+}
+TEXT_EXTS = {".py", ".md", ".txt", ".yaml", ".yml", ".json", ".toml", ".cfg", ".sh", ".ini"}
+
+def text_corpus(dirs, max_file_bytes=2_000_000, max_files=4000):
+    chunks, n = [], 0
+    for d in dirs:
+        if not d or not Path(d).exists():
+            continue
+        for p in limited_walk(d, 6):
+            if p.is_file() and p.suffix.lower() in TEXT_EXTS:
+                try:
+                    if p.stat().st_size <= max_file_bytes:
+                        chunks.append(p.read_text(encoding="utf-8", errors="ignore")); n += 1
+                except OSError:
+                    pass
+            if n >= max_files:
+                break
+    return "\n".join(chunks)
+
+HARNESS_DIRS = [] if DEMO_MODE else [DATA_DIR / d for d in ("sandbox", "docker")]
+SAMPLE_DIRS = [] if DEMO_MODE else [p for p in DATA_DIR.iterdir() if "sample" in p.name.lower() and p.is_dir()]
+corpus_harness, corpus_sample = text_corpus(HARNESS_DIRS), text_corpus(SAMPLE_DIRS)
+
+rows = []
+for tool, cat in EXPECTED_TOOLS.items():
+    pat = re.compile(r"\b" + re.escape(tool) + r"\b")
+    r, h, s = bool(pat.search(README)), bool(pat.search(corpus_harness)), bool(pat.search(corpus_sample))
+    rows.append({"tool": tool, "category": cat, "README": "✅" if r else "—", "harness sources": "✅" if h else "—",
+                 "sample submission": "✅" if s else "—", "verified": r or h or s})
+TOOLS_DF = pd.DataFrame(rows)
+have_evidence = bool(README or corpus_harness or corpus_sample)
+AVAILABLE_TOOLS = ([t for t in EXPECTED_TOOLS if TOOLS_DF.set_index("tool").loc[t, "verified"]] if have_evidence else list(EXPECTED_TOOLS))
+
+style_v = lambda v: ("background-color:#E6F4EA;color:#137333;font-weight:600" if v is True else
+                     "background-color:#FCE8E6;color:#C5221F;font-weight:600" if v is False else "")
+display(TOOLS_DF.style.hide(axis="index").map(style_v, subset=["verified"]))
+other = sorted(set(re.findall(r"`([a-z_][a-z0-9_]{2,})\(", README)) - set(EXPECTED_TOOLS))
+if other:
+    callout("Other callables mentioned in the README (review, some may be tools): " + ", ".join(f"<code>{esc(o)}</code>" for o in other))
+missing = [t for t in EXPECTED_TOOLS if t not in AVAILABLE_TOOLS]
+if missing and have_evidence:
+    callout("Not found anywhere, excluded from custom bundles: " + ", ".join(f"<code>{m}</code>" for m in missing), "warn")
+if not have_evidence:
+    callout("No harness files to verify against → assuming the default nine tools.", "warn")
+print("AVAILABLE_TOOLS =", AVAILABLE_TOOLS)
+
+# CELL 14 markdown
+### 🧱 Sandbox facts learned the hard way
+These come from the community notebooks' own trial runs. They shape the prompts, so the cell below checks each one against the README and marks it ✅ when the README states it. Facts marked "—" are **unconfirmed community observations**: useful, but verify before leaning on them.
+
+# CELL 15 code
+SANDBOX_FACTS = [
+    ("Context window is small (about 32k tokens)", r"32[,_]?768|32k|max_model_len",
+     "One long tool output can overflow it and lose the task. Keep every output short."),
+    ("`run_command` output is cut to its first ~5,000 characters", r"5[,_]?000",
+     "Pipe searches through `head`; test verdicts print last, so save long output to a file and `tail` it."),
+    ("`read_file` returns at most ~150 lines / 10,000 characters", r"150 lines|10[,_]?000",
+     "Request narrow line ranges."),
+    ("`rg` (ripgrep) and `tree` are not installed", r"ripgrep|\brg\b",
+     "Search with `git grep -n` or `grep -rn`."),
+    ("`read_file` / `edit_file` / `write_file` only work inside /workspace", r"/workspace",
+     "Scratch files go to /tmp via `run_command`; anything left in /workspace becomes part of the patch."),
+    ("`get_code_neighbors` / `get_code_subgraph` know only synchronous `calls` edges, no async functions", r"calls|edge_type",
+     "Never pass `edge_type`; if a graph tool errors, fall back to grep."),
+    ("`search_similar_code` can return whole class bodies (100,000+ characters)", r"search_similar_code",
+     "Dangerous for a coder with a 32k context; see the replay in section 6 and the playbook."),
+    ("`get_status()` and `submit_patch()` are free", r"get_status|submit_patch",
+     "Call `get_status` every ~8 tool calls, and always finish with `submit_patch`."),
+]
+rows = []
+for fact, pat, why in SANDBOX_FACTS:
+    hit = next((l.strip() for l in README.splitlines() if re.search(pat, l, re.I)), "")
+    rows.append({"fact": fact, "README mentions it": "✅" if (README and hit) else "—", "what to do": why})
+display(pd.DataFrame(rows).style.hide(axis="index").set_properties(**{"text-align": "left"}))
+
+# CELL 16 markdown
+<a id="eda"></a>
+# 📊 4. Task EDA
+### Loading `tasks.jsonl` and its schema
+
+# CELL 17 code
+DEMO_TASKS = [
+    {"instance_id": "demo_1", "repo": "demo/pkg", "base_commit": "0" * 40,
+     "problem_statement": "`parse_query` crashes on empty input.\n\nTraceback (most recent call last):\nValueError",
+     "hints_text": "", "created_at": "2026-05-01T00:00:00Z",
+     "patch": "--- a/pkg/query.py\n+++ b/pkg/query.py\n@@ -1,3 +1,5 @@ def parse_query(s):\n     x = 1\n+    if not s:\n+        return {}\n     y = 2\n     z = 3\n",
+     "test_patch": "--- a/tests/test_query.py\n+++ b/tests/test_query.py\n@@ -1,1 +1,3 @@\n import pkg\n+def test_empty():\n+    assert pkg.parse_query('') == {}\n"},
+    {"instance_id": "demo_2", "repo": "demo/pkg", "base_commit": "1" * 40,
+     "problem_statement": "Headers with underscores are silently accepted.", "hints_text": "see headers.py",
+     "created_at": "2026-06-01T00:00:00Z",
+     "patch": "diff --git a/pkg/headers.py b/pkg/headers.py\n--- a/pkg/headers.py\n+++ b/pkg/headers.py\n@@ -10,2 +10,2 @@ class Headers:\n-    allow = True\n+    allow = False\n     pass\n",
+     "test_patch": ""},
+]
+
+df = pd.read_json(DATA_DIR / "tasks.jsonl", lines=True, dtype=False) if not DEMO_MODE else pd.DataFrame(DEMO_TASKS)
+if "instance_id" not in df.columns:
+    df["instance_id"] = df["id"] if "id" in df.columns else [f"task_{i}" for i in range(len(df))]
+for col in ["problem_statement", "hints_text", "patch", "test_patch", "base_commit"]:
+    if col not in df.columns:
+        df[col] = ""
+    df[col] = df[col].fillna("").astype(str)
+if "repo" not in df.columns:
+    df["repo"] = df["instance_id"].str.rsplit("_", n=1).str[0]
+df["created_at"] = pd.to_datetime(df.get("created_at"), errors="coerce", utc=True)
+
+def schema_table(frame):
+    rows = []
+    for c in frame.columns:
+        s = frame[c]
+        filled = s.notna() & s.astype(str).str.strip().ne("") & s.astype(str).ne("NaT")
+        example = next((v for v in s if isinstance(v, str) and v.strip()), s.iloc[0] if len(s) else "")
+        rows.append({"column": c, "dtype": str(s.dtype), "filled %": round(100 * filled.mean(), 1), "unique": s.astype(str).nunique(),
+                     "example": textwrap.shorten(str(example).replace("\n", " ⏎ "), 80)})
+    return pd.DataFrame(rows)
+
+print(f"{len(df)} tasks · {df['repo'].nunique()} repositories · {len(df.columns)} columns")
+display(schema_table(df).style.hide(axis="index").bar(subset=["filled %"], color="#AECBFA", vmin=0, vmax=100)
+        .format({"filled %": "{:.0f}%"}).set_properties(**{"text-align": "left"}))
+
+# CELL 18 markdown
+### 🔬 A real unified-diff parser
+Reference patches use plain `--- a/` / `+++ b/` headers, **often without** a `diff --git` line, so counting `diff --git` lines reports "1 file" for every task. This parser tracks hunk line counts and handles both styles. It also detects malformed diffs, which is useful later for checking your agent's own output.
+
+# CELL 19 code
+HUNK_RE = re.compile(r"^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@(.*)$")
+SYMBOL_RE = re.compile(r"(?:async\s+)?(?:def|class)\s+([A-Za-z_]\w*)")
+
+def _clean_path(p):
+    p = p.split("\t")[0].strip()
+    return p[2:] if p.startswith(("a/", "b/")) else p
+
+def parse_patch(text):
+    """Return {'files': [...], 'malformed': int, 'unterminated': bool}. Each file: path, added, deleted, hunks, symbols, status."""
+    files, cur, old_path = [], None, None
+    rem_old = rem_new = 0
+    malformed = 0
+
+    def new_file(path):
+        f = {"path": path, "added": 0, "deleted": 0, "hunks": 0, "symbols": set(), "status": "modified", "_hdr": False}
+        files.append(f)
+        return f
+
+    for line in (text or "").splitlines():
+        if rem_old > 0 or rem_new > 0:                          # inside a hunk
+            tag = line[:1]
+            if tag in ("+", "-"):
+                key = "added" if tag == "+" else "deleted"
+                cur[key] += 1
+                if tag == "+": rem_new -= 1
+                else: rem_old -= 1
+                m = SYMBOL_RE.match(line[1:].strip())
+                if m: cur["symbols"].add(m.group(1))
+                continue
+            if tag == " " or line == "":
+                rem_old -= 1; rem_new -= 1
+                continue
+            if tag == "\\":
+                continue
+            malformed += 1
+            rem_old = rem_new = 0                                # fall through: treat as header
+        if line.startswith("\\"):
+            continue
+        if line.startswith("diff --git "):
+            m = re.match(r"diff --git a/(\S+) b/(\S+)", line)
+            cur = new_file(m.group(2) if m else line[11:].strip())
+            continue
+        if line.startswith("--- "):
+            old_path = _clean_path(line[4:])
+            continue
+        if line.startswith("+++ "):
+            new_path = _clean_path(line[4:])
+            if cur is None or cur["_hdr"]:
+                cur = new_file(new_path)
+            cur["_hdr"] = True
+            if new_path == "/dev/null":
+                cur["path"], cur["status"] = old_path, "deleted"
+            else:
+                cur["path"] = new_path
+                if old_path == "/dev/null":
+                    cur["status"] = "added"
+            continue
+        m = HUNK_RE.match(line)
+        if m and cur is not None:
+            rem_old = int(m.group(2)) if m.group(2) is not None else 1
+            rem_new = int(m.group(4)) if m.group(4) is not None else 1
+            cur["hunks"] += 1
+            sm = SYMBOL_RE.search(m.group(5) or "")
+            if sm: cur["symbols"].add(sm.group(1))
+    for f in files:
+        f.pop("_hdr", None)
+        f["symbols"] = sorted(f["symbols"])
+    return {"files": files, "malformed": malformed, "unterminated": rem_old > 0 or rem_new > 0}
+
+def is_test_path(p):
+    p = p.lower()
+    return bool(re.search(r"(^|/)(tests?|testing)/", p) or re.search(r"(^|/)test_[^/]*\.py$", p) or p.endswith("_test.py") or p.endswith("conftest.py"))
+
+# ── self-test: both header styles, symbols, hunk accounting ────────────────
+_t1 = parse_patch("--- a/x.py\n+++ b/x.py\n@@ -1,2 +1,3 @@ def foo():\n a\n+b\n c\n--- a/y.py\n+++ b/y.py\n@@ -5 +5 @@\n-q\n+r\n")
+_t2 = parse_patch("diff --git a/n.py b/n.py\nnew file mode 100644\n--- /dev/null\n+++ b/n.py\n@@ -0,0 +1,2 @@\n+class Bar:\n+    pass\n")
+assert [f["path"] for f in _t1["files"]] == ["x.py", "y.py"] and "foo" in _t1["files"][0]["symbols"]
+assert _t2["files"][0]["status"] == "added" and _t2["files"][0]["symbols"] == ["Bar"] and not _t2["malformed"]
+assert parse_patch("--- a/z.py\n+++ b/z.py\n@@ -1,5 +1,5 @@\n a\n")["unterminated"]
+print("parse_patch self-test passed ✅")
+
+# CELL 20 code
+PR_TEMPLATE = re.compile(r"<!--|## Checklist|## Pull Request|Please start with a GitHub Discussion", re.I)
+
+def task_features(row):
+    p = parse_patch(row["patch"])
+    src = [f for f in p["files"] if not is_test_path(f["path"])]
+    tp = parse_patch(row["test_patch"])
+    new_tests = re.findall(r"^\+\s*(?:async\s+)?def\s+(test_\w+)", row["test_patch"], flags=re.M)
+    added, deleted = sum(f["added"] for f in p["files"]), sum(f["deleted"] for f in p["files"])
+    return pd.Series({
+        "gold_files": [f["path"] for f in src], "gold_symbols": sorted({s for f in src for s in f["symbols"]}),
+        "n_files": len(p["files"]), "n_src_files": len(src), "n_hunks": sum(f["hunks"] for f in p["files"]),
+        "added": added, "deleted": deleted, "churn": added + deleted,
+        "adds_new_file": any(f["status"] == "added" for f in p["files"]),
+        "non_py_files": sum(not f["path"].endswith(".py") for f in src),
+        "docs_src": any(f["path"].startswith("docs_src/") for f in src),
+        "n_test_files": len(tp["files"]), "n_new_tests": len(new_tests),
+        "patch_ok": (not p["malformed"]) and (not p["unterminated"]) and bool(p["files"]),
+        "pr_template": bool(PR_TEMPLATE.search(row["problem_statement"])),
+    })
+
+feat = df.apply(task_features, axis=1)
+df = pd.concat([df.drop(columns=[c for c in feat.columns if c in df.columns]), feat], axis=1)
+df["problem_words"] = df["problem_statement"].str.split().str.len().fillna(0).astype(int)
+df["has_hints"] = df["hints_text"].str.strip().ne("")
+BINS, LABELS = [-1, 5, 20, 80, 300, np.inf], ["XS (≤5)", "S (≤20)", "M (≤80)", "L (≤300)", "XL (>300)"]
+df["size_bucket"] = pd.cut(df["churn"], bins=BINS, labels=LABELS)
+
+span = (f"{df['created_at'].min():%Y-%m} → {df['created_at'].max():%Y-%m}" if df["created_at"].notna().any() else "n/a")
+kpis([("Tasks", f"{len(df):,}"), ("Repositories", df["repo"].nunique()), ("Median churn (lines)", int(df["churn"].median())),
+      ("Single-file fixes", f"{(df['n_src_files'] == 1).mean():.0%}"), ("With hints", f"{df['has_hints'].mean():.0%}"),
+      ("Adds new tests", f"{(df['n_new_tests'] > 0).mean():.0%}"), ("PR-template issues", f"{df['pr_template'].mean():.0%}"),
+      ("Fix touches docs_src/", f"{df['docs_src'].mean():.0%}"), ("Well-formed patches", f"{df['patch_ok'].mean():.0%}"), ("Created", span)])
+
+with safe("per-repository table"):
+    by_repo = df.groupby("repo").agg(tasks=("instance_id", "size"), median_lines=("churn", "median"),
+                                     single_file=("n_src_files", lambda s: (s == 1).mean()),
+                                     median_issue_words=("problem_words", "median")).sort_values("tasks", ascending=False)
+    display(by_repo.style.format({"single_file": "{:.0%}", "median_lines": "{:.0f}", "median_issue_words": "{:.0f}"}).bar(subset=["tasks"], color="#cfe0f6"))
+
+# CELL 21 markdown
+### 🎨 The benchmark at a glance
+
+# CELL 22 code
+with safe("EDA dashboard"):
+    repo_order = df["repo"].value_counts().index.tolist()
+    rc = {r: PAL[i % len(PAL)] for i, r in enumerate(repo_order)}
+    fig, ax = plt.subplots(2, 3, figsize=(18, 9.5))
+    fig.suptitle("Gemma 4 Developer Agent: benchmark anatomy", y=1.0, fontweight="bold")
+
+    vc = df["repo"].value_counts()
+    a = ax[0, 0]; a.barh(vc.index[::-1], vc.values[::-1], color=[rc[r] for r in vc.index[::-1]])
+    for i, v in enumerate(vc.values[::-1]):
+        a.text(v, i, f" {v}", va="center", fontsize=9)
+    a.set_title("Tasks per repository"); a.set_xlabel("tasks")
+
+    a = ax[0, 1]
+    ct = pd.crosstab(df["repo"], df["size_bucket"]).reindex(index=repo_order[::-1], columns=LABELS, fill_value=0)
+    left, cmap = np.zeros(len(ct)), plt.get_cmap("viridis")(np.linspace(0.1, 0.9, len(LABELS)))
+    for j, lab in enumerate(LABELS):
+        a.barh(ct.index, ct[lab], left=left, color=cmap[j], label=lab); left += ct[lab].values
+    a.set_title("Patch size buckets (churn = added + deleted)"); a.legend(fontsize=8, ncol=2, loc="lower right")
+
+    a = ax[0, 2]
+    bins = np.logspace(0, np.log10(max(2, df["churn"].max() + 1)), 30)
+    a.hist(df["churn"].clip(lower=1), bins=bins, color=PAL[0], alpha=.85, edgecolor="white")
+    a.set_xscale("log"); a.axvline(df["churn"].median(), color=PAL[1], ls="--", lw=2, label=f"median = {int(df['churn'].median())}")
+    a.set_title("Reference patch churn (log scale)"); a.set_xlabel("lines changed"); a.legend()
+
+    a = ax[1, 0]
+    fcount, hcount = df["n_src_files"].clip(upper=5).value_counts().sort_index(), df["n_hunks"].clip(upper=8).value_counts().sort_index()
+    x = np.arange(1, 9)
+    a.bar(x - .2, [fcount.get(i, 0) for i in x], width=.4, label="source files", color=PAL[3])
+    a.bar(x + .2, [hcount.get(i, 0) for i in x], width=.4, label="hunks", color=PAL[4])
+    a.set_xticks(x); a.set_xticklabels([str(i) if i < 8 else "8+" for i in x])
+    a.set_title("How spread out is a fix?"); a.set_xlabel("count per task (files capped at 5+, hunks at 8+)"); a.legend()
+
+    a = ax[1, 1]
+    data = [df.loc[df["repo"] == r, "problem_words"].clip(lower=1).values for r in repo_order]
+    a.boxplot(data, vert=False, labels=repo_order, flierprops={"markersize": 2}); a.set_xscale("log")
+    a.set_title("Issue length (words, log)"); a.set_xlabel("words")
+
+    a = ax[1, 2]
+    if df["created_at"].notna().any():
+        tl = (df.dropna(subset=["created_at"]).assign(month=lambda d: d["created_at"].dt.strftime("%Y-%m"))
+                .pivot_table(index="month", columns="repo", values="instance_id", aggfunc="count", fill_value=0))
+        tl = tl.reindex(columns=[r for r in repo_order if r in tl.columns])
+        tl.plot(kind="bar", stacked=True, ax=a, color=[rc[r] for r in tl.columns], width=.85, legend=False)
+        a.set_title("When were the tasks created?"); a.set_xlabel(""); a.tick_params(axis="x", rotation=45)
+    else:
+        a.text(.5, .5, "no created_at column", ha="center"); a.axis("off")
+    plt.tight_layout(); plt.show()
+
+# CELL 23 markdown
+### 📌 Computed takeaways, and the prompt rules they imply
+Each public task ships with its reference patch and the hidden set is built the same way, so the *shape* of these fixes is a fair guide to what the agent should aim for. **Every number below is computed, not asserted.** The right-hand column says whether the rule is already in the scored top bundle or is a candidate for a controlled experiment (`CFG["issue_rules"]`).
+
+# CELL 24 code
+with safe("EDA takeaways"):
+    single, small = (df["n_src_files"] == 1).mean(), (df["churn"] <= 20).mean()
+    q90, multi_hunk, top_repo = int(df["churn"].quantile(.9)), (df["n_hunks"] > 1).mean(), df["repo"].value_counts()
+    display(Markdown(f"""
+- **{single:.0%}** of fixes touch exactly one source file, but **{multi_hunk:.0%}** need more than one hunk: the agent must be able to make *several coordinated edits*.
+- **{small:.0%}** of reference patches change ≤ 20 lines; the 90th percentile is **{q90} lines**. There is a long tail of feature-style changes.
+- **{(df['n_new_tests'] > 0).mean():.0%}** of tasks add new test functions: hidden tests check the behaviour the issue describes, so reproduce it before fixing it.
+- The biggest repository (`{top_repo.index[0]}`) is **{top_repo.iloc[0] / len(df):.0%}** of tasks. Repo-specific hints can pay off, but every word costs context on every turn.
+- **{df['adds_new_file'].mean():.0%}** of fixes create a new file (`write_file` matters, but rarely).
+"""))
+    rules = [
+        ("🎯", "Stay small", f"{single:.0%} of fixes touch one file, median {df.churn.median():.0f} lines. A diff past ~60 lines or 3 files usually means the issue was misread.", "in the top bundle (\"smallest correct patch\")"),
+        ("🏷️", "Use the issue's exact names", f"In {(df.n_new_tests > 0).mean():.0%} of tasks the hidden tests add new functions that call new parameters and messages by the name the issue gives them.", "candidate: <code>issue_rules</code>"),
+        ("🧹", "Look past PR boilerplate", f"{df.pr_template.mean():.0%} of issues are pasted pull-request templates. The title, code snippets and error text are the real spec.", "candidate: <code>issue_rules</code>"),
+        ("📚", "Examples are code too", f"{df.docs_src.mean():.0%} of fixes touch <code>docs_src/</code>, which tests import directly.", "candidate: <code>issue_rules</code>"),
+        ("🔁", "Reproduce → compile → test", "Edits can apply cleanly yet break the file (section 8); new tests check the described behaviour.", "in the top bundle"),
+    ]
+    items = "".join(f'<div style="display:flex;gap:12px;align-items:flex-start;padding:8px 0;border-top:1px solid #e3e6ea">'
+                    f'<div style="font-size:20px">{i}</div><div style="flex:1"><b style="color:{NAVY}">{t}</b><br><span style="color:{MUTED};font-size:13px">{d}</span></div>'
+                    f'<div style="font-size:12px;color:{MUTED};min-width:170px">{s}</div></div>' for i, t, d, s in rules)
+    display(HTML(f'<div style="background:#fff;border:1px solid #e3e6ea;border-radius:12px;padding:12px 18px;color:{INK}">'
+                 f'<div style="font-weight:800;font-size:15px;color:{NAVY};margin-bottom:4px">Rules the data suggests</div>{items}</div>'))
+    callout("Black Cat's lesson (section 0): rules derived from a handful of repositories can <i>lower</i> the hidden-set score when they pile up. "
+            "That is why the issue-reading rules are one toggle, tested on their own, rather than baked in.", "warn")
+
+# CELL 25 markdown
+<a id="signals"></a>
+# 🧭 5. Localization signals
+An agent that edits the wrong file cannot pass. How often does the issue text itself *point at* the fix? Per task we check whether the problem statement mentions a gold file (path or module name), a gold symbol, contains a traceback, or includes a code block.
+
+# CELL 26 code
+GENERIC_STEMS = {"__init__", "utils", "util", "main", "base", "core", "types", "models", "helpers", "common", "compat"}
+
+def mentions(text, needles):
+    t = text.lower()
+    return any(re.search(r"(?<![\w/])" + re.escape(n.lower()) + r"(?![\w])", t) for n in needles if len(n) >= 3)
+
+def signal_row(r):
+    text = r["problem_statement"] + "\n" + r["hints_text"]
+    stems = [Path(p).stem for p in r["gold_files"] if Path(p).stem not in GENERIC_STEMS and len(Path(p).stem) >= 4]
+    return pd.Series({
+        "mentions_file_path": mentions(text, r["gold_files"]), "mentions_module": mentions(text, stems),
+        "mentions_symbol": mentions(text, r["gold_symbols"]), "has_traceback": "Traceback (most recent call last)" in text,
+        "has_code_block": "```" in text or "\n    " in r["problem_statement"],
+    })
+
+SIGNALS = df.apply(signal_row, axis=1)
+df = pd.concat([df.drop(columns=[c for c in SIGNALS.columns if c in df.columns]), SIGNALS], axis=1)
+df["any_location_hint"] = df[["mentions_file_path", "mentions_module", "mentions_symbol", "has_traceback"]].any(axis=1)
+
+with safe("signals chart"):
+    sig_cols = ["mentions_file_path", "mentions_module", "mentions_symbol", "has_traceback", "has_code_block", "has_hints", "any_location_hint"]
+    heat = df.groupby("repo")[sig_cols].mean().T * 100
+    heat["ALL"] = df[sig_cols].mean() * 100
+    fig, ax = plt.subplots(figsize=(11, 4.6))
+    im = ax.imshow(heat.values, cmap="Blues", vmin=0, vmax=100, aspect="auto")
+    ax.set_xticks(range(heat.shape[1])); ax.set_xticklabels(heat.columns, rotation=20); ax.set_yticks(range(heat.shape[0])); ax.set_yticklabels(heat.index)
+    for i in range(heat.shape[0]):
+        for j in range(heat.shape[1]):
+            ax.text(j, i, f"{heat.values[i, j]:.0f}", ha="center", va="center", color="white" if heat.values[i, j] > 55 else INK, fontsize=9)
+    ax.grid(False); fig.colorbar(im, label="% of tasks")
+    ax.set_title("What does the issue text reveal about the fix location?  (% of tasks)")
+    plt.tight_layout(); plt.show()
+    callout(f"<b>{1 - df['any_location_hint'].mean():.0%}</b> of tasks give <i>no direct location hint</i> (no file, module, symbol or traceback). "
+            "For these the agent has to search: that is where a grep-first strategy, or graph tools on a confirmed symbol, earn their keep.")
+
+with safe("hot files"):
+    hot = (df[["repo", "gold_files"]].explode("gold_files").dropna().groupby(["repo", "gold_files"]).size().rename("tasks").reset_index()
+           .sort_values("tasks", ascending=False).head(15))
+    hot["share of repo"] = hot.apply(lambda r: r["tasks"] / (df["repo"] == r["repo"]).sum(), axis=1)
+    display(Markdown("#### 🔥 Hot files: where reference fixes land most often"))
+    display(hot.rename(columns={"gold_files": "file"}).style.hide(axis="index").bar(subset=["tasks"], color="#FAD2CF").format({"share of repo": "{:.0%}"}))
+
+# CELL 27 markdown
+### 🃏 Task card viewer
+Call `show_task("<instance_id>")` on any task to see the issue, the stats and a colour-coded reference diff. Handy for building intuition and for debugging your agent's trajectories.
+
+# CELL 28 code
+def render_diff(diff, max_lines=70):
+    out = []
+    for i, line in enumerate((diff or "").splitlines()):
+        if i >= max_lines:
+            out.append('<span style="color:#5F6368">… truncated …</span>'); break
+        if line.startswith("+") and not line.startswith("+++"): style = "color:#137333;background:#E6F4EA"
+        elif line.startswith("-") and not line.startswith("---"): style = "color:#C5221F;background:#FCE8E6"
+        elif line.startswith("@@"): style = "color:#1A73E8;font-weight:600"
+        elif line.startswith(("---", "+++", "diff ")): style = "color:#5F6368;font-weight:600"
+        else: style = "color:#202124"
+        out.append(f'<span style="{style}">{esc(line) or "&nbsp;"}</span>')
+    return ('<pre style="font-size:12px;line-height:1.4;background:#F8F9FA;padding:10px;border-radius:8px;overflow-x:auto;margin:0">'
+            + "\n".join(out) + "</pre>")
+
+def badge(text, color="#1A73E8"):
+    return f'<span style="background:{color};color:#fff;border-radius:10px;padding:2px 9px;margin-right:5px;font-size:12px">{esc(text)}</span>'
+
+def show_task(instance_id, max_problem_chars=1800):
+    r = df.loc[df["instance_id"] == instance_id]
+    if r.empty:
+        callout(f"Unknown instance_id <code>{esc(instance_id)}</code>", "err"); return
+    r = r.iloc[0]
+    problem = r["problem_statement"][:max_problem_chars] + ("\n…" if len(r["problem_statement"]) > max_problem_chars else "")
+    flags = "".join(badge(k.replace("_", " "), "#34A853") for k in ["mentions_file_path", "mentions_symbol", "has_traceback", "has_hints", "pr_template"] if bool(r.get(k)))
+    display(HTML(f"""
+    <div style="border:1px solid #DADCE0;border-radius:14px;padding:16px 18px;color:#202124;background:#fff">
+      <div style="font-size:20px;font-weight:700">{esc(r['instance_id'])}
+        <span style="font-size:13px;color:#5F6368;font-weight:400">· {esc(r['repo'])} @ {esc(str(r['base_commit'])[:10])}</span></div>
+      <div style="margin:8px 0">{badge(f"{r['n_src_files']} file(s)")}{badge(f"{r['n_hunks']} hunk(s)", "#A142F4")}
+        {badge(f"+{r['added']} / -{r['deleted']}", "#EA4335")}{badge(str(r['size_bucket']), "#5F6368")}{flags}</div>
+      <div style="font-size:12px;color:#5F6368">gold files: <code>{esc(', '.join(r['gold_files']))}</code> · symbols: <code>{esc(', '.join(r['gold_symbols']) or '—')}</code></div>
+      <h4 style="margin:12px 0 4px 0">📝 Issue</h4>{pre(problem, 40)}
+      <h4 style="margin:12px 0 4px 0">🩹 Reference patch</h4>{render_diff(r['patch'])}
+      <details style="margin-top:8px"><summary style="cursor:pointer;font-weight:600">🧪 Test patch ({r['n_new_tests']} new test functions)</summary>{render_diff(r['test_patch'], 50)}</details>
+    </div>"""))
+
+show_task(df.iloc[(df["churn"] - df["churn"].median()).abs().argsort().iloc[0]]["instance_id"])
+
+# CELL 29 markdown
+<a id="graphs"></a>
+# 🕸️ 6. Code intelligence: call graphs, embeddings, and a replay of the graph tool
+The dataset ships pre-computed code graphs and symbol embeddings; they are what the three code-intelligence tools query.
+
+### ⚠️ Load the commit-named files
+The data page says every graph and embedding exists twice: a task-named file (`fastapi_15661.json`) hard-linked to a commit-named one (`fastapi_<sha>.json`). **The hard links do not survive on Kaggle, so the task-named copies can be empty.** `asset_path` below tries both and ignores anything under 100 bytes. The embeddings are also not one matrix: each `.npz` holds **one entry per code symbol** (key = symbol id, value = a 256-dim vector).
+
+# CELL 30 code
+def asset_path(kind, task):
+    """Usable graph/embedding file for a task: task-named first, then commit-named; empty hard-link stubs are skipped."""
+    if not DATA_DIR:
+        return None
+    ext = ".json" if kind == "graphs" else ".npz"
+    short = str(task["repo"]).split("/")[-1]
+    for stem in (task["instance_id"], f"{short}_{task['base_commit']}"):
+        for suffix in (ext, ext + ".gz"):
+            p = DATA_DIR / kind / f"{stem}{suffix}"
+            if p.is_file() and p.stat().st_size > 100:
+                return p
+    return None
+
+def load_embeddings(path):
+    with np.load(path, allow_pickle=False) as z:
+        keys = list(z.files)
+        mat = np.stack([np.asarray(z[k], dtype=np.float32).ravel() for k in keys]) if keys else np.zeros((0, 256), np.float32)
+    return keys, mat
+
+def load_graph(path):
+    opener = gzip.open if str(path).endswith(".gz") else open
+    with opener(path, "rt", encoding="utf-8-sig") as f:
+        g = json.load(f)
+    for k in ("graph", "data", "code_graph"):
+        if isinstance(g.get(k), dict) and "nodes" in g[k]:
+            g = g[k]
+    return g.get("nodes", []), g.get("edges", g.get("links", []))
+
+TASKS = df.to_dict("records")
+with safe("asset inventory"):
+    if DATA_DIR is not None and (DATA_DIR / "graphs").is_dir():
+        counts = Counter()
+        for t in TASKS:
+            short = str(t["repo"]).split("/")[-1]
+            for kind, ext in (("graphs", ".json"), ("embeddings", ".npz")):
+                a, b = DATA_DIR / kind / f"{t['instance_id']}{ext}", DATA_DIR / kind / f"{short}_{t['base_commit']}{ext}"
+                counts[(kind, "task")] += a.is_file() and a.stat().st_size > 100
+                counts[(kind, "commit")] += b.is_file() and b.stat().st_size > 100
+        n = len(TASKS)
+        kpis([(f"{k} · {w}-named", f"{counts[(k, w)]}/{n}", "usable files") for k in ("graphs", "embeddings") for w in ("task", "commit")])
+    else:
+        callout("No <code>graphs/</code> folder: the code-intelligence studies are skipped.", "warn")
+
+with safe("asset demo"):
+    t0 = next((t for t in TASKS if asset_path("graphs", t)), None)
+    if t0:
+        nodes, edges = load_graph(asset_path("graphs", t0))
+        cards = [("graph nodes", f"{len(nodes):,}", asset_path("graphs", t0).name[:30]),
+                 ("graph edges", f"{len(edges):,}", ", ".join(f"{k}: {v}" for k, v in Counter(e.get("type") for e in edges).items()))]
+        ep = asset_path("embeddings", t0)
+        if ep:
+            keys, mat = load_embeddings(ep)
+            cards.append(("embedded symbols", f"{len(keys):,}", f"{mat.shape[1]} dims each"))
+        kpis(cards)
+        display(pd.DataFrame([{"symbol id": n.get("id"), "source chars": len(n.get("text") or "")} for n in nodes[:6]]))
+
+# CELL 31 code
+def node_tail(n):
+    return re.split(r"[./:]", str(n))[-1]
+
+def plot_fix_neighbourhood(max_nodes=40):
+    """Ego-graph around the symbol the reference fix edits (a visual feel for how much context the graph tools can return)."""
+    if nx is None:
+        callout("networkx is not installed; skipping the neighbourhood plot.", "warn"); return
+    for t in TASKS:
+        gp = asset_path("graphs", t)
+        if not gp or not t["gold_symbols"]:
+            continue
+        nodes, edges = load_graph(gp)
+        ids = [n.get("id") for n in nodes]
+        centres = [i for i in ids if node_tail(i) in set(t["gold_symbols"])]
+        if not centres:
+            continue
+        G = nx.DiGraph()
+        G.add_nodes_from(ids)
+        for e in edges:
+            s = next((e[k] for k in ("source", "src", "from", "caller") if k in e), None)
+            d = next((e[k] for k in ("target", "dst", "to", "callee") if k in e), None)
+            if s is not None and d is not None:
+                G.add_edge(s, d, type=e.get("type", "edge"))
+        centre = max(centres, key=G.degree)
+        und = G.to_undirected(as_view=True)
+        ego = set(nx.ego_graph(und, centre, radius=1).nodes)
+        if len(ego) < 8:
+            ego |= set(nx.ego_graph(und, centre, radius=2).nodes)
+        H = G.subgraph(sorted(ego, key=lambda n: (n != centre, -G.degree(n)))[:max_nodes])
+        pos = nx.spring_layout(H, seed=CFG["seed"], k=1.2 / np.sqrt(max(len(H), 1)))
+        fig, ax = plt.subplots(figsize=(12, 7))
+        nx.draw_networkx_edges(H, pos, edge_color="#9aa0a6", arrows=True, arrowsize=12, width=1.2, alpha=.7, ax=ax)
+        others = [n for n in H if n != centre]
+        nx.draw_networkx_nodes(H, pos, nodelist=others, node_size=[250 + 60 * H.degree(n) for n in others], node_color=PAL[0], alpha=.85, ax=ax)
+        nx.draw_networkx_nodes(H, pos, nodelist=[centre], node_size=1600, node_color=PAL[1], edgecolors="#202124", linewidths=2, ax=ax)
+        nx.draw_networkx_labels(H, pos, labels={n: node_tail(n) for n in H}, font_size=8, font_weight="bold", ax=ax)
+        ax.set_title(f"Where the fix lives: neighbourhood of `{node_tail(centre)}` · {t['instance_id']} ({G.number_of_nodes():,} nodes / {G.number_of_edges():,} edges in total)")
+        ax.axis("off"); plt.tight_layout(); plt.show()
+        return
+    callout("No task with a gold symbol present in its graph.", "warn")
+
+with safe("fix neighbourhood plot"):
+    if DATA_DIR is not None:
+        plot_fix_neighbourhood()
+
+# CELL 32 markdown
+### 🔬 Is `search_similar_code` worth a tool call?
+Tool calls cost time, so it is worth knowing which ones pay off. We **replay the graph tool offline against the reference fixes**.
+
+**Setup.** For each task, the *gold symbols* are the functions and classes the reference patch edits. The *queries* are the identifiers an agent would plausibly search for in the issue text (backticked names, `snake_case`, `CamelCase`, `dotted.paths`). Three strategies race to find a gold symbol:
+
+| Strategy | What it simulates |
+|:--|:--|
+| 🔵 **Name lookup** | step one of `search_similar_code(name)`: resolve the name to a symbol (exact → suffix → case-insensitive → substring) |
+| 🟠 **Embedding top-10** | the full tool: the 10 nearest neighbours of that symbol by cosine similarity |
+| 🟢 **Text search top-10** | a grep: rank symbols by how many issue identifiers appear in their source |
+
+The replay follows the tool as described in the README; it approximates the real implementation rather than reproducing it. Gold symbols only cover edits *inside* an existing function or class, so fixes that only add new code are skipped, and the identifier extraction is a heuristic. Read the numbers as a comparison between strategies, not a score prediction.
+
+# CELL 33 code
+STOP = set("""the and for with that this from into when have none true false self return import class def async await print issue pull
+request description checklist discussion github python fastapi rich requests httpx code example test tests docs error value values type
+types added adds using used should would could""".split())
+
+def issue_symbols(text, k=8):
+    text = re.sub(r"<!--.*?-->", " ", text or "", flags=re.S)
+    raw = re.findall(r"`([^`\n]{2,80})`", text)
+    raw += re.findall(r"\b[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)+\b", text)
+    raw += re.findall(r"\b[a-z]+_[a-z0-9_]+\b", text)
+    raw += re.findall(r"\b[A-Z][a-z0-9]+(?:[A-Z][a-z0-9]*)+\b", text)
+    out = []
+    for r in raw:
+        m = re.match(r"\s*([A-Za-z_][\w.]*)", r)
+        if not m:
+            continue
+        s = m.group(1).strip(".")
+        if len(s) >= 4 and s.lower() not in STOP and not s.startswith(("http", "www")) and s not in out:
+            out.append(s)
+    return out[:k]
+
+def gold_symbols(task, by_last):
+    gold = set()
+    for f in parse_patch(task.get("patch"))["files"]:
+        if is_test_path(f["path"]) or not f["path"].endswith(".py"):
+            continue
+        stem = Path(f["path"]).stem
+        for sym in f["symbols"]:
+            for nid in by_last.get(sym, []):
+                if stem == "__init__" or stem in re.split(r"[./]", nid):
+                    gold.add(nid)
+    return gold
+
+class SymbolIndex:
+    def __init__(self, keys, mat):
+        self.keys, self.pos, self.lower = keys, {k: i for i, k in enumerate(keys)}, {}
+        for k in keys:
+            self.lower.setdefault(k.lower(), k)
+        self.unit = mat / np.maximum(np.linalg.norm(mat, axis=1, keepdims=True), 1e-8)
+
+    def resolve(self, q):
+        if q in self.pos:
+            return q
+        suffix = [k for k in self.keys if k.endswith("." + q) or k.endswith("/" + q)]
+        if suffix:
+            return min(suffix, key=len)
+        if q.lower() in self.lower:
+            return self.lower[q.lower()]
+        sub = [k for k in self.keys if q.lower() in k.lower()]
+        return min(sub, key=len) if sub else None
+
+    def neighbours(self, node, k=10):
+        sims = self.unit @ self.unit[self.pos[node]]
+        return [self.keys[i] for i in np.argsort(-sims)[: k + 1] if self.keys[i] != node][:k]
+
+STUDY, n_scanned = [], 0
+with safe("graph tool replay"):
+    if DATA_DIR is not None and (DATA_DIR / "embeddings").is_dir():
+        by_commit = defaultdict(list)
+        for t in TASKS:
+            by_commit[(t["repo"], t["base_commit"])].append(t)
+        started = time.time()
+        for (repo, commit), group in by_commit.items():
+            if n_scanned >= CFG["graph_study_max_commits"] or time.time() - started > CFG["time_budget_s"]:
+                break
+            n_scanned += 1
+            ep, gp = asset_path("embeddings", group[0]), asset_path("graphs", group[0])
+            if not ep:
+                continue
+            keys, mat = load_embeddings(ep)
+            if not keys:
+                continue
+            idx = SymbolIndex(keys, mat)
+            by_last = defaultdict(list)
+            for k in keys:
+                by_last[node_tail(k)].append(k)
+            texts = {}
+            if gp:
+                nodes, _ = load_graph(gp)
+                texts = {n.get("id"): (str(n.get("id")) + "\n" + str(n.get("text") or "")).lower() for n in nodes}
+            text_ids = list(texts)
+            for t in group:
+                gold = gold_symbols(t, by_last)
+                if not gold:
+                    continue
+                queries = issue_symbols(t.get("problem_statement"))
+                resolved = [r for r in (idx.resolve(q) for q in queries) if r]
+                embed_hits = set(resolved)
+                for r in resolved:
+                    embed_hits.update(idx.neighbours(r, 10))
+                lex_hit = False
+                if text_ids and queries:
+                    terms = [q.split(".")[-1].lower() for q in queries]
+                    scores = np.array([sum(term in texts[i] for term in terms) for i in text_ids])
+                    top = [text_ids[i] for i in np.argsort(-scores, kind="stable")[:10] if scores[i] > 0]
+                    lex_hit = bool(gold & set(top))
+                STUDY.append({"repo": str(repo).split("/")[-1], "id": t["instance_id"], "queries": len(queries),
+                              "name lookup": bool(gold & set(resolved)), "embedding top-10": bool(gold & embed_hits), "text search top-10": lex_hit})
+        kpis([("tasks replayed", len(STUDY), "with identifiable gold symbols"), ("snapshots scanned", f"{n_scanned}/{len(by_commit)}"),
+              ("time", f"{time.time() - started:.0f}s")])
+STUDY = pd.DataFrame(STUDY)
+
+STRATS = ["name lookup", "embedding top-10", "text search top-10"]
+with safe("replay results"):
+    if len(STUDY):
+        summary = STUDY.groupby("repo")[STRATS].mean()
+        summary.loc["all"] = STUDY[STRATS].mean()
+        summary["tasks"] = STUDY.groupby("repo").size().reindex(summary.index).fillna(len(STUDY)).astype(int)
+        fig, ax = plt.subplots(figsize=(9, 4.2))
+        x, w = np.arange(len(summary.index)), 0.26
+        for i, (s, c) in enumerate(zip(STRATS, [BLUE, ORANGE, AQUA])):
+            ax.bar(x + (i - 1) * w, summary[s].values, w - 0.03, color=c, label=s)
+            for xi, v in zip(x + (i - 1) * w, summary[s].values):
+                ax.text(xi, v + 0.02, f"{v:.0%}", ha="center", va="bottom", fontsize=8, color=INK)
+        ax.set_xticks(x); ax.set_xticklabels([f"{r}\n(n={n})" for r, n in zip(summary.index, summary.tasks)])
+        ax.set_ylim(0, 1.12); ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{v:.0%}")); ax.set_ylabel("gold symbol found")
+        ax.set_title("How often each search strategy finds the symbol the reference fix edits")
+        ax.legend(frameon=False, ncol=3, loc="upper center", bbox_to_anchor=(0.5, -0.22), fontsize=9)
+        plt.tight_layout(); plt.show()
+        a = STUDY[STRATS].mean(); best = a.idxmax(); gain = a["embedding top-10"] - a["name lookup"]
+        verdict = ("Plain text search does at least as well as the embedding tool, so a <b>grep-first</b> prompt is justified and graph tools "
+                   "should only be used on a confirmed symbol name." if a["text search top-10"] >= a["embedding top-10"] else
+                   "The embedding tool beats plain text search here, so <code>search_similar_code</code> on a confirmed symbol name is worth a call.")
+        callout(f"Across <b>{len(STUDY)}</b> tasks, <b>{best}</b> finds the gold symbol most often (<b>{a[best]:.0%}</b>). "
+                f"Expanding a resolved name to its 10 embedding neighbours adds <b>{gain:+.0%}</b> over the lookup alone. {verdict} "
+                "Separately, remember that its output can be enormous: that is a context-safety question the replay cannot answer.", "idea")
+    else:
+        callout("No replay results: data missing or no gold symbols found.", "warn")
+
+# CELL 34 markdown
+<a id="baseline"></a>
+# 🎯 7. Localization baseline: can plain retrieval find the file?
+Before spending GPU time on an agent, measure the difficulty of step 1. For each task we index every non-test `.py` file of the repository snapshot with **TF-IDF over code-aware tokens** (`get_request_handler` → `get request handler`, `CamelCase` → `camel case`) and rank files against the issue text.
+
+- **TF-IDF**: pure lexical similarity.
+- **TF-IDF + mention boost**: extra score when the issue explicitly names the file/module or a symbol *defined* in the file. This is what a disciplined `grep` step gives an agent.
+
+**Hit@k** = share of tasks where a gold source file is in the top-k. A low Hit@5 means the agent needs real exploration (analyzer sub-agent, graph tools), not just reading the top result.
+
+# CELL 35 code
+try:
+    from sklearn.feature_extraction.text import TfidfVectorizer
+except Exception:
+    TfidfVectorizer = None
+
+_ID_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]+")
+_PART_RE = re.compile(r"[A-Z]?[a-z]+|[A-Z]+(?![a-z])|\d+")
+_DEF_RE = re.compile(r"^\s*(?:async\s+)?(?:def|class)\s+([A-Za-z_]\w*)", re.M)
+GENERIC_STEMS = {"utils", "helpers", "base", "common", "core", "types", "constants", "__init__"}
+
+def code_tokens(text):
+    out = []
+    for tok in _ID_RE.findall(text):
+        out.append(tok.lower())
+        parts = [p.lower() for p in _PART_RE.findall(tok) if len(p) > 1]
+        if len(parts) > 1:
+            out.extend(parts)
+    return out
+
+def strip_common_prefix(files):
+    if len(files) <= 1:
+        return files
+    keys = list(files.keys())
+    first_parts = {k.split("/", 1)[0] for k in keys if "/" in k}
+    if len(first_parts) == 1 and all("/" in k for k in keys):
+        new_files = {}
+        for k, v in files.items():
+            new_key = k.split("/", 1)[1]
+            new_files[new_key] = v
+        return strip_common_prefix(new_files)
+    return files
+
+def read_py_files(entry, max_files=8000, max_bytes=400_000):
+    files = {}
+    if entry.is_dir():
+        for p in entry.rglob("*.py"):
+            try:
+                if p.stat().st_size <= max_bytes:
+                    files[str(p.relative_to(entry))] = p.read_text(encoding="utf-8", errors="ignore")
+            except OSError:
+                pass
+            if len(files) >= max_files:
+                break
+    elif zipfile.is_zipfile(entry):
+        with zipfile.ZipFile(entry) as z:
+            for i in z.infolist():
+                if i.filename.endswith(".py") and i.file_size <= max_bytes and len(files) < max_files:
+                    files[i.filename] = z.read(i).decode("utf-8", "ignore")
+    elif tarfile.is_tarfile(entry):
+        with tarfile.open(entry) as t:
+            for m in t:
+                if m.isfile() and m.name.endswith(".py") and m.size <= max_bytes and len(files) < max_files:
+                    files[m.name] = t.extractfile(m).read().decode("utf-8", "ignore")
+    return strip_common_prefix(files)
+
+def resolve_snapshot(row):
+    base = DATA_DIR / "snapshots" if DATA_DIR else None
+    if not base or not base.exists():
+        return None
+    entries = list(limited_walk(base, 1))
+    repo = str(row["repo"])
+    for key in [row["instance_id"], str(row["base_commit"])[:12], str(row["base_commit"])[:7], repo.replace("/", "__"), repo.split("/")[-1]]:
+        if key and len(key) >= 4:
+            hits = [p for p in entries if key in p.name]
+            if hits:
+                return sorted(hits, key=lambda p: (len(p.relative_to(base).parts), len(p.name)))[0]
+    return None
+
+_INDEX_CACHE = {}
+def build_index(entry):
+    if entry not in _INDEX_CACHE:
+        files = {k: v for k, v in read_py_files(entry).items() if not is_test_path(k)}
+        paths = sorted(files)
+        if not paths:
+            _INDEX_CACHE[entry] = None
+        else:
+            docs = [(" ".join([p.replace("/", " ")] * 3)) + "\n" + files[p][:200_000] for p in paths]
+            vec = TfidfVectorizer(tokenizer=code_tokens, lowercase=False, token_pattern=None, sublinear_tf=True, max_features=300_000)
+            _INDEX_CACHE[entry] = (paths, vec, vec.fit_transform(docs), [set(_DEF_RE.findall(files[p])) for p in paths])
+        if len(_INDEX_CACHE) > 6:
+            _INDEX_CACHE.pop(next(iter(_INDEX_CACHE)))
+    return _INDEX_CACHE[entry]
+
+def rank_files(index, query, boost=False):
+    paths, vec, X, defs = index
+    scores = (X @ vec.transform([query]).T).toarray().ravel()
+    if boost:
+        q = query.lower()
+        q_ids = {t for t in _ID_RE.findall(query) if len(t) >= 4 and ("_" in t or any(c.isupper() for c in t[1:]))}
+        for i, p in enumerate(paths):
+            stem = Path(p).stem.lower()
+            if len(stem) >= 4 and stem not in GENERIC_STEMS and re.search(r"(?<![\w/])" + re.escape(stem) + r"(?![\w])", q):
+                scores[i] += 0.5
+            if p.lower() in q:
+                scores[i] += 1.0
+            scores[i] += 0.3 * len(defs[i] & q_ids)
+    return [paths[i] for i in np.argsort(-scores, kind="stable")]
+
+def file_hit(ranked, gold, k):
+    top = ranked[:k]
+    for p in top:
+        p_pure = Path(p)
+        for g in gold:
+            g_pure = Path(g)
+            if p == g or p.endswith("/" + g) or g.endswith("/" + p) or p_pure.name == g_pure.name:
+                return True
+    return False
+
+LOC = []
+with safe("localization Hit@k"):
+    if TfidfVectorizer is None:
+        raise RuntimeError("scikit-learn not available")
+    if DATA_DIR is None or not (DATA_DIR / "snapshots").exists():
+        raise RuntimeError("no snapshots/ folder found")
+    
+    t_start = time.time()
+    for _, r in df.head(CFG["localization_max_tasks"]).iterrows():
+        if time.time() - t_start > CFG["time_budget_s"]:
+            break
+        entry = resolve_snapshot(r)
+        index = build_index(entry) if entry else None
+        if index is None or not r["gold_files"]:
+            continue
+        query = r["problem_statement"] + "\n" + r["hints_text"]
+        base, boosted = rank_files(index, query), rank_files(index, query, boost=True)
+        LOC.append({
+            "repo": str(r["repo"]).split("/")[-1],
+            **{f"TF-IDF @{k}": file_hit(base, r["gold_files"], k) for k in (1, 3, 5, 10)},
+            **{f"+boost @{k}": file_hit(boosted, r["gold_files"], k) for k in (1, 3, 5, 10)}
+        })
+    
+    LOC = pd.DataFrame(LOC)
+    if len(LOC):
+        ks = (1, 3, 5, 10)
+        tf = [LOC[f"TF-IDF @{k}"].mean() for k in ks]
+        bo = [LOC[f"+boost @{k}"].mean() for k in ks]
+        
+        fig, ax = plt.subplots(1, 2, figsize=(14, 4.2), gridspec_kw={"width_ratios": [1, 1.2]})
+        x = np.arange(len(ks))
+        
+        ax[0].bar(x - .2, tf, .4, color=BLUE, label="TF-IDF")
+        ax[0].bar(x + .2, bo, .4, color=AQUA, label="TF-IDF + mention boost")
+        
+        for xi, v in zip(x - .2, tf): 
+            ax[0].text(xi, v + .01, f"{v:.0%}", ha="center", fontsize=8)
+        for xi, v, b_val in zip(x + .2, bo, tf): 
+            ax[0].text(xi, v + .01, f"{v:.0%} (+{v - b_val:.0%})", ha="center", fontsize=8)
+            
+        ax[0].set_xticks(x)
+        ax[0].set_xticklabels([f"Hit@{k}" for k in ks])
+        ax[0].set_ylim(0, 1.1)
+        ax[0].legend(frameon=False)
+        ax[0].set_title(f"Can plain retrieval find the gold file? (n={len(LOC)})")
+        
+        per = LOC.groupby("repo")[["TF-IDF @5", "+boost @5"]].mean().sort_values("+boost @5")
+        per.plot(kind="barh", ax=ax[1], color=[BLUE, AQUA], width=0.7)
+        ax[1].set_title("Hit@5 accuracy by repository")
+        ax[1].set_xlabel("Recall rate")
+        ax[1].set_xlim(0, 1.0)
+        
+        plt.tight_layout()
+        plt.show()
+
+# CELL 36 markdown
+<a id="edit"></a>
+# ✂️ 8. Edit mechanics & patch safety
+### A string-replacement `edit_file`, simulated
+Agents lose a lot of turns to failed or *silently broken* edits. The simulator below re-implements the common three-tier strategy (**exact → whitespace-flexible → token regex**) and, crucially, **checks that the result still parses**. It is a local model for building intuition; the real harness implementation is authoritative.
+
+# CELL 37 code
+def simulate_edit(content, old, new):
+    """Return (new_content | None, tier, error | None)."""
+    c = content.count(old) if old else 0
+    if c == 1:
+        return content.replace(old, new), "exact", None
+    if c > 1:
+        return None, "exact", f"old_string matches {c} times, so it must be unique"
+    lines = content.split("\n")
+    target = [l.strip() for l in old.strip("\n").split("\n")]
+    if any(target):
+        hits = [i for i in range(len(lines) - len(target) + 1) if all(lines[i + j].strip() == target[j] for j in range(len(target)))]
+        if len(hits) == 1:
+            i = hits[0]
+            indent = lines[i][: len(lines[i]) - len(lines[i].lstrip())]
+            block = [(indent + l) if l.strip() else "" for l in textwrap.dedent(new.strip("\n")).split("\n")]
+            return "\n".join(lines[:i] + block + lines[i + len(target):]), "flexible", None
+        if len(hits) > 1:
+            return None, "flexible", f"{len(hits)} whitespace-insensitive matches"
+    toks = old.split()
+    if toks:
+        ms = list(re.finditer(r"\s+".join(map(re.escape, toks)), content))
+        if len(ms) == 1:
+            return content[: ms[0].start()] + new + content[ms[0].end():], "regex", None
+        if len(ms) > 1:
+            return None, "regex", f"{len(ms)} regex matches"
+    return None, "—", "old_string not found"
+
+def compiles(src):
+    try:
+        ast.parse(src); return True, ""
+    except SyntaxError as e:
+        return False, f"{type(e).__name__}: {e.msg} (line {e.lineno})"
+
+ORIGINAL = """def calculate_total(items):
+    total = 0
+    for item in items:
+        total += item.price
+    return total
+"""
+CASES = [
+    ("Exact match, indentation included", "        total += item.price", "        if item.is_valid:\n            total += item.price"),
+    ("Exact match, indentation missing (classic pitfall)", "total += item.price", "if item.is_valid:\n    total += item.price"),
+    ("Wrong indentation in old_string → flexible tier", "for item in items:\n    total += item.price", "for item in items:\n    if item.is_valid:\n        total += item.price"),
+    ("Collapsed whitespace → regex tier", "total  +=   item.price", "total += item.price * item.qty"),
+    ("Ambiguous old_string", "total", "grand_total"),
+]
+rows, outputs = [], {}
+for name, old, new in CASES:
+    out, tier, err = simulate_edit(ORIGINAL, old, new)
+    ok, why = compiles(out) if out is not None else (None, "")
+    outputs[name] = out
+    rows.append({"case": name, "tier": tier, "applied": "✅" if out is not None else "❌",
+                 "still parses": "✅" if ok else ("💥 " + why if ok is False else "—"), "error": err or ""})
+display(pd.DataFrame(rows).style.hide(axis="index").set_properties(**{"text-align": "left"}))
+details("👀 See the silently broken result of the classic pitfall", pre(outputs[CASES[1][0]]))
+callout("<b>Lesson baked into every prompt:</b> copy <code>old_string</code> verbatim <i>including leading whitespace</i>, keep it short but unique, "
+        "and run <code>python -m py_compile &lt;file&gt;</code> after every edit. An edit that is applied but no longer parses is invisible until the hidden tests fail. "
+        "If an edit fails twice, re-read the exact lines and retry with a smaller unique snippet.")
+
+# CELL 38 markdown
+### 🧪 Patch sanity checker
+Run this on every patch your agent produces during local experiments. On the reference patches it doubles as a check of the parser itself. It flags empty or corrupted diffs, edits to tests or harness files, leftover scratch files and oversized patches (the "stay small" rule from section 4).
+
+# CELL 39 code
+PROTECTED = ("conftest.py", "pytest.ini", "tox.ini", "noxfile.py", "setup.cfg", "pyproject.toml", ".github/")
+SCRATCH_RE = re.compile(r"(^|/)(repro|reproduce|scratch|debug|tmp|temp)[^/]*\.py$", re.I)
+
+def check_patch(diff, max_churn=400, soft_churn=60, soft_files=3):
+    """Return a list of (severity, message). severity ∈ {'error', 'warn'}."""
+    if not diff or not diff.strip():
+        return [("error", "empty patch")]
+    info, issues = parse_patch(diff), []
+    if not info["files"]:
+        issues.append(("error", "no file headers found"))
+    if info["malformed"] or info["unterminated"]:
+        issues.append(("error", "hunk line counts do not match the @@ headers (corrupted diff)"))
+    churn = 0
+    for f in info["files"]:
+        churn += f["added"] + f["deleted"]
+        if is_test_path(f["path"]):
+            issues.append(("warn", f"modifies a test file: {f['path']}"))
+        if any(f["path"].endswith(p) or p in f["path"] for p in PROTECTED):
+            issues.append(("warn", f"touches config/harness file: {f['path']}"))
+        if f["status"] == "added" and SCRATCH_RE.search(f["path"]):
+            issues.append(("error", f"looks like a leftover scratch file: {f['path']}"))
+    if churn > max_churn:
+        issues.append(("warn", f"very large patch ({churn} changed lines)"))
+    elif churn > soft_churn or len(info["files"]) > soft_files:
+        issues.append(("warn", f"bigger than most reference fixes ({churn} lines, {len(info['files'])} files): was the issue misread?"))
+    return issues
+
+gold_issues = Counter(msg.split(":")[0] for d in df["patch"] for _, msg in check_patch(d))
+clean = sum(1 for d in df["patch"] if not check_patch(d))
+kpis([("Reference patches checked", len(df)), ("Clean", f"{clean / max(len(df), 1):.0%}")])
+if gold_issues:
+    display(pd.DataFrame(gold_issues.most_common(), columns=["finding on reference patches", "count"]).style.hide(axis="index"))
+demo_bad = "--- a/pkg/core.py\n+++ b/pkg/core.py\n@@ -1 +1 @@\n-x = 1\n+x = 2\n--- /dev/null\n+++ b/repro_issue.py\n@@ -0,0 +1,1 @@\n+print('debug')\n"
+print("Example agent patch →", check_patch(demo_bad))
+
+# CELL 40 markdown
+<a id="prompts"></a>
+# 🧠 9. Prompts, context & runtime budget
+
+### 📦 The scored bundles, embedded verbatim
+Three bundles have public leaderboard results. They are embedded below **exactly as they were submitted** (file name → text), so they can be compared, rebuilt and verified. The top bundle's per-file SHA-256 values are checked in section 10.
+
+# CELL 41 code
+# The three bundles that have public leaderboard results, embedded verbatim (file name → exact text).
+# Sources: romanrozen's public notebook (top bundle) and Black Cat's two scored submissions.
+TOP_BUNDLE = {'agent.yaml': 'name: swe_coder\n'
+               'model: gemma-4-31b-it-qat-w4a16-ct\n'
+               'description: Autonomous software engineer that fixes repository issues with minimal, verified '
+               'patches.\n'
+               'instruction: !include prompts/system.md\n'
+               'generate_content_config: !include configs/sampling.yaml\n'
+               'tools:\n'
+               '  - run_command\n'
+               '  - read_file\n'
+               '  - edit_file\n'
+               '  - write_file\n'
+               '  - get_status\n'
+               '  - submit_patch\n'
+               '  - agent_tool:\n'
+               '      config_path: sub_agents/code_analyzer.yaml\n'
+               '      skip_summarization: true\n',
+ 'configs/sampling.yaml': 'temperature: 0.2\n'
+                          'top_p: 0.95\n'
+                          'top_k: 40\n'
+                          'max_output_tokens: 8192\n'
+                          'thinking_config:\n'
+                          '  thinking_budget: 4096\n'
+                          '  include_thoughts: false\n',
+ 'prompts/analyzer.md': 'You are `code_analyzer`, a read-only code navigation specialist. You never modify files.\n'
+                        'Given an issue, find exactly where it must be fixed.\n'
+                        '\n'
+                        '## Tools\n'
+                        '- `run_command` for READ-ONLY commands only: `grep -rn`, `ls`, `sed -n`, `git log -p -S`\n'
+                        '- `search_similar_code` for concepts the issue describes without naming code\n'
+                        '- `get_code_neighbors` to walk callers and callees\n'
+                        '- `get_code_subgraph` to see how a few candidate symbols connect\n'
+                        '- `read_file` with tight line ranges to confirm\n'
+                        '\n'
+                        '## Method\n'
+                        '1. Extract identifiers from the issue: function/class names, error messages, file paths, '
+                        'options.\n'
+                        '2. Search for each one, then follow the call chain until you reach the line where behaviour '
+                        'diverges from what the issue expects.\n'
+                        '3. Confirm by reading the actual code. Never guess line numbers.\n'
+                        '\n'
+                        '## Answer format (at most 250 words, nothing else)\n'
+                        'LOCATION: <path>:<start>-<end> (<function or class>)\n'
+                        'ROOT CAUSE: <one or two sentences>\n'
+                        'FIX PLAN: <concrete change>\n'
+                        'RELATED: <other call sites or files needing the same change, or "none">\n'
+                        'TESTS: <existing test files that exercise this code>\n'
+                        'CONFIDENCE: high | medium | low\n',
+ 'prompts/system.md': 'You are an autonomous senior Python engineer working inside a sandboxed checkout of a real '
+                      'open-source repository at /workspace.\n'
+                      'Goal: resolve the issue in the user message with the smallest correct patch, then call '
+                      '`submit_patch`.\n'
+                      '\n'
+                      '## Hard rules\n'
+                      '- Never edit, add or delete tests, `conftest.py`, `pytest.ini`, CI or packaging files. Hidden '
+                      'tests are applied after you finish.\n'
+                      '- Keep public APIs backward compatible unless the issue explicitly asks for a change.\n'
+                      '- Scratch files go to /tmp only. Anything left in /workspace becomes part of your patch.\n'
+                      '- The environment is pre-built: do not try to install packages.\n'
+                      '- Always finish by calling `submit_patch`. A careful best-effort fix beats no patch.\n'
+                      '\n'
+                      '## Workflow\n'
+                      '1. **Understand**: state the expected vs. actual behaviour to yourself in one or two '
+                      'sentences.\n'
+                      '2. **Localize**:\n'
+                      '   - Call the `code_analyzer` tool with the full issue text first. It returns LOCATION / ROOT '
+                      'CAUSE / FIX PLAN. Verify its claim by reading those exact lines before editing.\n'
+                      '   - Extract every identifier, error message and file name from the issue and search for '
+                      'them: `grep -rn "<identifier>" --include=*.py . | head -30`.\n'
+                      "   - Read only the lines you need (`read_file` with a line range or `sed -n 'START,ENDp' "
+                      'FILE`).\n'
+                      '3. **Reproduce**: write a minimal script to /tmp/repro.py that shows the bug and run it with '
+                      '`python /tmp/repro.py`.\n'
+                      '4. **Fix**: edit source files with `edit_file`. Copy `old_string` verbatim from the file, '
+                      '*including leading indentation*, and strip any line-number prefixes. Keep `old_string` short '
+                      'but unique. One logical change per edit. Fix the root cause, not the symptom, and also handle '
+                      'the edge cases the issue mentions.\n'
+                      '5. **Verify**: run `python -m py_compile <file>` after every edit, rerun /tmp/repro.py, then '
+                      'run the closest existing tests: `python -m pytest <tests/path> -x -q` (narrow with `-k`).\n'
+                      '6. **Submit**: run `git status` and `git diff`, make sure only intended source changes '
+                      'remain, then call `submit_patch`.\n'
+                      '\n'
+                      '## Budget discipline\n'
+                      '- Call `get_status` every ~8 tool calls. When less than 25% of turns or time remain, stop '
+                      'exploring and go straight to Fix → Verify → Submit.\n'
+                      '- Keep outputs short: pipe through `head`, use `grep -n`, `pytest -q`. Never print whole '
+                      'large files.\n'
+                      '- If an edit fails twice, re-read the exact lines and retry with a smaller unique snippet.\n'
+                      '\n'
+                      '## Quality bar\n'
+                      '- Match the surrounding code style, type hints and naming.\n'
+                      '- Prefer a small, targeted change over a refactor. Touch other files only when the fix '
+                      'requires it.\n',
+ 'sub_agents/code_analyzer.yaml': 'name: code_analyzer\n'
+                                  'model: gemma-4-31b-it-qat-w4a16-ct\n'
+                                  'description: Read-only code navigator. Given an issue, returns the exact '
+                                  'location, root cause and a fix plan.\n'
+                                  'instruction: !include ../prompts/analyzer.md\n'
+                                  'generate_content_config: !include ../configs/sampling.yaml\n'
+                                  'tools:\n'
+                                  '  - run_command\n'
+                                  '  - read_file\n'
+                                  '  - search_similar_code\n'
+                                  '  - get_code_neighbors\n'
+                                  '  - get_code_subgraph\n'}
+TOP_BUNDLE_FILE_SHA256 = {'agent.yaml': 'c8f4305df8091c679985b610d3e5195e12703c5989f61230939a938ef6afb2e4',
+ 'configs/sampling.yaml': 'ac857a0e8f76e01bfb7de0dcfb1d7d68d256ba1537109050127cf75476ee5012',
+ 'prompts/analyzer.md': '771480aba97ca67110aec892a5107eb24ff544a9ef28a41fed5616228a0f4e58',
+ 'prompts/system.md': '22b6a11eeed24a5f216abc2d3143a6dbb8e7ab5946d78df1d8856fb554feb3f6',
+ 'sub_agents/code_analyzer.yaml': '07530d7f65c9654c3f074924cba10fb3e1fd22115885c3a948decc47fb055fc3'}
+ANCHOR_BUNDLE = {'agent.yaml': 'name: black_cat_coder\n'
+               'model: gemma-4-31b-it-qat-w4a16-ct\n'
+               'description: Fixes one repository issue with a small, verified source patch.\n'
+               'instruction: !include prompts/system.md\n'
+               'tools:\n'
+               '  - run_command\n'
+               '  - read_file\n'
+               '  - edit_file\n'
+               '  - write_file\n'
+               '  - get_status\n'
+               '  - submit_patch\n'
+               '  - get_code_neighbors\n'
+               '  - search_similar_code\n'
+               '  - get_code_subgraph\n'
+               '  - agent_tool:\n'
+               '      config_path: sub_agents/code_analyzer.yaml\n'
+               '      skip_summarization: true\n'
+               'generate_content_config: !include configs/sampling.yaml\n',
+ 'sub_agents/code_analyzer.yaml': 'name: code_analyzer\n'
+                                  'model: gemma-4-31b-it-qat-w4a16-ct\n'
+                                  'description: Read-only code navigator. It already knows the issue; returns the '
+                                  'exact fix location, root cause, fix plan and closest tests.\n'
+                                  'instruction: !include ../prompts/analyzer.md\n'
+                                  'tools:\n'
+                                  '  - run_command\n'
+                                  '  - read_file\n'
+                                  '  - get_code_neighbors\n'
+                                  '  - get_code_subgraph\n'
+                                  'generate_content_config:\n'
+                                  '  temperature: 0.1\n'
+                                  '  top_p: 0.95\n'
+                                  '  top_k: 40\n'
+                                  '  max_output_tokens: 2048\n'
+                                  '  thinking_config:\n'
+                                  '    include_thoughts: false\n',
+ 'configs/sampling.yaml': 'temperature: 0.2\n'
+                          'top_p: 0.95\n'
+                          'top_k: 40\n'
+                          'max_output_tokens: 4096\n'
+                          'thinking_config:\n'
+                          '  include_thoughts: false\n',
+ 'prompts/system.md': 'You are Black Cat, an autonomous software engineer fixing one issue in the Python repository '
+                      'at /workspace. Nobody will answer questions. Work with your tools until a fix is in place, '
+                      'then call `submit_patch()`.\n'
+                      '\n'
+                      '## How you are graded\n'
+                      '- Hidden tests run against your source changes in a fresh checkout; the task passes only if '
+                      'pytest exits 0. A careful best-effort fix beats an empty patch.\n'
+                      '- If time or tool calls run out, the working tree is graded as it is. Never revert a '
+                      'plausible fix.\n'
+                      '- Test files, `pytest.ini`, `conftest.py`, `pyproject.toml`, `setup.cfg` and `tox.ini` are '
+                      'reset before grading, so editing them never helps. Fix the source code.\n'
+                      '\n'
+                      '## Sandbox facts\n'
+                      '- Offline, dependencies already installed. Never install packages.\n'
+                      '- Available: git, grep, find, sed, awk, python3. NOT available: `rg` (ripgrep) and `tree`. '
+                      'Search with `git grep -n`.\n'
+                      '- `run_command` output is cut to its FIRST 5,000 characters. `read_file` returns at most 150 '
+                      'lines or 10,000 characters, so request narrow line ranges.\n'
+                      '- `read_file`, `write_file` and `edit_file` only work inside /workspace. Create scratch files '
+                      'in /tmp with `run_command`, never inside /workspace.\n'
+                      '- The context window is small (32k tokens). Every long output brings you closer to a crash '
+                      'that discards your work, so keep outputs short.\n'
+                      '- `get_status()` and `submit_patch()` are free.\n'
+                      '\n'
+                      '## Workflow\n'
+                      '1. Understand. State the expected and the actual behaviour in one or two sentences. Some '
+                      'issues are pull-request descriptions: skip checklists and template text, keep the substance. '
+                      'Note exact names, messages and values.\n'
+                      '2. Localize. Call `code_analyzer` once. Its request should be one short sentence with the key '
+                      'identifiers from the issue; it already has the full issue text and answers with LOCATION, '
+                      'ROOT CAUSE, FIX PLAN and TESTS. Skip it only when the issue names the exact file and function '
+                      'to change. Confirm its answer by reading those lines (at most about 60 lines per '
+                      '`read_file`). If it is unsure or wrong, search yourself: `git grep -n "identifier" -- '
+                      "'*.py' | head -20`.\n"
+                      '3. Reproduce when it is cheap. Write the script with a heredoc and run it in the same '
+                      'command:\n'
+                      "   `cat > /tmp/repro.py << 'EOF'` ... `EOF` then `python3 /tmp/repro.py 2>&1 | tail -n 20`.\n"
+                      '4. Fix. Before each edit, state in one or two sentences what you will change and why. Use '
+                      '`edit_file` with an `old_string` copied exactly from the file, including indentation and '
+                      'without line-number prefixes; keep it short but unique. Fix the root cause, handle every edge '
+                      'case the issue names, and keep public signatures backward compatible. Several small '
+                      'coordinated edits are fine; one huge edit can be cut off. Code under `docs_src/` counts as '
+                      'source when the issue is about it. Create a new file only when the requested feature needs '
+                      'one.\n'
+                      '5. Verify in one command, saving long output to /tmp and reading its end, because test '
+                      'verdicts are printed last:\n'
+                      '   `python3 -m py_compile path/to/changed.py && python3 -m pytest tests/test_x.py -q -x -p '
+                      'no:anyio -o timeout=0 > /tmp/t1.log 2>&1; tail -n 25 /tmp/t1.log`\n'
+                      '   Find the closest tests with `git grep -l "name" -- \'tests/*.py\' | head`. Never run bare '
+                      '`pytest` or a whole test suite. Existing failures unrelated to your change (missing fixtures, '
+                      'network, imports) are not your problem; do not touch test code. If your reproduction still '
+                      'fails, revise the same source change once.\n'
+                      '6. Submit. Run `git status --short` and `git diff | head -150`. Remove anything unintended '
+                      'from /workspace. Call `submit_patch()` as your last tool call, then reply with one line on '
+                      'what changed and what you verified.\n'
+                      '\n'
+                      '## Tool rules\n'
+                      '- Never call `search_similar_code`: each result carries the full source of whole classes '
+                      '(often over 100,000 characters), which overflows your context and loses the task.\n'
+                      '- `get_code_neighbors` and `get_code_subgraph` only know synchronous "calls" edges and no '
+                      'async functions. Never pass `edge_type`. If a graph tool errors, stop using it and use `git '
+                      'grep`.\n'
+                      '- If the same call fails twice, change method; for example read lines with `sed -n '
+                      "'START,ENDp' FILE` instead of `read_file`.\n"
+                      '- Keep every output short: `head`, `tail`, `grep -n`, `pytest -q`. Never print whole large '
+                      'files.\n'
+                      '\n'
+                      '## Pace\n'
+                      '- The budget is shared with `code_analyzer`. Call `get_status()` after about 8 tool calls and '
+                      'again before verifying.\n'
+                      '- Aim to have your first edit in place by the halfway point. When about a quarter of the time '
+                      'or tool calls remains, stop exploring: finish the edit, compile, check the diff and submit.\n',
+ 'prompts/analyzer.md': 'You are `code_analyzer`, a read-only code navigator for the Python repository at '
+                        '/workspace. You never modify files. The coder sends you a short request; the full issue is '
+                        'at the end of these instructions. Find exactly where the issue must be fixed, then answer.\n'
+                        '\n'
+                        '## Tools\n'
+                        '- `run_command` for read-only commands only: `git grep -n "text" -- \'*.py\' | head -20`, '
+                        "`grep -rn`, `sed -n 'START,ENDp' FILE`, `ls`, `git log --oneline -5 -- FILE`. `rg` and "
+                        '`tree` are not installed. Output is cut to its first 5,000 characters, so always pipe '
+                        'searches through `head`.\n'
+                        '- `read_file` with tight line ranges (at most about 80 lines). It only accepts paths inside '
+                        '/workspace.\n'
+                        '- `get_code_neighbors` and `get_code_subgraph` only know synchronous "calls" edges and no '
+                        'async functions. Never pass `edge_type`. If a graph tool errors, stop using it.\n'
+                        '\n'
+                        '## Method (at most 6 tool calls)\n'
+                        '1. Extract identifiers from the issue: function and class names, error messages, option and '
+                        'parameter names, file paths. Ignore pull-request template text such as checklists.\n'
+                        '2. Search for the most specific identifier first. Follow the code to the line where the '
+                        'behaviour diverges from what the issue expects. For a feature request, find where the '
+                        'closest existing feature is implemented and where the new behaviour must plug in.\n'
+                        '3. Find the existing test file that covers that code.\n'
+                        '4. Confirm by reading the code. Never guess line numbers.\n'
+                        '\n'
+                        '## Answer (at most 200 words, nothing else)\n'
+                        'LOCATION: path:start-end (function or class)\n'
+                        'ROOT CAUSE: one or two sentences\n'
+                        'FIX PLAN: the concrete change, including edge cases named in the issue\n'
+                        'RELATED: other places needing the same change, or none\n'
+                        'TESTS: existing test file(s) for this code\n'
+                        'CONFIDENCE: high | medium | low\n'
+                        '\n'
+                        '## The issue\n'
+                        '{problem_description?}\n',
+ 'eval_config.yaml': 'evaluation:\n'
+                     '  timeout_seconds: 120\n'
+                     '  max_tool_calls: 40\n'
+                     '  max_time_minutes: 5\n'
+                     '  max_turns: 100\n'}
+COMPACT_BUNDLE = {'agent.yaml': 'name: black_cat_compact\n'
+               'model: gemma-4-31b-it-qat-w4a16-ct\n'
+               'description: Budget-aware software engineer for focused repository fixes.\n'
+               'instruction: !include prompts/system.md\n'
+               'tools:\n'
+               '  - run_command\n'
+               '  - read_file\n'
+               '  - edit_file\n'
+               '  - write_file\n'
+               '  - get_status\n'
+               '  - submit_patch\n'
+               '  - get_code_neighbors\n'
+               '  - search_similar_code\n'
+               '  - get_code_subgraph\n'
+               'generate_content_config: !include configs/sampling.yaml\n',
+ 'configs/sampling.yaml': 'temperature: 0.15\n'
+                          'top_p: 0.90\n'
+                          'max_output_tokens: 8192\n'
+                          'seed: 42\n'
+                          'thinking_config:\n'
+                          '  thinking_level: MEDIUM\n'
+                          '  thinking_budget: 2048\n'
+                          '  include_thoughts: false\n',
+ 'prompts/system.md': 'You are Black Cat, an autonomous Python engineer in /workspace. Solve the issue with a real, '
+                      'minimal patch. A fresh checkout will run hidden tests. Finish by calling submit_patch(). Work '
+                      'within the stated task budget; make tool calls promptly and keep outputs short.\n'
+                      '\n'
+                      '1. Decode the issue: ignore PR-template boilerplate, keep the substantive request, exact '
+                      'identifiers, expected behavior, and edge cases. A short title still requires a best-effort '
+                      'implementation.\n'
+                      '2. Locate: use the initial file listing, then one bounded `rg -n` search for exact '
+                      'identifiers or error text (`grep -Rn` if rg is missing). Read only relevant ranges and nearby '
+                      'tests/examples. If the first route misses, search a second related symbol. Use graph tools '
+                      'only for known symbol names; if unavailable, return to source search. Do not treat '
+                      'natural-language text as a symbol query.\n'
+                      '3. Reproduce: when feasible, run a tiny behavior check with `python3 -c` or put a scratch '
+                      'script under /tmp. Confirm the failure before editing. Never leave scratch files in '
+                      '/workspace.\n'
+                      '4. Fix: change the earliest incorrect source layer with focused `edit_file` calls. Copy old '
+                      'text exactly and ensure it matches uniquely. Multiple coordinated edits are fine when '
+                      'behavior requires them. Preserve unrelated behavior and public APIs. Do not modify tests, '
+                      'hidden data, harness files, or broad formatting. Python example source may be changed when it '
+                      'is the implementation target.\n'
+                      '5. Verify: compile changed Python with `python3 -m py_compile`, rerun the reproduction, and '
+                      'run the closest targeted test if time allows. Inspect failures; do not claim a pass without '
+                      'tool output. Avoid full test suites, package installs, and network access.\n'
+                      '6. Review: check `git status --short`, `git diff --check`, and the relevant diff. Remove '
+                      'accidental files. Call get_status() around the middle of the budget. When little time '
+                      'remains, stop exploring and submit the best defensible patch.\n'
+                      '7. Call submit_patch() as the final tool action. It is free, captures intended new files, and '
+                      'ends the agent session. Then summarize only verified changes and checks.\n'
+                      '\n'
+                      'Commands have a 60-second cap in this submission and truncated output. If a tool fails twice, '
+                      'take a simpler route. Never fabricate source content, edits, or test results.\n',
+ 'eval_config.yaml': 'evaluation:\n'
+                     '  timeout_seconds: 60\n'
+                     '  max_tool_calls: 24\n'
+                     '  max_time_minutes: 4\n'
+                     '  max_turns: 40\n'}
+ANCHOR_ARCHIVE_SHA256 = '18b20200ba4a42f99ecaa0c889664ead4b78848835317bc114f4e4095f759916'      # archive that scored 0.10 twice
+COMPACT_ARCHIVE_SHA256 = 'c34a0f863ee45bfd923974d514e294fb69e85838c46a759d273217084b77cedb'     # archive that scored 0.08
+TOP_ARCHIVE_SHA256_PREFIX = 'f3534769cd8c'   # published top archive (0.12 / 0.15), as quoted by Black Cat
+BUNDLES = {"top_bundle": TOP_BUNDLE, "anchor": ANCHOR_BUNDLE, "compact": COMPACT_BUNDLE}
+
+# CELL 42 markdown
+### 🔍 What the top bundle does differently
+Parsing the three embedded bundles with the same loader gives the file-level comparison behind the "short prompt wins" lesson. `!include` is resolved relative to the including file, and sampling may be inline or included.
+
+# CELL 43 code
+class IncludeLoader(yaml.SafeLoader):
+    """SafeLoader that keeps `!include path` as {'__include__': path} so includes can be resolved and validated."""
+IncludeLoader.add_constructor("!include", lambda loader, node: {"__include__": loader.construct_scalar(node)})
+
+def resolve_ref(name, ref):
+    """`!include` / `config_path` targets: relative to the including file for `!include`, normalised."""
+    return posixpath.normpath(posixpath.join(posixpath.dirname(name), ref))
+
+def expand(files, name, obj, problems=None):
+    """Recursively replace {'__include__': ref} by the referenced file's (parsed) content."""
+    if isinstance(obj, dict) and set(obj) == {"__include__"}:
+        target = resolve_ref(name, obj["__include__"])
+        if target.startswith("..") or target not in files:
+            if problems is not None:
+                problems.append(f"{name}: include '{obj['__include__']}' does not resolve inside the bundle")
+            return None
+        text = files[target]
+        if target.endswith((".yaml", ".yml")):
+            return expand(files, target, yaml.load(text, Loader=IncludeLoader), problems)
+        return text
+    if isinstance(obj, dict):
+        return {k: expand(files, name, v, problems) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [expand(files, name, v, problems) for v in obj]
+    return obj
+
+def load_agent(files, name, problems=None):
+    return expand(files, name, yaml.load(files[name], Loader=IncludeLoader), problems)
+
+def sub_agent_paths(agent):
+    return [t["agent_tool"]["config_path"] for t in agent.get("tools") or [] if isinstance(t, dict) and "agent_tool" in t]
+
+def summarize_bundle(files):
+    agent = load_agent(files, "agent.yaml")
+    cfg = agent.get("generate_content_config") or {}
+    subs = sub_agent_paths(agent)
+    sub = load_agent(files, subs[0]) if subs else None
+    budget = (yaml.safe_load(files["eval_config.yaml"]) or {}).get("evaluation", {}) if "eval_config.yaml" in files else {}
+    return {
+        "coder prompt (words)": len(agent["instruction"].split()),
+        "coder tools": len([t for t in agent["tools"] if isinstance(t, str)]),
+        "analyzer": ("yes · " + str(len([t for t in sub["tools"] if isinstance(t, str)])) + " tools") if sub else "no",
+        "analyzer prompt (words)": len(sub["instruction"].split()) if sub else 0,
+        "temperature": cfg.get("temperature"), "max_output_tokens": cfg.get("max_output_tokens"),
+        "thinking": (cfg.get("thinking_config") or {}).get("thinking_budget", (cfg.get("thinking_config") or {}).get("thinking_level", "—")),
+        "eval budget": (f"{budget.get('max_tool_calls')} calls · {budget.get('max_time_minutes')} min · {budget.get('timeout_seconds')} s"
+                        if budget else "none → scorer defaults (100 calls · 60 min · 300 s)"),
+    }
+
+REPORTED = {"top_bundle": "0.12 / 0.15", "anchor": "0.10 / 0.10", "compact": "0.08"}
+cmp_df = pd.DataFrame({p: summarize_bundle(f) for p, f in BUNDLES.items()}).T
+cmp_df["reported public score"] = pd.Series(REPORTED)
+display(cmp_df.style.set_properties(**{"text-align": "left"}))
+callout("The best-evidenced bundle has the <b>shortest generic coder prompt</b> and <b>no hand-written budget</b>. The anchor added harness facts and a tight budget (0.10); "
+        "Black Cat's v8 added a long lab-derived rule list on top of the top bundle's budget (0.05). "
+        "A 31B model without extended thinking appears to do better with a short, clean workflow and room to work.", "idea")
+
+# CELL 44 markdown
+### 🧮 Where does the context window go?
+The 32k window is shared by the system prompt, the tool schemas, the issue text, the reserved output and **every tool result for the rest of the run**. That is why the analyzer sub-agent helps (its exploration happens in its own context and only a short report comes back), and why `include_thoughts: false` matters: hidden reasoning is not carried forward turn after turn.
+
+# CELL 45 code
+est_tokens = lambda s: int(len(s) / 3.6)            # rough heuristic for English + code, not a real tokenizer
+
+with safe("context budget"):
+    issue_tok = df["problem_statement"].map(est_tokens)
+    p90_issue = int(issue_tok.quantile(.9))
+    comp_names, colors = ["system prompt", "tool schemas", "p90 issue", "reserved for output"], [PAL[0], PAL[4], PAL[2], PAL[1]]
+    fig, ax = plt.subplots(figsize=(14, 3.4))
+    for yi, (prof, files) in enumerate(BUNDLES.items()):
+        agent = load_agent(files, "agent.yaml")
+        n_tools = len([t for t in agent["tools"]]) 
+        out_tok = (agent.get("generate_content_config") or {}).get("max_output_tokens", 8192)
+        parts = [est_tokens(agent["instruction"]), 130 * n_tools, p90_issue, out_tok]
+        left = 0
+        for name, v, c in zip(comp_names, parts, colors):
+            ax.barh(yi, v, left=left, color=c, label=name if yi == 0 else None, edgecolor="white"); left += v
+        free = CONTEXT_LIMIT - left
+        ax.barh(yi, max(free, 0), left=left, color="#E8EAED", label="left for the trajectory" if yi == 0 else None, edgecolor="white")
+        ax.text(min(left, CONTEXT_LIMIT) + 200, yi, f"{max(free, 0):,} tok free ({max(free, 0) / CONTEXT_LIMIT:.0%})", va="center", fontsize=9)
+    ax.axvline(CONTEXT_LIMIT, color="#202124", ls="--"); ax.set_yticks(range(len(BUNDLES))); ax.set_yticklabels(list(BUNDLES))
+    ax.set_xlim(0, CONTEXT_LIMIT * 1.1); ax.set_xlabel("tokens (approx.)")
+    ax.set_title(f"Where does a {CONTEXT_LIMIT:,}-token context go before the first tool call? (p90 issue = {p90_issue:,} tokens)")
+    ax.legend(ncol=5, loc="upper center", bbox_to_anchor=(.5, -.3), frameon=False)
+    plt.tight_layout(); plt.show()
+    callout("Every <code>read_file</code> or command output lands in the grey area. This is also why outputs must stay short "
+            "(<code>head</code>, <code>grep -n</code>, <code>pytest -q</code>) and why a result that can be 100,000+ characters, such as <code>search_similar_code</code>, is risky for the coder.")
+
+# CELL 46 markdown
+### ⏱️ Planning the runtime budget
+The harness gives the whole hidden set (about 120 tasks according to one source) **12 hours** on 4× L4 GPUs, sandbox setup included. The per-task budget printed in each task message (60 minutes by default) is a ceiling, and most tasks finish far below it. Here is the arithmetic if tasks run one after another. Verify the numbers against the README above: the task count and setup time are estimates.
+
+# CELL 47 code
+with safe("budget arithmetic"):
+    n_tasks, setup_min = 120, 1.5
+    per_task = np.linspace(1, 10, 181)
+    hours = n_tasks * (per_task + setup_min) / 60
+    breakeven = 12 * 60 / n_tasks - setup_min
+    fig, ax = plt.subplots(figsize=(9, 3.6))
+    ax.fill_between(per_task, 0, hours, where=hours <= 12, color=AQUA, alpha=0.10)
+    ax.plot(per_task, hours, color=BLUE, lw=2); ax.axhline(12, color=ORANGE, lw=1.5, ls="--")
+    ax.text(9.9, 12.4, "12 h limit", color=INK, fontsize=9, ha="right")
+    ax.axvline(breakeven, color=MUTED, lw=1, ls=":"); ax.text(breakeven + 0.1, 20.5, f"break-even ≈ {breakeven:.1f} min", color=INK, fontsize=9)
+    ax.set_xlabel("average agent minutes per task (+ ~1.5 min setup)"); ax.set_ylabel("total run time (hours)")
+    ax.set_title(f"~{n_tasks} tasks in 12 hours leaves about {breakeven:.1f} agent-minutes per task on average")
+    ax.set_xlim(1, 10); ax.set_ylim(0, 25); plt.tight_layout(); plt.show()
+
+cards = [("🧠", "Reasoning stays out of context", "<code>include_thoughts: false</code> on every agent. The model still thinks, but its reasoning is not carried into the 32k window turn after turn. All the scoring bundles do this."),
+         ("⏲️", "Adaptive, not capped", "The agent checks <code>get_status()</code> every ~8 calls and moves to fix → verify → submit when under 25% of its budget is left. <b>Lesson:</b> hard 4-minute caps finished comfortably but scored 0.08 (twice, in two notebooks). Cutting hard tasks short cost more than it saved."),
+         ("📄", "No hand-written eval_config", "The top bundle ships none, so the scorer's defaults apply. If you ship one, copy the official sample's file unchanged (<code>CFG['ship_eval_config']</code>).")]
+display(HTML('<div style="display:flex;flex-wrap:wrap;gap:12px;margin:8px 0 6px">' + "".join(
+    f'<div style="flex:1 1 230px;background:#fff;border:1px solid #e3e6ea;border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.06);color:#1f2328">'
+    f'<div style="font-size:22px">{i}</div><div style="font-weight:700;font-size:15px;margin:4px 0;color:#0b1f3a">{t}</div>'
+    f'<div style="font-size:13px;line-height:1.45;color:#44484e">{d}</div></div>' for i, t, d in cards) + "</div>"))
+
+# CELL 48 markdown
+<a id="bundle"></a>
+# 🏗️ 10. Agent bundle builder
+**Step 1: learn from the official sample.** We locate `sample_submission` (folder or zip), show its files, and detect the model alias, root file name and whether it uses `!include`. Section 2 of the Pathfinder notebook noted that the sample's `eval_config.yaml` is the file most people skip, so it is displayed in full.
+
+# CELL 49 code
+ROOT_NAMES = ["agent.yaml", "agent.yml", "root_agent.yaml", "root_agent.yml"]
+
+def find_sample_submission():
+    if DEMO_MODE:
+        return None
+    for c in sorted(p for p in DATA_DIR.iterdir() if "sample" in p.name.lower()):
+        if c.is_dir():
+            ymls = sorted((p for p in c.rglob("*") if p.suffix in (".yaml", ".yml")), key=lambda p: len(p.parts))
+            if ymls:
+                return ymls[0].parent
+            zips = sorted(c.rglob("*.zip"))
+            if zips:
+                c = zips[0]
+        if c.is_file() and zipfile.is_zipfile(c):
+            out = WORK / "_sample_submission"
+            shutil.rmtree(out, ignore_errors=True)
+            with zipfile.ZipFile(c) as z:
+                z.extractall(out)
+            ymls = sorted((p for p in out.rglob("*") if p.suffix in (".yaml", ".yml")), key=lambda p: len(p.parts))
+            return ymls[0].parent if ymls else out
+    return None
+
+SAMPLE_ROOT = find_sample_submission()
+SAMPLE_TEXT, SAMPLE = {}, {"root_file": None, "models": set(), "uses_include": None, "text": ""}
+with safe("sample submission"):
+    if SAMPLE_ROOT:
+        for p in sorted(SAMPLE_ROOT.rglob("*")):
+            if p.is_file() and p.suffix in (".yaml", ".yml", ".md", ".txt", ".json"):
+                SAMPLE_TEXT[p.relative_to(SAMPLE_ROOT).as_posix()] = p.read_text(encoding="utf-8", errors="replace")
+        ytexts = {n: t for n, t in SAMPLE_TEXT.items() if n.endswith((".yaml", ".yml"))}
+        SAMPLE["text"] = "\n".join(ytexts.values())
+        SAMPLE["root_file"] = next((n for n in ROOT_NAMES if n in SAMPLE_TEXT), None)
+        SAMPLE["models"] = {m for t in ytexts.values() for m in re.findall(r"^\s*model:\s*['\"]?([^'\"\s#]+)", t, flags=re.M)}
+        SAMPLE["uses_include"] = "!include" in SAMPLE["text"]
+        blocks = ""
+        for name, text in SAMPLE_TEXT.items():
+            blocks += (f'<details style="margin:4px 0" {"open" if name.endswith((".yaml", ".yml")) else ""}><summary style="cursor:pointer;font-weight:600">📄 {esc(name)} '
+                       f'<span style="color:{MUTED};font-weight:400">({len(text):,} chars)</span></summary>{pre(text, 40)}</details>')
+        display(HTML(blocks))
+        binaries = sorted(p.relative_to(SAMPLE_ROOT).as_posix() for p in SAMPLE_ROOT.rglob("*") if p.is_file() and p.relative_to(SAMPLE_ROOT).as_posix() not in SAMPLE_TEXT)
+        if binaries:
+            callout("Binary files, not shown: " + ", ".join(f"<code>{esc(b)}</code>" for b in binaries))
+        ev = SAMPLE_TEXT.get("eval_config.yaml")
+        yaml_all = SAMPLE["text"]
+        kpis([("include_thoughts set", "yes" if "include_thoughts" in yaml_all else "no"), ("uses !include", "yes" if SAMPLE["uses_include"] else "no"),
+              ("'../' includes", "yes" if re.search(r"!include\s+\.\./", yaml_all) else "no"),
+              ("eval_config.yaml", "shipped" if ev else "none", ("keys: " + ", ".join(map(str, (yaml.safe_load(ev) or {}).keys()))) if ev else "")])
+    else:
+        callout("No sample submission found. The bundle is built from the embedded, scored templates only.", "warn")
+
+MODEL_ALIAS = (CFG["model_alias"] or (next(iter(SAMPLE["models"])) if len(SAMPLE["models"]) == 1 else None) or CFG["fallback_model_alias"])
+alias_src = "CFG override" if CFG["model_alias"] else ("sample submission" if len(SAMPLE["models"]) == 1 else "fallback (verify in HARNESS_README!)")
+kpis([("Model alias", MODEL_ALIAS, alias_src), ("Profile", CFG["profile"]), ("Context limit", f"{CONTEXT_LIMIT:,}")])
+
+# CELL 50 markdown
+**Step 2: choose what to ship.** The three scored profiles are used **verbatim**. `custom` starts from the top bundle and applies only the toggles in `CFG`. Each toggle is a small, local text transformation with an assertion that the text it replaces really exists, so an edit can never silently do nothing:
+
+| Toggle | Transformation | Source of the idea |
+|:--|:--|:--|
+| `issue_rules` | Adds a short **Reading the issue** section to the coder prompt and "skip PR boilerplate / use the exact new names" to the analyzer | Pathfinder (data-driven, still unscored) |
+| `analyzer_search_similar` = `False` | Removes `search_similar_code` from the analyzer's tools and prompt | Black Cat (huge outputs can overflow the context and discard the patch) |
+| `architecture` = `"single"` | One agent with the graph tools, no analyzer | Pathfinder / romanrozen (planned A/B) |
+| sampling values | Rewrites `configs/sampling.yaml` (thoughts stay hidden) | all three |
+| `ship_eval_config` | Adds the official sample's `eval_config.yaml`, unchanged | Pathfinder |
+
+# CELL 51 code
+BASE_SYSTEM, BASE_ANALYZER = TOP_BUNDLE["prompts/system.md"], TOP_BUNDLE["prompts/analyzer.md"]
+GRAPH_TOOLS = ["get_code_neighbors", "get_code_subgraph", "search_similar_code"]
+CODER_CORE = ["run_command", "read_file", "edit_file", "write_file", "get_status", "submit_patch"]
+ANALYZER_TOOLS_ALL = ["run_command", "read_file", "search_similar_code", "get_code_neighbors", "get_code_subgraph"]
+
+ISSUE_RULES_BLOCK = """## Reading the issue
+- Many issues are pasted pull-request descriptions. Ignore the template parts (HTML comments, discussion links, checklists, AI disclaimers). The title, code snippets, error messages and API names are the real specification.
+- The hidden tests usually add new test functions that exercise exactly what the issue describes. If the issue names a new parameter, function, class, option or message, use exactly that name and spelling, and implement it completely, including the edge cases it mentions.
+- Runnable documentation examples (for example `docs_src/`) are real code that tests import. Change them when the issue is about them.
+
+"""
+ANALYZER_LINE_OLD = "1. Extract identifiers from the issue: function/class names, error messages, file paths, options."
+ANALYZER_LINE_NEW = "1. Skip pull-request template boilerplate in the issue. Extract identifiers: function/class names, error messages, file paths, options, and any NEW names the issue asks for."
+FIX_PLAN_OLD, FIX_PLAN_NEW = "FIX PLAN: <concrete change>", "FIX PLAN: <concrete change, using the exact names the issue uses>"
+LOCALIZE_ANALYZER = ("   - Call the `code_analyzer` tool with the full issue text first. It returns LOCATION / ROOT CAUSE / FIX PLAN. "
+                     "Verify its claim by reading those exact lines before editing.\n")
+LOCALIZE_SINGLE = ("   - Use `search_similar_code` with a real symbol name (not a sentence) once you know one, and `get_code_neighbors` "
+                   "to follow callers and callees to where behaviour diverges.\n")
+SEARCH_LINE = "- `search_similar_code` for concepts the issue describes without naming code\n"
+
+def replace_once(text, old, new, what):
+    assert text.count(old) == 1, f"cannot apply '{what}': expected text not found exactly once"
+    return text.replace(old, new)
+
+def render_agent(model, tools, analyzer):
+    lines = ["name: swe_coder", f"model: {model}",
+             "description: Autonomous software engineer that fixes repository issues with minimal, verified patches.",
+             "instruction: !include prompts/system.md", "generate_content_config: !include configs/sampling.yaml", "tools:"]
+    lines += [f"  - {t}" for t in tools]
+    if analyzer:
+        lines += ["  - agent_tool:", "      config_path: sub_agents/code_analyzer.yaml", "      skip_summarization: true"]
+    return "\n".join(lines) + "\n"
+
+def render_analyzer(model, tools):
+    return "\n".join(["name: code_analyzer", f"model: {model}",
+                      "description: Read-only code navigator. Given an issue, returns the exact location, root cause and a fix plan.",
+                      "instruction: !include ../prompts/analyzer.md", "generate_content_config: !include ../configs/sampling.yaml",
+                      "tools:", *[f"  - {t}" for t in tools]]) + "\n"
+
+# self-check: the renderers must reproduce the scored top bundle byte for byte when no toggle is changed
+assert render_agent("gemma-4-31b-it-qat-w4a16-ct", CODER_CORE, True) == TOP_BUNDLE["agent.yaml"]
+assert render_analyzer("gemma-4-31b-it-qat-w4a16-ct", ANALYZER_TOOLS_ALL) == TOP_BUNDLE["sub_agents/code_analyzer.yaml"]
+
+DEFAULTS = {"architecture": "analyzer+coder", "issue_rules": False, "analyzer_search_similar": True, "temperature": 0.2, "top_p": 0.95,
+            "top_k": 40, "max_output_tokens": 8192, "thinking_budget": 4096, "ship_eval_config": False}
+CHANGES = [k for k, v in DEFAULTS.items() if CFG[k] != v] if CFG["profile"] == "custom" else []
+
+def build_files(profile):
+    if profile != "custom":
+        return dict(BUNDLES[profile])
+    files, single = dict(TOP_BUNDLE), CFG["architecture"] == "single"
+    tools_ok = lambda ts: [t for t in ts if t in AVAILABLE_TOOLS]
+    system, analyzer = BASE_SYSTEM, BASE_ANALYZER
+    if CFG["issue_rules"]:
+        system = replace_once(system, "## Workflow", ISSUE_RULES_BLOCK + "## Workflow", "issue_rules (coder)")
+        analyzer = replace_once(analyzer, ANALYZER_LINE_OLD, ANALYZER_LINE_NEW, "issue_rules (analyzer step 1)")
+        analyzer = replace_once(analyzer, FIX_PLAN_OLD, FIX_PLAN_NEW, "issue_rules (analyzer answer format)")
+    use_search = CFG["analyzer_search_similar"]
+    if not use_search:
+        analyzer = replace_once(analyzer, SEARCH_LINE, "", "analyzer_search_similar")
+    if single:
+        system = replace_once(system, LOCALIZE_ANALYZER, LOCALIZE_SINGLE if use_search else
+                              "   - Use `get_code_neighbors` to follow callers and callees from a confirmed symbol to where behaviour diverges.\n", "single architecture")
+        graph = [t for t in GRAPH_TOOLS if use_search or t != "search_similar_code"]
+        files["agent.yaml"] = render_agent(MODEL_ALIAS, tools_ok(CODER_CORE + graph), analyzer=False)
+        files.pop("sub_agents/code_analyzer.yaml"); analyzer = None
+    else:
+        files["agent.yaml"] = render_agent(MODEL_ALIAS, tools_ok(CODER_CORE), analyzer=True)
+        files["sub_agents/code_analyzer.yaml"] = render_analyzer(MODEL_ALIAS, tools_ok([t for t in ANALYZER_TOOLS_ALL if use_search or t != "search_similar_code"]))
+    files["prompts/system.md"] = system
+    if analyzer is None:
+        files.pop("prompts/analyzer.md", None)
+    else:
+        files["prompts/analyzer.md"] = analyzer
+    sampling = {"temperature": CFG["temperature"], "top_p": CFG["top_p"], "top_k": CFG["top_k"], "max_output_tokens": CFG["max_output_tokens"],
+                "thinking_config": {"thinking_budget": CFG["thinking_budget"], "include_thoughts": False}}
+    if any(CFG[k] != DEFAULTS[k] for k in ("temperature", "top_p", "top_k", "max_output_tokens", "thinking_budget")):
+        files["configs/sampling.yaml"] = yaml.safe_dump(sampling, sort_keys=False)
+    if CFG["ship_eval_config"]:
+        if "eval_config.yaml" in SAMPLE_TEXT:
+            files["eval_config.yaml"] = SAMPLE_TEXT["eval_config.yaml"]            # the official file, unchanged
+        else:
+            callout("<code>ship_eval_config</code> is on, but no official <code>eval_config.yaml</code> was found: nothing shipped.", "warn")
+    return files
+
+FILES = build_files(CFG["profile"])
+BUNDLE = WORK / CFG["bundle_dir"]
+shutil.rmtree(BUNDLE, ignore_errors=True)
+for rel, text in FILES.items():
+    p = BUNDLE / rel
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_bytes(text.encode("utf-8"))                       # exact bytes: no newline normalisation, no stripping
+
+def tree_lines(d, prefix=""):
+    kids = sorted(d.iterdir(), key=lambda p: (p.is_file(), p.name))
+    out = []
+    for i, k in enumerate(kids):
+        last = i == len(kids) - 1
+        out.append(f"{prefix}{'└── ' if last else '├── '}{k.name}{'/' if k.is_dir() else f'  ({human_bytes(k.stat().st_size)})'}")
+        if k.is_dir():
+            out += tree_lines(k, prefix + ("    " if last else "│   "))
+    return out
+
+display(HTML(pre("\n".join([f"{BUNDLE.name}/", *tree_lines(BUNDLE)]))))
+for name in sorted(FILES):
+    if name.endswith((".yaml", ".yml")):
+        details(f"📄 {name}", pre(FILES[name]))
+details("📜 prompts/system.md  (" + f"{len(FILES['prompts/system.md'].split())} words)", pre(FILES["prompts/system.md"], 200))
+if "prompts/analyzer.md" in FILES:
+    details("🔎 prompts/analyzer.md  (" + f"{len(FILES['prompts/analyzer.md'].split())} words)", pre(FILES["prompts/analyzer.md"], 200))
+
+# how far is this bundle from the best-evidenced one?
+changed = sorted(n for n in set(FILES) | set(TOP_BUNDLE) if FILES.get(n) != TOP_BUNDLE.get(n))
+if CFG["profile"] == "top_bundle":
+    callout("Profile <b>top_bundle</b>: identical to the published top bundle (verified in section 11).", "ok")
+elif CFG["profile"] == "custom":
+    kind = "ok" if len(CHANGES) <= 1 else "warn"
+    callout(f"Profile <b>custom</b>: <b>{len(CHANGES)}</b> toggle(s) differ from the defaults ({', '.join(CHANGES) or 'none'}). "
+            + ("That is one controlled change: compare the score against your own top_bundle submission." if len(CHANGES) == 1 else
+               "More than one change at a time makes the score uninterpretable (see section 0)." if CHANGES else "With nothing changed this equals the top bundle."), kind)
+    diff_html = ""
+    for n in changed:
+        a, b = (TOP_BUNDLE.get(n) or "").splitlines(), (FILES.get(n) or "").splitlines()
+        diff_html += f"<b>{esc(n)}</b>" + render_diff("\n".join(difflib.unified_diff(a, b, "top_bundle/" + n, "this bundle/" + n, lineterm="", n=1)), 60)
+    if diff_html:
+        details("🔀 Diff against the top bundle", diff_html, open_=True)
+else:
+    callout(f"Profile <b>{esc(CFG['profile'])}</b>: a verbatim scored bundle, {len(changed)} file(s) differ from the top bundle.", "info")
+
+# CELL 52 markdown
+<a id="validate"></a>
+# 🛡️ 11. Validator & packaging
+With one submission a day, a broken bundle costs a full day, so these checks run **before** the zip is written and the build stops on any blocking failure. The allowed extensions and size limit are **parsed from the README when present**, and the source of every limit is shown.
+
+| Check | Why |
+|:--|:--|
+| exactly one root config, YAML parses | harness requirement |
+| every `!include` / `config_path` resolves **inside** the bundle | a missing file fails the whole run |
+| single required model alias, matches the sample | multiple models are rejected |
+| registered tools only, root can `submit_patch` | an unknown tool breaks the agent |
+| **sub-agents are read-only** | an analyzer that edits files pollutes the patch |
+| thoughts hidden, `thinking_budget < max_output_tokens`, tokens ≤ 8,192 | the largest value with leaderboard results |
+| **no unknown ADK state placeholder** in an instruction | `{name}` is a template variable: an unknown one raises `KeyError` at run time (`{problem_description?}` is the one known-good variable) |
+| `eval_config.yaml` only if requested, within limits | the top bundle ships none |
+| file types, size, hidden files, adapter config | packaging rules |
+| scored profiles match their recorded SHA-256 | proves nothing was changed |
+
+**A note on `..` in includes.** One notebook reports that the README rejects paths containing `..`. Yet the scored top and anchor bundles use `!include ../prompts/analyzer.md` from `sub_agents/code_analyzer.yaml`, and both resolved fine. The validator therefore **fails only on paths that escape the bundle** and shows a notice for `..` that stays inside it. The README lines that mention it are printed below when the data is attached.
+
+# CELL 53 code
+if DOTDOT_LINES:
+    callout("README lines that may concern <code>..</code> / parent paths:<br>" + "<br>".join(f"<code>{esc(l)}</code>" for l in DOTDOT_LINES), "info")
+
+REGISTERED_TOOLS = set(AVAILABLE_TOOLS) | set(EXPECTED_TOOLS)
+WRITE_TOOLS = {"edit_file", "write_file", "submit_patch"}
+ADK_PLACEHOLDER = re.compile(r'(?<![\$\{\\]){+[^{}]*}+')      # the pattern ADK uses for state injection
+ALLOWED_STATE = {"problem_description"}
+sha256 = lambda b: hashlib.sha256(b).hexdigest()
+
+def validate_files(files, profile=None, verbose=True):
+    checks = []
+    def add(status, name, detail=""):
+        checks.append({"status": status, "check": name, "detail": detail})
+
+    roots = [n for n in ROOT_NAMES if n in files]
+    add("PASS" if roots == ["agent.yaml"] or len(roots) == 1 else "FAIL", "exactly one root config", ", ".join(roots) or "none found")
+    if not roots:
+        return pd.DataFrame(checks), False
+
+    problems, agents, notices = [], {}, []
+    def collect(name):
+        if name in agents:
+            return
+        agents[name] = load_agent(files, name, problems)
+        for sub in sub_agent_paths(agents[name]):
+            if sub not in files:
+                problems.append(f"{name}: config_path '{sub}' is not in the bundle")
+            else:
+                collect(sub)
+    try:
+        collect(roots[0])
+    except Exception as e:
+        problems.append(f"{type(e).__name__}: {e}")
+    for n, t in files.items():
+        for ref in re.findall(r"!include\s+(\S+)", t) if n.endswith((".yaml", ".yml")) else []:
+            tgt = resolve_ref(n, ref)
+            if tgt.startswith("/") or tgt.startswith(".."):
+                problems.append(f"{n}: include '{ref}' escapes the bundle")
+            elif ".." in Path(ref).parts:
+                notices.append(f"{n} → {ref}")
+    add("PASS" if not problems else "FAIL", "YAML parses, includes and config_path resolve inside the bundle", "; ".join(problems) or f"{len(agents)} agent(s)")
+    add("PASS" if not notices else "WARN", "'..' in includes (stays inside the bundle)", ("used by the scored bundles: " + "; ".join(notices)) if notices else "none")
+
+    models = {a.get("model") for a in agents.values()}
+    add("PASS" if len(models) == 1 and None not in models else "FAIL", "single required model", ", ".join(map(str, models)))
+    if SAMPLE["models"]:
+        add("PASS" if models <= SAMPLE["models"] else "WARN", "model alias matches sample submission", f"sample: {sorted(SAMPLE['models'])}")
+    all_tools = {t for a in agents.values() for t in (a.get("tools") or []) if isinstance(t, str)}
+    add("PASS" if all_tools <= REGISTERED_TOOLS else "FAIL", "registered tools only", ", ".join(sorted(all_tools - REGISTERED_TOOLS)) or f"{len(all_tools)} tools")
+    root_tools = [t for t in agents[roots[0]].get("tools") or [] if isinstance(t, str)]
+    add("PASS" if "submit_patch" in root_tools else "FAIL", "root agent can submit_patch")
+    for name, a in agents.items():
+        if name != roots[0]:
+            bad = sorted(set(t for t in a.get("tools") or [] if isinstance(t, str)) & WRITE_TOOLS)
+            add("PASS" if not bad else "FAIL", f"{name}: sub-agent is read-only", ", ".join(bad) or "ok")
+
+    for name, a in agents.items():
+        cfg = a.get("generate_content_config") or {}
+        tc = cfg.get("thinking_config") or {}
+        hidden = tc.get("include_thoughts") is False or str(tc.get("thinking_level", "")).upper() == "NONE"
+        add("PASS" if hidden else "FAIL", f"{name}: reasoning kept out of context", str(tc))
+        mot = cfg.get("max_output_tokens", 16384)
+        ok_budget = tc.get("thinking_budget", 0) < mot
+        add("PASS" if 1 <= mot <= 8192 and ok_budget else ("WARN" if ok_budget and mot <= 32768 else "FAIL"),
+            f"{name}: token limits", f"max_output={mot} (8,192 is the largest value with leaderboard results), thinking_budget={tc.get('thinking_budget', '—')}")
+        if mot > 0.35 * CONTEXT_LIMIT:
+            add("WARN", f"{name}: output reservation vs context", f"{mot:,} tokens is more than 35% of the {CONTEXT_LIMIT:,}-token window")
+        instr = a.get("instruction")
+        unknown = []
+        if isinstance(instr, str):
+            for m in ADK_PLACEHOLDER.finditer(instr):
+                var = m.group().strip("{}").strip().removesuffix("?")
+                if not var.isidentifier() or var not in ALLOWED_STATE:
+                    unknown.append(m.group())
+        add("PASS" if not unknown and isinstance(instr, str) else "FAIL", f"{name}: no unknown ADK state placeholders in the instruction", ", ".join(unknown[:5]) or "ok")
+
+    if "eval_config.yaml" in files:
+        try:
+            b = yaml.safe_load(files["eval_config.yaml"])["evaluation"]
+            ok = 0 < b["max_time_minutes"] <= 60 and 0 < b["max_tool_calls"] <= 100
+            add("PASS" if ok and CFG["ship_eval_config"] else ("WARN" if ok else "FAIL"), "eval_config.yaml", f"{b} — the top bundle ships none; hard caps scored lower")
+        except Exception as e:
+            add("FAIL", "eval_config.yaml parses and is within limits", str(e)[:100])
+    else:
+        add("PASS", "eval_config.yaml absent (scorer defaults)", "same as the top bundle")
+
+    bad_paths = [n for n in files if Path(n).is_absolute() or ".." in Path(n).parts or Path(n).name.startswith(".")]
+    bad_ext = [n for n in files if Path(n).suffix not in ALLOWED_EXTS]
+    empty = [n for n, t in files.items() if not t.strip()]
+    add("PASS" if not (bad_paths or bad_ext or empty) and len(files) <= 10000 else "FAIL", "safe paths, allowed file types, no empty files",
+        ", ".join(bad_paths + bad_ext + empty) or f"{len(files)} files · allowed: {', '.join(sorted(ALLOWED_EXTS))}" + ("" if _exts else " (default, unverified)"))
+    total = sum(len(t.encode("utf-8")) for t in files.values())
+    add("PASS" if total <= MAX_BYTES else "FAIL", "size limit", f"{human_bytes(total)} / {human_bytes(MAX_BYTES)} ({'README' if _size else 'default, unverified'})")
+    prompt_tok = sum(est_tokens(t) for n, t in files.items() if n.endswith(".md"))
+    add("PASS" if prompt_tok < 0.15 * CONTEXT_LIMIT else "WARN", "prompt size vs context", f"~{prompt_tok:,} tokens across .md files")
+
+    if profile == "top_bundle":
+        diffs = [n for n in TOP_BUNDLE_FILE_SHA256 if sha256(files.get(n, "").encode("utf-8")) != TOP_BUNDLE_FILE_SHA256[n]]
+        add("PASS" if not diffs and sorted(files) == sorted(TOP_BUNDLE_FILE_SHA256) else "FAIL", "every file matches the published top bundle (SHA-256)", ", ".join(diffs) or "5/5 identical")
+
+    report = pd.DataFrame(checks)
+    passed = not (report["status"] == "FAIL").any()
+    if verbose:
+        style = {"PASS": ("#e7f6ef", "#127a52"), "FAIL": ("#fdeaea", "#b3261e"), "WARN": ("#fdf3e3", "#8a5a00")}
+        rows = "".join(f'<tr style="border-top:1px solid #e3e6ea"><td style="text-align:left;padding:6px 10px;width:70px"><span style="background:{style[s][0]};color:{style[s][1]};'
+                       f'font-weight:700;padding:2px 10px;border-radius:999px;font-size:12px">{s}</span></td><td style="text-align:left;padding:6px 10px">{esc(c)}</td>'
+                       f'<td style="text-align:left;padding:6px 10px;color:{MUTED};font-family:monospace;font-size:12px">{esc(d)}</td></tr>' for s, c, d in report[["status", "check", "detail"]].itertuples(index=False))
+        display(HTML(f'<table style="border-collapse:collapse;width:100%;font-size:13px">{rows}</table>'))
+        callout("All blocking checks passed." if passed else "Blocking issues found. Fix them before submitting.", "ok" if passed else "err")
+    return report, passed
+
+# the embedded scored bundles must pass their own validator (this also tests the validator itself)
+for _p, _f in BUNDLES.items():
+    _, _ok = validate_files(_f, profile=_p if _p == "top_bundle" else None, verbose=False)
+    assert _ok, f"validator rejects the scored '{_p}' bundle: the validator is too strict"
+print("validator accepts all three scored bundles ✅")
+
+# CELL 54 code
+disk = {p.relative_to(BUNDLE).as_posix(): p.read_text(encoding="utf-8") for p in BUNDLE.rglob("*") if p.is_file()}
+assert disk == FILES, "bundle on disk differs from the in-memory bundle"
+REPORT, VALID = validate_files(FILES, profile=CFG["profile"])
+assert VALID, "Blocking validation failure: fix before submitting."
+
+# CELL 55 markdown
+### 📦 Deterministic packaging, round trip and fallbacks
+
+# CELL 56 code
+def package(files, output):
+    """Deterministic zip: sorted entries, fixed timestamps and permissions → identical bytes for identical bundles."""
+    output = Path(output); output.unlink(missing_ok=True)
+    with zipfile.ZipFile(output, "w") as archive:
+        for name, content in sorted(files.items()):
+            info = zipfile.ZipInfo(name, date_time=(1980, 1, 1, 0, 0, 0))
+            info.compress_type, info.create_system, info.external_attr = zipfile.ZIP_DEFLATED, 3, 0o644 << 16
+            archive.writestr(info, content.encode("utf-8"))
+    with zipfile.ZipFile(output) as archive:                              # round trip: validate the archive itself, not the folder
+        assert archive.testzip() is None
+        back = {n: archive.read(n).decode("utf-8") for n in archive.namelist()}
+    assert back == files, "archive content differs from the bundle"
+    return output
+
+ZIP_PATH = package(FILES, WORK / CFG["zip_name"])
+SHA = sha256(ZIP_PATH.read_bytes())
+with zipfile.ZipFile(ZIP_PATH) as z:
+    names = z.namelist()
+    rt_files = {n: z.read(n).decode("utf-8") for n in names}
+RT_report, RT_OK = validate_files(rt_files, profile=CFG["profile"], verbose=False)
+assert RT_OK, "round-trip validation failed"
+
+fallbacks = {}
+if CFG["package_fallbacks"]:
+    for label, prof, fname, known in (("anchor (0.10 ×2)", "anchor", "anchor_submission.zip", ANCHOR_ARCHIVE_SHA256),
+                                      ("compact (0.08)", "compact", "fallback_submission.zip", COMPACT_ARCHIVE_SHA256)):
+        path = package(BUNDLES[prof], WORK / fname)
+        fallbacks[label] = (path, sha256(path.read_bytes()) == known)
+top_zip_note = ""
+if CFG["profile"] == "top_bundle":
+    top_zip_note = "byte-identical to the published archive" if SHA.startswith(TOP_ARCHIVE_SHA256_PREFIX) else "contents verified file by file (archive bytes can differ with the zlib build)"
+
+card = {"created_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"), "zip": ZIP_PATH.name, "sha256": SHA,
+        "profile": CFG["profile"], "changes_vs_defaults": CHANGES, "files_differing_from_top_bundle": changed,
+        "architecture": "analyzer+coder" if "sub_agents/code_analyzer.yaml" in FILES else "single", "model_alias": MODEL_ALIAS,
+        "tools": sorted({t for a in (load_agent(FILES, "agent.yaml"),) for t in a["tools"] if isinstance(t, str)}),
+        "sampling": yaml.safe_load(FILES["configs/sampling.yaml"]) if "configs/sampling.yaml" in FILES else None,
+        "eval_config": "shipped" if "eval_config.yaml" in FILES else "none (scorer defaults)",
+        "prompt_sha": sha256(FILES["prompts/system.md"].encode())[:12], "context_limit": CONTEXT_LIMIT,
+        "validation_passed": bool(VALID and RT_OK), "public_score": None,
+        "fallbacks": {k: {"file": v[0].name, "matches_scored_archive": v[1]} for k, v in fallbacks.items()},
+        "reproduces": "romanrozen/gemma-eda-baseline-for-a-start-lb-top-1 (public 0.12; identical copy 0.15)" if CFG["profile"] == "top_bundle" else None}
+(WORK / "experiment_card.json").write_text(json.dumps(card, indent=2))
+
+files_html = "".join(f'<span style="display:inline-block;background:rgba(255,255,255,.16);padding:3px 10px;border-radius:999px;font-size:12px;margin:0 6px 6px 0;font-family:monospace">{esc(n)}</span>' for n in names)
+fb_html = "".join(f'<div style="font-size:12px;opacity:.9">📎 {esc(k)}: <code style="color:#fff;background:rgba(0,0,0,.15)">{esc(v[0].name)}</code> · {"✅ matches the scored archive byte for byte" if v[1] else "contents verified; archive bytes differ (zlib build)"}</div>' for k, v in fallbacks.items())
+display(HTML(f'<div style="background:linear-gradient(120deg,#0e7a54 0%,#1baf7a 100%);border-radius:14px;padding:20px 24px;color:#ffffff">'
+             f'<div style="font-size:22px;font-weight:800">✅ {esc(ZIP_PATH.name)} is ready · profile <code style="color:#fff;background:rgba(0,0,0,.15)">{esc(CFG["profile"])}</code></div>'
+             f'<div style="opacity:.9;margin:4px 0 12px">{ZIP_PATH.stat().st_size:,} bytes · sha256 <code style="color:#fff;background:rgba(0,0,0,.15)">{SHA[:16]}…</code> · all checks passed'
+             f'{" · " + top_zip_note if top_zip_note else ""}</div>{files_html}<div style="margin-top:8px">{fb_html}</div></div>'))
+
+# CELL 57 markdown
+<a id="playbook"></a>
+# 🚀 12. Playbook & experiment log
+
+### The rules of the game
+1. **One change per submission.** With about ±0.03 of noise, only a single, local change can be attributed. `CHANGES` in section 10 counts the toggles you changed.
+2. **Judge a challenger against your own baseline score**, not against a score quoted in somebody's title (often the best of several submissions).
+3. **Promotion rule** (Black Cat): if a challenger scores above the current anchor it becomes the new anchor. A tie, or a one-task miss, is not evidence against it.
+4. **Keep the scored fallbacks.** `anchor_submission.zip` and `fallback_submission.zip` are verified against the archives that scored 0.10 and 0.08.
+
+### Ranked next steps (by expected value and evidence)
+
+| # | Idea | Why (evidence) | How in this notebook | Effort |
+|:-:|:--|:--|:--|:-:|
+| 1 | **Submit `top_bundle` unchanged as your own baseline** | The only configuration with two leaderboard results (0.12, 0.15); every later score is judged against yours | `profile = "top_bundle"` | 🟢 |
+| 2 | **Keep `search_similar_code` away from the analyzer** | Its results carry whole class bodies; a context overflow discards the patch (Black Cat). Section 6's replay asks whether it earns its cost | `profile="custom"`, `analyzer_search_similar=False` | 🟢 |
+| 3 | **Issue-reading rules** | Data-driven (exact names, PR boilerplate, `docs_src/`), but unscored, and long rule lists hurt before | `profile="custom"`, `issue_rules=True` | 🟢 |
+| 4 | **Pass the issue to the analyzer through `{problem_description?}`** instead of the coder retyping it | The anchor does this and the validator knows the placeholder | start from the `anchor` profile files | 🟡 |
+| 5 | **Single vs analyzer + coder** | Same prompts and sampling, only the architecture changes | `architecture="single"` | 🟡 |
+| 6 | **Thinking budget / level sweep** | Trade speed against quality; the compact fallback used `thinking_level: MEDIUM` with a 2,048 budget | `thinking_budget` | 🟢 |
+| 7 | **Reviewer sub-agent** | A read-only agent that inspects `git diff` against the issue before `submit_patch` catches scratch files, test edits and partial fixes (see `check_patch`) | new sub-agent file; must pass the read-only check | 🟡 |
+| 8 | **Repository-specific hints** | Hot files (section 5) and per-repo test commands. Keep it tiny: it costs context every turn, and rule piles hurt in v8 | prompt appendix | 🟡 |
+| 9 | **LoRA adapter, if the rules allow** | Train on trajectories (tool calls + edits) from repositories **other** than the benchmark ones. Tuning on the public tasks risks overfitting and may conflict with the rules, so read the README first. One source says the harness serves up to 8 adapters: verify | adapter files + `adapter_config.json` (checked by the packager) | 🔴 |
+
+### What the evidence says *not* to do
+Long lab-derived rule lists (0.05, 0.06) · hard time caps (0.08 ×2) · temperature 1.0 (0.06) · changing several things at once · trusting a title score.
+
+# CELL 58 code
+LOG = pd.DataFrame([
+    ("romanrozen top bundle", "analyzer+coder", "short generic prompt, no eval_config, 8,192 tokens", 0.2, 4096, "0.12", "romanrozen"),
+    ("same bundle, byte-identical copy", "analyzer+coder", "identical archive", 0.2, 4096, "0.15", "kozykappa (via Black Cat)"),
+    ("Black Cat v6 anchor", "analyzer+coder", "harness facts, 40 calls · 5 min · 120 s", 0.2, "default", "0.10, 0.10", "Black Cat"),
+    ("Black Cat v5 compact", "single", "24 calls · 4 min", 0.15, 2048, "0.08", "Black Cat"),
+    ("Black Cat v2 first strike", "single", "default budget", "—", "—", "0.06", "Black Cat"),
+    ("Black Cat lab-tuned", "single", "temperature 1.0, lab-derived rules", 1.0, "—", "0.06", "Black Cat"),
+    ("Black Cat v8 Pack Instinct", "analyzer+coder", "anchor + 100 calls + long rule list", 0.2, "—", "0.05", "Black Cat"),
+    ("Pathfinder v1", "analyzer+coder", "short data-driven prompts, hard 4-min cap", 0.2, 4096, "0.08", "Pathfinder"),
+    ("▶ THIS RUN", card["architecture"], f"profile={CFG['profile']}, changes={CHANGES or 'none'}", (card['sampling'] or {}).get('temperature', 0.2),
+     (card['sampling'] or {}).get('thinking_config', {}).get('thinking_budget', 4096), "← fill in", f"prompt sha {card['prompt_sha']} · zip {SHA[:10]}"),
+], columns=["run", "architecture", "what changed", "temp", "thinking", "public LB", "source / note"])
+display(LOG.style.hide(axis="index").set_properties(**{"text-align": "left"}))
+
+# CELL 59 markdown
+### 🔧 How to adapt this starter
+- **Everything** is controlled from `CFG` (section 1). The scored bundles are plain dictionaries (section 9); the builder in section 10 only applies small, asserted text transformations, so a toggle can never silently do nothing.
+- New data format? Extend `load_graph`, `load_embeddings` or `read_py_files`. The rest of the notebook picks it up.
+- Validation fails on schema? Compare the root config's top-level keys with the official sample displayed in section 10, and read the README lines printed in section 11.
+- Log every submission in the table above, using `experiment_card.json` (it records the profile, the changes, the prompt hash and the zip hash).
+
+---
+<div style="text-align:center;padding:12px;color:#5F6368">
+Built on the public work of <b>romanrozen</b> (the framework and the top bundle), <b>kozykappa</b> (a second leaderboard run of it), <b>mizeroluckygall</b> (Pathfinder: benchmark rules, asset fixes, graph-tool replay) and the <b>Black Cat SWE Agent</b> notebook (noise measurement, verified fallbacks, stricter validator). If this notebook helps you, please upvote theirs too. 🍀
+</div>

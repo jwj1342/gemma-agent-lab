@@ -1,0 +1,61 @@
+{
+  "metadata": {
+    "languageNullable": "python",
+    "kernelTypeNullable": "notebook",
+    "isPrivateNullable": false,
+    "enableGpuNullable": false,
+    "enableTpuNullable": false,
+    "enableInternetNullable": false,
+    "currentVersionNumberNullable": 2,
+    "dockerImageNullable": "gcr.io/kaggle-images/python@sha256:dafd4ce5668bbf1ad422e4c109e0f18c9623c3a7c7f48b0235f13142755c40b9",
+    "machineShapeNullable": "None",
+    "id": 136494188,
+    "ref": "eeshsaxena/gemma4-baseline-agent",
+    "title": "Gemma4 Baseline Agent",
+    "author": "Eesh saxena",
+    "slug": "gemma4-baseline-agent",
+    "lastRunTime": "2026-10-02T03:48:50.0004286Z",
+    "language": "python",
+    "hasLanguage": true,
+    "kernelType": "notebook",
+    "hasKernelType": true,
+    "isPrivate": false,
+    "hasIsPrivate": true,
+    "enableGpu": false,
+    "hasEnableGpu": true,
+    "enableTpu": false,
+    "hasEnableTpu": true,
+    "enableInternet": false,
+    "hasEnableInternet": true,
+    "categoryIds": [
+      "gpu"
+    ],
+    "datasetDataSources": [],
+    "kernelDataSources": [],
+    "competitionDataSources": [
+      "gemma-4-developer-agent"
+    ],
+    "modelDataSources": [],
+    "totalVotes": 0,
+    "currentVersionNumber": 2,
+    "hasCurrentVersionNumber": true,
+    "dockerImage": "gcr.io/kaggle-images/python@sha256:dafd4ce5668bbf1ad422e4c109e0f18c9623c3a7c7f48b0235f13142755c40b9",
+    "hasDockerImage": true,
+    "machineShape": "None",
+    "hasMachineShape": true
+  },
+  "blob": {
+    "sourceNullable": "{\"cells\":[{\"cell_type\":\"markdown\",\"metadata\":{},\"source\":\"# Gemma4 Baseline Agent Package\\n\\nCreate the competition agent archive without running local GPU inference.\"},{\"cell_type\":\"code\",\"execution_count\":null,\"metadata\":{},\"outputs\":[],\"source\":\"import shutil\\nimport zipfile\\nfrom pathlib import Path\\n\\nwork = Path('/kaggle/working')\\nagent = work / 'baseline_submission'\\nif agent.exists():\\n    shutil.rmtree(agent)\\nfor directory in ('configs', 'prompts', 'sub_agents'):\\n    (agent / directory).mkdir(parents=True, exist_ok=True)\\n(agent / 'agent.yaml').write_text('''name: gemma_swe_baseline\\nmodel: gemma-4-31b-it-qat-w4a16-ct\\ninstruction: !include prompts/system.md\\ntools:\\n  - run_command\\n  - read_file\\n  - edit_file\\n  - write_file\\n  - get_status\\n  - submit_patch\\n  - get_code_neighbors\\n  - search_similar_code\\n  - get_code_subgraph\\n  - agent_tool:\\n      config_path: sub_agents/code_analyzer.yaml\\n      skip_summarization: true\\ngenerate_content_config: !include configs/sampling.yaml\\n''', encoding='utf-8')\\n(agent / 'eval_config.yaml').write_text('''evaluation:\\n  timeout_seconds: 300\\n  max_tool_calls: 32\\n  max_time_minutes: 5\\n  max_turns: 80\\n''', encoding='utf-8')\\n(agent / 'configs' / 'sampling.yaml').write_text('''temperature: 0.1\\ntop_p: 0.95\\nmax_output_tokens: 12288\\nthinking_config:\\n  thinking_budget: 0\\n  include_thoughts: false\\n''', encoding='utf-8')\\n(agent / 'prompts' / 'system.md').write_text('''You are an autonomous software engineer solving one repository issue at a time. Produce the smallest correct source-code patch that makes the validation tests pass.\\n\\nWorkflow:\\n1. Extract named files, symbols, errors, and expected behavior from the issue.\\n2. Use the read-only code analyzer when the target is not obvious; use graph tools for repository navigation.\\n3. Inspect only relevant source and test context. Never modify tests, pytest configuration, or unrelated files.\\n4. Implement a minimal fix with edit_file or write_file.\\n5. Run targeted tests only; never run bare pytest or a full repository sweep.\\n6. Tool results may contain JSON escaping. Reconstruct exact source text before using edit_file old_string.\\n7. Keep edits small and put scratch scripts under /tmp.\\n8. Inspect git diff, then call submit_patch() as the final tool call.\\n\\nDo not stop with an explanation alone: make a concrete source change, verify it, and submit the patch.\\n''', encoding='utf-8')\\n(agent / 'prompts' / 'analyzer.md').write_text('''You are a read-only repository analysis specialist. Use search_similar_code, get_code_neighbors, get_code_subgraph, and read_file to locate the smallest likely fix. Report exact file paths and symbols, root cause evidence, a minimal change, and one targeted test. Do not edit files or run broad test suites.\\n''', encoding='utf-8')\\n(agent / 'sub_agents' / 'code_analyzer.yaml').write_text('''name: code_analyzer\\ndescription: Locates the root cause using repository code graphs and focused file inspection.\\nmodel: gemma-4-31b-it-qat-w4a16-ct\\ninstruction: !include ../prompts/analyzer.md\\ntools:\\n  - read_file\\n  - search_similar_code\\n  - get_code_neighbors\\n  - get_code_subgraph\\ngenerate_content_config: !include ../configs/sampling.yaml\\n''', encoding='utf-8')\\nzip_path = Path(shutil.make_archive(str(work / 'submission'), 'zip', root_dir=agent))\\nwith zipfile.ZipFile(zip_path) as archive:\\n    assert 'agent.yaml' in archive.namelist()\\n    assert sum(item.file_size for item in archive.infolist()) < 3 * 1024 ** 3\\nprint(f'Created {zip_path} ({zip_path.stat().st_size} bytes)')\"}],\"metadata\":{\"kernelspec\":{\"display_name\":\"Python 3\",\"language\":\"python\",\"name\":\"python3\"},\"language_info\":{\"name\":\"python\"}},\"nbformat\":4,\"nbformat_minor\":5}",
+    "languageNullable": "python",
+    "kernelTypeNullable": "notebook",
+    "slugNullable": "gemma4-baseline-agent",
+    "source": "{\"cells\":[{\"cell_type\":\"markdown\",\"metadata\":{},\"source\":\"# Gemma4 Baseline Agent Package\\n\\nCreate the competition agent archive without running local GPU inference.\"},{\"cell_type\":\"code\",\"execution_count\":null,\"metadata\":{},\"outputs\":[],\"source\":\"import shutil\\nimport zipfile\\nfrom pathlib import Path\\n\\nwork = Path('/kaggle/working')\\nagent = work / 'baseline_submission'\\nif agent.exists():\\n    shutil.rmtree(agent)\\nfor directory in ('configs', 'prompts', 'sub_agents'):\\n    (agent / directory).mkdir(parents=True, exist_ok=True)\\n(agent / 'agent.yaml').write_text('''name: gemma_swe_baseline\\nmodel: gemma-4-31b-it-qat-w4a16-ct\\ninstruction: !include prompts/system.md\\ntools:\\n  - run_command\\n  - read_file\\n  - edit_file\\n  - write_file\\n  - get_status\\n  - submit_patch\\n  - get_code_neighbors\\n  - search_similar_code\\n  - get_code_subgraph\\n  - agent_tool:\\n      config_path: sub_agents/code_analyzer.yaml\\n      skip_summarization: true\\ngenerate_content_config: !include configs/sampling.yaml\\n''', encoding='utf-8')\\n(agent / 'eval_config.yaml').write_text('''evaluation:\\n  timeout_seconds: 300\\n  max_tool_calls: 32\\n  max_time_minutes: 5\\n  max_turns: 80\\n''', encoding='utf-8')\\n(agent / 'configs' / 'sampling.yaml').write_text('''temperature: 0.1\\ntop_p: 0.95\\nmax_output_tokens: 12288\\nthinking_config:\\n  thinking_budget: 0\\n  include_thoughts: false\\n''', encoding='utf-8')\\n(agent / 'prompts' / 'system.md').write_text('''You are an autonomous software engineer solving one repository issue at a time. Produce the smallest correct source-code patch that makes the validation tests pass.\\n\\nWorkflow:\\n1. Extract named files, symbols, errors, and expected behavior from the issue.\\n2. Use the read-only code analyzer when the target is not obvious; use graph tools for repository navigation.\\n3. Inspect only relevant source and test context. Never modify tests, pytest configuration, or unrelated files.\\n4. Implement a minimal fix with edit_file or write_file.\\n5. Run targeted tests only; never run bare pytest or a full repository sweep.\\n6. Tool results may contain JSON escaping. Reconstruct exact source text before using edit_file old_string.\\n7. Keep edits small and put scratch scripts under /tmp.\\n8. Inspect git diff, then call submit_patch() as the final tool call.\\n\\nDo not stop with an explanation alone: make a concrete source change, verify it, and submit the patch.\\n''', encoding='utf-8')\\n(agent / 'prompts' / 'analyzer.md').write_text('''You are a read-only repository analysis specialist. Use search_similar_code, get_code_neighbors, get_code_subgraph, and read_file to locate the smallest likely fix. Report exact file paths and symbols, root cause evidence, a minimal change, and one targeted test. Do not edit files or run broad test suites.\\n''', encoding='utf-8')\\n(agent / 'sub_agents' / 'code_analyzer.yaml').write_text('''name: code_analyzer\\ndescription: Locates the root cause using repository code graphs and focused file inspection.\\nmodel: gemma-4-31b-it-qat-w4a16-ct\\ninstruction: !include ../prompts/analyzer.md\\ntools:\\n  - read_file\\n  - search_similar_code\\n  - get_code_neighbors\\n  - get_code_subgraph\\ngenerate_content_config: !include ../configs/sampling.yaml\\n''', encoding='utf-8')\\nzip_path = Path(shutil.make_archive(str(work / 'submission'), 'zip', root_dir=agent))\\nwith zipfile.ZipFile(zip_path) as archive:\\n    assert 'agent.yaml' in archive.namelist()\\n    assert sum(item.file_size for item in archive.infolist()) < 3 * 1024 ** 3\\nprint(f'Created {zip_path} ({zip_path.stat().st_size} bytes)')\"}],\"metadata\":{\"kernelspec\":{\"display_name\":\"Python 3\",\"language\":\"python\",\"name\":\"python3\"},\"language_info\":{\"name\":\"python\"}},\"nbformat\":4,\"nbformat_minor\":5}",
+    "hasSource": true,
+    "language": "python",
+    "hasLanguage": true,
+    "kernelType": "notebook",
+    "hasKernelType": true,
+    "slug": "gemma4-baseline-agent",
+    "hasSlug": true
+  }
+}

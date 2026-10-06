@@ -1,0 +1,57 @@
+# Credentials and local configuration
+.env
+.env.*
+!.env.example
+access_token
+access_token.txt
+kaggle.json
+.kaggle/
+*.pem
+*.key
+.netrc
+.git-credentials
+.config/gh/
+.ssh/
+credentials.json
+client_secret*.json
+
+# Large inputs, models, outputs, and environments
+data/raw/**
+data/processed/**
+model/base/**
+model/adapters/**
+resource/downloads/**
+runs/**
+!data/raw/README.md
+!data/processed/README.md
+!model/base/README.md
+!model/adapters/README.md
+!runs/README.md
+cache/**
+*.safetensors
+*.pt
+*.pth
+*.ckpt
+*.bin
+*.gguf
+*.onnx
+*.sif
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.whl
+*.partial
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.DS_Store
+
+# Browser page shells are local collection aids; structured discussion bodies
+# and source links are retained in resource/discussions/.
+/resource/discussions/*.html
+
+# Unused fonts from the earlier Chinese slide draft stay local.
+/slides/gemma4-kickoff/fonts/*.otf

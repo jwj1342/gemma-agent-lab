@@ -1,0 +1,61 @@
+{
+  "forumTopic": {
+    "authorId": 6082025,
+    "authorThumbnailName": "6082025-kg.png?t=2026-08-01-19-49-46",
+    "authorUserDisplayName": "Oleksii Zhukov",
+    "authorUserName": "zhukovoleksiy",
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3529630,
+      "postDate": "2026-09-28T16:59:09.757Z",
+      "rawMarkdown": "Hi, hosts. I got two timing questions, since many of us plan our per-task budgets around the 12-hour limit.\n\n1. When a submission takes many hours to show a score, is part of that time spent waiting in a queue, or is almost all of it the scoring run itself? Several threads mention long waits for the 4x L4 machines. Some of my submissions took close to 12 hours from Submit to score, much longer than I expected, so I can't tell how close they came to the limit.\n\n\n2. Does the 12-hour limit start when the scoring run starts, or when we click Submit? In other words, can a long queue wait count against the limit?\n\nThanks!",
+      "content": "<p>Hi, hosts. I got two timing questions, since many of us plan our per-task budgets around the 12-hour limit.</p>\n<ol>\n<li><p>When a submission takes many hours to show a score, is part of that time spent waiting in a queue, or is almost all of it the scoring run itself? Several threads mention long waits for the 4x L4 machines. Some of my submissions took close to 12 hours from Submit to score, much longer than I expected, so I can't tell how close they came to the limit.</p></li>\n<li><p>Does the 12-hour limit start when the scoring run starts, or when we click Submit? In other words, can a long queue wait count against the limit?</p></li>\n</ol>\n<p>Thanks!</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Oleksii Zhukov",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/6082025-kg.png?t=2026-08-01-19-49-46",
+        "url": "/zhukovoleksiy",
+        "tier": "MASTER",
+        "id": 6082025,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 1,
+        "canUpvote": true,
+        "totalUpvotes": 1
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 282,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Oleksii Zhukov",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/6082025-kg.png?t=2026-08-01-19-49-46",
+          "url": "/zhukovoleksiy",
+          "userName": "zhukovoleksiy",
+          "tier": "MASTER",
+          "id": 6082025,
+          "profileUrl": "/zhukovoleksiy",
+          "performanceTier": "MASTER",
+          "userId": 6082025,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3529630,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 744099,
+    "name": "Does the time between submitting and the scoring include queue time?",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-28T16:59:09.757789100Z",
+    "totalVotes": 1,
+    "url": "/competitions/gemma-4-developer-agent/discussion/744099",
+    "authorPerformanceTier": "MASTER",
+    "authorProgressionOptOut": false
+  }
+}

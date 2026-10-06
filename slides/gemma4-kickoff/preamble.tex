@@ -1,0 +1,52 @@
+% Packages, shared typography, and diagram styles.
+\makeatletter
+\def\input@path{{sty/}}
+\makeatother
+\usetheme{Jacquenetta}
+\usepackage{booktabs,tabularx,array}
+\usepackage{adjustbox}
+\usepackage{pgfplots}
+\usetikzlibrary{positioning,arrows.meta,calc}
+\pgfplotsset{compat=1.17}
+% Chart colors follow the supplied theme; page chrome is not overridden.
+\colorlet{ink}{jqdark}
+\colorlet{teal}{jqaccent}
+\colorlet{orange}{jqorange}
+\colorlet{muted}{jqgray}
+\colorlet{line}{jqgray!30}
+\colorlet{pale}{jqaccent!8}
+\hypersetup{colorlinks=true,urlcolor=teal,linkcolor=teal,pdftitle={Gemma 4 Developer Agent Competition},pdfauthor={Wenjia Jiang; Di Liao; Sholpan Amankeldi; Junzhe Jiao; Xuanlin Guo}}
+% Local refinements leave the five original theme files intact.
+\setbeamerfont{author}{size=\fontsize{9.3}{12}\selectfont}
+\hyphenpenalty=10000
+\exhyphenpenalty=10000
+\widowpenalty=10000
+\clubpenalty=10000
+\setlength{\emergencystretch}{1em}
+\renewcommand{\tabularxcolumn}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcommand{\eyebrow}[2][orange]{{\color{#1}\small\bfseries #2}\par\vspace{2mm}}
+\newcommand{\takeaway}[1]{\begin{alertblock}{}\raggedright\small\bfseries #1\end{alertblock}}
+\newcommand{\emoji}[2][5mm]{\raisebox{-.15\height}{\includegraphics[height=#1]{assets/emoji/#2.png}}}
+\newcommand{\softpanel}[3]{\begin{tcolorbox}[colback=#1!7,colframe=#1!7,boxrule=0pt,arc=1.5mm,left=3mm,right=3mm,top=3mm,bottom=3mm]\raggedright\textbf{#2}\par\vspace{2mm}\small #3\end{tcolorbox}}
+\newcommand{\tagline}[1]{{\small\color{muted}#1}\par\vspace{3mm}}
+\newcommand{\pathcode}[1]{{\ttfamily\small\detokenize{#1}}}
+\newcommand{\metric}[3]{\begin{minipage}[t]{.235\textwidth}{\color{teal}\fontsize{25}{29}\selectfont\bfseries #1}\par\vspace{1mm}\textbf{#2}\par\vspace{1mm}{\small\color{muted}#3}\end{minipage}}
+
+
+% Shared diagram geometry. Keep the original theme files unchanged.
+\tikzset{
+  flow link/.style={draw=muted!55,line width=.8pt,-{Stealth[length=1.8mm,width=1.2mm]}},
+  flow number/.style={circle,fill=orange,text=white,minimum size=6.5mm,inner sep=0pt,font=\small\bfseries},
+  flow title/.style={anchor=north west,inner sep=0pt,text width=2.85cm,align=left,font=\normalsize\bfseries,text=ink},
+  flow detail/.style={anchor=north west,inner sep=0pt,text width=2.85cm,align=left,font=\small,text=ink!75}
+}
+\newcommand{\flowstep}[4]{%
+  \begin{scope}[xshift=#2cm]
+    \node[flow number] at (.33,0) {#1};
+    \node[flow title] at (0,-.64) {#3};
+    \node[flow detail] at (0,-1.12) {#4};
+  \end{scope}%
+}
+\newcommand{\flowlinks}{%
+  \foreach \x in {0,3.5,7}{\draw[flow link] (\x+.85,0)--(\x+3.32,0);}%
+}

@@ -1,0 +1,109 @@
+{
+  "forumTopic": {
+    "authorId": 19641724,
+    "authorThumbnailName": "19641724-kg.png?t=2026-09-29-07-48-18",
+    "authorUserDisplayName": "Whisper Last",
+    "authorUserName": "whisperlast",
+    "comments": [
+      {
+        "id": 3527981,
+        "postDate": "2026-09-25T06:00:07.183Z",
+        "rawMarkdown": "@whisperlast\nhttps://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743063#3527819\n\nKaggle staff answered your questions nearly in this thread so check it out 🙋",
+        "content": "<p><a href=\"/whisperlast\" target=\"_blank\">@whisperlast</a>\n<a href=\"https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743063#3527819\" target=\"_blank\">https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743063#3527819</a></p>\n<p>Kaggle staff answered your questions nearly in this thread so check it out 🙋</p>",
+        "parent": {},
+        "author": {
+          "displayName": "Rahul Rathnavel K",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/24807521-kg.png?t=2026-05-18-16-49-34",
+          "url": "/rahulrathnavel",
+          "tier": "CONTRIBUTOR",
+          "id": 24807521,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 187,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "reactions": [
+          {
+            "emoji": "KAGGLE",
+            "featuredUserNames": [
+              "whisperlast",
+              "rahulrathnavel"
+            ],
+            "userCount": 2
+          }
+        ],
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Rahul Rathnavel K",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/24807521-kg.png?t=2026-05-18-16-49-34",
+            "url": "/rahulrathnavel",
+            "userName": "rahulrathnavel",
+            "tier": "CONTRIBUTOR",
+            "id": 24807521,
+            "profileUrl": "/rahulrathnavel",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 24807521,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3527953,
+      "postDate": "2026-09-25T04:19:22.893Z",
+      "rawMarkdown": "Hi organizers,\n\nThe Evaluation section says the agent has 12 hours to submit patches for all tasks, including sandbox setup, and that per-task limits in `eval_config.yaml` are optional. To pick a sensible per-task budget, it would help to know how the scoring run behaves at the limit:\n\n1. If the 12 hours run out before every task has been attempted, are the patches that were already produced still scored (and the remaining tasks counted as unresolved), or does the whole submission fail with an error?\n2. Are the hidden tasks run one at a time (concurrency 1, as in the `swegemma eval` default) on the 4x L4 machine, or several in parallel?\n3. If `eval_config.yaml` is omitted, is the per-task limit the 60-minute default from HARNESS_README, or is there another cap in the scoring run?\n\nThanks!",
+      "content": "<p>Hi organizers,</p>\n<p>The Evaluation section says the agent has 12 hours to submit patches for all tasks, including sandbox setup, and that per-task limits in <code>eval_config.yaml</code> are optional. To pick a sensible per-task budget, it would help to know how the scoring run behaves at the limit:</p>\n<ol>\n<li>If the 12 hours run out before every task has been attempted, are the patches that were already produced still scored (and the remaining tasks counted as unresolved), or does the whole submission fail with an error?</li>\n<li>Are the hidden tasks run one at a time (concurrency 1, as in the <code>swegemma eval</code> default) on the 4x L4 machine, or several in parallel?</li>\n<li>If <code>eval_config.yaml</code> is omitted, is the per-task limit the 60-minute default from HARNESS_README, or is there another cap in the scoring run?</li>\n</ol>\n<p>Thanks!</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Whisper Last",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/19641724-kg.png?t=2026-09-29-07-48-18",
+        "url": "/whisperlast",
+        "tier": "CONTRIBUTOR",
+        "id": 19641724,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "canUpvote": true
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 194,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Whisper Last",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/19641724-kg.png?t=2026-09-29-07-48-18",
+          "url": "/whisperlast",
+          "userName": "whisperlast",
+          "tier": "CONTRIBUTOR",
+          "id": 19641724,
+          "profileUrl": "/whisperlast",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 19641724,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3527953,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 743162,
+    "name": "What happens when a submission reaches the 12-hour limit?",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-25T04:19:22.893071600Z",
+    "url": "/competitions/gemma-4-developer-agent/discussion/743162",
+    "totalMessages": 1,
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

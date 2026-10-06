@@ -1,0 +1,22 @@
+{
+  "checked_at": "2026-10-05T05:59:02.683764+00:00",
+  "git_version": "git version 2.34.1",
+  "source": "Ubuntu jammy/main, jammy-updates/main, jammy-security/main; apt signature validation enabled",
+  "packages": [
+    {
+      "file": "git_1%3a2.34.1-1ubuntu1.17_amd64.deb",
+      "sha256": "8794fcf2c4606c445df0db3dc963c8fb852772208bfb12727a12717c03767af7"
+    },
+    {
+      "file": "libpcre2-8-0_10.39-3ubuntu0.1_amd64.deb",
+      "sha256": "01a5a74f3d305cad32fffffdc200c2a92fd8e5a01bff97de76ac598fb444d53e"
+    }
+  ],
+  "verified": [
+    "init",
+    "add",
+    "commit with temporary test identity",
+    "diff HEAD"
+  ],
+  "scope": "Offline local repository operations in the pinned container; not a new image build"
+}

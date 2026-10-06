@@ -1,0 +1,120 @@
+{
+  "forumTopic": {
+    "authorId": 35891656,
+    "authorThumbnailName": "default-thumb.png",
+    "authorUserDisplayName": "TheFusionCube",
+    "authorUserName": "thefusioncube",
+    "comments": [
+      {
+        "id": 3530722,
+        "postDate": "2026-09-30T19:03:22.687Z",
+        "rawMarkdown": "Usually I would say Google Colab, and Kaggle. \n\nGuide from unsloth : https://unsloth.ai/docs/models/gemma-4/qat \n\nYou can also test it out without training, helping you optimize quite a bit, on HuggingFace inference endpoints, there's several hosts for this model.",
+        "content": "<p>Usually I would say Google Colab, and Kaggle. </p>\n<p>Guide from unsloth : <a href=\"https://unsloth.ai/docs/models/gemma-4/qat\" target=\"_blank\">https://unsloth.ai/docs/models/gemma-4/qat</a> </p>\n<p>You can also test it out without training, helping you optimize quite a bit, on HuggingFace inference endpoints, there's several hosts for this model.</p>",
+        "parent": {},
+        "author": {
+          "displayName": "Amanie El-Hajj",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/1668870-kg.jpg",
+          "url": "/aelhajj",
+          "tier": "CONTRIBUTOR",
+          "id": 1668870,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 975,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Amanie El-Hajj",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/1668870-kg.jpg",
+            "url": "/aelhajj",
+            "userName": "aelhajj",
+            "tier": "CONTRIBUTOR",
+            "id": 1668870,
+            "profileUrl": "/aelhajj",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 1668870,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3528160,
+        "postDate": "2026-09-25T14:27:53.970Z",
+        "rawMarkdown": "",
+        "parent": {},
+        "author": {
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/"
+        },
+        "authorType": "COMMENT",
+        "votes": {},
+        "canDelete": true,
+        "isUserAuthor": true,
+        "isDeleted": true,
+        "kernelVersion": 0,
+        "feedbackTrackingData": {},
+        "isThankYou": false
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3527986,
+      "postDate": "2026-09-25T06:08:35.793Z",
+      "rawMarkdown": "How exactly are we supposed to post train? Do we have to do it on our own GPUs (of which I have 64 gb of VRAM, which can't load the full gemma-4-31B-it-qat-q4_0-unquantized model for post-training, which is ~63 gigs of VRAM just to sit on disk), or can we use Kaggle notebooks for it. Furthermore, if we aren't supposed to use Kaggle notebooks for training, can we use QLoRA feasibly without severe degradation, and if we are, are 4x L4's considered sufficient for post training purposes or could more/higher quality compute be provided later on? ",
+      "content": "<p>How exactly are we supposed to post train? Do we have to do it on our own GPUs (of which I have 64 gb of VRAM, which can't load the full gemma-4-31B-it-qat-q4_0-unquantized model for post-training, which is ~63 gigs of VRAM just to sit on disk), or can we use Kaggle notebooks for it. Furthermore, if we aren't supposed to use Kaggle notebooks for training, can we use QLoRA feasibly without severe degradation, and if we are, are 4x L4's considered sufficient for post training purposes or could more/higher quality compute be provided later on? </p>",
+      "parent": {},
+      "author": {
+        "displayName": "TheFusionCube",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+        "url": "/thefusioncube",
+        "tier": "CONTRIBUTOR",
+        "id": 35891656,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 4,
+        "canUpvote": true,
+        "totalUpvotes": 4
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 1166,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "TheFusionCube",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/thefusioncube",
+          "userName": "thefusioncube",
+          "tier": "CONTRIBUTOR",
+          "id": 35891656,
+          "profileUrl": "/thefusioncube",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 35891656,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3527986,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 743186,
+    "name": "Suggestions on infra for post training, SFT, and RL?",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-25T06:08:35.794982900Z",
+    "totalVotes": 4,
+    "url": "/competitions/gemma-4-developer-agent/discussion/743186",
+    "totalMessages": 2,
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

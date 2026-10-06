@@ -1,0 +1,58 @@
+{
+  "forumTopic": {
+    "authorId": 8945642,
+    "authorThumbnailName": "8945642-kg.jpeg?t=2024-03-27-17-11-22",
+    "authorUserDisplayName": "Pankaj Kumar",
+    "authorUserName": "pankajkumar2002",
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3532498,
+      "postDate": "2026-10-03T18:43:03.287Z",
+      "rawMarkdown": "Hello @ryanholbrook \n\nI’m investigating the `fastapi_15661` task at base commit [`1990ecb` (https://github.com/fastapi/fastapi/tree/1990ecb446d4db044e8f2be26758aa42b2c62fa8)](<https://github.com/fastapi/fastapi/tree/1990ecb446d4db044e8f2be26758aa42b2c62fa8>). The visible request is “Automate release preparation” and refers to [Asyncer PR \\#608 (https://github.com/fastapi/asyncer/pull/608)](<https://github.com/fastapi/asyncer/pull/608>), but the agent environment is offline.\n\nThe base commit contains a release-date script, release notes, and publishing workflows. It does **not** contain `scripts/prepare_release.py` or `tests/test_prepare_release.py`. After my agent submitted a workflow-based patch, verification failed during test collection:\n\n```\nfrom scripts.prepare_release import (...)\nModuleNotFoundError: No module named 'scripts.prepare_release'\n```\n\nThe [original FastAPI PR \\#15661 (https://github.com/fastapi/fastapi/pull/15661)](<https://github.com/fastapi/fastapi/pull/15661>) did add `scripts/prepare_release.py`, but that exact module name is not specified in the visible request or present in the base repository. An agent could guess it from the title; it cannot establish that the hidden tests require it from local evidence.\n\nIs this task intended to require reproducing the referenced PR’s file-level interface? If so, could the task include the required module or command name, or make the relevant reference available offline? That would let agents work toward the behavior the tests actually check without revealing the tests themselves.\n",
+      "content": "<p>Hello <a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a> </p>\n<p>I’m investigating the <code>fastapi_15661</code> task at base commit <a href=\"https://github.com/fastapi/fastapi/tree/1990ecb446d4db044e8f2be26758aa42b2c62fa8\" target=\"_blank\"><code>1990ecb</code> (https://github.com/fastapi/fastapi/tree/1990ecb446d4db044e8f2be26758aa42b2c62fa8)</a>. The visible request is “Automate release preparation” and refers to <a href=\"https://github.com/fastapi/asyncer/pull/608\" target=\"_blank\">Asyncer PR #608 (https://github.com/fastapi/asyncer/pull/608)</a>, but the agent environment is offline.</p>\n<p>The base commit contains a release-date script, release notes, and publishing workflows. It does <strong>not</strong> contain <code>scripts/prepare_release.py</code> or <code>tests/test_prepare_release.py</code>. After my agent submitted a workflow-based patch, verification failed during test collection:</p>\n<pre><code>from scripts.prepare_release import (...)\nModuleNotFoundError: No module named 'scripts.prepare_release'\n</code></pre>\n<p>The <a href=\"https://github.com/fastapi/fastapi/pull/15661\" target=\"_blank\">original FastAPI PR #15661 (https://github.com/fastapi/fastapi/pull/15661)</a> did add <code>scripts/prepare_release.py</code>, but that exact module name is not specified in the visible request or present in the base repository. An agent could guess it from the title; it cannot establish that the hidden tests require it from local evidence.</p>\n<p>Is this task intended to require reproducing the referenced PR’s file-level interface? If so, could the task include the required module or command name, or make the relevant reference available offline? That would let agents work toward the behavior the tests actually check without revealing the tests themselves.</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Pankaj Kumar",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/8945642-kg.jpeg?t=2024-03-27-17-11-22",
+        "url": "/pankajkumar2002",
+        "tier": "EXPERT",
+        "id": 8945642,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "canUpvote": true
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 1140,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Pankaj Kumar",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/8945642-kg.jpeg?t=2024-03-27-17-11-22",
+          "url": "/pankajkumar2002",
+          "userName": "pankajkumar2002",
+          "tier": "EXPERT",
+          "id": 8945642,
+          "profileUrl": "/pankajkumar2002",
+          "performanceTier": "EXPERT",
+          "userId": 8945642,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3532498,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 745695,
+    "name": "Hidden filename requirement in `fastapi_15661` (“Automate release preparation”)",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-10-03T18:43:03.286553900Z",
+    "url": "/competitions/gemma-4-developer-agent/discussion/745695",
+    "authorPerformanceTier": "EXPERT",
+    "authorProgressionOptOut": false
+  }
+}

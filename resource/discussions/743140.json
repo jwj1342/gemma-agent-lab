@@ -1,0 +1,53 @@
+{
+  "messages": [
+    {
+      "id": 3532499,
+      "postDate": "2026-10-03T18:43:21.470Z",
+      "content": "<p>I submitted the sample_submission given in the competition data to the leaderboard today, it gave a score of 0.01</p>",
+      "rawMarkdown": "I submitted the sample_submission given in the competition data to the leaderboard today, it gave a score of 0.01",
+      "votes": 1
+    },
+    {
+      "id": 3529359,
+      "postDate": "2026-09-28T02:32:11.120Z",
+      "content": "<p>Are the results deterministic -  I see <code>\"temperature\": 0.2</code> which could have some variation.  Not sure what else could cause non deterministic results </p>",
+      "rawMarkdown": "Are the results deterministic -  I see `\"temperature\": 0.2` which could have some variation.  Not sure what else could cause non deterministic results ",
+      "votes": 1
+    },
+    {
+      "id": 3527923,
+      "postDate": "2026-09-25T02:09:29.283Z",
+      "content": "<p>Since this competition allows only <strong>one submission per day</strong>, I’d like to leverage the community to compare results.</p>\n<p>I’ll share a couple of examples from my side as well.</p>\n<h3>Gemma 4 SWE Agent: Complete EDA &amp; ADK Starter Kit</h3>\n<p><a href=\"https://www.kaggle.com/code/nursrijan/gemma-4-swe-agent-complete-eda-adk-starter-kit\" target=\"_blank\">https://www.kaggle.com/code/nursrijan/gemma-4-swe-agent-complete-eda-adk-starter-kit</a></p>\n<p>I submitted the output as-is and got <strong>LB = 0.05</strong>.</p>\n<h3>GEMMA: EDA, Baseline for a start | LB TOP 1</h3>\n<p><a href=\"https://www.kaggle.com/code/romanrozen/gemma-eda-baseline-for-a-start-lb-top-1\" target=\"_blank\">https://www.kaggle.com/code/romanrozen/gemma-eda-baseline-for-a-start-lb-top-1</a></p>\n<p>This notebook currently shows <strong>LB = 0.12</strong>, which appears to be the best score among the publicly available notebooks.</p>\n<p>If anyone has submitted this notebook, <strong>what result did you get? Did you get the same score of 0.12?</strong></p>\n<p>Also, in the organizers' discussion titled <strong>\"Welcome to the Gemma 4 Developer Agent Competition,\"</strong> they mention that:</p>\n<blockquote>\n  <p>we’ve provided a <a href=\"https://www.kaggle.com/competitions/gemma-4-developer-agent/data?select=sample_submission\" target=\"_blank\">starter submission</a></p>\n</blockquote>\n<p><strong>What score did this starter submission achieve on the leaderboard?</strong></p>\n<p>That's all from me. <strong>Please share your results in the comments!</strong> It would be great to compare everyone's findings.</p>",
+      "rawMarkdown": "Since this competition allows only **one submission per day**, I’d like to leverage the community to compare results.\n\nI’ll share a couple of examples from my side as well.\n\n### Gemma 4 SWE Agent: Complete EDA & ADK Starter Kit\n\nhttps://www.kaggle.com/code/nursrijan/gemma-4-swe-agent-complete-eda-adk-starter-kit\n\nI submitted the output as-is and got **LB = 0.05**.\n\n### GEMMA: EDA, Baseline for a start | LB TOP 1\n\nhttps://www.kaggle.com/code/romanrozen/gemma-eda-baseline-for-a-start-lb-top-1\n\nThis notebook currently shows **LB = 0.12**, which appears to be the best score among the publicly available notebooks.\n\nIf anyone has submitted this notebook, **what result did you get? Did you get the same score of 0.12?**\n\nAlso, in the organizers' discussion titled **\"Welcome to the Gemma 4 Developer Agent Competition,\"** they mention that:\n\n> we’ve provided a [starter submission](https://www.kaggle.com/competitions/gemma-4-developer-agent/data?select=sample_submission)\n\n**What score did this starter submission achieve on the leaderboard?**\n\nThat's all from me. **Please share your results in the comments!** It would be great to compare everyone's findings.\n",
+      "votes": 12
+    },
+    {
+      "id": 3528007,
+      "postDate": "2026-09-25T07:17:40.340Z",
+      "content": "<p>Answering your last question: the <strong>official <code>sample_submission</code>, submitted byte-for-byte as-is</strong> (submission <code>56539111</code>, 2026-09-25 03:46 UTC) → <strong>FAILED, no score</strong>. Only message: <code>Your notebook hit an unhandled error while rerunning your code.</code></p>\n<p>It still contains both <code>adapters/main_lora</code> and <code>adapters/tool_lora</code>, so my current suspicion is the adapter path. What I mean by that: <code>adapter: &lt;name&gt;</code> never goes through local PEFT loading — in <code>swegemma/models/registry.py</code> (<code>resolve_swegemma_adapter</code>, and <code>_make_adapter_model</code> inside <code>setup_gemma_model_registry</code>) it rewrites the agent's model into a LiteLLM id of <code>openai/&lt;adapter-name&gt;</code>, i.e. the run asks the inference endpoint to serve a LoRA <strong>already registered under that name</strong> (vLLM <code>--lora-modules &lt;name&gt;=&lt;path&gt;</code>). For this package the compiled root agent's model string is literally <code>openai/main_lora</code>, and <code>swegemma</code> itself never starts the server, so that registration lives entirely on the scoring side. I verified locally with the pinned wheels (<code>google-adk 1.36.1</code>, <code>adk-submission 0.2.11</code>, <code>swegemma 0.2.7</code>) that the package compiles clean, that <code>discover_adapters()</code> returns both names, and that all 9 tools register unconditionally — so it is not a YAML/assembly bug and not the empty graph/embedding files. This is a hypothesis about the failure, not a confirmed diagnosis.</p>\n<p>Worth adding, because it changes how useful your two numbers are: I read the packaging cells of both notebooks — <code>nursrijan</code>'s starter-kit bundle writes <code>configs/ prompts/ sub_agents/ agent.yaml</code>, and <code>romanrozen</code>'s bundle likewise contains no <code>adapters/</code> (LoRA appears there only in a validator check and in a roadmap line saying \"LoRA adapter, <em>if the rules allow</em>\"). So neither the 0.05 nor the 0.12 exercises the adapter path, and as far as I can tell <strong>no public submission has</strong>. That is consistent with the failure above being LoRA-related rather than a bug in my packaging.</p>\n<p>Next step: same official package with <code>adapters/</code> and the two <code>adapter:</code> lines removed, nothing else touched. If it scores, the adapter path is the trigger; if it fails the same way, it isn't. I'll report whichever happens.</p>",
+      "rawMarkdown": "Answering your last question: the **official `sample_submission`, submitted byte-for-byte as-is** (submission `56539111`, 2026-09-25 03:46 UTC) → **FAILED, no score**. Only message: `Your notebook hit an unhandled error while rerunning your code.`\n\nIt still contains both `adapters/main_lora` and `adapters/tool_lora`, so my current suspicion is the adapter path. What I mean by that: `adapter: <name>` never goes through local PEFT loading — in `swegemma/models/registry.py` (`resolve_swegemma_adapter`, and `_make_adapter_model` inside `setup_gemma_model_registry`) it rewrites the agent's model into a LiteLLM id of `openai/<adapter-name>`, i.e. the run asks the inference endpoint to serve a LoRA **already registered under that name** (vLLM `--lora-modules <name>=<path>`). For this package the compiled root agent's model string is literally `openai/main_lora`, and `swegemma` itself never starts the server, so that registration lives entirely on the scoring side. I verified locally with the pinned wheels (`google-adk 1.36.1`, `adk-submission 0.2.11`, `swegemma 0.2.7`) that the package compiles clean, that `discover_adapters()` returns both names, and that all 9 tools register unconditionally — so it is not a YAML/assembly bug and not the empty graph/embedding files. This is a hypothesis about the failure, not a confirmed diagnosis.\n\nWorth adding, because it changes how useful your two numbers are: I read the packaging cells of both notebooks — `nursrijan`'s starter-kit bundle writes `configs/ prompts/ sub_agents/ agent.yaml`, and `romanrozen`'s bundle likewise contains no `adapters/` (LoRA appears there only in a validator check and in a roadmap line saying \"LoRA adapter, *if the rules allow*\"). So neither the 0.05 nor the 0.12 exercises the adapter path, and as far as I can tell **no public submission has**. That is consistent with the failure above being LoRA-related rather than a bug in my packaging.\n\nNext step: same official package with `adapters/` and the two `adapter:` lines removed, nothing else touched. If it scores, the adapter path is the trigger; if it fails the same way, it isn't. I'll report whichever happens.",
+      "votes": 2
+    },
+    {
+      "id": 3528322,
+      "postDate": "2026-09-25T21:21:20.143Z",
+      "content": "<p>direct fork of <a href=\"https://www.kaggle.com/code/romanrozen/gemma-eda-baseline-for-a-start-lb-top-1\" target=\"_blank\">https://www.kaggle.com/code/romanrozen/gemma-eda-baseline-for-a-start-lb-top-1</a> </p>\n<p>LB: 0.08\nScoring Time: 14.5 hours\nGPU: 4x L4</p>",
+      "rawMarkdown": "direct fork of https://www.kaggle.com/code/romanrozen/gemma-eda-baseline-for-a-start-lb-top-1 \n\nLB: 0.08\nScoring Time: 14.5 hours\nGPU: 4x L4",
+      "votes": 1
+    },
+    {
+      "id": 3528159,
+      "postDate": "2026-09-25T14:26:18.533Z",
+      "content": "<p>I have a bare bones submission that got 0.08 <a href=\"https://www.kaggle.com/code/twangygarlic449/gemma-super-basic\" target=\"_blank\">https://www.kaggle.com/code/twangygarlic449/gemma-super-basic</a></p>",
+      "rawMarkdown": "I have a bare bones submission that got 0.08 https://www.kaggle.com/code/twangygarlic449/gemma-super-basic",
+      "votes": 1
+    },
+    {
+      "id": 3527977,
+      "postDate": "2026-09-25T05:54:04.317Z",
+      "content": "<p>GEMMA: EDA, Baseline for a start | LB TOP 1\n<a href=\"/isakatsuyoshi\" target=\"_blank\">@isakatsuyoshi</a> as it earned ,stated score 0.12 \nSo no need to test it using your submission 🙋 </p>",
+      "rawMarkdown": "GEMMA: EDA, Baseline for a start | LB TOP 1\n@isakatsuyoshi as it earned ,stated score 0.12 \nSo no need to test it using your submission 🙋 ",
+      "votes": 1
+    }
+  ]
+}

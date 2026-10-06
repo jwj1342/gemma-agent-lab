@@ -1,0 +1,53 @@
+{
+  "competition": "gemma-4-developer-agent",
+  "indexed_at": "2026-10-05T07:00:40.014195+00:00",
+  "snapshot_window": "2026-10-04 evening America/Toronto to 2026-10-05 UTC",
+  "official_pages": 10,
+  "data": {
+    "competition": "gemma-4-developer-agent",
+    "verified_at": "2026-10-05T03:37:55.721236+00:00",
+    "file_count": 524,
+    "uncompressed_bytes": 22416766904,
+    "archive_bytes": 21929289087,
+    "verification": "API manifest names and sizes; ZIP CRC checked during extraction"
+  },
+  "notebooks": {
+    "listed": 112,
+    "downloaded": 112,
+    "empty_sources": [
+      "aryangupta85/gemma-4-developer-agent-swe-architecture"
+    ],
+    "unique_source_hashes": 109,
+    "review": "Static structure/configuration scan plus individually recorded execution-path reading; empty source explicitly marked; not a line-by-line audit; none executed"
+  },
+  "discussions": {
+    "topics": 116,
+    "messages": 370,
+    "host_or_staff_messages": 53,
+    "reported_message_counts_covered": true
+  },
+  "manual_notebook_reviews": 112,
+  "model_instances": 4,
+  "model_weights_downloaded": true,
+  "assets_verified_at": "2026-10-05T04:57:56.211223+00:00",
+  "runtime_evidence": "resource/manifests/hpc-smoke.json",
+  "leaderboard": {
+    "rows": 1755,
+    "source": "gemma-4-developer-agent-publicleaderboard-2026-10-05T03:50:43.csv"
+  },
+  "wheelhouse": {
+    "listed_files": 41,
+    "downloaded_files": 41
+  },
+  "resolved_fetch_errors": [
+    "3 public notebook anonymous 401s resolved via authenticated SDK",
+    "leaderboard view 429 resolved via official CSV download",
+    "discussion opening posts absent from CLI resolved via public website API"
+  ],
+  "not_covered": [
+    "All external links, image attachments and Discord",
+    "private/deleted content",
+    "Every line of public notebook or repository source",
+    "Third-party notebook execution, training, aggregate benchmark and hidden scoring"
+  ]
+}

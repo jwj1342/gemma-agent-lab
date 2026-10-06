@@ -1,0 +1,61 @@
+{
+  "forumTopic": {
+    "authorId": 15617084,
+    "authorThumbnailName": "default-thumb.png",
+    "authorUserDisplayName": "htn",
+    "authorUserName": "iztanmaymohan",
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3528897,
+      "postDate": "2026-09-26T19:39:36.363Z",
+      "rawMarkdown": "Hi Ryan, two quick questions about the scoring run, because the README and the Getting Started notebook differ:\n1. Events compaction: HARNESS_README §7.2 says `metric/scoring.py` uses `EventsCompactionConfig(compaction_interval=15, overlap_size=2, token_threshold=32768, event_retention_size=5)`; the Getting Started notebook uses `token_threshold=14336`. Which value does the scorer use today? Also, does it pass `default_chat_template_kwargs` (e.g. `{'enable_thinking': True}`) to vLLM, as the notebook does?\n2. Sandbox: does the scorer run tasks in the Docker backend (and under gVisor/runsc?) or the subprocess backend the notebook uses?",
+      "content": "<p>Hi Ryan, two quick questions about the scoring run, because the README and the Getting Started notebook differ:</p>\n<ol>\n<li>Events compaction: HARNESS_README §7.2 says <code>metric/scoring.py</code> uses <code>EventsCompactionConfig(compaction_interval=15, overlap_size=2, token_threshold=32768, event_retention_size=5)</code>; the Getting Started notebook uses <code>token_threshold=14336</code>. Which value does the scorer use today? Also, does it pass <code>default_chat_template_kwargs</code> (e.g. <code>{'enable_thinking': True}</code>) to vLLM, as the notebook does?</li>\n<li>Sandbox: does the scorer run tasks in the Docker backend (and under gVisor/runsc?) or the subprocess backend the notebook uses?</li>\n</ol>",
+      "parent": {},
+      "author": {
+        "displayName": "htn",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+        "url": "/iztanmaymohan",
+        "tier": "CONTRIBUTOR",
+        "id": 15617084,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 1,
+        "canUpvote": true,
+        "totalUpvotes": 1
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 57,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "htn",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/iztanmaymohan",
+          "userName": "iztanmaymohan",
+          "tier": "CONTRIBUTOR",
+          "id": 15617084,
+          "profileUrl": "/iztanmaymohan",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 15617084,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3528897,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 743752,
+    "name": "Query regarding scorer config",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-26T19:39:36.364872100Z",
+    "totalVotes": 1,
+    "url": "/competitions/gemma-4-developer-agent/discussion/743752",
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

@@ -1,0 +1,39 @@
+# The public leaderboard has exactly 58 tasks
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743506
+
+## 3528506 /yeoyunsianggeremie TOPIC
+Observing the current LB distribution:
+
+```
+0.00, 0.01, 0.03, 0.05, 0.06, 0.08, 0.10, 0.12, 0.13
+```
+
+and since Kaggle has always rounded down LB scores, there is only one **test set size** that could lead to exactly this distribution
+
+```python
+# Displayed scores expressed in hundredths.
+observed = {0, 1, 3, 5, 6, 8, 10, 12, 13}
+
+def compatible(n):
+    possible = {100 * k // n for k in range(n + 1)}
+    return observed <= possible
+
+print([n for n in range(1, 79) if compatible(n)])
+# [58]
+```
+
+| Tasks solved | Score before truncation | Displayed score |
+|---:|---:|---:|
+| 0 | 0.000000 | 0.00 |
+| 1 | 0.017241… | 0.01 |
+| 2 | 0.034482… | 0.03 |
+| 3 | 0.051724… | 0.05 |
+| 4 | 0.068965… | 0.06 |
+| 5 | 0.086206… | 0.08 |
+| 6 | 0.103448… | 0.10 |
+| 7 | 0.120689… | 0.12 |
+| 8 | 0.137931… | 0.13 |
+
+which is close to the ~60 described in the data description
+
+> There are about 120 tasks in the test set, evenly divided between the public and private splits.

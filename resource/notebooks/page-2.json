@@ -1,0 +1,88 @@
+{
+  "kernels": [
+    {
+      "ref": "rishavae/gemma4",
+      "title": "Gemma4",
+      "author": "Rishav Yadav",
+      "lastRunTime": "2026-09-24T06:26:53.450Z",
+      "totalVotes": 3
+    },
+    {
+      "ref": "avikdas567/dual-space-spectral-graph-swe-agent-for-gemma-4",
+      "title": "Dual-Space Spectral Graph SWE Agent for Gemma 4",
+      "author": "Avik Das",
+      "lastRunTime": "2026-09-24T09:04:08.407Z",
+      "totalVotes": 20
+    },
+    {
+      "ref": "zhukovoleksiy/gemma-4-walkthrough-first-submission",
+      "title": "Gemma 4 | Walkthrough & First Submission",
+      "author": "Oleksii Zhukov",
+      "lastRunTime": "2026-09-30T15:08:00.037Z",
+      "totalVotes": 77
+    },
+    {
+      "ref": "yuki16/gemma4-devagent-graphtools-submission-v2",
+      "title": "Gemma4_DevAgent_GraphTools_Submission_v2",
+      "author": "yuki16",
+      "lastRunTime": "2026-09-24T02:46:54.463Z",
+      "totalVotes": 2
+    },
+    {
+      "ref": "mizeroluckygall/gemma-4-agent-eda-agent-validator",
+      "title": "Gemma 4 Agent 🌟EDA + Agent + Validator",
+      "author": "Mizero Lucky Gall",
+      "lastRunTime": "2026-09-25T06:24:30.270Z",
+      "totalVotes": 3
+    },
+    {
+      "ref": "romanrozen/gemma-eda-baseline-for-a-start-lb-top-1",
+      "title": "GEMMA: EDA, Baseline for a start | LB TOP 1",
+      "author": "Roman Rozen",
+      "lastRunTime": "2026-09-23T19:14:08.027Z",
+      "totalVotes": 208
+    },
+    {
+      "ref": "nihilisticneuralnet/0-10-gemma-4-developer-agent-submission",
+      "title": "[0.10]: Gemma 4 Developer Agent Submission",
+      "author": "parthenos",
+      "lastRunTime": "2026-09-25T14:51:49.003Z",
+      "totalVotes": 23
+    },
+    {
+      "ref": "evgendvorkin/google-the-gemma-4",
+      "title": "Google - The Gemma 4",
+      "author": "Дворкин Евгений Владимирович",
+      "lastRunTime": "2026-09-25T10:35:43.397Z",
+      "totalVotes": 12
+    },
+    {
+      "ref": "lucifer19/black-cat-swe-agent-pack-instinct",
+      "title": "🐈‍⬛ Black Cat SWE Agent | Pack Instinct",
+      "author": "Agent Trainer",
+      "lastRunTime": "2026-10-03T15:59:23.510Z",
+      "totalVotes": 128
+    },
+    {
+      "ref": "foysalemonshanto/gemma4-agent-advanced-eda",
+      "title": "Gemma4 Agent Advanced EDA",
+      "author": "FOYSAL",
+      "lastRunTime": "2026-09-23T17:22:12.210Z",
+      "totalVotes": 3
+    },
+    {
+      "ref": "nursrijan/gemma-4-swe-agent-complete-eda-adk-starter-kit",
+      "title": "Gemma 4 SWE Agent: Complete EDA & ADK Starter Kit",
+      "author": "Nur Srijan",
+      "lastRunTime": "2026-09-23T16:47:59.803Z",
+      "totalVotes": 46
+    },
+    {
+      "ref": "haideptry/gemma-develop-first-try",
+      "title": "Gemma develop first try",
+      "author": "haideptry",
+      "lastRunTime": "2026-10-01T11:17:48.347Z",
+      "totalVotes": 24
+    }
+  ]
+}

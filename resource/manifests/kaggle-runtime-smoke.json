@@ -1,0 +1,136 @@
+{
+  "recorded_at": "2026-10-05T18:17:42.407410+00:00",
+  "kernel": "jwj1342/gemma4-official-runtime-smoke",
+  "version": 1,
+  "status": "COMPLETE",
+  "task_id": "rich_3454",
+  "hardware": "4 x NVIDIA L4",
+  "tensor_parallel_size": 4,
+  "controls_valid": true,
+  "agent_resolved": true,
+  "official_compiler_passed": true,
+  "test_counts": {
+    "empty": {
+      "failed": 1,
+      "passed": 82
+    },
+    "gold": {
+      "failed": 0,
+      "passed": 83
+    },
+    "agent": {
+      "failed": 0,
+      "passed": 84
+    }
+  },
+  "agent_inference_seconds": 74.10129157899996,
+  "agent_time_excludes_model_startup": true,
+  "notebook_elapsed_seconds_at_smoke_completion": 655.215526567,
+  "llm_calls": 9,
+  "tool_calls": 7,
+  "archive_sha256": "02bb939095ded0c970088fc9d19634e203e2d3119a36a5feff20bad55c9343fc",
+  "matches_formal_submission_ref": 56844353,
+  "scope": "One real public task on Kaggle L4x4. Confirms official compiler, inference, empty/gold controls and generated-patch tests. Not an aggregate benchmark, training validation, or a speed comparison with H100. Notebook timing excludes time queued and final output export.",
+  "evidence": [
+    {
+      "path": "runs/kaggle-runtime-smoke/kaggle-output/gemma4-official-runtime-smoke.log",
+      "bytes": 21110,
+      "sha256": "aa18d409f36d8bc31c9d4322f2484057067c6f50aedc4f73d0c26315bb8b0b76"
+    },
+    {
+      "path": "runs/kaggle-runtime-smoke/kaggle-output/runtime-smoke/checks/controls.log",
+      "bytes": 276,
+      "sha256": "8bd31170e91a09c46f10b85d8c917543f76357bd6c2aeb854d6f192e8d7d6502"
+    },
+    {
+      "path": "runs/kaggle-runtime-smoke/kaggle-output/runtime-smoke/checks/summary.log",
+      "bytes": 549,
+      "sha256": "ac4263deaf04b31897567751e5d1c9bbd8547cbccef8285cc447771488811440"
+    },
+    {
+      "path": "runs/kaggle-runtime-smoke/kaggle-output/runtime-smoke/compile/compile.log",
+      "bytes": 700,
+      "sha256": "1af57fcdbf9ed636a8e44a4867195ecd4b46e92105d8acb1292f10122912d501"
+    },
+    {
+      "path": "runs/kaggle-runtime-smoke/kaggle-output/runtime-smoke/compile/validation.json",
+      "bytes": 699,
+      "sha256": "00170e2e709c54adfa45e8b7dcaca9ffd40e407b6ae0a26cf69d01073f71f0da"
+    },
+    {
+      "path": "runs/kaggle-runtime-smoke/kaggle-output/runtime-smoke/controls-summary.json",
+      "bytes": 276,
+      "sha256": "8bd31170e91a09c46f10b85d8c917543f76357bd6c2aeb854d6f192e8d7d6502"
+    },
+    {
+      "path": "runs/kaggle-runtime-smoke/kaggle-output/runtime-smoke/hardware.csv",
+      "bytes": 173,
+      "sha256": "871a7248fdd9cca5e92abae9272f9d97aea8c8a69c4d81dc346e4315c8e118d9"
+    },
+    {
+      "path": "runs/kaggle-runtime-smoke/kaggle-output/runtime-smoke/infer/inference.log",
+      "bytes": 1337,
+      "sha256": "948e6ba6fb68f1cf2ce3e963a3ca891e8820dc4d15260ed8ef9d6c72f175e958"
+    },
+    {
+      "path": "runs/kaggle-runtime-smoke/kaggle-output/runtime-smoke/infer/prediction.json",
+      "bytes": 1487,
+      "sha256": "2743a8dfaf8110be4e2f71e468c3cf75a23abc5a9871b17b254a812d88f05747"
+    },
+    {
+      "path": "runs/kaggle-runtime-smoke/kaggle-output/runtime-smoke/infer/results/result.json",
+      "bytes": 1696,
+      "sha256": "daa4bb8118e182b4438af7180419becd8260cf96cd53760c132d9309f0ad780e"
+    },
+    {
+      "path": "runs/kaggle-runtime-smoke/kaggle-output/runtime-smoke/infer/results/traces/trace_rich_3454.json",
+      "bytes": 41885,
+      "sha256": "83bbe20561d763b65807a2c5ca8cf9ca6a80c974a79725565abbb3fbf486f752"
+    },
+    {
+      "path": "runs/kaggle-runtime-smoke/kaggle-output/runtime-smoke/installation.log",
+      "bytes": 6262,
+      "sha256": "18f7335520c62b334dc6d8e3b6f276f46fcda22dc9ebef916f1f5cd4a0decac5"
+    },
+    {
+      "path": "runs/kaggle-runtime-smoke/kaggle-output/runtime-smoke/smoke-summary.json",
+      "bytes": 549,
+      "sha256": "ac4263deaf04b31897567751e5d1c9bbd8547cbccef8285cc447771488811440"
+    },
+    {
+      "path": "runs/kaggle-runtime-smoke/kaggle-output/runtime-smoke/verify/agent/result.json",
+      "bytes": 2209,
+      "sha256": "e82cb542923afc17526b062fc5e59951fb22450e9cc28a3349abf6ef0bdf521b"
+    },
+    {
+      "path": "runs/kaggle-runtime-smoke/kaggle-output/runtime-smoke/verify/agent/tests.log",
+      "bytes": 337,
+      "sha256": "c66ba0729c45b3b852c1f25668e707ecbaad436bfcbcec8a23ae2fd1e7b48b52"
+    },
+    {
+      "path": "runs/kaggle-runtime-smoke/kaggle-output/runtime-smoke/verify/empty/result.json",
+      "bytes": 2150,
+      "sha256": "91c88d5b3335bfc01d2debe79c56162a2394aa1509bba84fc82cecc10d0bfc37"
+    },
+    {
+      "path": "runs/kaggle-runtime-smoke/kaggle-output/runtime-smoke/verify/empty/tests.log",
+      "bytes": 1497,
+      "sha256": "93c762f76d281817d99700a145863b97bfa1de844cd8973f2522dca3f7214305"
+    },
+    {
+      "path": "runs/kaggle-runtime-smoke/kaggle-output/runtime-smoke/verify/gold/result.json",
+      "bytes": 1582,
+      "sha256": "7cda1984dab310febf4a0be0a673d0339beade14339204dfb19d3de690c76f69"
+    },
+    {
+      "path": "runs/kaggle-runtime-smoke/kaggle-output/runtime-smoke/verify/gold/tests.log",
+      "bytes": 337,
+      "sha256": "9673600b74538d4b5ca05cab01c6b8632cce0f911c77844afad759ec8c8ba040"
+    },
+    {
+      "path": "runs/kaggle-runtime-smoke/kaggle-output/submission.zip",
+      "bytes": 3695,
+      "sha256": "02bb939095ded0c970088fc9d19634e203e2d3119a36a5feff20bad55c9343fc"
+    }
+  ]
+}

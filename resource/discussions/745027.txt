@@ -1,0 +1,15 @@
+# [Paper Track] Making a Legacy PHP Monolith Verifiable for a Gemma 4 Bug-Fixing Agent
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/745027
+
+## 3531428 /rmisoubeyrand TOPIC
+---
+
+## Feedback We Are Seeking From the Community
+
+We would greatly appreciate feedback on the following methodological aspects:
+
+1. **Hidden Browser Oracles vs. Unit Tests:** For legacy monoliths without unit suites, does Dockerized MariaDB snapshotting + Playwright E2E testing feel like a convincing paradigm for SWE benchmarking?
+2. **Statistical Transparency:** At $N=33$, detecting a +6.8 pt lift requires $N \ge 95$ for $\alpha = 0.05$. We reported $p \approx 0.11$ honestly rather than claiming statistical significance. How can we best present this trade-off between costly E2E verification depth and statistical sample size?
+3. **Reward Hacking Guards:** Has anyone else observed 30%+ verifier gaming when bootstrapping agents with model-generated tests? What programmatic guards do you recommend?
+
+*All code, docker environments, traces, and datasets are open-source under Apache-2.0.*

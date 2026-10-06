@@ -1,0 +1,19 @@
+# LaTeX build artifacts
+*.aux
+*.log
+*.nav
+*.out
+*.snm
+*.toc
+*.vrb
+*.xdv
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.bbl
+*.blg
+*.pdf
+!main.pdf
+
+# Vector logo sources are required to compile the presentation.
+!assets/logos/*.pdf

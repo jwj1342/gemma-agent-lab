@@ -1,0 +1,932 @@
+# CELL 0 markdown
+# Gemma 4 Developer Agent: submission builder
+
+This notebook does one job that matters for scoring: it writes a valid
+`/kaggle/working/submission.zip` (agent config with `agent.yaml` at the archive
+root, per the competition's *Evaluation* section) on every run, including the
+private re-run against the hidden test set.
+
+Design rules for the re-run:
+
+* **Nothing before packaging can stop the packaging.** All data exploration is
+  wrapped in `try/except`, and the build step falls back through three tiers
+  (sample-based, built-in, emergency) so a `submission.zip` is always produced.
+* **`/kaggle/working` contains exactly one file: `submission.zip`.** No extra
+  archives, plots or checkpoints are written there.
+* **The organizers' `sample_submission/` (shipped in the competition data) is the
+  schema authority.** When it is present, the archive is derived from it, so the
+  YAML shape (tool entries, model string, includes) is the one the harness is
+  known to load.
+
+# CELL 1 code
+from pathlib import Path, PurePosixPath
+import hashlib
+import json
+import os
+import platform
+import posixpath
+import re
+import shutil
+import zipfile
+
+import matplotlib.pyplot as plt
+import pandas as pd
+import yaml
+
+WORKING = Path("/kaggle/working") if Path("/kaggle/working").exists() else Path.cwd()
+WORKING.mkdir(parents=True, exist_ok=True)
+
+print(f"Python {platform.python_version()}")
+print(f"Working directory: {WORKING}")
+
+# CELL 2 markdown
+## 1. Public development data (descriptive only)
+
+`tasks.jsonl` holds the public tasks. This section is exploratory: it is fully
+wrapped so that a missing file, a different hidden-set shape, duplicate ids or a
+plotting error can never prevent the submission from being built in Section 4.
+The build step does not read anything from this section.
+
+# CELL 3 code
+from pathlib import Path
+import json
+import pandas as pd
+
+DATASET_ROOT = Path("/kaggle/input/competitions/gemma-4-developer-agent")
+WORKING = Path("/kaggle/working") if Path("/kaggle/working").exists() else Path.cwd()
+WORKING.mkdir(parents=True, exist_ok=True)
+
+def find_tasks_file():
+    candidates = [
+        DATASET_ROOT / "tasks.jsonl",
+        Path("/kaggle/input/gemma-4-developer-agent/tasks.jsonl"),
+        Path.cwd() / "tasks.jsonl",
+    ]
+    input_root = Path("/kaggle/input")
+    if input_root.exists():
+        candidates += sorted(input_root.rglob("tasks.jsonl"))
+    for path in candidates:
+        if path.exists():
+            return path
+    return None
+
+def load_tasks(path):
+    rows = []
+    with path.open(encoding="utf-8") as handle:
+        for line_no, line in enumerate(handle, start=1):
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                rows.append(json.loads(line))
+            except json.JSONDecodeError as exc:
+                print(f"Skipping malformed line {line_no} in {path.name}: {exc}")
+    if not rows:
+        return None
+    frame = pd.DataFrame({
+        "id": [row.get("instance_id", f"row_{i}") for i, row in enumerate(rows)],
+        "repository": [row.get("repo", "unknown") for row in rows],
+        "issue_chars": [len(row.get("problem_statement") or "") for row in rows],
+        "reference_patch_bytes": [len((row.get("patch") or "").encode("utf-8")) for row in rows],
+        "has_hint": [bool(row.get("hints_text")) for row in rows],
+    })
+    if not frame["id"].is_unique:
+        dupes = frame["id"].duplicated().sum()
+        print(f"Note: {dupes} duplicate id value(s) in {path.name}; de-duplicating "
+              "(keeping the first occurrence) rather than failing the run. The "
+              "hidden evaluation set is not guaranteed to match the public "
+              "tasks.jsonl exactly, so this must degrade gracefully, not crash.")
+        frame = frame.drop_duplicates(subset="id", keep="first").reset_index(drop=True)
+    return frame
+
+# This whole block is descriptive EDA over public data, not part of the
+# required deliverable (submission.zip, built in Section 4 from hardcoded
+# strings with no dependency on `tasks`/`task_path`). The competition's own
+# troubleshooting guidance warns the hidden dataset can be larger, smaller,
+# or shaped differently than the public one, and that an unhandled error
+# anywhere upstream can silently prevent the required output file from ever
+# being written. So nothing in this cell is allowed to raise: any failure
+# here is caught, logged, and treated the same as "no data available" so it
+# can never block Section 4 from running.
+task_path = None
+tasks = None
+try:
+    task_path = find_tasks_file()
+    if task_path is None:
+        print("tasks.jsonl was not found under /kaggle/input. EDA and optional LoRA "
+              "data preparation will be skipped; agent packaging is unaffected.")
+    else:
+        tasks = load_tasks(task_path)
+        if tasks is None:
+            print(f"{task_path} contained no parseable rows.")
+        else:
+            print(f"Loaded {len(tasks)} public tasks from {task_path} "
+                  f"across {tasks['repository'].nunique()} repositories.")
+except Exception as exc:
+    print(f"Task index loading failed ({type(exc).__name__}: {exc}); continuing "
+          "without it. Agent packaging in Section 4 does not depend on this data.")
+    task_path, tasks = None, None
+
+# CELL 4 markdown
+### 1A. Repository coverage and issue/patch-size distributions
+
+# CELL 5 code
+import matplotlib.pyplot as plt
+
+try:
+    if tasks is not None:
+        summary = tasks.groupby("repository").agg(
+            issues=("id", "size"),
+            median_issue_chars=("issue_chars", "median"),
+            median_patch_bytes=("reference_patch_bytes", "median"),
+            share_with_hint=("has_hint", "mean"),
+        ).sort_values("issues", ascending=False)
+        print(summary.round(2))
+
+        counts = tasks["repository"].value_counts().sort_values()
+        fig, axes = plt.subplots(1, 2, figsize=(12, 4))
+
+        axes[0].barh(counts.index, counts.values)
+        axes[0].set_title("Public issues per repository")
+        axes[0].set_xlabel("Issue count")
+
+        order = counts.index
+        groups = [tasks.loc[tasks.repository == repo, "issue_chars"].values for repo in order]
+        axes[1].boxplot(groups, vert=False, tick_labels=list(order), showfliers=False)
+        axes[1].set_title("Problem statement length by repository")
+        axes[1].set_xlabel("Characters")
+
+        fig.tight_layout()
+        plt.show()
+
+        fig2, ax2 = plt.subplots(figsize=(6, 4))
+        ax2.scatter(tasks["issue_chars"], tasks["reference_patch_bytes"], alpha=0.6)
+        ax2.set_xlabel("Issue length (characters)")
+        ax2.set_ylabel("Reference patch size (bytes)")
+        ax2.set_title("Issue length vs. reference patch size")
+        fig2.tight_layout()
+        plt.show()
+
+        correlation = tasks["issue_chars"].corr(tasks["reference_patch_bytes"])
+        print(f"Correlation between issue length and patch size: {correlation:.2f}")
+    else:
+        print("No public task index available; skipping repository-level EDA figures.")
+except Exception as exc:
+    # Purely descriptive: a plotting/aggregation error here must never stop
+    # the notebook from reaching Section 4 and writing submission.zip.
+    print(f"Repository-level EDA figures skipped ({type(exc).__name__}: {exc}).")
+
+# CELL 6 markdown
+### 1B. Prompt formatting
+
+The agent reads the issue text as its task prompt. This preview shows the
+formatting used by the optional LoRA data preparation in Section 3.
+
+# CELL 7 code
+def preview_prompt_format(row):
+    """Same formatting used for optional LoRA supervision in Section 3."""
+    return (
+        "Repository: " + row.get("repo", "unknown") + "\n"
+        "Issue:\n" + (row.get("problem_statement") or "").strip() + "\n\n"
+        "Produce the unified diff that resolves this issue."
+    )
+
+
+try:
+    if tasks is not None and task_path is not None:
+        with task_path.open(encoding="utf-8") as handle:
+            sample_row = json.loads(handle.readline())
+        print(preview_prompt_format(sample_row)[:600])
+    else:
+        print("No public task index available to preview prompt formatting.")
+except Exception as exc:
+    print(f"Prompt-format preview skipped ({type(exc).__name__}: {exc}).")
+
+# CELL 8 markdown
+## 2. Agent configuration (built-in fallback)
+
+This is the agent that is packaged when the organizers' `sample_submission/`
+cannot be found or fails validation. It follows the Google ADK Agent Config
+schema, which the competition's *Evaluation* section names as the config
+language:
+
+* `tools:` entries use `- name: ...` (ADK style). **This is a guess** for the case
+  where the sample cannot be read: the organizers' own sample also uses a
+  `- agent_tool: {config_path: ...}` form, so the sample, not this list, is the
+  schema authority.
+* `generate_content_config` carries only plain sampling parameters. The earlier
+  `thinking_config` set `thinking_level` and `thinking_budget` together, which
+  the GenAI API treats as conflicting, so it is removed.
+* `instruction` and sampling parameters live in separate files and are pulled in
+  with `!include`, exactly as in the competition's submission layout.
+* Instruction text contains no curly braces, because ADK treats `{name}` inside
+  an instruction as a session-state placeholder.
+
+# CELL 9 code
+MODEL_ID = "gemma-4-31b-it-qat-w4a16-ct"
+
+# Tool names exposed by the evaluation harness (competition Data page / harness guide).
+HARNESS_TOOLS = [
+    "run_command",
+    "read_file",
+    "edit_file",
+    "write_file",
+    "get_status",
+    "submit_patch",
+    "get_code_neighbors",
+    "search_similar_code",
+    "get_code_subgraph",
+]
+
+SAMPLING_YAML = """temperature: 0.2
+top_p: 0.95
+max_output_tokens: 8192
+"""
+
+SYSTEM_PROMPT_MD = """You are an autonomous software engineer working inside a single Python repository
+checkout. Your only deliverable is one git patch, sent with submit_patch(), that
+resolves the issue in the first user message. The patch is applied to the repository
+at its base commit and graded by hidden unit tests that you cannot see. A run that
+ends without a patch always fails, so finish with your best defensible fix. Never
+claim a test passed unless a tool call actually showed that result.
+
+WORKFLOW
+
+1. Decode the issue.
+   Read the title and body. Ignore pull-request-template boilerplate (checklists,
+   "related issues", contribution guidelines) and keep the concrete behavior, the
+   affected API or symbol, any literal error text or traceback, and the edge cases
+   named. A short title is still an actionable specification; do not stop because no
+   reproduction script or failing test was provided.
+
+2. Investigate before editing.
+   Once you have a concrete symbol or literal error string, run one bounded search
+   with run_command (rg -n, or grep -R if rg is unavailable). Read focused ranges
+   with read_file rather than whole large files. Use get_code_neighbors,
+   search_similar_code and get_code_subgraph only with a real symbol name that a
+   search already confirmed. If a graph call errors or returns nothing, fall back to
+   source search rather than guessing.
+
+3. Form one testable hypothesis.
+   Trace the reported input through the affected function and its callers until you
+   can state why the current code produces the wrong behavior. Prefer fixing the
+   earliest incorrect layer over patching a downstream symptom. Consider the ordinary
+   path and any boundary cases named in the issue (empty input, missing field, type
+   variation, exception behavior).
+
+4. Make the smallest complete fix.
+   Use edit_file for targeted replacements; if a match is ambiguous, re-read a
+   narrower range and retry rather than guessing. Use write_file only when a new
+   source file is genuinely required. Keep public signatures and unrelated behavior
+   stable. Never edit test files, pytest.ini, conftest.py or anything that looks like
+   grading configuration.
+
+5. Verify with the smallest useful check.
+   Run one targeted existing test (python3 -m pytest path::test_name -q) or a tiny
+   inline reproduction (python3 -c ...) for the changed behavior. Do not run the full
+   test suite, install packages or use the network. Keep scratch scripts under /tmp
+   so they never enter the patch. If a check fails, decide whether it is a real
+   regression from your change or a pre-existing environment problem before acting.
+
+6. Review, then submit once.
+   Inspect git status --short and git diff (narrow the range if the diff is large) to
+   confirm every changed file is intentional. Call get_status() if the remaining time
+   or tool budget is unclear. Call submit_patch() exactly once as your final tool
+   action and check the reported patch size and file count. If time runs low, submit
+   the best defensible working edit rather than nothing.
+
+OPERATING RULES
+- Keep every command and read small and specific; output may be truncated.
+- The environment is offline. Do not attempt network access or dependency installation.
+- Never fabricate file contents, symbol names or test results.
+- Spend the time budget on evidence and a working patch, not on long unstructured
+  reasoning.
+"""
+
+HELPER_NOTE = """
+HELPER AGENTS
+- Your tool list may include helper agent tools (for example a code analyzer). They are
+  optional aids for read-only investigation. You remain responsible for the edit and
+  for calling submit_patch() yourself.
+"""
+
+ROOT_AGENT_YAML = (
+    "name: swe_patch_agent\n"
+    f"model: {MODEL_ID}\n"
+    "description: Investigates a repository issue, makes a minimal source fix, verifies it and submits a git patch.\n"
+    "instruction: !include prompts/system.md\n"
+    "tools:\n"
+    + "".join(f"  - name: {tool}\n" for tool in HARNESS_TOOLS)
+    + "generate_content_config: !include configs/sampling.yaml\n"
+)
+
+BUILTIN_FILES = {
+    "agent.yaml": ROOT_AGENT_YAML,
+    "configs/sampling.yaml": SAMPLING_YAML,
+    "prompts/system.md": SYSTEM_PROMPT_MD,
+}
+
+# Last-resort package: one self-contained agent.yaml with no includes, generated by a
+# YAML serializer so it is valid by construction.
+EMERGENCY_FILES = {
+    "agent.yaml": yaml.safe_dump(
+        {
+            "name": "swe_patch_agent",
+            "model": MODEL_ID,
+            "description": "Minimal fallback software engineering agent.",
+            "instruction": (
+                "Fix the Python repository issue described by the user. Inspect the relevant "
+                "source, make the smallest correct source edit, run one focused check if "
+                "possible, review the git diff, then call submit_patch() once. Never edit "
+                "tests or grading configuration. Work offline."
+            ),
+            "tools": [{"name": tool} for tool in HARNESS_TOOLS],
+            "generate_content_config": {"temperature": 0.2, "max_output_tokens": 8192},
+        },
+        sort_keys=False,
+        width=10000,
+    )
+}
+print(f"Built-in agent: {MODEL_ID}, {len(HARNESS_TOOLS)} tools, prompt {len(SYSTEM_PROMPT_MD)} chars")
+
+# CELL 10 markdown
+## 3. Optional: LoRA fine-tuning (off by default)
+
+Off unless `RUN_LORA_TRAINING = True`. It needs a GPU, the base model attached as
+an input, and `transformers`, `peft`, `trl`, `accelerate`. Adapters are written
+to a scratch directory (never to `/kaggle/working`) and, if produced, are added
+to `submission.zip` under `adapters/main_lora/` (the layout given in the
+competition's *Evaluation* section).
+
+**This path is untested here.** How an adapter is *referenced* from `agent.yaml`
+is defined by the organizers' `sample_submission/` (multi-LoRA routing) and
+`HARNESS_README.md`; this notebook does not invent that wiring, so an adapter
+added this way stays inert until you wire it the way the sample does.
+
+# CELL 11 code
+from pathlib import Path
+import json
+import random
+
+# Off by default. Building and validating the declarative submission.zip does
+# not require a GPU or the base model and works with this flag left False.
+# Set to True only when running on Kaggle with a GPU accelerator attached and
+# the gemma-4-31b-it-qat-w4a16-ct model added as a notebook input; it needs
+# `transformers`, `peft`, `trl`, and `accelerate` importable, and enough public
+# task rows in tasks.jsonl to form a training set.
+RUN_LORA_TRAINING = False
+
+MODEL_LOCAL_PATH = Path("/kaggle/input/gemma-4/other/gemma-4-31b-it-qat-w4a16-ct")
+SCRATCH = Path("/kaggle/temp") if Path("/kaggle/temp").exists() else Path("/tmp")
+ADAPTER_OUTPUT_DIR = SCRATCH / "adapters" / "main_lora"
+MAX_SEQ_LEN = 4096
+VAL_FRACTION = 0.1
+RANDOM_SEED = 42
+
+
+def build_sft_examples(tasks_df, rows_by_id):
+    """Turn each public task into one supervised example: the same issue framing
+    the agent sees at inference time as input, the ground-truth unified diff as
+    the target. This is prompt-formatting / feature engineering for a generative
+    model, not tabular feature engineering -- there is no fixed feature matrix
+    to scale or one-hot encode here, the "features" are the tokenized text."""
+    examples = []
+    for task_id in tasks_df["id"]:
+        row = rows_by_id[task_id]
+        issue = (row.get("problem_statement") or "").strip()
+        patch = (row.get("patch") or "").strip()
+        if not issue or not patch:
+            continue
+        prompt = (
+            "Repository: " + row.get("repo", "unknown") + "\n"
+            "Issue:\n" + issue + "\n\n"
+            "Produce the unified diff that resolves this issue."
+        )
+        examples.append({"prompt": prompt, "completion": patch})
+    return examples
+
+
+def run_lora_finetune():
+    import torch
+    from datasets import Dataset
+    from transformers import AutoModelForCausalLM, AutoTokenizer, TrainingArguments
+    from peft import LoraConfig, get_peft_model
+    from trl import SFTTrainer, SFTConfig
+
+    if tasks is None or task_path is None:
+        raise RuntimeError("tasks.jsonl was not found; cannot build a fine-tuning set.")
+    if not MODEL_LOCAL_PATH.exists():
+        raise RuntimeError(
+            f"Base model not found at {MODEL_LOCAL_PATH}. Attach the "
+            "gemma-4-31b-it-qat-w4a16-ct Kaggle model as a notebook input first."
+        )
+
+    with task_path.open(encoding="utf-8") as handle:
+        rows = [json.loads(line) for line in handle if line.strip()]
+    rows_by_id = {row["instance_id"]: row for row in rows}
+
+    examples = build_sft_examples(tasks, rows_by_id)
+    if len(examples) < 20:
+        raise RuntimeError(
+            f"Only {len(examples)} usable (issue, patch) pairs found; too few to "
+            "fine-tune reliably. Skipping LoRA training."
+        )
+
+    random.Random(RANDOM_SEED).shuffle(examples)
+    n_val = max(1, int(len(examples) * VAL_FRACTION))
+    val_examples, train_examples = examples[:n_val], examples[n_val:]
+    print(f"Fine-tuning set: {len(train_examples)} train / {len(val_examples)} validation examples.")
+
+    train_ds = Dataset.from_list(train_examples)
+    val_ds = Dataset.from_list(val_examples)
+
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_LOCAL_PATH)
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
+
+    def format_example(example):
+        text = example["prompt"] + "\n\n" + example["completion"] + tokenizer.eos_token
+        return {"text": text}
+
+    train_ds = train_ds.map(format_example, remove_columns=train_ds.column_names)
+    val_ds = val_ds.map(format_example, remove_columns=val_ds.column_names)
+
+    # The published checkpoint is already quantized (w4a16, compressed-tensors).
+    # Loading it directly for LoRA training depends on the compressed-tensors /
+    # transformers version staged in the Kaggle environment supporting
+    # quantization-aware backward passes. If that combination is unavailable at
+    # run time, load an unquantized Gemma 4 checkpoint of the same size in 4-bit
+    # via bitsandbytes instead (classic QLoRA) and skip this block; the
+    # submission still declares gemma-4-31b-it-qat-w4a16-ct as its base model
+    # per the competition rules, and the adapter is portable across the two.
+    model = AutoModelForCausalLM.from_pretrained(
+        MODEL_LOCAL_PATH,
+        device_map="auto",
+        torch_dtype=torch.bfloat16,
+    )
+    model.config.use_cache = False
+
+    lora_config = LoraConfig(
+        r=16,
+        lora_alpha=32,
+        lora_dropout=0.05,
+        bias="none",
+        task_type="CAUSAL_LM",
+        target_modules=["q_proj", "k_proj", "v_proj", "o_proj",
+                         "gate_proj", "up_proj", "down_proj"],
+    )
+    model = get_peft_model(model, lora_config)
+    model.print_trainable_parameters()
+
+    sft_config = SFTConfig(
+        output_dir=str(SCRATCH / "lora_checkpoints"),
+        per_device_train_batch_size=1,
+        gradient_accumulation_steps=8,
+        num_train_epochs=2,
+        learning_rate=2e-4,
+        logging_steps=10,
+        eval_strategy="epoch",
+        save_strategy="epoch",
+        bf16=True,
+        max_seq_length=MAX_SEQ_LEN,
+        packing=False,
+        report_to=[],
+        seed=RANDOM_SEED,
+    )
+
+    trainer = SFTTrainer(
+        model=model,
+        args=sft_config,
+        train_dataset=train_ds,
+        eval_dataset=val_ds,
+        dataset_text_field="text",
+    )
+    trainer.train()
+
+    final_eval = trainer.evaluate()
+    print("Final validation metrics:", final_eval)
+
+    ADAPTER_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    model.save_pretrained(str(ADAPTER_OUTPUT_DIR), safe_serialization=True)
+    tokenizer.save_pretrained(str(ADAPTER_OUTPUT_DIR))
+    print(f"Saved LoRA adapter to {ADAPTER_OUTPUT_DIR}")
+    return final_eval
+
+
+lora_adapter_files = None
+if RUN_LORA_TRAINING:
+    run_lora_finetune()
+    lora_adapter_files = {
+        f"adapters/main_lora/{p.name}": p
+        for p in ADAPTER_OUTPUT_DIR.glob("adapter_*")
+    }
+    missing = {"adapter_config.json", "adapter_model.safetensors"} - {
+        Path(k).name for k in lora_adapter_files
+    }
+    if missing:
+        raise RuntimeError(f"LoRA training finished but adapter files are missing: {missing}")
+else:
+    print("RUN_LORA_TRAINING is False: packaging the declarative agent config "
+          "only, with no LoRA adapter. This matches the competition rules, "
+          "which mark adapters optional.")
+
+# CELL 12 markdown
+## 4. Build, validate and write `submission.zip`
+
+Build order (first tier that validates wins; nothing here is allowed to abort the run):
+
+1. **`sample_submission/` + our prompt.** If the competition data contains the
+   organizers' baseline, copy it verbatim (tools of any form, sub-agents, model
+   string, includes) and change exactly one thing: the root agent's `instruction`
+   now points at `prompts/swe_patch_system.md`. A self-check confirms every other
+   key is unchanged. The sample's YAML files are also printed to the run log.
+2. **Built-in ADK-style agent** from Section 2.
+3. **Emergency single-file agent.**
+
+Set `USE_SAMPLE_AS_BASE = False` in the build cell to force tier 2.
+
+# CELL 13 code
+ALLOWED_TOP_LEVEL = {"agent.yaml", "eval_config.yaml", "configs", "prompts",
+                     "sub_agents", "adapters", "skills"}
+AUTHORED_EXTENSIONS = {".yaml", ".yml", ".md", ".txt", ".json", ".safetensors"}
+TEXT_EXTENSIONS = {".yaml", ".yml", ".md", ".txt", ".json", ".py", ".sh", ".toml", ".cfg"}
+FORBIDDEN_SUBSTRINGS = ("instance_id", "problem_statement", "reference_patch", "test_patch")
+SKIP_DIRS = {"__pycache__", ".git", ".ipynb_checkpoints", "__MACOSX", ".venv", "node_modules"}
+SKIP_FILES = {".DS_Store"}
+INCLUDE_RE = re.compile(r"!include[ \t]+([^\s#]+)")
+OVERLAY_PROMPT_PATH = "prompts/swe_patch_system.md"
+
+
+# ---- YAML helpers -------------------------------------------------------------------
+def load_yaml_lenient(text):
+    """Parse agent YAML; `!include x` is replaced by null (includes are checked separately)."""
+    return yaml.safe_load(INCLUDE_RE.sub("null", text))
+
+
+def include_targets(text):
+    return [t.strip("'\"") for t in INCLUDE_RE.findall(text)]
+
+
+def resolve_include(target, owner, files):
+    owner_dir = posixpath.dirname(owner)
+    for cand in (posixpath.normpath(posixpath.join(owner_dir, target)), posixpath.normpath(target)):
+        if cand in files:
+            return cand
+    return None
+
+
+def tool_names(cfg):
+    """Best-effort tool identifiers. Handles `- run_command`, `- name: run_command` and
+    single-key forms such as `- agent_tool: {...}` (used by the organizers' sample)."""
+    names = []
+    for entry in (cfg.get("tools") or []):
+        if isinstance(entry, str):
+            names.append(entry)
+        elif isinstance(entry, dict) and entry.get("name"):
+            names.append(str(entry["name"]))
+        elif isinstance(entry, dict) and entry:
+            names.append(str(next(iter(entry))))
+    return names
+
+
+def has_agent_tool(cfg):
+    for entry in (cfg.get("tools") or []):
+        if isinstance(entry, dict) and ("agent_tool" in entry or entry.get("name") == "AgentTool"):
+            return True
+    return False
+
+
+def text_of(value):
+    if isinstance(value, str):
+        return value
+    if isinstance(value, bytes):
+        return value.decode("utf-8", "replace")
+    return None
+
+
+# ---- sample_submission discovery and loading ----------------------------------------
+def find_sample_submission():
+    roots = [
+        Path("/kaggle/input/competitions/gemma-4-developer-agent"),
+        Path("/kaggle/input/gemma-4-developer-agent"),
+        Path.cwd(),
+    ]
+    for root in roots:
+        cand = root / "sample_submission"
+        if (cand / "agent.yaml").is_file():
+            return cand
+    input_root = Path("/kaggle/input")
+    if input_root.exists():
+        for dirpath, dirnames, filenames in os.walk(input_root):
+            depth = len(Path(dirpath).relative_to(input_root).parts)
+            if depth >= 4:
+                dirnames[:] = []
+            if Path(dirpath).name == "sample_submission" and "agent.yaml" in filenames:
+                return Path(dirpath)
+    return None
+
+
+def read_tree(root):
+    """Small text files are held as str; everything else (e.g. LoRA weights) stays a Path."""
+    files = {}
+    for path in sorted(root.rglob("*")):
+        if not path.is_file():
+            continue
+        rel = path.relative_to(root)
+        if any(part in SKIP_DIRS for part in rel.parts) or rel.name in SKIP_FILES or rel.suffix == ".pyc":
+            continue
+        if rel.suffix in TEXT_EXTENSIONS and path.stat().st_size <= 5_000_000:
+            try:
+                files[rel.as_posix()] = path.read_text(encoding="utf-8")
+                continue
+            except UnicodeDecodeError:
+                pass
+        files[rel.as_posix()] = path
+    return files
+
+
+def overlay_instruction(root_text, prompt_path):
+    """Point the root agent's `instruction` at prompt_path and touch nothing else."""
+    replacement = f"instruction: !include {prompt_path}"
+    match = re.search(r"^instruction:.*(?:\n(?![A-Za-z_#])[^\n]*)*", root_text, re.M)
+    if match:
+        return root_text[: match.start()] + replacement + root_text[match.end():]
+    return root_text.rstrip("\n") + "\n" + replacement + "\n"
+
+
+def derive_from_sample(sample_dir):
+    files = read_tree(sample_dir)
+    root_text = text_of(files.get("agent.yaml"))
+    if root_text is None:
+        raise ValueError("sample_submission/agent.yaml is missing or not text")
+    cfg = load_yaml_lenient(root_text)
+    if not isinstance(cfg, dict):
+        raise ValueError("sample_submission/agent.yaml did not parse to a mapping")
+
+    authored = set()
+    if True:  # the overlay only changes `instruction`; the self-check below enforces that
+        new_root = overlay_instruction(root_text, OVERLAY_PROMPT_PATH)
+        new_cfg = load_yaml_lenient(new_root)
+        same_rest = ({k: v for k, v in new_cfg.items() if k != "instruction"}
+                     == {k: v for k, v in cfg.items() if k != "instruction"})
+        if same_rest and "instruction" in new_cfg:
+            files["agent.yaml"] = new_root
+            prompt = SYSTEM_PROMPT_MD + (HELPER_NOTE if has_agent_tool(cfg) else "")
+            files[OVERLAY_PROMPT_PATH] = prompt
+            authored.add(OVERLAY_PROMPT_PATH)
+            label = "sample_submission + our system prompt on the root agent"
+        else:
+            label = "sample_submission verbatim (prompt overlay failed its self-check)"
+    return files, label, authored
+
+
+# ---- validation ---------------------------------------------------------------------
+def validate_package(files, *, authored, require_submit_patch, expected_model=None):
+    """Raise ValueError on anything that would make the archive unusable; return warnings."""
+    errors, warnings = [], []
+    if "agent.yaml" not in files:
+        raise ValueError("agent.yaml must be present at the archive root")
+
+    for name in files:
+        parts = name.split("/")
+        if name.startswith("/") or "\\" in name or ".." in parts or name.endswith("/"):
+            errors.append(f"unsafe archive path: {name!r}")
+        if parts[0] not in ALLOWED_TOP_LEVEL:
+            (errors if name in authored else warnings).append(f"unexpected top-level entry: {parts[0]!r}")
+
+    for name in authored:
+        if PurePosixPath(name).suffix not in AUTHORED_EXTENSIONS:
+            errors.append(f"disallowed extension in authored file: {name}")
+        text = text_of(files[name])
+        if text is None or not text.strip():
+            errors.append(f"authored file is empty or not text: {name}")
+            continue
+        lowered = text.lower()
+        for token in FORBIDDEN_SUBSTRINGS:
+            if token in lowered:
+                errors.append(f"{name} mentions {token!r}; archives must not carry task data")
+        if name.endswith(".md") and ("{" in text or "}" in text):
+            errors.append(f"{name} contains curly braces; ADK treats {{name}} in instructions as a state variable")
+
+    root_text = text_of(files["agent.yaml"])
+    cfg = None
+    try:
+        cfg = load_yaml_lenient(root_text)
+    except Exception as exc:
+        errors.append(f"agent.yaml does not parse: {exc}")
+    if cfg is not None:
+        if not isinstance(cfg, dict):
+            errors.append("agent.yaml is not a YAML mapping")
+        else:
+            for key in ("name", "model"):
+                if not cfg.get(key):
+                    errors.append(f"agent.yaml is missing top-level {key!r}")
+            if expected_model and cfg.get("model") != expected_model:
+                errors.append(f"agent.yaml model is {cfg.get('model')!r}, expected {expected_model!r}")
+            raw_tools = cfg.get("tools") or []
+            if not isinstance(raw_tools, list):
+                errors.append("agent.yaml 'tools' must be a list")
+            else:
+                # Deliberately permissive: the organizers' own sample uses forms such as
+                # `- agent_tool: {config_path: ...}`, so only structurally empty entries are errors.
+                bad = [t for t in raw_tools
+                       if not ((isinstance(t, str) and t.strip()) or (isinstance(t, dict) and t))]
+                if bad:
+                    errors.append(f"empty or malformed tool entries: {bad!r}")
+            if "submit_patch" not in tool_names(cfg):
+                (errors if require_submit_patch else warnings).append("root agent does not declare submit_patch")
+
+    for name, value in files.items():
+        if PurePosixPath(name).suffix in (".yaml", ".yml"):
+            text = text_of(value)
+            if text is None:
+                continue
+            for target in include_targets(text):
+                if resolve_include(target, name, files) is None:
+                    (errors if name == "agent.yaml" else warnings).append(
+                        f"{name}: !include target {target!r} not found in archive")
+
+    if len(files) > 10000:
+        errors.append("archive contains too many members")
+    if errors:
+        raise ValueError("; ".join(errors))
+    return warnings
+
+
+# ---- writing ------------------------------------------------------------------------
+def write_zip(files, output_path):
+    output_path = Path(output_path)
+    if output_path.exists():
+        output_path.unlink()
+    order = ["agent.yaml"] + sorted(n for n in files if n != "agent.yaml")
+    try:
+        with zipfile.ZipFile(output_path, "w", compression=zipfile.ZIP_DEFLATED, allowZip64=True) as archive:
+            for name in order:
+                info = zipfile.ZipInfo(name, date_time=(2026, 1, 1, 0, 0, 0))
+                info.compress_type = zipfile.ZIP_DEFLATED
+                info.external_attr = 0o644 << 16
+                value = files[name]
+                if isinstance(value, Path):
+                    with open(value, "rb") as src, archive.open(info, "w", force_zip64=True) as dst:
+                        shutil.copyfileobj(src, dst, 1024 * 1024)
+                else:
+                    archive.writestr(info, value.encode("utf-8") if isinstance(value, str) else value)
+        with zipfile.ZipFile(output_path) as archive:
+            names = archive.namelist()
+            assert archive.testzip() is None, "corrupt archive"
+        assert sorted(names) == sorted(files), "archive members differ from intended files"
+        assert "agent.yaml" in names, "agent.yaml is not at the archive root"
+        assert not any(n.startswith("/") or "\\" in n or n.endswith("/") for n in names), "bad member names"
+    except Exception:
+        if output_path.exists():
+            output_path.unlink()
+        raise
+    return output_path
+
+# CELL 14 code
+# ---- switches ------------------------------------------------------------------------
+USE_SAMPLE_AS_BASE = True      # False -> skip sample_submission/ and use the built-in agent
+
+SUBMISSION_ZIP = WORKING / "submission.zip"
+
+
+def build_package():
+    """Return (files, label, warnings). Never raises: falls through three tiers."""
+    if USE_SAMPLE_AS_BASE:
+        try:
+            sample_dir = find_sample_submission()
+            if sample_dir is None:
+                print("sample_submission/ not found in the competition data; using the built-in agent.")
+            else:
+                print(f"Found sample_submission at {sample_dir}")
+                files, label, authored = derive_from_sample(sample_dir)
+                warnings = validate_package(files, authored=authored, require_submit_patch=False)
+                return files, label, warnings
+        except Exception as exc:
+            print(f"Sample-based package rejected ({type(exc).__name__}: {exc}); trying built-in agent.")
+    try:
+        files = dict(BUILTIN_FILES)
+        warnings = validate_package(files, authored=set(files), require_submit_patch=True,
+                                    expected_model=MODEL_ID)
+        return files, "built-in ADK-style agent", warnings
+    except Exception as exc:
+        print(f"Built-in package rejected ({type(exc).__name__}: {exc}); using the emergency agent.")
+    return dict(EMERGENCY_FILES), "emergency single-file agent", []
+
+
+def dump_sample_diagnostics():
+    """Print the organizers' sample so its exact schema is visible in the run log."""
+    try:
+        sample_dir = find_sample_submission()
+        if sample_dir is None:
+            print("[diagnostics] no sample_submission/ found")
+            return
+        print(f"[diagnostics] sample_submission tree ({sample_dir}):")
+        for path in sorted(sample_dir.rglob("*")):
+            if path.is_file():
+                print(f"    {path.stat().st_size:>10,}  {path.relative_to(sample_dir).as_posix()}")
+        for path in sorted(sample_dir.rglob("*.y*ml")):
+            print(f"\n[diagnostics] ---- {path.relative_to(sample_dir).as_posix()} ----")
+            print(path.read_text(encoding="utf-8", errors="replace")[:4000])
+        readme = sample_dir.parent / "HARNESS_README.md"
+        if readme.is_file():
+            keys = ("agent.yaml", "agent_tool", "tools:", "!include", "eval_config", "skills", "adapter", "sub_agent")
+            lines = readme.read_text(encoding="utf-8", errors="replace").splitlines()
+            hits = [f"{i + 1}: {l}" for i, l in enumerate(lines) if any(k in l for k in keys)]
+            print(f"\n[diagnostics] HARNESS_README.md: {len(lines)} lines, {len(hits)} schema-related lines (first 80):")
+            print("\n".join(hits[:80]))
+    except Exception as exc:
+        print(f"[diagnostics] skipped ({type(exc).__name__}: {exc})")
+
+
+dump_sample_diagnostics()
+package_files, package_label, package_warnings = build_package()
+
+# Optional LoRA weights (empty unless RUN_LORA_TRAINING produced them). Inert until wired
+# into the config the way sample_submission/ does it.
+if lora_adapter_files:
+    package_files.update(lora_adapter_files)
+    package_warnings.append("LoRA adapter files added under adapters/ but NOT referenced by agent.yaml")
+
+try:
+    write_zip(package_files, SUBMISSION_ZIP)
+except Exception as exc:
+    print(f"Writing the {package_label} failed ({type(exc).__name__}: {exc}); writing the emergency agent.")
+    package_files, package_label, package_warnings = dict(EMERGENCY_FILES), "emergency single-file agent", []
+    write_zip(package_files, SUBMISSION_ZIP)
+
+# ---- report --------------------------------------------------------------------------
+print(f"\nPackage source : {package_label}")
+for warning in package_warnings:
+    print(f"WARNING        : {warning}")
+with zipfile.ZipFile(SUBMISSION_ZIP) as archive:
+    print(f"Wrote          : {SUBMISSION_ZIP}  ({SUBMISSION_ZIP.stat().st_size:,} bytes, {len(archive.namelist())} members)")
+    for info in archive.infolist():
+        print(f"  {info.file_size:>12,}  {info.filename}")
+    root_yaml = archive.read("agent.yaml").decode("utf-8")
+print("sha256         :", hashlib.sha256(SUBMISSION_ZIP.read_bytes()).hexdigest()[:16], "...")
+print("\n--- agent.yaml (archive root) ---")
+print(root_yaml)
+
+# The only hard requirements left: a non-empty zip with agent.yaml at its root.
+assert SUBMISSION_ZIP.is_file() and SUBMISSION_ZIP.stat().st_size > 0
+with zipfile.ZipFile(SUBMISSION_ZIP) as archive:
+    assert "agent.yaml" in archive.namelist()
+
+# CELL 15 markdown
+### 4A. Read-back smoke test (informational, never fails the run)
+
+Re-opens the zip from disk the way a loader would: every `!include` is resolved
+inside the archive and the root config is parsed with a custom loader. Problems
+are printed as warnings only, because a failure here after the archive was
+already written must not turn a valid submission into a failed run.
+
+# CELL 16 code
+class _IncludeLoader(yaml.SafeLoader):
+    pass
+
+
+def _make_include_constructor(archive, owner):
+    def construct(loader, node):
+        target = loader.construct_scalar(node)
+        names = set(archive.namelist())
+        cand = posixpath.normpath(posixpath.join(posixpath.dirname(owner), target))
+        cand = cand if cand in names else posixpath.normpath(target)
+        if cand not in names:
+            raise FileNotFoundError(f"{owner}: !include {target!r} not in archive")
+        raw = archive.read(cand).decode("utf-8")
+        return yaml.safe_load(raw) if cand.endswith((".yaml", ".yml")) else raw
+    return construct
+
+
+try:
+    with zipfile.ZipFile(SUBMISSION_ZIP) as archive:
+        loader_cls = type("Loader", (_IncludeLoader,), {})
+        loader_cls.add_constructor("!include", _make_include_constructor(archive, "agent.yaml"))
+        compiled = yaml.load(archive.read("agent.yaml").decode("utf-8"), Loader=loader_cls)
+    instruction = compiled.get("instruction")
+    print("name            :", compiled.get("name"))
+    print("model           :", compiled.get("model"))
+    print("tools           :", tool_names(compiled))
+    print("instruction     :", f"{len(instruction)} chars" if isinstance(instruction, str) else type(instruction).__name__)
+    print("generate config :", compiled.get("generate_content_config"))
+    others = sorted(p.name for p in WORKING.iterdir() if p.name != "submission.zip")
+    print("other files in the working directory:", others or "none")
+except Exception as exc:
+    print(f"Read-back smoke test could not complete ({type(exc).__name__}: {exc}). "
+          "submission.zip was still written; check the build log above.")
+
+# CELL 17 markdown
+## 5. Hardware and how to submit
+
+* This notebook only packages configuration files, so it runs on CPU with
+  **Internet off**. It does not run the agent; the organizers' harness does that
+  in its own sandbox.
+* Submit the **saved version** (Save Version, then Save & Run All), then choose
+  **`submission.zip`** as the output file. It is the only file in `/kaggle/working`.
+* The harness later produces `submission.parquet` (`id`, `prediction`) itself; it
+  is not something this notebook writes.
+* The evaluation limit is 12 hours for all tasks including sandbox setup. Any
+  per-task limit belongs in `eval_config.yaml`; copy the schema from
+  `sample_submission/` rather than guessing (it is carried over automatically if
+  the sample contains one).

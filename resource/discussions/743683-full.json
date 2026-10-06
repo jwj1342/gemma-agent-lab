@@ -1,0 +1,746 @@
+{
+  "forumTopic": {
+    "authorId": 2003505,
+    "authorThumbnailName": "2003505-kg.jpg",
+    "authorUserDisplayName": "Ryan Holbrook",
+    "authorUserName": "ryanholbrook",
+    "comments": [
+      {
+        "id": 3529441,
+        "postDate": "2026-09-28T09:16:17.263Z",
+        "rawMarkdown": "Hi @ryanholbrook , I have a different kind of problem: I launched my notebook and it sat in the queue for 5 hours; it then ran for another 5 hours on GPU, but 10 hours were deducted from my GPU quota.\n\n![](https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F6426555%2Fcdb41f54dd33c19d64f033761ce05143%2FScreenshot%202026-09-28%20121340.png?generation=1790586918749457&alt=media)\n![](https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F6426555%2F4e9af6877fd480b4797be84dfea0cce0%2FScreenshot%202026-09-28%20121422.png?generation=1790586928959343&alt=media)",
+        "content": "<p>Hi <a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a> , I have a different kind of problem: I launched my notebook and it sat in the queue for 5 hours; it then ran for another 5 hours on GPU, but 10 hours were deducted from my GPU quota.</p>\n<p><img src=\"https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F6426555%2Fcdb41f54dd33c19d64f033761ce05143%2FScreenshot%202026-09-28%20121340.png?generation=1790586918749457&amp;alt=media\" alt=\"\">\n<img src=\"https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F6426555%2F4e9af6877fd480b4797be84dfea0cce0%2FScreenshot%202026-09-28%20121422.png?generation=1790586928959343&amp;alt=media\" alt=\"\"></p>",
+        "replies": [
+          {
+            "id": 3529475,
+            "postDate": "2026-09-28T10:40:31.003Z",
+            "rawMarkdown": "same here. its showing 2x the notebook runtime",
+            "content": "<p>same here. its showing 2x the notebook runtime</p>",
+            "replies": [
+              {
+                "id": 3529491,
+                "postDate": "2026-09-28T11:18:47.027Z",
+                "rawMarkdown": "i think they forgot to mention here but like in arc agi 2, where the same gpus are provided, they too take double the time from your gpu quota  ",
+                "content": "<p>i think they forgot to mention here but like in arc agi 2, where the same gpus are provided, they too take double the time from your gpu quota  </p>",
+                "parent": {},
+                "author": {
+                  "displayName": "Penguin",
+                  "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+                  "url": "/penguin069",
+                  "tier": "CONTRIBUTOR",
+                  "id": 33714352,
+                  "progressionOptOut": false
+                },
+                "authorType": "COMMENT",
+                "votes": {
+                  "totalVotes": 2,
+                  "canUpvote": true,
+                  "totalUpvotes": 2
+                },
+                "kernelVersion": 0,
+                "competitionRanking": 418,
+                "feedbackTrackingData": {},
+                "isThankYou": false,
+                "teamUpInfo": {
+                  "teamLeader": {
+                    "displayName": "Penguin",
+                    "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+                    "url": "/penguin069",
+                    "userName": "penguin069",
+                    "tier": "CONTRIBUTOR",
+                    "id": 33714352,
+                    "profileUrl": "/penguin069",
+                    "performanceTier": "CONTRIBUTOR",
+                    "userId": 33714352,
+                    "progressionOptOut": false
+                  },
+                  "intro": ""
+                }
+              }
+            ],
+            "parent": {},
+            "author": {
+              "displayName": "parthenos",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/15559822-kg.png?t=2026-08-13-14-46-51",
+              "url": "/nihilisticneuralnet",
+              "tier": "MASTER",
+              "id": 15559822,
+              "progressionOptOut": false
+            },
+            "authorType": "COMMENT",
+            "votes": {
+              "canUpvote": true
+            },
+            "kernelVersion": 0,
+            "competitionRanking": 466,
+            "feedbackTrackingData": {},
+            "isThankYou": false,
+            "teamUpInfo": {
+              "teamLeader": {
+                "displayName": "parthenos",
+                "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/15559822-kg.png?t=2026-08-13-14-46-51",
+                "url": "/nihilisticneuralnet",
+                "userName": "nihilisticneuralnet",
+                "tier": "MASTER",
+                "id": 15559822,
+                "profileUrl": "/nihilisticneuralnet",
+                "performanceTier": "MASTER",
+                "userId": 15559822,
+                "progressionOptOut": false
+              },
+              "intro": ""
+            }
+          }
+        ],
+        "parent": {},
+        "author": {
+          "displayName": "Dmitry Sokolevski",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/6426555-kg.jpg",
+          "url": "/dmitrysokolevskiy",
+          "tier": "EXPERT",
+          "id": 6426555,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "totalVotes": 1,
+          "canUpvote": true,
+          "totalUpvotes": 1
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 513,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Dmitry Sokolevski",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/6426555-kg.jpg",
+            "url": "/dmitrysokolevskiy",
+            "userName": "dmitrysokolevskiy",
+            "tier": "EXPERT",
+            "id": 6426555,
+            "profileUrl": "/dmitrysokolevskiy",
+            "performanceTier": "EXPERT",
+            "userId": 6426555,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3529544,
+        "postDate": "2026-09-28T13:17:43.667Z",
+        "rawMarkdown": "Hi everyone,\n\nI'm going to pause the rescore until we can resolve the queueing for the L4x4 machines. I will get it going as soon as I can.",
+        "content": "<p>Hi everyone,</p>\n<p>I'm going to pause the rescore until we can resolve the queueing for the L4x4 machines. I will get it going as soon as I can.</p>",
+        "parent": {},
+        "author": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "progressionOptOut": false
+        },
+        "authorType": "ADMIN",
+        "votes": {
+          "totalVotes": 2,
+          "canUpvote": true,
+          "totalUpvotes": 2
+        },
+        "kernelVersion": 0,
+        "feedbackTrackingData": {},
+        "isPinned": true,
+        "isThankYou": false,
+        "reactions": [
+          {
+            "emoji": "THANK_YOU",
+            "featuredUserNames": [
+              "nicupetridean",
+              "connortynan"
+            ],
+            "userCount": 2
+          }
+        ],
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Ryan Holbrook",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+            "url": "/ryanholbrook",
+            "userName": "ryanholbrook",
+            "tier": "STAFF",
+            "id": 2003505,
+            "profileUrl": "/ryanholbrook",
+            "performanceTier": "STAFF",
+            "userId": 2003505,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3528757,
+        "postDate": "2026-09-26T12:19:31.400Z",
+        "rawMarkdown": "![](https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F15559822%2Fff13fb1fad0d64c49eb279c792d21451%2FScreenshot%202026-09-26%20174740.png?generation=1790425085487856&alt=media)\n\n\n![](https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F15559822%2Faf4d11095086d1b7ed9ab27ab52bd6c7%2FScreenshot%202026-09-26%20174858.png?generation=1790425153277741&alt=media)\n\nwhen i click 'submit', submission fails instantly sue to system error",
+        "content": "<p><img src=\"https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F15559822%2Fff13fb1fad0d64c49eb279c792d21451%2FScreenshot%202026-09-26%20174740.png?generation=1790425085487856&amp;alt=media\" alt=\"\"></p>\n<p><img src=\"https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F15559822%2Faf4d11095086d1b7ed9ab27ab52bd6c7%2FScreenshot%202026-09-26%20174858.png?generation=1790425153277741&amp;alt=media\" alt=\"\"></p>\n<p>when i click 'submit', submission fails instantly sue to system error</p>",
+        "replies": [
+          {
+            "id": 3528777,
+            "postDate": "2026-09-26T13:43:51.750Z",
+            "rawMarkdown": "Has this submission run successfully in the past? I'm seeing `Did not find output file 'submission.zip' in the submitted Notebook.`",
+            "content": "<p>Has this submission run successfully in the past? I'm seeing <code>Did not find output file 'submission.zip' in the submitted Notebook.</code></p>",
+            "replies": [
+              {
+                "id": 3529487,
+                "postDate": "2026-09-28T11:11:59.483Z",
+                "rawMarkdown": "if i 'save version', successfully run the notebook and then 'submit', then the submission is scored \n\nbut if i click 'submit' b4 saving the notebook, it fails",
+                "content": "<p>if i 'save version', successfully run the notebook and then 'submit', then the submission is scored </p>\n<p>but if i click 'submit' b4 saving the notebook, it fails</p>",
+                "parent": {},
+                "author": {
+                  "displayName": "parthenos",
+                  "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/15559822-kg.png?t=2026-08-13-14-46-51",
+                  "url": "/nihilisticneuralnet",
+                  "tier": "MASTER",
+                  "id": 15559822,
+                  "progressionOptOut": false
+                },
+                "authorType": "COMMENT",
+                "votes": {
+                  "canUpvote": true
+                },
+                "kernelVersion": 0,
+                "competitionRanking": 466,
+                "feedbackTrackingData": {},
+                "isThankYou": false,
+                "teamUpInfo": {
+                  "teamLeader": {
+                    "displayName": "parthenos",
+                    "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/15559822-kg.png?t=2026-08-13-14-46-51",
+                    "url": "/nihilisticneuralnet",
+                    "userName": "nihilisticneuralnet",
+                    "tier": "MASTER",
+                    "id": 15559822,
+                    "profileUrl": "/nihilisticneuralnet",
+                    "performanceTier": "MASTER",
+                    "userId": 15559822,
+                    "progressionOptOut": false
+                  },
+                  "intro": ""
+                }
+              },
+              {
+                "id": 3529541,
+                "postDate": "2026-09-28T13:12:55.657Z",
+                "rawMarkdown": "I think this is WAI. Your notebook needs to generate a submission file (`submission.zip`) before that submission can be scored. The workflow seems a little confusing, though. I will give feedback to the team.",
+                "content": "<p>I think this is WAI. Your notebook needs to generate a submission file (<code>submission.zip</code>) before that submission can be scored. The workflow seems a little confusing, though. I will give feedback to the team.</p>",
+                "parent": {},
+                "author": {
+                  "displayName": "Ryan Holbrook",
+                  "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+                  "url": "/ryanholbrook",
+                  "tier": "STAFF",
+                  "id": 2003505,
+                  "progressionOptOut": false
+                },
+                "authorType": "ADMIN",
+                "votes": {
+                  "totalVotes": 1,
+                  "canUpvote": true,
+                  "totalUpvotes": 1
+                },
+                "kernelVersion": 0,
+                "feedbackTrackingData": {},
+                "isThankYou": false,
+                "teamUpInfo": {
+                  "teamLeader": {
+                    "displayName": "Ryan Holbrook",
+                    "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+                    "url": "/ryanholbrook",
+                    "userName": "ryanholbrook",
+                    "tier": "STAFF",
+                    "id": 2003505,
+                    "profileUrl": "/ryanholbrook",
+                    "performanceTier": "STAFF",
+                    "userId": 2003505,
+                    "progressionOptOut": false
+                  },
+                  "intro": ""
+                }
+              }
+            ],
+            "parent": {},
+            "author": {
+              "displayName": "Ryan Holbrook",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+              "url": "/ryanholbrook",
+              "tier": "STAFF",
+              "id": 2003505,
+              "progressionOptOut": false
+            },
+            "authorType": "ADMIN",
+            "votes": {
+              "canUpvote": true
+            },
+            "kernelVersion": 0,
+            "feedbackTrackingData": {},
+            "isThankYou": false,
+            "teamUpInfo": {
+              "teamLeader": {
+                "displayName": "Ryan Holbrook",
+                "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+                "url": "/ryanholbrook",
+                "userName": "ryanholbrook",
+                "tier": "STAFF",
+                "id": 2003505,
+                "profileUrl": "/ryanholbrook",
+                "performanceTier": "STAFF",
+                "userId": 2003505,
+                "progressionOptOut": false
+              },
+              "intro": ""
+            }
+          }
+        ],
+        "parent": {},
+        "author": {
+          "displayName": "parthenos",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/15559822-kg.png?t=2026-08-13-14-46-51",
+          "url": "/nihilisticneuralnet",
+          "tier": "MASTER",
+          "id": 15559822,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "totalVotes": 1,
+          "canUpvote": true,
+          "totalUpvotes": 1
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 466,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "parthenos",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/15559822-kg.png?t=2026-08-13-14-46-51",
+            "url": "/nihilisticneuralnet",
+            "userName": "nihilisticneuralnet",
+            "tier": "MASTER",
+            "id": 15559822,
+            "profileUrl": "/nihilisticneuralnet",
+            "performanceTier": "MASTER",
+            "userId": 15559822,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3529495,
+        "postDate": "2026-09-28T11:26:27.437Z",
+        "rawMarkdown": "it toke more than 11 hours and not finished yet what I should do ",
+        "content": "<p>it toke more than 11 hours and not finished yet what I should do </p>",
+        "parent": {},
+        "author": {
+          "displayName": "tammamalasha",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/918183-gp.jpg",
+          "url": "/tammamalasha",
+          "tier": "CONTRIBUTOR",
+          "id": 918183,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 95,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "tammamalasha",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/918183-gp.jpg",
+            "url": "/tammamalasha",
+            "userName": "tammamalasha",
+            "tier": "CONTRIBUTOR",
+            "id": 918183,
+            "profileUrl": "/tammamalasha",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 918183,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3529269,
+        "postDate": "2026-09-27T19:02:53.183Z",
+        "rawMarkdown": "Still same issue on my side @ryanholbrook ![](https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F9882418%2F7d651a3e62c6943dbd9a1cb31b1aec52%2Ferror_gemma4_competition.png?generation=1790535767374553&alt=media)",
+        "content": "<p>Still same issue on my side <a href=\"/ryanholbrook\" target=\"_blank\">@ryanholbrook</a> <img src=\"https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F9882418%2F7d651a3e62c6943dbd9a1cb31b1aec52%2Ferror_gemma4_competition.png?generation=1790535767374553&amp;alt=media\" alt=\"\"></p>",
+        "parent": {},
+        "author": {
+          "displayName": "Seif Eddine Achour",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/seifachour12",
+          "tier": "EXPERT",
+          "id": 9882418,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Seif Eddine Achour",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+            "url": "/seifachour12",
+            "userName": "seifachour12",
+            "tier": "EXPERT",
+            "id": 9882418,
+            "profileUrl": "/seifachour12",
+            "performanceTier": "EXPERT",
+            "userId": 9882418,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3529183,
+        "postDate": "2026-09-27T15:32:53.583Z",
+        "rawMarkdown": "how long does it take to score a submission? mine is running for more than 1h.",
+        "content": "<p>how long does it take to score a submission? mine is running for more than 1h.</p>",
+        "replies": [
+          {
+            "id": 3529214,
+            "postDate": "2026-09-27T16:53:16.997Z",
+            "rawMarkdown": "Few hours is expected",
+            "content": "<p>Few hours is expected</p>",
+            "parent": {},
+            "author": {
+              "displayName": "Roko Torbarina",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+              "url": "/rokotorbarina",
+              "tier": "CONTRIBUTOR",
+              "id": 11036102,
+              "progressionOptOut": false
+            },
+            "authorType": "COMMENT",
+            "votes": {
+              "canUpvote": true
+            },
+            "kernelVersion": 0,
+            "competitionRanking": 1543,
+            "feedbackTrackingData": {},
+            "isThankYou": false,
+            "teamUpInfo": {
+              "teamLeader": {
+                "displayName": "Roko Torbarina",
+                "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+                "url": "/rokotorbarina",
+                "userName": "rokotorbarina",
+                "tier": "CONTRIBUTOR",
+                "id": 11036102,
+                "profileUrl": "/rokotorbarina",
+                "performanceTier": "CONTRIBUTOR",
+                "userId": 11036102,
+                "progressionOptOut": false
+              },
+              "intro": ""
+            }
+          },
+          {
+            "id": 3529416,
+            "postDate": "2026-09-28T07:26:45.590Z",
+            "rawMarkdown": "It takes approximately 12 hours",
+            "content": "<p>It takes approximately 12 hours</p>",
+            "replies": [
+              {
+                "id": 3529434,
+                "postDate": "2026-09-28T08:45:28.917Z",
+                "rawMarkdown": "timeout after 14 hours in my case :( ",
+                "content": "<p>timeout after 14 hours in my case :( </p>",
+                "parent": {},
+                "author": {
+                  "displayName": "Nicu",
+                  "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/1850334-kg.jpg",
+                  "url": "/nicupetridean",
+                  "tier": "EXPERT",
+                  "id": 1850334,
+                  "progressionOptOut": false
+                },
+                "authorType": "COMMENT",
+                "votes": {
+                  "canUpvote": true
+                },
+                "kernelVersion": 0,
+                "competitionRanking": 452,
+                "feedbackTrackingData": {},
+                "isThankYou": false,
+                "teamUpInfo": {
+                  "teamLeader": {
+                    "displayName": "Nicu",
+                    "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/1850334-kg.jpg",
+                    "url": "/nicupetridean",
+                    "userName": "nicupetridean",
+                    "tier": "EXPERT",
+                    "id": 1850334,
+                    "profileUrl": "/nicupetridean",
+                    "performanceTier": "EXPERT",
+                    "userId": 1850334,
+                    "progressionOptOut": false
+                  },
+                  "intro": ""
+                }
+              }
+            ],
+            "parent": {},
+            "author": {
+              "displayName": "Varun Ambadi",
+              "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+              "url": "/varunambadi",
+              "tier": "CONTRIBUTOR",
+              "id": 31268718,
+              "progressionOptOut": false
+            },
+            "authorType": "COMMENT",
+            "votes": {
+              "canUpvote": true
+            },
+            "kernelVersion": 0,
+            "competitionRanking": 280,
+            "feedbackTrackingData": {},
+            "isThankYou": false,
+            "teamUpInfo": {
+              "teamLeader": {
+                "displayName": "Varun Ambadi",
+                "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+                "url": "/varunambadi",
+                "userName": "varunambadi",
+                "tier": "CONTRIBUTOR",
+                "id": 31268718,
+                "profileUrl": "/varunambadi",
+                "performanceTier": "CONTRIBUTOR",
+                "userId": 31268718,
+                "progressionOptOut": false
+              },
+              "intro": ""
+            }
+          }
+        ],
+        "parent": {},
+        "author": {
+          "displayName": "Nicu",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/1850334-kg.jpg",
+          "url": "/nicupetridean",
+          "tier": "EXPERT",
+          "id": 1850334,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 452,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Nicu",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/1850334-kg.jpg",
+            "url": "/nicupetridean",
+            "userName": "nicupetridean",
+            "tier": "EXPERT",
+            "id": 1850334,
+            "profileUrl": "/nicupetridean",
+            "performanceTier": "EXPERT",
+            "userId": 1850334,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3528853,
+        "postDate": "2026-09-26T17:32:31.097Z",
+        "rawMarkdown": "Hi, thank you for looking into it. Lost a couple hours debugging yesterday trying to find the issue, but noticed that it happens even when I try to upload the fastest model possible. Will retry in a few hours when I get my daily submission back.",
+        "content": "<p>Hi, thank you for looking into it. Lost a couple hours debugging yesterday trying to find the issue, but noticed that it happens even when I try to upload the fastest model possible. Will retry in a few hours when I get my daily submission back.</p>",
+        "parent": {},
+        "author": {
+          "displayName": "Roko Torbarina",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/rokotorbarina",
+          "tier": "CONTRIBUTOR",
+          "id": 11036102,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 1543,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "Roko Torbarina",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+            "url": "/rokotorbarina",
+            "userName": "rokotorbarina",
+            "tier": "CONTRIBUTOR",
+            "id": 11036102,
+            "profileUrl": "/rokotorbarina",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 11036102,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3528765,
+        "postDate": "2026-09-26T12:53:15.053Z",
+        "rawMarkdown": "![](https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F30803717%2F0d43261c041e94faa9cbd3864c6f4373%2FScreenshot%202026-09-26%20155232.png?generation=1790427179329130&alt=media)",
+        "content": "<p><img src=\"https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F30803717%2F0d43261c041e94faa9cbd3864c6f4373%2FScreenshot%202026-09-26%20155232.png?generation=1790427179329130&amp;alt=media\" alt=\"\"></p>",
+        "parent": {},
+        "author": {
+          "displayName": "sheko",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/30803717-kg.png?t=2026-09-25-18-25-37",
+          "url": "/sharifmohamed1",
+          "tier": "CONTRIBUTOR",
+          "id": 30803717,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 1489,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "sheko",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/30803717-kg.png?t=2026-09-25-18-25-37",
+            "url": "/sharifmohamed1",
+            "userName": "sharifmohamed1",
+            "tier": "CONTRIBUTOR",
+            "id": 30803717,
+            "profileUrl": "/sharifmohamed1",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 30803717,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3529255,
+        "postDate": "2026-09-27T18:44:50.763Z",
+        "rawMarkdown": "",
+        "parent": {},
+        "author": {
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/"
+        },
+        "authorType": "COMMENT",
+        "votes": {},
+        "canDelete": true,
+        "isUserAuthor": true,
+        "isDeleted": true,
+        "kernelVersion": 0,
+        "feedbackTrackingData": {},
+        "isThankYou": false
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3528752,
+      "postDate": "2026-09-26T12:01:49.977Z",
+      "rawMarkdown": "Hi everyone,\n\nSome submissions since yesterday were failing with `\"Your notebook has requested more CPU, GPU or TPU resources than are available.\"` I believe I've resolved the issue, though please let me know if you're still having issues. I will rerun the affected submissions on Monday so that you won't be losing a submission.",
+      "content": "<p>Hi everyone,</p>\n<p>Some submissions since yesterday were failing with <code>\"Your notebook has requested more CPU, GPU or TPU resources than are available.\"</code> I believe I've resolved the issue, though please let me know if you're still having issues. I will rerun the affected submissions on Monday so that you won't be losing a submission.</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Ryan Holbrook",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+        "url": "/ryanholbrook",
+        "tier": "STAFF",
+        "id": 2003505,
+        "progressionOptOut": false
+      },
+      "authorType": "ADMIN",
+      "votes": {
+        "totalVotes": 12,
+        "canUpvote": true,
+        "totalUpvotes": 12
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "reactions": [
+        {
+          "emoji": "THANK_YOU",
+          "featuredUserNames": [
+            "tammamalasha",
+            "goyashuto",
+            "zhukovoleksiy",
+            "tonylica",
+            "adaluvu",
+            "sharifmohamed1",
+            "saltice",
+            "doaimabt"
+          ],
+          "userCount": 8
+        },
+        {
+          "emoji": "LOVE",
+          "featuredUserNames": [
+            "goyashuto",
+            "rokotorbarina",
+            "tonylica",
+            "sharifmohamed1",
+            "saltice",
+            "raydestar"
+          ],
+          "userCount": 6
+        }
+      ],
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Ryan Holbrook",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/2003505-kg.jpg",
+          "url": "/ryanholbrook",
+          "userName": "ryanholbrook",
+          "tier": "STAFF",
+          "id": 2003505,
+          "profileUrl": "/ryanholbrook",
+          "performanceTier": "STAFF",
+          "userId": 2003505,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3528752,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 743683,
+    "name": "Rerunning Failed Submissions",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-26T12:01:49.976290200Z",
+    "totalVotes": 12,
+    "url": "/competitions/gemma-4-developer-agent/discussion/743683",
+    "totalMessages": 17,
+    "authorPerformanceTier": "STAFF",
+    "authorProgressionOptOut": false
+  }
+}

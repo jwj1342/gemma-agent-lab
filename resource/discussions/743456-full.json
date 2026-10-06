@@ -1,0 +1,61 @@
+{
+  "forumTopic": {
+    "authorId": 28395178,
+    "authorThumbnailName": "28395178-kg.png?t=2026-09-25-14-23-00",
+    "authorUserDisplayName": "Narendar Kumar Ale",
+    "authorUserName": "narendarkumarale",
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3528441,
+      "postDate": "2026-09-26T04:45:36.127Z",
+      "rawMarkdown": "Hi team, quick question on HARNESS_README §7.2 — EventsCompactionConfig sets token_threshold = 32,768, which matches max_model_len. Since every request already has to fit prompt + max_output_tokens inside that same 32,768-token window, is there a code path where compaction fires before a session hits ContextWindowExceededError? Or is the threshold measured against something narrower (e.g. just the events history, not the full request)? Trying to understand whether long agent sessions are expected to self-compact or just need to stay well under the limit on their own. Thanks!",
+      "content": "<p>Hi team, quick question on HARNESS_README §7.2 — EventsCompactionConfig sets token_threshold = 32,768, which matches max_model_len. Since every request already has to fit prompt + max_output_tokens inside that same 32,768-token window, is there a code path where compaction fires before a session hits ContextWindowExceededError? Or is the threshold measured against something narrower (e.g. just the events history, not the full request)? Trying to understand whether long agent sessions are expected to self-compact or just need to stay well under the limit on their own. Thanks!</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Narendar Kumar Ale",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/28395178-kg.png?t=2026-09-25-14-23-00",
+        "url": "/narendarkumarale",
+        "tier": "CONTRIBUTOR",
+        "id": 28395178,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 1,
+        "canUpvote": true,
+        "totalUpvotes": 1
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 127,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Narendar Kumar Ale",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/28395178-kg.png?t=2026-09-25-14-23-00",
+          "url": "/narendarkumarale",
+          "userName": "narendarkumarale",
+          "tier": "CONTRIBUTOR",
+          "id": 28395178,
+          "profileUrl": "/narendarkumarale",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 28395178,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3528441,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 743456,
+    "name": "Does events compaction ever trigger before the context limit?",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-26T04:45:36.125075700Z",
+    "totalVotes": 1,
+    "url": "/competitions/gemma-4-developer-agent/discussion/743456",
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

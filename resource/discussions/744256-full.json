@@ -1,0 +1,143 @@
+{
+  "forumTopic": {
+    "authorId": 10136697,
+    "authorThumbnailName": "default-thumb.png",
+    "authorUserDisplayName": "Dhruv Pai Dukle",
+    "authorUserName": "dhruvpaidukle",
+    "comments": [
+      {
+        "id": 3529901,
+        "postDate": "2026-09-29T06:37:46.940Z",
+        "rawMarkdown": "They are providing GPU access for us already, You can access it in kaggle notebook, 30 hours/week is the quota . You can train or test there.4 x GPU L4 are provided",
+        "content": "<p>They are providing GPU access for us already, You can access it in kaggle notebook, 30 hours/week is the quota . You can train or test there.4 x GPU L4 are provided</p>",
+        "parent": {},
+        "author": {
+          "displayName": "Saltice",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/31469616-kg.jpg?t=2026-09-29-07-05-24",
+          "url": "/saltice",
+          "tier": "CONTRIBUTOR",
+          "id": 31469616,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "totalVotes": 2,
+          "canUpvote": true,
+          "totalUpvotes": 2
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 907,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "enabled": true,
+          "teamLeader": {
+            "displayName": "Saltice",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/31469616-kg.jpg?t=2026-09-29-07-05-24",
+            "url": "/saltice",
+            "userName": "saltice",
+            "tier": "CONTRIBUTOR",
+            "id": 31469616,
+            "profileUrl": "/saltice",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 31469616,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      },
+      {
+        "id": 3529941,
+        "postDate": "2026-09-29T08:12:49.667Z",
+        "rawMarkdown": "You should ask for a RTX Pro 6000 instead. It’s way quicker than the L4 x 4 setup we have now. ",
+        "content": "<p>You should ask for a RTX Pro 6000 instead. It’s way quicker than the L4 x 4 setup we have now. </p>",
+        "parent": {},
+        "author": {
+          "displayName": "JohnParkerson",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/johnparkerson",
+          "tier": "CONTRIBUTOR",
+          "id": 36840669,
+          "progressionOptOut": false
+        },
+        "authorType": "COMMENT",
+        "votes": {
+          "totalVotes": -2,
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "competitionRanking": 529,
+        "feedbackTrackingData": {},
+        "isThankYou": false,
+        "teamUpInfo": {
+          "teamLeader": {
+            "displayName": "JohnParkerson",
+            "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+            "url": "/johnparkerson",
+            "userName": "johnparkerson",
+            "tier": "CONTRIBUTOR",
+            "id": 36840669,
+            "profileUrl": "/johnparkerson",
+            "performanceTier": "CONTRIBUTOR",
+            "userId": 36840669,
+            "progressionOptOut": false
+          },
+          "intro": ""
+        }
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3529879,
+      "postDate": "2026-09-29T05:45:26.157Z",
+      "rawMarkdown": "Since the accepted model is relatively large(31B Parameters), The organizers are requested to provide limited GPU access, so that everyone can run the model and participate.",
+      "content": "<p>Since the accepted model is relatively large(31B Parameters), The organizers are requested to provide limited GPU access, so that everyone can run the model and participate.</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Dhruv Pai Dukle",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+        "url": "/dhruvpaidukle",
+        "tier": "CONTRIBUTOR",
+        "id": 10136697,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "totalVotes": 2,
+        "canUpvote": true,
+        "totalUpvotes": 4
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "Dhruv Pai Dukle",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/dhruvpaidukle",
+          "userName": "dhruvpaidukle",
+          "tier": "CONTRIBUTOR",
+          "id": 10136697,
+          "profileUrl": "/dhruvpaidukle",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 10136697,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3529879,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 744256,
+    "name": "Request to Organizers to provide GPU access to fine-tune model",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-29T05:45:26.156523900Z",
+    "totalVotes": 2,
+    "url": "/competitions/gemma-4-developer-agent/discussion/744256",
+    "totalMessages": 2,
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "forumTopic": {
+    "authorId": 16726498,
+    "authorThumbnailName": "16726498-kg.jpg?t=2025-03-13-11-55-17",
+    "authorUserDisplayName": "Mr.Vsevolod",
+    "authorUserName": "mrvsevolod",
+    "comments": [
+      {
+        "id": 3529645,
+        "postDate": "2026-09-28T17:25:32.773Z",
+        "rawMarkdown": "Hi, just following up on this question.\n\nA clarification from the Competition Host would be greatly appreciated, as the answer affects whether participants residing in Russia can reasonably commit time and compute to the competition.\n\nThank you.",
+        "content": "<p>Hi, just following up on this question.</p>\n<p>A clarification from the Competition Host would be greatly appreciated, as the answer affects whether participants residing in Russia can reasonably commit time and compute to the competition.</p>\n<p>Thank you.</p>",
+        "parent": {},
+        "author": {
+          "displayName": "Mr.Vsevolod",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/16726498-kg.jpg?t=2025-03-13-11-55-17",
+          "url": "/mrvsevolod",
+          "tier": "CONTRIBUTOR",
+          "id": 16726498,
+          "progressionOptOut": false
+        },
+        "authorType": "TOPIC",
+        "votes": {
+          "canUpvote": true
+        },
+        "kernelVersion": 0,
+        "feedbackTrackingData": {},
+        "isThankYou": false
+      }
+    ],
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3528170,
+      "postDate": "2026-09-25T14:50:34.507Z",
+      "rawMarkdown": "Hello,\n\nCould the Competition Host please clarify the rules for receiving monetary prizes for participants residing in the Russian Federation?\n\nSuppose a participant:\n\n- is a legal resident of the Russian Federation;\n- is not located in Crimea, DNR, LNR, or another excluded territory;\n- is not subject to U.S. sanctions or U.S. export controls;\n- otherwise fully complies with the competition rules.\n\nWould such a participant be able to actually receive the monetary prize if they win?\n\nIn particular:\n\n1. Can monetary prizes currently be paid to residents of Russia?\n2. Which payment provider or payout method is used?\n3. If the standard payment provider cannot serve residents of Russia, is an alternative payout method available?\n\nI am asking specifically about the ability to actually receive the monetary prize, not only about eligibility to enter or participate in the competition.\n\nThank you.",
+      "content": "<p>Hello,</p>\n<p>Could the Competition Host please clarify the rules for receiving monetary prizes for participants residing in the Russian Federation?</p>\n<p>Suppose a participant:</p>\n<ul>\n<li>is a legal resident of the Russian Federation;</li>\n<li>is not located in Crimea, DNR, LNR, or another excluded territory;</li>\n<li>is not subject to U.S. sanctions or U.S. export controls;</li>\n<li>otherwise fully complies with the competition rules.</li>\n</ul>\n<p>Would such a participant be able to actually receive the monetary prize if they win?</p>\n<p>In particular:</p>\n<ol>\n<li>Can monetary prizes currently be paid to residents of Russia?</li>\n<li>Which payment provider or payout method is used?</li>\n<li>If the standard payment provider cannot serve residents of Russia, is an alternative payout method available?</li>\n</ol>\n<p>I am asking specifically about the ability to actually receive the monetary prize, not only about eligibility to enter or participate in the competition.</p>\n<p>Thank you.</p>",
+      "parent": {},
+      "author": {
+        "displayName": "Mr.Vsevolod",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/16726498-kg.jpg?t=2025-03-13-11-55-17",
+        "url": "/mrvsevolod",
+        "tier": "CONTRIBUTOR",
+        "id": 16726498,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "canUpvote": true
+      },
+      "kernelVersion": 0,
+      "feedbackTrackingData": {},
+      "isThankYou": false
+    },
+    "firstMessageId": 3528170,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 743297,
+    "name": "Prize payout eligibility for participants residing in Russia",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-09-25T14:50:34.506982200Z",
+    "url": "/competitions/gemma-4-developer-agent/discussion/743297",
+    "totalMessages": 1,
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

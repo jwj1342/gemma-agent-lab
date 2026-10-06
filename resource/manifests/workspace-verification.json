@@ -1,0 +1,72 @@
+{
+  "verified_at": "2026-10-05T06:17:16.125356+00:00",
+  "checks": {
+    "scripts_syntax": "passed: 18 Python AST and 10 bash -n",
+    "resource_json": "456 Git-eligible JSON/notebooks parsed",
+    "credentials": "access_token 0600, parent 0700; no KGAT token pattern in Git-eligible text",
+    "local_document_links": "41 README/docs local links exist",
+    "branch": "main",
+    "remote_configured": false,
+    "large_files": "data/model/run/download artifacts ignored by Git; existing full integrity records retained",
+    "slides": "20-page English PDF, all pages visually reviewed; added author affiliations and university marks; no overfull boxes/missing glyphs; XeLaTeX and pdfLaTeX passed.",
+    "local_pipeline": "Official compiler, actual H100 inference, empty/gold/agent independent tests passed; see hpc-smoke.json",
+    "competition_submission": "56844353 accepted; remote snapshot separate in kaggle-evaluation-status.json"
+  },
+  "limits": [
+    "One public task only; no aggregate benchmark or training validation",
+    "Known dependency metadata conflicts recorded; executed paths passed, not a universal compatibility claim",
+    "Git initialized, no initial commit, remote or backup configured",
+    "Official public score 0.12 is available; private score is not returned. Training slides describe proposed work, not an executed training setup."
+  ],
+  "incremental_verification": {
+    "verified_at": "2026-10-05T07:00:40.072043+00:00",
+    "manual_notebook_records": 112,
+    "empty_sources": 1,
+    "source_hashes_and_line_ranges": "verified by renderer",
+    "changed_python_scripts": "render_notebook_reading.py and index_resources.py AST passed; render/index commands passed",
+    "local_document_links": {
+      "checked": 144,
+      "missing": 0
+    },
+    "edited_docs": [
+      "README.md",
+      "docs/competition-research.md",
+      "docs/training-plan.md"
+    ],
+    "remote_status_snapshot": "resource/manifests/kaggle-evaluation-status.json",
+    "scope": "Incremental checks only; earlier full checks retain original timestamp."
+  },
+  "latest_incremental_verification": {
+    "verified_at": "2026-10-05T18:46:04.496037+00:00",
+    "checks": {
+      "runtime_evidence_files": {
+        "hpc-smoke": 17,
+        "kaggle-runtime-smoke": 20
+      },
+      "slides_evidence_files": 32,
+      "local_links": {
+        "checked": 61,
+        "missing": 0
+      },
+      "both_compilers": "27 pages; no overflow or missing glyphs",
+      "all_slide_pages_visually_reviewed": true
+    },
+    "slides": "resource/manifests/slides-kickoff.json",
+    "overleaf_commit": "59d71fc58a8a4f5e43f9317de8cbf8c01980b23e",
+    "remote_status": "resource/manifests/kaggle-evaluation-status.json",
+    "formal_result": "resource/manifests/competition-result.json",
+    "l4_result": "resource/manifests/kaggle-runtime-smoke.json",
+    "scope": "Incremental checks; earlier general checks retain original timestamp."
+  },
+  "updated_at": "2026-10-05T20:09:57.549555+00:00",
+  "latest_slides_verification": {
+    "verified_at": "2026-10-05T20:09:57.549555+00:00",
+    "pages": 32,
+    "sources": 42,
+    "black_chapters": 5,
+    "independent_reviewers": 2,
+    "independent_review_rounds": 3,
+    "remote_commit": "e29cdd6c922d34c53356cc6b02a1257c57682407",
+    "audit": "resource/manifests/slides-completion-audit.json"
+  }
+}

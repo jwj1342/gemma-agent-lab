@@ -1,0 +1,58 @@
+{
+  "forumTopic": {
+    "authorId": 15617084,
+    "authorThumbnailName": "default-thumb.png",
+    "authorUserDisplayName": "htn",
+    "authorUserName": "iztanmaymohan",
+    "commentSort": "COMMENT_LIST_SORT_BY_HOT",
+    "firstMessage": {
+      "id": 3531940,
+      "postDate": "2026-10-02T21:16:35.680Z",
+      "rawMarkdown": "As the title suggests, I want to know if any of you have had moderate success refining gemma 4's own trajectories to use as training material for a LoRA adapter, or if you have been using an opensource model as a teacher. On my local evals, using Deepseek V4.1 Flash yielded barely any returns (solved 5 more tasks than my own agent) when put under the same constraints of max time per task and my multi-agent harness setup.\nGiven that literature seems to suggest that you can hope to recover at best 30-50% of the gap between student and teacher, I wanted to understand what sort of strategies people who've found success with distillation have been employing - I've already wasted around 20 dollars worth of api on barely useable results.",
+      "content": "<p>As the title suggests, I want to know if any of you have had moderate success refining gemma 4's own trajectories to use as training material for a LoRA adapter, or if you have been using an opensource model as a teacher. On my local evals, using Deepseek V4.1 Flash yielded barely any returns (solved 5 more tasks than my own agent) when put under the same constraints of max time per task and my multi-agent harness setup.\nGiven that literature seems to suggest that you can hope to recover at best 30-50% of the gap between student and teacher, I wanted to understand what sort of strategies people who've found success with distillation have been employing - I've already wasted around 20 dollars worth of api on barely useable results.</p>",
+      "parent": {},
+      "author": {
+        "displayName": "htn",
+        "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+        "url": "/iztanmaymohan",
+        "tier": "CONTRIBUTOR",
+        "id": 15617084,
+        "progressionOptOut": false
+      },
+      "authorType": "TOPIC",
+      "votes": {
+        "canUpvote": true
+      },
+      "kernelVersion": 0,
+      "competitionRanking": 54,
+      "feedbackTrackingData": {},
+      "isThankYou": false,
+      "teamUpInfo": {
+        "teamLeader": {
+          "displayName": "htn",
+          "thumbnailUrl": "https://storage.googleapis.com/kaggle-avatars/thumbnails/default-thumb.png",
+          "url": "/iztanmaymohan",
+          "userName": "iztanmaymohan",
+          "tier": "CONTRIBUTOR",
+          "id": 15617084,
+          "profileUrl": "/iztanmaymohan",
+          "performanceTier": "CONTRIBUTOR",
+          "userId": 15617084,
+          "progressionOptOut": false
+        },
+        "intro": ""
+      }
+    },
+    "firstMessageId": 3531940,
+    "forumId": 11630393,
+    "forumName": "Google - The Gemma 4 Developer Agent Competition",
+    "id": 745274,
+    "name": "Discussion : Are you guys seeing gains with distillation? What's your setup?",
+    "parentName": "gemma-4-developer-agent",
+    "parentUrl": "/competitions/gemma-4-developer-agent",
+    "postDate": "2026-10-02T21:16:35.681511700Z",
+    "url": "/competitions/gemma-4-developer-agent/discussion/745274",
+    "authorPerformanceTier": "CONTRIBUTOR",
+    "authorProgressionOptOut": false
+  }
+}

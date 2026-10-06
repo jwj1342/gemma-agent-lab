@@ -1,0 +1,20 @@
+{
+  "checked_at": "2026-10-05T06:22:36.674159+00:00",
+  "refresh_at": "2026-10-10T00:00:00",
+  "kagglesdk_version": "0.1.37",
+  "duration_conversion": "timedelta.total_seconds(), never timedelta.seconds or SDK to_dict()",
+  "gpu_seconds": {
+    "time_used": 0.0,
+    "time_reserved": 0.0,
+    "total_time_allowed": 108000.0,
+    "minimum_time_allowed": 108000.0,
+    "remaining_after_reservations": 108000.0
+  },
+  "tpu_seconds": {
+    "time_used": 0.0,
+    "time_reserved": 0.0,
+    "total_time_allowed": 72000.0,
+    "minimum_time_allowed": 72000.0,
+    "remaining_after_reservations": 72000.0
+  }
+}

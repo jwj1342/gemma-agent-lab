@@ -1,0 +1,32 @@
+# L4 ×4 session queued for 13 hours—still hasn’t started
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/744054
+
+## 3529535 /ztggtz TOPIC
+My L4 ×4 session has been queued for over 13 hours and still hasn’t started. This is extremely frustrating and makes me wonder whether it’s realistic to participate in this competition using only the resources Kaggle provides.
+
+## 3529539 /shivam2212 COMMENT
+I'm pretty sure that's the issue will everyone. And going on at this rate for 2 months sounds pretty unrealistic tbh, its very frustrating. Hopefully they do something about this
+
+## 3529540 /luciankucera COMMENT
+No it isn't realistiic to participate in kaggle competitions using only kaggle resources. I would recommend renting RTX-PRO-6000-MAX-Q from [vast.ai](https://vast.ai/pricing/gpu/RTX-PRO-6000-MAX-Q). I do this for this competition and rent it for two months for nonstop training and experimenting, its only about 1000$ usd a month for nonstop training. So if ur competative i would invest at least 2k usd.
+
+## 3529564 /rdeschamps COMMENT
+I have 4x3090 locally that I use for training / evaluating.  However for my workflow I submit my latest notebook with a very small target task set to ensure that it executes properly before submitting my full notebook against the competition.  It's been in queue for the last 12 hours, lol.
+
+## 3529585 /rashidel1988 COMMENT
+is this a promo for vast.ai or are you being serious? I estimated I'd need $300 for renting GPU if I wanted to do the training myself. Almost gave up until realized we have 4xL4 for this competition.
+
+## 3529628 /luciankucera COMMENT
+bro its not promo, just i asked gemini and it told me they have cheapest gpus. So iam unbiased.
+
+## 3529750 /yusufmo COMMENT
+Same here, queued for 24 hours without starting
+
+## 3529584 /rashidel1988 COMMENT
+how do I know for when it's queued? I only see it as queued in active events, not for when
+
+## 3529676 /connortynan COMMENT
+It doesn't tell you. You just queue until you don't
+
+## 3529561 /atomstack001 COMMENT
+facing the same issue 

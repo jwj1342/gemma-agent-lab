@@ -1,0 +1,38 @@
+# Past Competition Reference ? (Anyone)
+https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743275
+
+## 3528139 /suryagaur1408 TOPIC
+Hi I am new to this Agentic-AI world and still going through its early phase of learning. Can anyone know Past competitions similar to this one so I can take reference from it. 
+
+Thanks in advance.!!
+
+## 3529035 /nihilisticneuralnet COMMENT
+Kowinski prize: https://www.kaggle.com/competitions/konwinski-prize
+
+## 3528701 /doaimabt COMMENT
+Hi! Welcome to the exciting field of Agentic-AI and Autonomous Software Engineering!
+The **Google - The Gemma 4 Developer Agent Competition** is actually a landmark event because it is the **first official Kaggle competition that evaluates full-lifecycle coding agents on real-world SWE-bench benchmarks** in an air-gapped container environment using local quantized models.
+Here are the most relevant historical benchmarks, research open-source projects, and papers with direct links to help you get started:
+### 1. Direct Benchmarks & Prior Art
+* **SWE-bench / SWE-bench Verified**: The gold standard benchmark created by Princeton & Stanford that this competition is built upon. Check their official leaderboard and paper:
+  * Website: [swebench.com](https://www.swebench.com/)
+  * GitHub: [princeton-nlp/SWE-bench](https://github.com/princeton-nlp/SWE-bench)
+  * Paper: *"SWE-bench: Can Language Models Resolve Real-World GitHub Issues?"* ([arXiv:2310.06770](https://arxiv.org/abs/2310.06770))
+* **SWE-agent (Princeton NLP)**: One of the pioneering autonomous agents running inside Docker containers with a specialized Agent-Computer Interface (ACI).
+  * GitHub: [princeton-nlp/SWE-agent](https://github.com/princeton-nlp/SWE-agent)
+* **Agentless (UIUC)**: A brilliant open-source project by Prof. Lingming Zhang's group that challenges complex multi-turn agent loops. It uses a clean 2-phase approach (Localization -> Repair) and achieves competitive solve rates at a fraction of the cost.
+  * GitHub: [OpenAutoCoder/Agentless](https://github.com/OpenAutoCoder/Agentless)
+  * Paper: *"Agentless: Demystifying LLM-based Software Engineering Agents"* ([arXiv:2407.01489](https://arxiv.org/abs/2407.01489))
+### 2. Similar Competitive Environments on Kaggle
+* **Kaggle AI Mathematical Olympiad (AIMO)**: Great reference for tool-augmented multi-step reasoning under strict memory and hardware timeouts.
+* **Kaggle LLM Science Exam**: Excellent reference for handling air-gapped inference and packaging custom libraries without internet access.
+### 3. Vital Tips for Beginners (To Avoid Burning Your Evaluation Quota)
+Since Kaggle enforces strict runtime budgets (e.g., total 12-hour limit across all tasks, 4GB RAM/2 vCPUs per container), here are a few golden rules:
+1. **Token Economy is King**: Avoid letting the model output massive thinking blocks or full-file rewrites. The context window can easily saturate. Keeping generation lean and focused directly saves you from Out-Of-Memory (OOM) or token limit errors.
+2. **Micro-Surgical Edits Over Refactoring**: In real software bugs, over 70% of fixes require fewer than 15 lines of code (e.g., adding a None check, stripping whitespace, or fixing parameter types). Avoid having the agent refactor surrounding code, as it almost always breaks pre-existing unit tests.
+3. **Fail-Fast Strategy**: Don't let your agent burn 30 minutes on a single broken or unsolvable issue. Set a tight timeout/turn cap so it moves on quickly to solvable tasks.
+If you ever want to discuss agent architectures, toolsets, or evaluation setups in more depth, feel free to reach out via email at: **maplemagilabsvn@protonmail.com**.
+Best of luck on your competition journey! 🚀
+
+## 3528935 /twangygarlic449 COMMENT
+You may also want to check out the Nemotron Reasoning Challenge (https://www.kaggle.com/competitions/nvidia-nemotron-model-reasoning-challenge). Kinda similar in that you're adding a LoRA adapter to an existing model, albeit with a different target.
