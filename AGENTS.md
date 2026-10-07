@@ -36,3 +36,12 @@
   report execution success separately from issue resolution.
 - Presentation sources and outputs remain local in `slides/` and in the separate Overleaf project.
   Keep the entire `slides/` directory out of this repository; `slides/main.tex` is the local entry point.
+
+## Persistent work log
+
+- At the beginning of every task in this repository, read `WORKLOG.md` before inspecting or changing the project.
+- Before completing each task, update `WORKLOG.md` with the objective, work performed, important findings or decisions, verification results, changed files, and any remaining follow-up.
+- Keep the `Current project state` section accurate and concise so a future agent can resume quickly.
+- Add new history entries at the top of `Work history` and use local time in the `Asia/Shanghai` timezone.
+- Record outcomes and evidence, not private chain-of-thought, credentials, tokens, or other secrets.
+- Log read-only investigations as well as code changes. If a task makes no repository changes, say so explicitly.

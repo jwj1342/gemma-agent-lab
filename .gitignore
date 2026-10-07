@@ -55,3 +55,14 @@ __pycache__/
 
 # Presentation files are maintained separately in Overleaf and kept local.
 /slides/
+
+# Preserved local experiment inputs and outputs from the pre-remote workspace.
+# Source/configuration migrations should be reviewed and committed separately.
+/artifacts/
+/data/public/
+/dist/
+/results/
+.pytest_cache/
+/.tmp-tests/
+submission.zip
+*.parquet
