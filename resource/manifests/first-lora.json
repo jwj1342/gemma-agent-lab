@@ -341,5 +341,7 @@
     "Corrected smoke made zero graph calls; graph utility has not been measured",
     "Snapshots are split by repository/base commit; complete repository holdout is still needed",
     "Official public score remains the original 0.12; no new competition upload"
-  ]
+  ],
+  "tracking_issue": "https://github.com/jwj1342/gemma-agent-lab/issues/4",
+  "implementation_pr": "https://github.com/jwj1342/gemma-agent-lab/pull/3"
 }

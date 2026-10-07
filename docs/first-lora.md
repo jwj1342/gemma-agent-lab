@@ -1,5 +1,8 @@
 # First SWE and graph LoRA
 
+Track the experiment in [Issue #4](https://github.com/jwj1342/gemma-agent-lab/issues/4)
+and review the implementation in [PR #3](https://github.com/jwj1342/gemma-agent-lab/pull/3).
+
 The first experiment uses successful SWE-smith trajectories to train repository repair actions and
 executed competition graph queries to train graph-tool arguments. It is a bounded SFT pilot. Its
 export and recovery checks are separate from any claim about issue-resolution gains.
