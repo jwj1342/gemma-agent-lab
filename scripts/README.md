@@ -75,3 +75,19 @@ Use your own CLI on a laptop; these module commands are specific to Trillium.
 Collectors cache files. Explicitly choose which snapshot to refresh; rerunning one command does not
 refresh the entire collection. A complete update also requires separate competition-file, Models-page,
 wheelhouse, and Code-structure inventories. Preserve dated evidence and inspect changes before updating conclusions.
+
+## SFT pilot
+
+Read [the first LoRA guide](../docs/first-lora.md) for data boundaries and validation gates.
+
+| Script | Purpose |
+| --- | --- |
+| [download_swesmith_pilot.sh](download_swesmith_pilot.sh) | Download a pinned public trajectory shard and verify its upstream SHA-256 |
+| [prepare_sft_data.py](prepare_sft_data.py) | Convert successful SWE-smith tool actions and group splits by repository/snapshot |
+| [prepare_graph_sft.py](prepare_graph_sft.py) | Execute official graph tools to construct component demonstrations without gold patches |
+| [prepare_terminal_sft.py](prepare_terminal_sft.py) | Execute official test/submission/status tools on controlled Git fixtures and label a final answer |
+| [prepare_lora_run.py](prepare_lora_run.py) | Freeze training source and configuration before submitting |
+| [train_first_lora.py](train_first_lora.py) | Assistant-action/terminal LoRA SFT, optional adapter initialization, full recovery state, held-out NLL, and export checks |
+| [slurm_first_lora.sh](slurm_first_lora.sh) | Allocated, offline H100 pilot with a fresh-process resume |
+| [check_lora_serving.py](check_lora_serving.py) | Official quantized-vLLM reload and fixed held-out action comparison |
+| [slurm_check_lora.sh](slurm_check_lora.sh) | Isolated allocated serving compatibility check |

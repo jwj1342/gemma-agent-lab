@@ -68,7 +68,7 @@ async def run(args):
                             'total_memory_bytes':torch.cuda.get_device_properties(i).total_memory}
                            for i in range(torch.cuda.device_count())]},indent=2)+'\n')
             server=VllmServer(VllmConfig(
-                model=str(args.model),host='127.0.0.1',port=8000,
+                model=str(args.model),host='127.0.0.1',port=int(os.environ.get('HPC_VLLM_PORT', '8000')),
                 tensor_parallel_size=args.tensor_parallel_size,max_model_len=32768,dtype='bfloat16',
                 gpu_memory_utilization=args.gpu_memory_utilization,tool_call_parser='gemma4',reasoning_parser='gemma4',
                 enable_auto_tool_choice=True,enable_lora=bool(adapters.adapters),startup_timeout=1200,

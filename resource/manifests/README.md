@@ -31,6 +31,7 @@ workspace; those artifacts are not included in a Git clone.
 | [snapshots-audit.json](snapshots-audit.json) | Repository archive structure |
 | [wheels-audit.json](wheels-audit.json) | Competition test-wheel inventory inspection |
 | [sample-adapters.json](sample-adapters.json) | Supplied adapter examples; not team training evidence |
+| [first-lora.json](first-lora.json) | First actual SWE/graph SFT, recovery, export, and separately recorded evaluation checks |
 | [harness-wheels.json](harness-wheels.json) | Official harness package metadata |
 | [research-collection.json](research-collection.json) | Coverage of pages, notebooks, discussions, models, and rankings |
 

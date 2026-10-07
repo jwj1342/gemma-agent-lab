@@ -13,6 +13,7 @@ Choose the platform at the execution entry point; the agent configuration is sha
 | Where do I edit the agent? | [Configuration map](../configs/README.md) |
 | How do I run it with no local GPU? | [Kaggle runtime](kaggle-runtime.md) |
 | How do I use our existing H100 setup? | [Trillium runtime](cluster-runtime.md) |
+| How is the first SWE/graph adapter trained? | [First LoRA](first-lora.md) |
 | What does a particular script do? | [Script catalog](../scripts/README.md) |
 | Where are the results behind a claim? | [Evidence catalog](../resource/manifests/README.md) |
 | Where are public notebooks and discussions? | [Research resource index](../resource/README.md) |
@@ -38,7 +39,7 @@ Choose the platform at the execution entry point; the agent configuration is sha
 | Directory | What belongs here | Who changes it? |
 | --- | --- | --- |
 | `configs/` | Agent YAML/prompts and named environment snapshots | Experiment authors; preserve the measured baseline |
-| `src/` | New team implementations such as retrieval or training utilities | Implementation authors; currently a reserved extension point |
+| `src/` | Team implementations, including trajectory conversion and SFT loss masks | Implementation authors |
 | `scripts/` | Existing build, evaluation, preparation, and collection entry points | Maintainers and experiment authors |
 | `tests/` | Lightweight checks of our preparation tools | Contributors changing those tools |
 | `docs/` | Human-readable guides and compact experiment reports | Everyone |

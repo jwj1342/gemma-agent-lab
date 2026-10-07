@@ -13,7 +13,7 @@ A collaborative workspace for the [Gemma 4 Developer Agent Competition](https://
 
 ## 🔬 Research focus
 
-We develop and evaluate agents built on the competition's required Gemma 4 base. The current baseline runs without a LoRA adapter; training remains a proposed research direction.
+We develop and evaluate agents built on the competition's required Gemma 4 base. The submitted baseline runs without a LoRA adapter. A [first SWE/graph LoRA pilot](docs/first-lora.md) completed training, checkpoint recovery, official quantized serving, and one-task repair verification. Broader repair and graph gains remain open research questions.
 
 | Direction | Research question |
 | --- | --- |
@@ -36,17 +36,18 @@ flowchart LR
 
 ## 📊 Verified results
 
-The baseline uses `gemma-4-31b-it-qat-w4a16-ct` with no LoRA. The following are recorded results, last checked on **October 5, 2026**.
+The submitted baseline uses `gemma-4-31b-it-qat-w4a16-ct` with no LoRA. The following are recorded results, last updated on **October 7, 2026**.
 
 | Evaluation | Result | Evidence |
 | --- | --- | --- |
 | Official competition submission | **0.12 public score**, submission `56844353` complete; private score unavailable | [Submission record](resource/manifests/competition-result.json) |
 | Kaggle L4×4 smoke test | `rich_3454` resolved; **84 tests passed**, including one added regression test | [L4 run](resource/manifests/kaggle-runtime-smoke.json) |
 | Independent H100 smoke test | The same public task passed compilation, offline generation, and patch verification | [H100 run](resource/manifests/hpc-smoke.json) |
+| First LoRA pilot on H100 | 64 SFT updates across two phases; corrected agent completed `rich_3454` with **84 passed tests** | [Pilot report](docs/first-lora.md) |
 
 Controls reproduced the original failure (**1 failed / 82 passed**) and confirmed the reference patch (**83 passed**). On L4×4, the agent phase took **74.10 seconds**, excluding model startup; the notebook reached smoke completion in about **655 seconds**.
 
-These smoke tests cover one public task. They do not establish full-benchmark performance, training success, or compliance with the global runtime budget. See the [submission guide](docs/submission.md) for the complete evidence and remaining work.
+These smoke tests cover one public task. They do not establish full-benchmark performance, a LoRA advantage, graph utility, or compliance with the global runtime budget. See the [submission guide](docs/submission.md) and [LoRA report](docs/first-lora.md) for evidence and remaining work.
 
 <a id="getting-started"></a>
 
@@ -121,6 +122,7 @@ For a first contribution, open an Issue with a small hypothesis, make one change
 | [Resource index](resource/README.md) | Official pages, 112 notebook reviews, discussions, models, and leaderboard snapshot |
 | [Submission guide](docs/submission.md) | Packaging, validation, official upload, and result tracking |
 | [Training plan](docs/training-plan.md) | Proposed SFT/LoRA work, compatibility checks, and prerequisites |
+| [First LoRA](docs/first-lora.md) | SWE-smith trajectories, grounded graph demonstrations, SFT, recovery, and evaluation gates |
 | [Trillium runtime](docs/cluster-runtime.md) | Optional cluster-specific environment and execution instructions |
 
 The [32-page kickoff presentation](https://www.overleaf.com/project/6ac31a4a617496d875323ad8) introduces coding agents, the competition, research directions, and team workflows. It is maintained separately in Overleaf and is excluded from this repository.

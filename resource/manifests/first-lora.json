@@ -1,0 +1,345 @@
+{
+  "recorded_at": "2026-10-07T20:04:11.827532+00:00",
+  "status": "trained and end-to-end smoke verified; broader SWE/graph gains unestablished",
+  "base_model": "google/gemma-4/Other/gemma-4-31b-it-qat-w4a16-ct/2",
+  "total_optimizer_steps": 64,
+  "trainable_parameters": 10956800,
+  "adapter_bytes": 43859880,
+  "adapter_sha256": "7a5f5f4a90487565e56f776fd4317263179d12bd8449cc8e62a2cdedf1f37732",
+  "adapter_export_path": "/scratch/jwj/kaggle_gemma4_agent/model/adapters/first-swe-graph-lora-pilot",
+  "objective": "assistant tool-action and terminal-answer SFT; no online reinforcement learning",
+  "swe_data": {
+    "dataset": "SWE-bench/SWE-smith-trajectories",
+    "revision": "08e109b4a59eaeebf80e4675cd125d42e7ac99a4",
+    "shard": "tool-00004-of-00008.parquet",
+    "sha256": "e41ffbd3f9d1571917ac5b9f4d0108ded4799d9776f597a054203467135a5715",
+    "selected_trajectories": 128,
+    "actions": {
+      "train": 1602,
+      "validation": 251
+    },
+    "reserved_evaluation_groups": [
+      "Textualize/rich.e1e6d745"
+    ]
+  },
+  "swe_teacher_models": [
+    "claude-3-5-sonnet-20241022"
+  ],
+  "graphs": {
+    "snapshots": 16,
+    "training_actions": 160,
+    "validation_actions": 96,
+    "harness_version": "0.2.7",
+    "grounding": "official tools executed; component exercises, no repair labels"
+  },
+  "terminal_fixtures": {
+    "count": 128,
+    "training": 109,
+    "validation": 19,
+    "label_origin": "team-authored final text after actual official tools on controlled Git fixtures"
+  },
+  "training_phases": [
+    {
+      "job": 1053959,
+      "run_path": "/scratch/jwj/kaggle_gemma4_agent/runs/20261007-first-swe-graph-lora-pilot-r2",
+      "optimizer_steps": 32,
+      "config": {
+        "seed": 42,
+        "max_length": 4096,
+        "rank": 8,
+        "lora_alpha": 16,
+        "target_suffixes": [
+          "q_proj",
+          "v_proj"
+        ],
+        "learning_rate": 5e-05,
+        "gradient_accumulation": 4,
+        "steps": 32,
+        "checkpoint_every": 8,
+        "validation_actions": 16,
+        "graph_fraction": 0.25,
+        "objective": "assistant tool-action tokens only",
+        "base_loading": "official v2 compressed-tensors dequantized to BF16",
+        "scope": "bounded pipeline pilot; benchmark improvement requires matched agent evaluation"
+      },
+      "source_sha256": {
+        "src/sft_data.py": "28c643cdf64209ab391fdce65202bceb40827533f518f3449e8b2247198f0de5",
+        "scripts/train_first_lora.py": "b120348ece300245b46e0b4c2f5d252ea4fd2da391027c484b0ee15e4dc6f01f"
+      },
+      "accepted_actions": {
+        "train": {
+          "swe": 1566,
+          "graph": 160
+        },
+        "validation": {
+          "swe": 250,
+          "graph": 96
+        }
+      },
+      "adapter_sha256": "c52413fb69d5d4e6cd6c3e83005c8a5fe865c1cf8e65b9ce475e60e004554e5d",
+      "validation_before": {
+        "swe": {
+          "assistant_nll": 1.2953611111428402,
+          "tokens": 617,
+          "actions": 16
+        },
+        "graph": {
+          "assistant_nll": 1.3092282382688163,
+          "tokens": 582,
+          "actions": 16
+        }
+      },
+      "validation_after": {
+        "swe": {
+          "assistant_nll": 0.723079106228568,
+          "tokens": 617,
+          "actions": 16
+        },
+        "graph": {
+          "assistant_nll": 0.5268511835012034,
+          "tokens": 582,
+          "actions": 16
+        }
+      },
+      "resume": {
+        "checkpoint": "/scratch/jwj/kaggle_gemma4_agent/runs/20261007-first-swe-graph-lora-pilot-r2/train/checkpoint-0008",
+        "restored_step": 8,
+        "input_hashes_match": true,
+        "optimizer_and_rng_restored": true
+      },
+      "peak_gib": 65.07667112350464,
+      "initial_adapter_sha256": null,
+      "fixed_input_nll_difference": 0.5255804508924484
+    },
+    {
+      "job": 1054072,
+      "run_path": "/scratch/jwj/kaggle_gemma4_agent/runs/20261007-first-swe-graph-lora-recovery-r2",
+      "optimizer_steps": 32,
+      "config": {
+        "seed": 42,
+        "max_length": 4096,
+        "rank": 8,
+        "lora_alpha": 16,
+        "target_suffixes": [
+          "q_proj",
+          "v_proj"
+        ],
+        "learning_rate": 5e-05,
+        "gradient_accumulation": 4,
+        "steps": 32,
+        "checkpoint_every": 8,
+        "validation_actions": 16,
+        "graph_fraction": 0.25,
+        "terminal_fraction": 0.5,
+        "objective": "assistant tool-action and terminal-answer tokens only",
+        "base_loading": "official v2 compressed-tensors dequantized to BF16",
+        "scope": "control-flow correction initialized from the first adapter with a fresh optimizer"
+      },
+      "source_sha256": {
+        "src/sft_data.py": "08d7e40a0e2d6920c94dae89822d4683f2ee513d03f66d7d160aff7b917e82fc",
+        "scripts/train_first_lora.py": "757a396130fd0168daac01d26d2bea4042890424b3812792628a5eb1b1f5e2f9"
+      },
+      "accepted_actions": {
+        "train": {
+          "swe": 1566,
+          "graph": 160,
+          "terminal": 109
+        },
+        "validation": {
+          "swe": 250,
+          "graph": 96,
+          "terminal": 19
+        }
+      },
+      "adapter_sha256": "7a5f5f4a90487565e56f776fd4317263179d12bd8449cc8e62a2cdedf1f37732",
+      "validation_before": {
+        "swe": {
+          "assistant_nll": 0.7669079201209685,
+          "tokens": 1619,
+          "actions": 16
+        },
+        "graph": {
+          "assistant_nll": 0.5268511835012034,
+          "tokens": 582,
+          "actions": 16
+        },
+        "terminal": {
+          "assistant_nll": 5.258656829595566,
+          "tokens": 112,
+          "actions": 16
+        }
+      },
+      "validation_after": {
+        "swe": {
+          "assistant_nll": 0.6517287896781553,
+          "tokens": 1619,
+          "actions": 16
+        },
+        "graph": {
+          "assistant_nll": 0.25498217526067984,
+          "tokens": 582,
+          "actions": 16
+        },
+        "terminal": {
+          "assistant_nll": 0.0006470436383096967,
+          "tokens": 112,
+          "actions": 16
+        }
+      },
+      "resume": {
+        "checkpoint": "/scratch/jwj/kaggle_gemma4_agent/runs/20261007-first-swe-graph-lora-recovery-r2/train/checkpoint-0008",
+        "restored_step": 8,
+        "input_hashes_match": true,
+        "optimizer_and_rng_restored": true
+      },
+      "peak_gib": 65.1812834739685,
+      "initial_adapter_sha256": {
+        "adapter_model.safetensors": "c52413fb69d5d4e6cd6c3e83005c8a5fe865c1cf8e65b9ce475e60e004554e5d",
+        "adapter_config.json": "445d6bf46dc93aebe98e3cf277f1783aaebd0a7487aff20d56120afd3ef912e5"
+      },
+      "fixed_input_nll_difference": 0.7208994664251804
+    }
+  ],
+  "serving": {
+    "job": 1054128,
+    "adapter_loaded": true,
+    "thinking_enabled": false,
+    "max_output_tokens": 512,
+    "summary": {
+      "swe": {
+        "/model": {
+          "schema_valid": 4,
+          "expected_tool_match": 3,
+          "clean_final_answer": 0,
+          "output_limit_reached": 0,
+          "actions": 4
+        },
+        "first_lora": {
+          "schema_valid": 3,
+          "expected_tool_match": 2,
+          "clean_final_answer": 0,
+          "output_limit_reached": 1,
+          "actions": 4
+        }
+      },
+      "graph": {
+        "/model": {
+          "schema_valid": 3,
+          "expected_tool_match": 3,
+          "clean_final_answer": 1,
+          "output_limit_reached": 0,
+          "actions": 4
+        },
+        "first_lora": {
+          "schema_valid": 4,
+          "expected_tool_match": 3,
+          "clean_final_answer": 0,
+          "output_limit_reached": 0,
+          "actions": 4
+        }
+      },
+      "terminal": {
+        "/model": {
+          "schema_valid": 0,
+          "expected_tool_match": 0,
+          "clean_final_answer": 4,
+          "output_limit_reached": 0,
+          "actions": 4
+        },
+        "first_lora": {
+          "schema_valid": 0,
+          "expected_tool_match": 0,
+          "clean_final_answer": 4,
+          "output_limit_reached": 0,
+          "actions": 4
+        }
+      }
+    },
+    "scope": "Fixed held-out tool/terminal contexts, thinking disabled for both models. Not an issue-resolution benchmark."
+  },
+  "repair_smoke": {
+    "job": 1054128,
+    "task_id": "rich_3454",
+    "agent_archive_sha256": "c32b143c6fbce2b5b9c614f183afdd47060bcc2cfe9550ae4b857e7cdac7012f",
+    "public_task_sha256": "6bf8045a08a3d0e71165e66e18f9b8bd8d79057446ce912b74ea32b597b68b8c",
+    "controls": {
+      "empty": "1 failed, 82 passed",
+      "gold": "83 passed"
+    },
+    "agent_tests_passed": 84,
+    "resolved": true,
+    "clean_completion": true,
+    "inference_seconds": 41.64929308090359,
+    "budget_counted_tools": 13,
+    "llm_calls": 15,
+    "tool_attempts": {
+      "run_command": 4,
+      "read_file": 6,
+      "edit_file": 3,
+      "submit_patch": 1
+    },
+    "observed_errors": {
+      "CommandError": 1
+    }
+  },
+  "initial_failure": {
+    "job": 1053994,
+    "error": "Agent exceeded turns budget (80 turns)",
+    "diagnostic_verification_job": 1054042,
+    "diagnostic_patch_tests_passed": 84,
+    "tool_attempts": {
+      "run_command": 6,
+      "read_file": 6,
+      "edit_file": 3,
+      "submit_patch": 62,
+      "get_status": 3
+    },
+    "observed_errors": {
+      "CommandError": 1
+    }
+  },
+  "filtered_candidate": {
+    "path": "/scratch/jwj/kaggle_gemma4_agent/data/processed/first-swe-graph-lora-offline-candidate",
+    "selected_trajectories": 109,
+    "actions": {
+      "train": 933,
+      "validation": 272
+    },
+    "reject_setup_actions": true,
+    "trained": false,
+    "scope": "heuristic exclusion of explicit setup commands; target replay pending"
+  },
+  "leaderboard_snapshot": {
+    "timestamp": "2026-10-07T18:33:26.037301+00:00",
+    "teams": 1982,
+    "max": 0.24,
+    "median": 0.1,
+    "at_or_below_012": 1626,
+    "score_counts": {
+      "0.0": 129,
+      "0.01": 47,
+      "0.03": 68,
+      "0.05": 136,
+      "0.06": 184,
+      "0.08": 317,
+      "0.1": 370,
+      "0.12": 375,
+      "0.13": 242,
+      "0.15": 82,
+      "0.17": 27,
+      "0.18": 4,
+      "0.24": 1
+    },
+    "source": "https://www.kaggle.com/competitions/gemma-4-developer-agent/leaderboard"
+  },
+  "limitations": [
+    "64-update pilot, not full-corpus or one-epoch training",
+    "Upstream SWE success labels; competition-tool replay not performed",
+    "Measured pilot retains upstream dependency setup actions; stricter untrained candidate saved separately",
+    "Validation NLL and prescribed tool matches are not issue-resolution rates",
+    "Repair smoke covers one historically known task; stochastic single-run comparisons do not establish causal improvements",
+    "Corrected smoke made zero graph calls; graph utility has not been measured",
+    "Snapshots are split by repository/base commit; complete repository holdout is still needed",
+    "Official public score remains the original 0.12; no new competition upload"
+  ]
+}

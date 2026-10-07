@@ -35,6 +35,7 @@ args+=(--bind "$data_dir/snapshots:/data/snapshots:ro" --bind "$data_dir/graphs:
   --bind "$data_dir/embeddings:/data/embeddings:ro" --bind "$data_dir/wheels:/data/wheels:ro")
 if [[ "$mode" == infer ]]; then
   args+=(--nv --bind "$model_dir:/model:ro" --bind "$run_dir/inputs/tasks.jsonl:/data/tasks.jsonl:ro")
+  args+=(--env "HPC_VLLM_PORT=$((20000 + SLURM_JOB_ID % 10000))")
   if [[ -n ${CUDA_VISIBLE_DEVICES:-} ]]; then
     args+=(--env "CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES")
   fi
