@@ -111,7 +111,7 @@ with zipfile.ZipFile(io.BytesIO(raw)) as archive:
 (WORK/'inputs/submission.zip').write_bytes(raw)
 archive_manifest = dict(PAYLOAD['archive_manifest'], archive=str(WORK/'inputs/submission.zip'))
 (WORK/'inputs/submission.manifest.json').write_text(json.dumps(archive_manifest, indent=2) + '\\n')
-(WORK/'inputs/tasks.jsonl').write_text(task_text)
+(WORK/'inputs/tasks.jsonl').write_bytes(task_text.encode('utf-8'))
 (WORK/'run-manifest.json').write_text(json.dumps({
     'task_id': PAYLOAD['task_id'], 'git_revision': PAYLOAD['git_revision'],
     'source_run_git_revision': PAYLOAD['source_run_git_revision'],

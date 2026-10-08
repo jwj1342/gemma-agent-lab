@@ -18,6 +18,10 @@ Copy `baseline/` to `experiments/<name>/` for a variant. Keep reports outside th
 the packaging script includes every allowed file underneath it. Existing smoke evidence applies
 to the unchanged baseline ZIP, not automatically to a new variant.
 
+| Experiment | Change | Evidence |
+| --- | --- | --- |
+| [Localization v1](experiments/localization-v1/agent.yaml) | Read-only full-tree skill with a BM25 fallback and a portable learned ranker/confidence gate; positive offline results, remote A/B pending | [Portable nested study](../docs/experiments/2026-10-08-localization-v1-portable.md), [full-tree benchmark](../docs/experiments/2026-10-08-localization-v1.md), and [legacy gate study](../docs/experiments/2026-10-08-localization-v1-large-learning.md) |
+
 ## Environment records
 
 | File | Scope |

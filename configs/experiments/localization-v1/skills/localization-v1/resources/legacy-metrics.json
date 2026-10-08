@@ -1,0 +1,108 @@
+{
+  "provenance": {
+    "checkpoint_sha256": "56bec1d839b79ecaf9374a7f6da1e5cb496870e87c51750d2284d10f569cfdbc",
+    "source": "artifacts/localization_v3_3k/model.json",
+    "source_checkpoint_name": "localizer v3, retained as product-level Localization v1"
+  },
+  "baselines": {
+    "dev": {
+      "frequency_plus_lexical": {
+        "hit_at_1": 0.3157894736842105,
+        "hit_at_3": 0.631578947368421,
+        "hit_at_5": 0.7368421052631579,
+        "mrr": 0.5031768610715979,
+        "tasks": 19
+      },
+      "lexical": {
+        "hit_at_1": 0.3157894736842105,
+        "hit_at_3": 0.3684210526315789,
+        "hit_at_5": 0.47368421052631576,
+        "mrr": 0.38832497554908424,
+        "tasks": 19
+      }
+    },
+    "test": {
+      "frequency_plus_lexical": {
+        "hit_at_1": 0.3684210526315789,
+        "hit_at_3": 0.631578947368421,
+        "hit_at_5": 0.9473684210526315,
+        "mrr": 0.5675438596491228,
+        "tasks": 19
+      },
+      "lexical": {
+        "hit_at_1": 0.2631578947368421,
+        "hit_at_3": 0.3684210526315789,
+        "hit_at_5": 0.42105263157894735,
+        "mrr": 0.3640954182806954,
+        "tasks": 19
+      }
+    },
+    "train": {
+      "frequency_plus_lexical": {
+        "hit_at_1": 0.34065934065934067,
+        "hit_at_3": 0.6483516483516484,
+        "hit_at_5": 0.8571428571428571,
+        "mrr": 0.5346546869467075,
+        "tasks": 91
+      },
+      "lexical": {
+        "hit_at_1": 0.31868131868131866,
+        "hit_at_3": 0.4945054945054945,
+        "hit_at_5": 0.5384615384615384,
+        "mrr": 0.42679591612200324,
+        "tasks": 91
+      }
+    }
+  },
+  "benchmark_scope": "closed-world public changed-file candidates",
+  "best_checkpoint": {
+    "dev": {
+      "hit_at_1": 0.5263157894736842,
+      "hit_at_3": 0.631578947368421,
+      "hit_at_5": 0.7894736842105263,
+      "mrr": 0.6205958976388338,
+      "tasks": 19
+    },
+    "test": {
+      "hit_at_1": 0.47368421052631576,
+      "hit_at_3": 0.7368421052631579,
+      "hit_at_5": 0.7894736842105263,
+      "mrr": 0.6188596491228069,
+      "tasks": 19
+    },
+    "train": {
+      "hit_at_1": 1.0,
+      "hit_at_3": 1.0,
+      "hit_at_5": 1.0,
+      "mrr": 1.0,
+      "tasks": 91
+    }
+  },
+  "best_dev_checkpoint_score": 0.6578947368421053,
+  "best_epoch": 1850,
+  "checkpoint_objective": {
+    "hit_at_1_weight": 0.5,
+    "hit_at_5_weight": 0.5,
+    "tie_breaker": "mrr"
+  },
+  "completed_epochs": 3000,
+  "repo_candidate_counts": {
+    "Textualize/rich": 55,
+    "encode/httpx": 7,
+    "fastapi/fastapi": 68,
+    "psf/requests": 8
+  },
+  "split_sizes": {
+    "dev": 19,
+    "test": 19,
+    "train": 91
+  },
+  "training_config": {
+    "dimension": 262144,
+    "eval_every": 25,
+    "learning_rate": 0.08,
+    "seed": 52,
+    "weight_decay": 0.0001,
+    "weight_decay_mode": "global_decoupled_lazy_scale"
+  }
+}

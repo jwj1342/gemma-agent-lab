@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "model_type": "portable_localization_v1",
+  "features": ["bm25", "unique_query", "short_length_normalization", "path", "symbols", "exact_symbols", "implementation"],
+  "weights": [1.0, 2.0, 0.0, 2.0, 2.0, 0.0, 1.0],
+  "gate": {
+    "kind": "confidence",
+    "max_bm25_margin": 0.6,
+    "min_candidate_margin": 0.025
+  },
+  "enabled": false,
+  "promotion_checks": {
+    "gate_nontrivial": true,
+    "nested_snapshot_no_regression": true,
+    "nested_repository_no_regression": true,
+    "dev_no_regression": true,
+    "test_no_regression": true,
+    "fresh_confirmation_passed": false,
+    "remote_paired_repair_improvement": false
+  },
+  "decision": "Positive retrospective localization results; use explicit portable mode for frozen remote A/B. Production activation awaits fresh confirmation and paired repair evidence.",
+  "study_artifact": "runs/2026-10-08-localization-v1-portable/study-final/study.json"
+}

@@ -18,6 +18,11 @@ The generated Kaggle notebook subsequently runs in Kaggle's evaluation environme
 | [check_kaggle_quota.py](check_kaggle_quota.py) | Kaggle CLI environment | Read quota with complete duration values and save a dated JSON report |
 | [check_submission_status.py](check_submission_status.py) | Kaggle CLI environment | Query existing submission/notebook state without uploading again |
 | [submit_competition.py](submit_competition.py) | Prepared run + Kaggle CLI | Recheck evidence, ZIP, and upload route; dry-run by default, `--submit` sends an entry with a duplicate-prevention receipt |
+| [benchmark_localization_v1.py](benchmark_localization_v1.py) | Local, with public task data and source-repository objects | Leakage-safe full-tree BM25/checkpoint localization comparison at each task's base commit |
+| [train_localization_gate.py](train_localization_gate.py) | Local, with the same full-tree inputs | Fit a conservative per-issue BM25/v1 gate on 91 training tasks; run five-fold, repository-holdout, frozen development/holdout, and stratified-bootstrap safety checks |
+| [train_portable_localization.py](train_portable_localization.py) | Local CPU, with full-tree inputs | Learn portable ranking coefficients and a confidence gate with whole-system nested cross-fitting |
+| [prepare_localization_ab.py](prepare_localization_ab.py) | Local CPU, with public tasks | Freeze baseline/BM25/portable arms and paired tasks; optionally generate manual Kaggle pilot notebooks |
+| [summarize_localization_ab.py](summarize_localization_ab.py) | Local CPU, with downloaded frozen run outputs | Check paired repair gains, exact discordant-pair significance, latency, and complete valid evidence |
 
 ## Shared evaluation helpers
 

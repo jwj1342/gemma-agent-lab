@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "enabled": false,
+  "fallback": "bm25",
+  "candidate": "v1_hybrid",
+  "candidate_weights": {
+    "bm25": 1.0,
+    "exact": 0.4,
+    "legacy": 0.5
+  },
+  "features": [
+    "log_candidates",
+    "log_issue_tokens",
+    "bm25_margin",
+    "bm25_positive_fraction",
+    "legacy_margin",
+    "legacy_positive_fraction",
+    "exact_top",
+    "exact_positive_fraction",
+    "top1_agree",
+    "top3_jaccard",
+    "candidate_top_in_bm25",
+    "bm25_top_in_candidate"
+  ],
+  "rule": {
+    "kind": "all",
+    "conditions": [
+      {
+        "kind": "stump",
+        "feature": "bm25_margin",
+        "operator": "<=",
+        "threshold": 0.36349847748766084
+      },
+      {
+        "kind": "stump",
+        "feature": "bm25_positive_fraction",
+        "operator": ">",
+        "threshold": 0.12810649472405317
+      }
+    ]
+  },
+  "safety_checks": {
+    "nontrivial_rule": true,
+    "training_fit_no_primary_regression": true,
+    "training_cross_validation_no_primary_regression": true,
+    "training_leave_one_repo_out_no_primary_regression": true,
+    "development_no_primary_regression": true,
+    "development_bootstrap_95_no_regression": false,
+    "holdout_no_primary_regression": false,
+    "holdout_bootstrap_95_no_regression": false,
+    "holdout_has_v1_activation": true
+  },
+  "decision": "Keep v1 disabled by default; large-sample calibration improved training and development but the frozen rule regressed holdout Hit@1 and MRR, and bootstrap confidence checks failed.",
+  "study_artifact": "runs/2026-10-08-localization-v1-large-learning/gate-study.json"
+}

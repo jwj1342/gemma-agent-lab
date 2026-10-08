@@ -9,4 +9,8 @@ Existing baseline results predate this convention. Their authoritative receipts 
 
 | Date | Report |
 | --- | --- |
+| 2026-10-08 | [Portable Localization v1 and nested gate learning](2026-10-08-localization-v1-portable.md) |
+| 2026-10-08 | [Localization v1 large-sample gate study](2026-10-08-localization-v1-large-learning.md) |
+| 2026-10-08 | [Localization v1 adaptive gate study](2026-10-08-localization-v1-gate.md) |
+| 2026-10-08 | [Localization v1 full-tree integration](2026-10-08-localization-v1.md) |
 | 2026-10-06 | [Repository navigation and Kaggle preparation](2026-10-06-repository-onboarding.md) |

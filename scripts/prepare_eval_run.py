@@ -18,7 +18,7 @@ def main():
     parser.add_argument('--tasks', type=Path, default=Path('data/raw/gemma-4-developer-agent/tasks.jsonl'))
     args = parser.parse_args()
     source, files = collect_files(args.agent_dir)
-    rows = [json.loads(line) for line in args.tasks.read_text().splitlines() if line.strip()]
+    rows = [json.loads(line) for line in args.tasks.read_text(encoding='utf-8').splitlines() if line.strip()]
     rows = [row for row in rows if row['instance_id'] == args.task_id]
     if len(rows) != 1:
         raise ValueError('Expected one matching public task')
@@ -33,7 +33,8 @@ def main():
         shutil.copy2(path, target)
     public_task = {key: value for key, value in rows[0].items() if key in PUBLIC_FIELDS}
     task_file = inputs / 'tasks.jsonl'
-    task_file.write_text(json.dumps(public_task) + '\n')
+    # Freeze identical task bytes on Windows and Linux/Kaggle.
+    task_file.write_bytes((json.dumps(public_task) + '\n').encode('utf-8'))
     bundle = build(agent_dir, inputs / 'submission.zip')
     revision = subprocess.run(['git', 'rev-parse', '--verify', 'HEAD'], capture_output=True, text=True)
     manifest = {'created_at': datetime.now(timezone.utc).isoformat(),

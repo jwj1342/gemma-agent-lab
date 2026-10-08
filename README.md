@@ -48,6 +48,11 @@ Controls reproduced the original failure (**1 failed / 82 passed**) and confirme
 
 These smoke tests cover one public task. They do not establish full-benchmark performance, training success, or compliance with the global runtime budget. See the [submission guide](docs/submission.md) for the complete evidence and remaining work.
 
+**Localization experiment (October 8):** portable v1 with a learned gate improves offline file
+ranking; remote repair improvement is not yet verified. The baseline is unchanged. See the
+[handoff](docs/localization-handoff.md) for the existing localization mechanisms, preserved module,
+results, and next evaluation step.
+
 <a id="getting-started"></a>
 
 ## 🚀 Getting started
