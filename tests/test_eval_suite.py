@@ -101,6 +101,20 @@ class SuiteTests(unittest.TestCase):
         os.utime(path, ns=(stat.st_atime_ns, stat.st_mtime_ns))
         self.assertNotEqual(indexed_hash(path, index), old)
 
+    def test_documented_new_api_requires_exact_failure_and_passing_gold(self):
+        empty, gold = self.controls('fastapi_15745')
+        empty.update(test_exit_code=2, test_output=(
+            "E   ImportError: cannot import name '_IncludedRouter' from 'fastapi.routing' (/workspace/fastapi/routing.py)\n"
+            "1 error during collection"))
+        self.assertTrue(cache_record('key', empty, gold)['body']['valid'])
+        gold['resolved'] = False
+        self.assertFalse(cache_record('key', empty, gold)['body']['valid'])
+        gold['resolved'] = True
+        empty['test_output'] += '\nE   ModuleNotFoundError: missing_dependency'
+        self.assertFalse(cache_record('key', empty, gold)['body']['valid'])
+        empty['test_output'] = empty['test_output'].split('\nE   ModuleNotFoundError')[0].replace('_IncludedRouter', 'UnexpectedAPI')
+        self.assertFalse(cache_record('key', empty, gold)['body']['valid'])
+
     def populate(self, run):
         m = verify_inputs(run)
         controls = {}

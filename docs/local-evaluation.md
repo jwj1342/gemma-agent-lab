@@ -144,6 +144,14 @@ to an incompatible Pydantic 1 release. Rich uses Pygments 2.19.2, as recorded in
 These are environment choices for this dated public cohort. Keep them in the run identity and check
 empty/gold controls again before changing versions or extending to more tasks.
 
+Two feature tasks have an explicit negative-control exception: `fastapi_15745` imports
+`_IncludedRouter` and `fastapi_14609` imports `PydanticV1NotSupportedError`. Each symbol is introduced
+by that task's reference patch. Their empty controls may therefore contain exactly that single
+collection-time import failure. The reference patch must still pass the complete official verifier.
+Unexpected symbols, missing dependencies, multiple collection errors, timeouts, and failed positive
+controls remain ineligible. This avoids excluding feature implementation merely because its test
+imports the new API before exercising it.
+
 Content changes to the environment, grader, data, or budget invalidate control reuse. The hash index
 assumes trusted local files and normal filesystem metadata behavior; `--rehash-assets` provides an
 independent full-content check. Invalid controls are cached too, with their logs, so a second method does

@@ -39,11 +39,29 @@ def snapshot_group(task):
     return task['repo'].lower() + '.' + task['base_commit'].lower()
 
 
+def expected_missing_api(empty):
+    """Two released feature tests import a symbol introduced by the reference patch.
+
+    Keep the exception narrow: other collection failures remain ineligible.
+    The complete positive control is still required by check_controls.
+    """
+    symbols = {'fastapi_15745': ('_IncludedRouter', 'fastapi.routing'),
+               'fastapi_14609': ('PydanticV1NotSupportedError', 'fastapi.exceptions')}
+    symbol = symbols.get(empty.get('task_id'))
+    output = empty.get('test_output', '')
+    if (symbol is None or empty.get('resolved') is not False or empty.get('test_exit_code') != 2
+            or empty.get('error_message') or '1 error during collection' not in output):
+        return False
+    errors = re.findall(r'^E\s+(.+Error:.*)$', output, re.MULTILINE)
+    expected = "ImportError: cannot import name '%s' from '%s'" % symbol
+    return len(errors) == 1 and errors[0].startswith(expected)
+
+
 def check_controls(empty, gold):
-    """Collection errors and missing required tests are not valid negative controls."""
+    """Require a reproduced failure and complete passing reference verification."""
     from summarize_eval_smoke import ordinary_test_failure
     return (empty.get('task_id') == gold.get('task_id')
-            and ordinary_test_failure(empty)
+            and (ordinary_test_failure(empty) or expected_missing_api(empty))
             and gold.get('resolved') is True and gold.get('test_exit_code') == 0
             and not gold.get('error_message'))
 
