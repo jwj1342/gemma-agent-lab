@@ -15,6 +15,9 @@ The generated Kaggle notebook subsequently runs in Kaggle's evaluation environme
 | [prepare_kaggle_upload.py](prepare_kaggle_upload.py) | Local | Private CPU notebook that emits an already reviewed small ZIP; no model inference |
 | [prepare_eval_run.py](prepare_eval_run.py) | Local, with task data | Freeze agent, sanitized public task, and ZIP identity into a new run |
 | [slurm_eval_smoke.sh](slurm_eval_smoke.sh) | Trillium GPU allocation | Existing H100 compile → controls → inference → independent tests workflow |
+| [prepare_eval_suite.py](prepare_eval_suite.py) | Local, with task data | Freeze a candidate, public cohort, and runtime scripts for repeated evaluation |
+| [slurm_eval_suite.sh](slurm_eval_suite.sh) | Trillium GPU allocation | One model startup per batch, cached controls, independent grading, and paired comparison |
+| [summarize_eval_suite.py](summarize_eval_suite.py) | Local, with completed runs | Coverage, resolution, cost, and task-by-task gains/regressions |
 | [check_kaggle_quota.py](check_kaggle_quota.py) | Kaggle CLI environment | Read quota with complete duration values and save a dated JSON report |
 | [check_submission_status.py](check_submission_status.py) | Kaggle CLI environment | Query existing submission/notebook state without uploading again |
 | [submit_competition.py](submit_competition.py) | Prepared run + Kaggle CLI | Recheck evidence, ZIP, and upload route; dry-run by default, `--submit` sends an entry with a duplicate-prevention receipt |
@@ -28,6 +31,9 @@ The generated Kaggle notebook subsequently runs in Kaggle's evaluation environme
 | [prepare_eval_task.py](prepare_eval_task.py) | Export inference fields while removing reference/test patches and labels |
 | [verify_eval_run.py](verify_eval_run.py) | Check frozen task identity/hash and agent/ZIP member hashes before execution or submission; standard library only |
 | [summarize_eval_smoke.py](summarize_eval_smoke.py) | Check empty/gold controls and report pipeline execution separately from issue resolution |
+| [define_eval_splits.py](define_eval_splits.py) | Freeze repository/snapshot groups after auditing known SWE/graph exposure |
+| [eval_suite_lib.py](eval_suite_lib.py) | JSON, grouping, result integrity, control-cache validation, and descriptive intervals |
+| [run_eval_suite.py](run_eval_suite.py) | Versioned asset identities, cache reuse, run locking, resume, and isolated execution phases |
 
 Kaggle embeds these evaluation helpers in its generated notebook. H100 runs them in the prepared
 container. An inference result is not a competition score, and a packaging check is not a GPU test.

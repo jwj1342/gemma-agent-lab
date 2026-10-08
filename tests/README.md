@@ -12,6 +12,9 @@ checks the embedded shared scripts and baseline ZIP, and executes only the input
 cell against tiny temporary mount fixtures. It checks label removal, frozen-input tampering,
 input mismatch, execution provenance, the downloaded-run submission dry-run, and output preservation.
 Synthetic result JSON files exercise the submission handoff without claiming model performance.
+`test_eval_suite.py` checks grouped cohorts, label-free frozen inputs, explicit holdout access,
+changed control identities, artifact receipts, fixed score denominators, and matched comparisons.
+Its synthetic results do not establish runtime speed or model quality; allocated runs provide that evidence.
 The wheel-inventory test also executes the start of the installation cell with pip mocked, requiring
 unexpected wheels to fail before any installation or deletion. It never installs the wheelhouse, contacts
 Kaggle, loads a model, runs repository tests, or consumes GPU quota.

@@ -2,6 +2,8 @@
 
 Track the experiment in [Issue #4](https://github.com/jwj1342/gemma-agent-lab/issues/4)
 and review the implementation in [PR #3](https://github.com/jwj1342/gemma-agent-lab/pull/3).
+The follow-up [local evaluation workflow](local-evaluation.md) freezes public cohorts and batches
+inference with reusable environment controls. It separates repeated development from milestone holdout use.
 
 The first experiment uses successful SWE-smith trajectories to train repository repair actions and
 executed competition graph queries to train graph-tool arguments. It is a bounded SFT pilot. Its

@@ -2,7 +2,7 @@
 # Invoke from a compute allocation for infer/verify. compile is a light import check.
 set -eo pipefail
 mode=${1:?mode}; run_dir=${2:?run directory}; shift 2
-project_root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
+project_root=${GEMMA_PROJECT_ROOT:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)}
 run_dir=$(realpath "$run_dir")
 module load apptainer/1.4.5
 # Alliance exports /project,/scratch as user bind mounts. --cleanenv and
@@ -20,12 +20,14 @@ case "$mode" in infer|verify|compile) ;; *) echo 'Mode must be infer, verify or 
 if [[ "$mode" != compile && -z ${SLURM_JOB_ID:-} ]]; then
   echo 'Inference and repository tests must run within a Slurm allocation.' >&2; exit 2
 fi
-python3 "$project_root/scripts/verify_eval_run.py" --run-dir "$run_dir"
+runtime_dir="$project_root/scripts"
+if [[ -d "$run_dir/inputs/runtime" ]]; then runtime_dir="$run_dir/inputs/runtime"; fi
+python3 "$runtime_dir/verify_eval_run.py" --run-dir "$run_dir"
 work="$run_dir/$mode"
 mkdir -p "$work/tmp" "$work/home"
 args=(exec --cleanenv --containall --no-home --no-mount hostfs,bind-paths,cwd
   --pwd /work/run
-  --bind "$project_root/scripts:/app:ro" --bind "$agent_dir:/agent:ro"
+  --bind "$runtime_dir:/app:ro" --bind "$agent_dir:/agent:ro"
   --bind "$eval_venv:$eval_venv:ro" --bind "$work:/work/run" --bind "$work/tmp:/tmp")
 if [[ "$mode" == compile ]]; then
   exec apptainer "${args[@]}" "$image" /bin/bash /app/container_entry.sh \

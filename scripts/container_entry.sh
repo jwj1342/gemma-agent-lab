@@ -9,6 +9,7 @@ export TORCH_HOME=/work/run/cache/torch
 export TORCH_EXTENSIONS_DIR=/work/run/cache/torch-extensions
 export TRITON_CACHE_DIR=/work/run/cache/triton
 export VLLM_CACHE_ROOT=/work/run/cache/vllm
+export FLASHINFER_WORKSPACE_BASE=/work/run/cache/flashinfer
 export HF_HUB_OFFLINE=1 HF_DATASETS_OFFLINE=1
 export PIP_NO_INDEX=1 PIP_DISABLE_PIP_VERSION_CHECK=1
 export LITELLM_LOCAL_MODEL_COST_MAP=True OTEL_SDK_DISABLED=true

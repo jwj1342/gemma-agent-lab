@@ -15,9 +15,20 @@ def verify_inputs(run):
     tasks = run / 'inputs/tasks.jsonl'
     if sha256(tasks) != manifest['public_task_sha256']:
         raise ValueError('Frozen public task hash changed')
-    rows = [json.loads(line) for line in tasks.read_text().splitlines() if line.strip()]
-    if len(rows) != 1 or rows[0].get('instance_id') != manifest['task_id'] or not set(rows[0]) <= PUBLIC_FIELDS:
-        raise ValueError('Frozen task must contain one matching public task without validation labels')
+    with tasks.open() as stream:
+        rows = [json.loads(line) for line in stream if line.strip()]
+    expected_ids = manifest['task_ids'] if manifest.get('suite_version') else [manifest['task_id']]
+    if ([row.get('instance_id') for row in rows] != expected_ids
+            or len(set(expected_ids)) != len(expected_ids) or not rows
+            or any(not set(row) <= PUBLIC_FIELDS for row in rows)):
+        raise ValueError('Frozen tasks must match the manifest without validation labels')
+    if manifest.get('suite_version'):
+        if sha256(run / 'inputs/benchmark.json') != manifest['benchmark_sha256']:
+            raise ValueError('Frozen benchmark changed')
+        runtime = run / 'inputs/runtime'
+        actual = {p.name: sha256(p) for p in runtime.iterdir() if p.is_file()}
+        if actual != manifest['runtime_sha256']:
+            raise ValueError('Frozen runtime changed')
     bundle = run / 'inputs/submission.zip'
     archive_manifest = json.loads(bundle.with_suffix('.manifest.json').read_text())
     digest = sha256(bundle)
@@ -47,4 +58,4 @@ if __name__ == '__main__':
     parser.add_argument('--run-dir', type=Path, required=True)
     args = parser.parse_args()
     result = verify_inputs(args.run_dir)
-    print(json.dumps({'task_id': result['task_id'], 'status': 'Frozen inputs verified'}))
+    print(json.dumps({'task_ids': result.get('task_ids', [result.get('task_id')]), 'status': 'Frozen inputs verified'}))

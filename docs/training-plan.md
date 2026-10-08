@@ -2,6 +2,8 @@
 
 The original plan below is now accompanied by the [first SWE/graph LoRA pilot](first-lora.md).
 Use its measured report to distinguish completed training checks from planned benchmark comparisons.
+Use the [local evaluation workflow](local-evaluation.md) for frozen development/holdout cohorts and
+matched repair comparisons. Future SWE and graph preparation excludes those snapshots by default.
 `/home/jwj/venvs/kaggle-cli` is the maintainer's data-access environment. Trillium PyTorch,
 SFT, and RL operating guidance is maintained in `/home/jwj/.codex/cluster-guides/trillium.md`.
 All environment versions and resource figures below are dated October 5, 2026 unless stated otherwise.

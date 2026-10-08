@@ -10,6 +10,9 @@ A collaborative workspace for the [Gemma 4 Developer Agent Competition](https://
 
 **New to the workspace?** Use the [repository map](docs/repository-map.md) to find files and the
 [Kaggle walkthrough](docs/kaggle-runtime.md) to run our baseline with your own account.
+For repeated method comparisons on our prepared H100 environment, use the
+[local evaluation guide](docs/local-evaluation.md): fixed cohorts, one model startup per batch,
+cached environment controls, resumable results, and paired reports.
 
 ## 🔬 Research focus
 
@@ -123,6 +126,7 @@ For a first contribution, open an Issue with a small hypothesis, make one change
 | [Submission guide](docs/submission.md) | Packaging, validation, official upload, and result tracking |
 | [Training plan](docs/training-plan.md) | Proposed SFT/LoRA work, compatibility checks, and prerequisites |
 | [First LoRA](docs/first-lora.md) | SWE-smith trajectories, grounded graph demonstrations, SFT, recovery, and evaluation gates |
+| [Local evaluation](docs/local-evaluation.md) | Frozen public cohorts, batch inference, cached controls, and method comparisons |
 | [Trillium runtime](docs/cluster-runtime.md) | Optional cluster-specific environment and execution instructions |
 
 The [32-page kickoff presentation](https://www.overleaf.com/project/6ac31a4a617496d875323ad8) introduces coding agents, the competition, research directions, and team workflows. It is maintained separately in Overleaf and is excluded from this repository.

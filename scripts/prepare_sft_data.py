@@ -24,6 +24,8 @@ def main():
     parser.add_argument("--reject-setup-actions", action="store_true",
                         help="Reject whole trajectories containing explicit dependency/network setup commands")
     parser.add_argument("--tasks", type=Path, default=Path("data/raw/gemma-4-developer-agent/tasks.jsonl"))
+    parser.add_argument("--eval-benchmark", type=Path, default=Path("configs/evaluation/public-v1.json"),
+                        help="Exclude all frozen development/holdout snapshots from future training")
     args = parser.parse_args()
     import pyarrow.parquet as pq
     if args.output.exists():
@@ -39,6 +41,14 @@ def main():
     selected = []
     public_tasks = [json.loads(line) for line in args.tasks.read_text().splitlines() if line.strip()]
     reserved = {t["repo"] + "." + t["base_commit"][:8] for t in public_tasks if t["instance_id"] == "rich_3454"}
+    benchmark_hash = None
+    if not args.eval_benchmark.exists():
+        raise ValueError("Frozen evaluation benchmark is missing; provide --eval-benchmark explicitly")
+    if args.eval_benchmark.exists():
+        benchmark = json.loads(args.eval_benchmark.read_text())
+        protected = set(benchmark["cohorts"]["dev"] + benchmark["cohorts"]["holdout"])
+        reserved.update(t["repo"] + "." + t["base_commit"][:8] for t in public_tasks if t["instance_id"] in protected)
+        benchmark_hash = hashlib.sha256(args.eval_benchmark.read_bytes()).hexdigest()
     rows.sort(key=lambda r: hashlib.sha256(f"{args.seed}:{r['traj_id']}".encode()).hexdigest())
     seen = set()
     for row in rows:
@@ -50,7 +60,7 @@ def main():
         try:
             messages = convert_trajectory(row, reject_setup_actions=args.reject_setup_actions)
             group = group_key(row["instance_id"])
-            if group in reserved:
+            if group.lower() in {g.lower() for g in reserved}:
                 raise UnsupportedAction("Reserved evaluation snapshot")
         except (UnsupportedAction, KeyError, ValueError, TypeError) as exc:
             rejected[str(exc)] += 1
@@ -72,6 +82,7 @@ def main():
                 "actions": {k: len(v) for k, v in examples.items()}, "groups": {k: sorted(v) for k, v in groups.items()},
                 "selected": selected, "rejected": dict(rejected), "reserved_evaluation_groups": sorted(reserved),
                 "reject_setup_actions": args.reject_setup_actions,
+                "eval_benchmark_sha256": benchmark_hash,
                 "scope": "Action-level warm start. Upstream success labels retained; observations have not been replayed with competition tools."}
     (args.output / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
     print(json.dumps({k: v for k, v in manifest.items() if k not in ("selected", "groups", "rejected")}, indent=2))

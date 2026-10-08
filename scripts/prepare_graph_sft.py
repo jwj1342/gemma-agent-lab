@@ -29,6 +29,7 @@ def main():
     parser.add_argument("--embeddings", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--max-graphs", type=int, default=16)
+    parser.add_argument("--eval-benchmark", type=Path, default=Path("configs/evaluation/public-v1.json"))
     args = parser.parse_args()
     from swegemma.tools.graph import get_code_neighbors, get_code_subgraph, search_similar_code
     from swegemma.graph.graph_utils import clear_caches
@@ -38,6 +39,14 @@ def main():
     tasks = [json.loads(line) for line in args.tasks.read_text().splitlines() if line.strip()]
     # Reserve the historically tested snapshot entirely; select other snapshots without using issue patches.
     reserved = {t["base_commit"] for t in tasks if t["instance_id"] == "rich_3454"}
+    benchmark_hash = None
+    if not args.eval_benchmark.exists():
+        raise ValueError("Frozen evaluation benchmark is missing; provide --eval-benchmark explicitly")
+    if args.eval_benchmark.exists():
+        benchmark = json.loads(args.eval_benchmark.read_text())
+        protected = set(benchmark["cohorts"]["dev"] + benchmark["cohorts"]["holdout"])
+        reserved.update(t["base_commit"] for t in tasks if t["instance_id"] in protected)
+        benchmark_hash = hashlib.sha256(args.eval_benchmark.read_bytes()).hexdigest()
     unique = {(t["repo"], t["base_commit"]): t for t in tasks if t["base_commit"] not in reserved}
     selected = sorted(unique.values(), key=lambda t: hashlib.sha256(t["base_commit"].encode()).hexdigest())[:args.max_graphs]
     records = {"train": [], "validation": []}
@@ -100,6 +109,7 @@ def main():
     for split, rows in records.items():
         (args.output / f"{split}.jsonl").write_text("".join(json.dumps(r) + "\n" for r in rows))
     manifest = {"harness_version": "0.2.7", "excluded_snapshot_commits": sorted(reserved), "graphs": len(selected),
+                "eval_benchmark_sha256": benchmark_hash,
                 "actions": {k: len(v) for k, v in records.items()}, "executed_components": executed,
                 "scope": "Graph query arguments, induced subgraph selection, and empty-result fallback. No end-to-end repairs generated."}
     (args.output / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
