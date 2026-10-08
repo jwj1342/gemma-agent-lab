@@ -13,7 +13,7 @@ from prepare_eval_task import PUBLIC_FIELDS
 RUNTIME_FILES = ['build_submission.py', 'prepare_eval_task.py', 'verify_eval_run.py',
                  'eval_suite_lib.py', 'evaluate_agent.py', 'validate_agent.py', 'summarize_eval_smoke.py',
                  'run_eval_container.sh', 'container_entry.sh', 'run_eval_suite.py',
-                 'summarize_eval_suite.py']
+                 'summarize_eval_suite.py', 'local_eval_setup.py']
 
 
 def prepare(run, agent, tasks, benchmark, cohort, allow_holdout=False):

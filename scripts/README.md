@@ -34,6 +34,8 @@ The generated Kaggle notebook subsequently runs in Kaggle's evaluation environme
 | [define_eval_splits.py](define_eval_splits.py) | Freeze repository/snapshot groups after auditing known SWE/graph exposure |
 | [eval_suite_lib.py](eval_suite_lib.py) | JSON, grouping, result integrity, control-cache validation, and descriptive intervals |
 | [run_eval_suite.py](run_eval_suite.py) | Versioned asset identities, cache reuse, run locking, resume, and isolated execution phases |
+| [local_eval_setup.py](local_eval_setup.py) | Version-checked local setup hook: isolated task dependencies, editable workspace install, and import-origin checks |
+| [download_eval_test_wheels.py](download_eval_test_wheels.py) | Stage small pinned public-test dependency wheels using upstream hashes |
 
 Kaggle embeds these evaluation helpers in its generated notebook. H100 runs them in the prepared
 container. An inference result is not a competition score, and a packaging check is not a GPU test.

@@ -40,6 +40,7 @@ workspace; those artifacts are not included in a Git clone.
 | File | Purpose |
 | --- | --- |
 | [wheelhouse-files.json](wheelhouse-files.json) | Official evaluation dependency inventory |
+| [local-eval-test-wheels.json](local-eval-test-wheels.json) | Pinned supplemental wheels and upstream hashes for isolated local repository tests |
 | [eval-assets-verification.json](eval-assets-verification.json) | Base model and wheel hashes; used by notebook preparation |
 | [eval-git.json](eval-git.json) | Container Git installation, package identity, and basic behavior checks |
 | [vllm-image.json](vllm-image.json) | Prepared Apptainer image identity and checks |

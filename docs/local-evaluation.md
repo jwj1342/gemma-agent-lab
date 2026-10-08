@@ -68,6 +68,17 @@ The following launcher is specific to the maintainer's H100 installation. Read t
 24 CPU cores, and two hours; ordinary GPU jobs let Trillium select the partition. All run artifacts and
 caches are on SCRATCH. It does not submit a Kaggle entry.
 
+Stage the pinned extra test dependencies once on a node with Internet access:
+
+```bash
+python3 scripts/download_eval_test_wheels.py
+```
+
+The [wheel manifest](../resource/manifests/local-eval-test-wheels.json) records exact PyPI URLs,
+versions, sizes, and upstream SHA-256 values. These small additional wheels support public repository
+tests and builds; the official inference environment is unchanged. Do not install them into the
+training or inference HOME environment.
+
 ```bash
 sbatch --account=def-zhouyang \
   --output=runs/20261008-my-baseline/slurm-%j.log \
@@ -116,6 +127,22 @@ tasks, while contexts, traces, edits, and budgets are separate. Inference mounts
 records and public code/graph inputs; the control cache, reference patches, verification workspace, and
 Kaggle credentials stay outside its mounts. The existing Apptainer/subprocess runtime is not equivalent
 to the official scoring service's Docker/gVisor security boundary.
+
+The pinned official subprocess backend skips Docker's per-repository dependency installation and
+inherits host packages. The first multi-task preflight found missing FastAPI test dependencies and an
+HTTPX package imported from the host instead of the task's source. Batch mode therefore adds a
+version-checked local preparation hook: create a disposable venv without host site-packages, install
+dependencies and the actual workspace offline, and verify the package's import origin. Each task
+records its installed package versions. Official source files, patch application, test selection, and
+JUnit validation remain unchanged. This adaptation applies to local batch mode; the legacy single-task
+Kaggle notebook retains its existing setup. Grading uses the official 300-second command timeout;
+the submitted per-task and command budgets continue to govern the agent's inference phase.
+
+The current setup pins Pydantic 2.13.4 for FastAPI instead of allowing an offline resolver to fall back
+to an incompatible Pydantic 1 release. Rich uses Pygments 2.19.2, as recorded in the released
+`rich_4079` repository's `poetry.lock`; newer lexer colors can change expected terminal snapshots.
+These are environment choices for this dated public cohort. Keep them in the run identity and check
+empty/gold controls again before changing versions or extending to more tasks.
 
 Content changes to the environment, grader, data, or budget invalidate control reuse. The hash index
 assumes trusted local files and normal filesystem metadata behavior; `--rehash-assets` provides an

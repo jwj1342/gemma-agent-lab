@@ -64,6 +64,10 @@ async def run(args):
         raise ValueError('Inference input contains validation labels')
     args.results.mkdir(parents=True, exist_ok=True)
     budget = yaml.safe_load((args.agent_dir / 'eval_config.yaml').read_text())['evaluation']
+    if batch and args.mode == 'verify':
+        # Submission budgets govern inference. Independent grading uses the
+        # official default command timeout, including longer repository tests.
+        budget = {**budget, 'timeout_seconds': 300}
     adapters = discover_adapters(str(args.agent_dir), adapter_extensions=ALLOWED_ADAPTER_EXTENSIONS)
     versions = {n: version(n) for n in ['swegemma', 'adk-submission', 'google-adk', 'torch', 'vllm']}
     server = None
@@ -118,6 +122,9 @@ async def run(args):
                                 events_compaction_config=EventsCompactionConfig(compaction_interval=15, overlap_size=2,
                                                                                token_threshold=14336, event_retention_size=5))
             evaluator = Evaluator(config)
+            if batch:
+                from local_eval_setup import configure
+                configure(evaluator)
             snapshot = args.data_dir / 'snapshots' / (task.instance_id + '.tgz')
             start = time.perf_counter()
             try:

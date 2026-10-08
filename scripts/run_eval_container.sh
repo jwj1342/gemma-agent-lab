@@ -29,6 +29,9 @@ args=(exec --cleanenv --containall --no-home --no-mount hostfs,bind-paths,cwd
   --pwd /work/run
   --bind "$runtime_dir:/app:ro" --bind "$agent_dir:/agent:ro"
   --bind "$eval_venv:$eval_venv:ro" --bind "$work:/work/run" --bind "$work/tmp:/tmp")
+if [[ -f "$runtime_dir/local_eval_setup.py" && -d "$run_dir/inputs/runtime" ]]; then
+  args+=(--bind "$project_root/resource/downloads/eval-test-wheels-v3:/eval-test-wheels:ro")
+fi
 if [[ "$mode" == compile ]]; then
   exec apptainer "${args[@]}" "$image" /bin/bash /app/container_entry.sh \
     /app/validate_agent.py --agent-dir /agent --output /work/run/validation.json "$@"

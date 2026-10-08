@@ -72,12 +72,14 @@ def identify_assets(project, run, manifest, cache, force=False):
         image = indexed_hash(project / 'resource/downloads/images/vllm-0.19.1.sif', index, force)
         environment = tree_hash(Path('/home/jwj/venvs/gemma4-eval'), index, force)
         wheels = tree_hash(data / 'wheels', index, force)
+        test_wheels = tree_hash(project / 'resource/downloads/eval-test-wheels-v3', index, force)
         model = tree_hash(project / 'model/base/gemma-4-31b-it-qat-w4a16-ct-v2', index, force)
         runtime = manifest['runtime_sha256']
         # Budget can affect verification subprocess timeouts. Include it even though
         # prompts, adapters, and generation choices do not change control validity.
         budget = sha256(run / 'inputs/agent/eval_config.yaml')
         verification = digest({'image': image, 'environment': environment, 'wheels': wheels,
+                               'test_wheels': test_wheels,
                                'runtime': runtime, 'budget': budget, 'backend': 'subprocess', 'fast_path': False})
         task_assets = {}
         for task_id in manifest['task_ids']:
@@ -91,7 +93,7 @@ def identify_assets(project, run, manifest, cache, force=False):
             task_assets[task_id] = assets
         write_json(index_path, index)
     return {'verification_identity': verification, 'image_sha256': image, 'environment_sha256': environment,
-            'wheels_sha256': wheels, 'model_sha256': model, 'budget_sha256': budget,
+            'wheels_sha256': wheels, 'test_wheels_sha256': test_wheels, 'model_sha256': model, 'budget_sha256': budget,
             'tasks': task_assets, 'protocol': manifest['protocol'],
             'asset_check_seconds': time.perf_counter() - started,
             'hash_policy': 'SHA-256 of content; reuse indexed hashes only when device/inode/size/mtime/ctime match. '
