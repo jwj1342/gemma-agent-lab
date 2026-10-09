@@ -6,6 +6,7 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'scripts'))
@@ -13,6 +14,7 @@ from build_submission import sha256
 from define_eval_splits import define
 from eval_suite_lib import cache_record, digest, read_control_cache, save_artifact, write_json
 from prepare_eval_suite import prepare
+from prepare_eval_run import main as prepare_single
 from run_eval_suite import indexed_hash
 from summarize_eval_suite import compare, summarize, trace_metrics
 from verify_eval_run import verify_inputs
@@ -72,6 +74,21 @@ class SuiteTests(unittest.TestCase):
     def test_holdout_requires_explicit_milestone_switch(self):
         with self.assertRaisesRegex(ValueError, 'allow-holdout'):
             prepare(self.root / 'sealed', ROOT / 'configs/baseline', self.path, self.benchmark, 'holdout')
+
+    def test_single_task_freezes_offline_runtime_and_rejects_mutation(self):
+        run = self.root / 'single'
+        with patch.object(sys, 'argv', ['prepare_eval_run', '--run-dir', str(run),
+             '--agent-dir', str(ROOT / 'configs/baseline'), '--tasks', str(self.path),
+             '--task-id', 'fastapi_0']):
+            prepare_single()
+        manifest = verify_inputs(run)
+        self.assertEqual(manifest['task_id'], 'fastapi_0')
+        runtime = run / 'inputs/runtime/local_eval_setup.py'
+        self.assertTrue(runtime.is_file())
+        self.assertNotIn('SECRET_', (run / 'inputs/tasks.jsonl').read_text())
+        runtime.write_text(runtime.read_text() + '\n# changed\n')
+        with self.assertRaisesRegex(ValueError, 'runtime changed'):
+            verify_inputs(run)
 
     def test_control_cache_rejects_changed_identity_and_collection_errors(self):
         empty, gold = self.controls('fastapi_1')

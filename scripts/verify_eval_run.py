@@ -25,6 +25,7 @@ def verify_inputs(run):
     if manifest.get('suite_version'):
         if sha256(run / 'inputs/benchmark.json') != manifest['benchmark_sha256']:
             raise ValueError('Frozen benchmark changed')
+    if manifest.get('suite_version') or 'runtime_sha256' in manifest:
         runtime = run / 'inputs/runtime'
         actual = {p.name: sha256(p) for p in runtime.iterdir() if p.is_file()}
         if actual != manifest['runtime_sha256']:
