@@ -39,7 +39,8 @@ workspace; those artifacts are not included in a Git clone.
 | File | Purpose |
 | --- | --- |
 | [wheelhouse-files.json](wheelhouse-files.json) | Official evaluation dependency inventory |
-| [eval-assets-verification.json](eval-assets-verification.json) | Base model and wheel hashes; used by notebook preparation |
+| [eval-assets-verification.json](eval-assets-verification.json) | Historical base model and wheel hashes; preserved for earlier runs |
+| [kaggle-wheelhouse-snapshots.json](kaggle-wheelhouse-snapshots.json) | Registered old/new wheel inventories used by notebook preparation; compatibility status recorded separately |
 | [eval-git.json](eval-git.json) | Container Git installation, package identity, and basic behavior checks |
 | [vllm-image.json](vllm-image.json) | Prepared Apptainer image identity and checks |
 | [vllm-image-inspect.json](vllm-image-inspect.json) | Container inspection metadata |

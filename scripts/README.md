@@ -23,6 +23,7 @@ The generated Kaggle notebook subsequently runs in Kaggle's evaluation environme
 
 | Script | Purpose |
 | --- | --- |
+| [wheelhouse_runtime.py](wheelhouse_runtime.py) | Match registered wheelhouse snapshots or explicitly record new inputs; recheck captured bytes before installation |
 | [validate_agent.py](validate_agent.py) | Invoke the official compiler and restrictions in the prepared runtime |
 | [evaluate_agent.py](evaluate_agent.py) | Separate inference from verification; explicit tensor parallelism and GPU-memory fraction |
 | [prepare_eval_task.py](prepare_eval_task.py) | Export inference fields while removing reference/test patches and labels |

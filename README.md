@@ -91,6 +91,10 @@ is also available for a browser-first introduction.
 
 For a first contribution, open an Issue with a small hypothesis, make one change on a branch, and compare it against the baseline. The [contribution guide](CONTRIBUTING.md) explains the PR workflow and experiment records.
 
+If an official dependency update stops notebook preparation, see the
+[wheelhouse update guide](docs/wheelhouse-updates.md). Known snapshots are accepted
+automatically; `--wheelhouse-mode record` enables a documented exploratory update.
+
 ## 🗂️ Repository structure
 
 | Path | Purpose |
