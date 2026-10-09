@@ -29,6 +29,7 @@ For an official update not yet in the registry, explicitly request record mode:
 ```bash
 python3 scripts/prepare_kaggle_runtime.py \
   --owner YOUR_KAGGLE_USERNAME --slug gemma4-wheelhouse-exploration \
+  --title 'Gemma4 Wheelhouse Exploration' \
   --agent-dir configs/baseline --task-id rich_3454 \
   --wheelhouse-mode record \
   --output runs/wheelhouse-exploration/notebook

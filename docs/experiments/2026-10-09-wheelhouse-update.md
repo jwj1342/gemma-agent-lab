@@ -62,14 +62,41 @@ The allocation used `StdEnv/2023`, `python/3.12.4`, and the existing compiler to
 environment; the checks themselves used CPU only.
 
 A private [L4 smoke notebook](https://www.kaggle.com/code/jwj1342/gemma4-wheelhouse-v29-smoke),
-version 1, has been submitted. Compilation, empty/reference controls, inference,
-and generated-patch verification are pending. No new competition entry has been
-submitted, and repair quality with the updated harness has not yet been measured.
+version 1, **completed successfully** on four NVIDIA L4 GPUs, each reporting
+23,034 MiB, with driver 580.178.04. Compilation passed, both controls were valid,
+and the agent resolved `rich_3454`.
+
+| Patch | Passed tests | Failed tests |
+| --- | --- | --- |
+| Empty | 82 | 1 |
+| Reference | 83 | 0 |
+| Agent | 83 | 0 |
+
+The agent made 19 LLM calls and 13 tool calls in 129.48 seconds, excluding model
+startup. The notebook reached smoke completion after 661.39 seconds, excluding
+queue time and final output export. The account quota counter increased by
+1,338.026 seconds (22.30 quota minutes), consistent with the L4 billing multiplier;
+this is an account observation rather than physical GPU time.
+
+Actual inference packages included `swegemma` 0.2.10, `adk-submission` 0.2.13,
+`google-adk` 1.36.1, `torch` 2.10.0+cu128, and `vllm` 0.19.1. Mounted wheel hashes
+matched the registered version-29 snapshot exactly. The
+[compact receipt](../../resource/manifests/kaggle-wheelhouse-v29-smoke.json) records
+the input identities, results, and artifact hashes.
+
+This establishes compatibility on one task. It does not estimate aggregate repair
+quality, graph benefit, or LoRA performance. No competition entry was submitted.
+The October 5 smoke's 84 passing agent tests and this run's 83 are not a score
+comparison: the new harness filters protected test paths, and the generated patch
+also differs. Rerun baseline and adapter together before comparing the methods.
 
 The notebook was prepared on parent revision `3054da842f794c854f438a5478ea9437b119e9bc`
-with the uncommitted fix. Embedded helper SHA256 values in `preparation.json` and
-the runtime manifest identify the exact executed source; the parent revision alone
-does not identify those changes.
+with the uncommitted fix. All embedded runtime helper hashes match commit
+`571d6e84f3e4670d00580308c11c44e0db39210d`. Embedded helper SHA256 values in
+`preparation.json` and the runtime manifest identify the exact executed source;
+the parent revision alone does not identify those changes. The saved run retains
+the compatibility status known at preparation time; the registry now records this
+completed validation without rewriting the original run receipt.
 
 ## Artifacts
 
