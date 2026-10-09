@@ -22,12 +22,12 @@ The exposed integration task is `rich_3454`. It is excluded from training. Empty
 patch verification failed the intended test and the reference patch passed under
 version 29. Runs used one H100, the required W4A16 base model and seed 42.
 
-| Candidate | Official compilation | Patch passes tests | Clean agent completion | Observed invalid editor calls |
+| Candidate | Official compilation | Patch passes tests | Clean agent completion | Schema-invalid editor calls |
 | --- | --- | --- | --- | ---: |
 | `workflow` | Passed | Yes | No; four-minute timeout | 20 |
 | `icl` | Passed | No | No; four-minute timeout | 32 |
 | Original `reflect` | Failed skill frontmatter validation | Not run | Not run | Not measured |
-| Corrected `reflect-v2` | Passed | Yes | Yes; agent time 90.69 seconds | 11 |
+| Corrected `reflect-v2` | Passed | Yes | Yes; agent time 90.69 seconds | 7 |
 
 Both executed candidates repeatedly omitted the mandatory `old_string` argument
 from `edit_file`. The harness returned that error each time. Workflow eventually
