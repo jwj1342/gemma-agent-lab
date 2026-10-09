@@ -1,12 +1,54 @@
 """Load a trained adapter with official quantized vLLM and compare fixed held-out actions."""
 import argparse
 import copy
+import hashlib
 import json
 import os
 from pathlib import Path
 import shutil
 
 from src.sft_data import read_jsonl
+
+
+def completion_token_ids(tokenizer, example):
+    """Request token IDs explicitly; Transformers 5 defaults to a BatchEncoding."""
+    prompt = tokenizer.apply_chat_template(example['messages'][:-1], tools=example['tools'],
+        tokenize=True, return_dict=False, add_generation_prompt=True, enable_thinking=True)
+    if not isinstance(prompt, list) or not prompt or any(type(t) is not int or t < 0 for t in prompt):
+        raise ValueError('Completion probe requires one nonempty list of integer token IDs')
+    return prompt
+
+
+def probability_difference(reference, candidate):
+    shared = set(reference) & set(candidate)
+    return {'max_logprob_difference': max((abs(reference[t] - candidate[t]) for t in shared), default=0),
+            'top_tokens_changed': set(reference) != set(candidate)}
+
+
+def adapter_effect(zero, repeated_zero, trained):
+    jitter = probability_difference(zero, repeated_zero)
+    change = probability_difference(zero, trained)
+    return {'zero_repeat': jitter, 'trained_vs_zero': change,
+            'measurable_effect': (not jitter['top_tokens_changed']) and
+            (change['top_tokens_changed'] or
+             change['max_logprob_difference'] > max(1e-5, 10 * jitter['max_logprob_difference']))}
+
+
+def create_zero_adapter(source, destination):
+    """Keep the adapter path active with a mathematically zero LoRA update."""
+    from safetensors.torch import load_file, save_file
+    weights = load_file(source / 'adapter_model.safetensors')
+    if not weights or any('.lora_A.' not in k and '.lora_B.' not in k for k in weights):
+        raise ValueError('The zero-update control requires ordinary LoRA A/B tensors only')
+    matrices = [value for name, value in weights.items() if '.lora_B.' in name]
+    if not matrices:
+        raise ValueError('No LoRA B matrices found')
+    for tensor in matrices:
+        tensor.zero_()
+    destination.mkdir()
+    shutil.copyfile(source / 'adapter_config.json', destination / 'adapter_config.json')
+    save_file(weights, destination / 'adapter_model.safetensors')
+    return len(matrices)
 
 
 def select_examples(path, kind):
@@ -58,44 +100,48 @@ def main():
     if args.output.exists():
         raise ValueError("Output directory already exists")
     args.output.mkdir(parents=True)
+    zero_adapter = args.output / 'zero-adapter'
+    zeroed_matrices = create_zero_adapter(args.adapter, zero_adapter)
     sources = [("swe", select_examples(args.data, "swe")), ("graph", select_examples(args.graph_data, "graph"))]
     if args.terminal_data:
         sources.append(("terminal", list(read_jsonl(args.terminal_data / "validation.jsonl"))[:4]))
     server = VllmServer(VllmConfig(model=str(args.base), host="127.0.0.1", port=int(os.environ.get("LORA_SERVING_PORT", "8001")), tensor_parallel_size=1,
                          max_model_len=32768, dtype="bfloat16", gpu_memory_utilization=0.80,
                          tool_call_parser="gemma4", reasoning_parser="gemma4", enable_auto_tool_choice=True,
-                         enable_lora=True, startup_timeout=1200), lora_modules={"first_lora": str(args.adapter)})
+                         enable_lora=True, startup_timeout=1200),
+                        lora_modules={"first_lora": str(args.adapter), "zero_lora": str(zero_adapter)})
     rows = []
     try:
         server.start()
         client = OpenAI(base_url=server.base_url, api_key="EMPTY", timeout=120)
         models = [m.id for m in client.models.list().data]
-        if "first_lora" not in models:
-            raise RuntimeError("Trained adapter is absent from served model IDs")
+        if not {'first_lora', 'zero_lora'}.issubset(models):
+            raise RuntimeError("A trained/control adapter is absent from served model IDs")
         # A registered adapter may still have no effect. Compare first-token
-        # probabilities on identical prompts, including a repeated-base control.
+        # probabilities on identical token IDs. A zero-update adapter distinguishes
+        # weight effects from switching to the adapter-enabled numerical path.
         tokenizer = AutoTokenizer.from_pretrained(args.base, local_files_only=True)
         effects = []
         for kind, examples in sources:
             example = examples[0]
-            prompt = tokenizer.apply_chat_template(example['messages'][:-1], tools=example['tools'],
-                tokenize=True, add_generation_prompt=True, enable_thinking=True)
+            prompt = completion_token_ids(tokenizer, example)
             distributions = []
-            for name in (str(args.base), str(args.base), 'first_lora'):
+            for name in (str(args.base), str(args.base), 'zero_lora', 'zero_lora', 'first_lora'):
                 response = client.completions.create(model=name, prompt=prompt, max_tokens=1,
                     temperature=0, seed=42, logprobs=5)
+                if len(response.choices) != 1 or response.usage.prompt_tokens != len(prompt):
+                    raise RuntimeError('Server did not evaluate exactly the supplied token-ID prompt')
                 probabilities = response.choices[0].logprobs.top_logprobs[0]
                 if not probabilities:
                     raise RuntimeError('No token log probabilities returned for adapter-effect check')
                 distributions.append(probabilities)
-            shared = set.intersection(*(set(d) for d in distributions))
-            base_jitter = max((abs(distributions[0][t] - distributions[1][t]) for t in shared), default=0)
-            difference = max((abs(distributions[0][t] - distributions[2][t]) for t in shared), default=0)
-            changed_tokens = set(distributions[0]) != set(distributions[2])
             effects.append({'kind': kind, 'group': example['metadata']['group'],
-                'base_repeat_max_logprob_difference': base_jitter,
-                'adapter_max_logprob_difference': difference, 'top_tokens_changed': changed_tokens,
-                'measurable_effect': changed_tokens or difference > max(1e-5, base_jitter * 10),
+                'prompt_tokens': len(prompt),
+                'prompt_sha256': hashlib.sha256(json.dumps(prompt).encode()).hexdigest(),
+                'base_repeat': probability_difference(distributions[0], distributions[1]),
+                'zero_vs_base': probability_difference(distributions[0], distributions[2]),
+                **adapter_effect(distributions[2], distributions[3], distributions[4]),
+                'distribution_order': ['base', 'base_repeat', 'zero_lora', 'zero_repeat', 'trained_lora'],
                 'distributions': distributions})
         for kind, examples in sources:
             for index, example in enumerate(examples):
@@ -128,6 +174,7 @@ def main():
                                  "output_limit_reached": response.choices[0].finish_reason == "length",
                                  "response": response.model_dump(mode="json")})
         report = {"served_model_ids": models, "adapter_loaded": True,
+                  "zero_control_B_matrices": zeroed_matrices,
                   "adapter_effect_checked": any(e['measurable_effect'] for e in effects),
                   "adapter_effect_probes": effects, "requests": rows,
                   "summary": {kind: {name: {"schema_valid": sum(r["schema_valid"] for r in rows if r["kind"] == kind and r["model"] == name),

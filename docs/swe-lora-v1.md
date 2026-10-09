@@ -89,7 +89,9 @@ Final exports contain only PEFT configuration and safetensors adapter weights.
 
 ## Evaluation and release gates
 
-Check adapter loading and effect with the official quantized server. Freeze the
+Check adapter loading and effect with the official quantized server. Use explicit
+token IDs and verify consumed-token counts. A zero-update LoRA control distinguishes
+trained-weight effects from the numerical adapter execution path. Freeze the
 candidate, public task selection and archive hash. Require valid empty/gold controls
 before repair evaluation, and report environment execution separately from resolved
 issues. Keep the holdout protected from prompt/checkpoint tuning. A manual competition
