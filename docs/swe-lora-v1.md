@@ -21,6 +21,13 @@ its fallback value of 128 is not an explicit competition rank limit. Standard ra
 16 avoids additional conversion assumptions. QLoRA's usual NF4 base is not a substitute
 for the competition's required QAT W4A16 checkpoint.
 
+Direct inspection of the installed official vLLM 0.19.1 `lora/peft_helper.py`
+confirms alpha/sqrt(rank) handling for `use_rslora`, while `use_dora=True` and
+nonempty `modules_to_save` are rejected. This is runtime compatibility evidence,
+separate from the competition's artifact-format permission. Standard LoRA remains
+the first configuration; rsLoRA is a possible later ablation with its own loading
+check. DoRA is unsuitable for this pinned runtime.
+
 ## Corpus construction
 
 1. Read all eight pinned SWE-smith tool shards and keep up to 768 distinct successful issues.

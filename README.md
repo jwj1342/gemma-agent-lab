@@ -134,6 +134,7 @@ automatically; `--wheelhouse-mode record` enables a documented exploratory updat
 | [Submission guide](docs/submission.md) | Packaging, validation, official upload, and result tracking |
 | [Training plan](docs/training-plan.md) | Proposed SFT/LoRA work, compatibility checks, and prerequisites |
 | [First LoRA](docs/first-lora.md) | SWE-smith trajectories, grounded graph demonstrations, SFT, recovery, and evaluation gates |
+| [Complete SWE LoRA run](docs/swe-lora-v1.md) | Research-based configuration, corpus construction, full epochs, and submission gates |
 | [Local evaluation](docs/local-evaluation.md) | Frozen public cohorts, batch inference, cached controls, and method comparisons |
 | [Trillium runtime](docs/cluster-runtime.md) | Optional cluster-specific environment and execution instructions |
 
