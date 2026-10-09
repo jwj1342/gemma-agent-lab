@@ -7,6 +7,7 @@
 #SBATCH --time=00:45:00
 set -eo pipefail
 project_root=${1:?project root}
+code_root=${GEMMA_CODE_ROOT:-$project_root}
 train_run=${2:?completed training run}
 swe_dataset=${3:-"$project_root/data/processed/first-swe-graph-lora"}
 graph_dataset=${4:-"$project_root/data/processed/first-graph-lora"}
@@ -29,7 +30,7 @@ apptainer exec --nv --cleanenv --containall --no-home --no-mount hostfs,bind-pat
   --env XDG_CACHE_HOME=/output/cache/xdg --env HF_HOME=/output/cache/hf --env VLLM_CACHE_ROOT=/output/cache/vllm \
   --env TRITON_CACHE_DIR=/output/cache/triton --env TORCH_EXTENSIONS_DIR=/output/cache/torch-extensions \
   --env FLASHINFER_WORKSPACE_BASE=/output/cache/flashinfer \
-  --bind "$project_root/src:/app/src:ro" --bind "$project_root/scripts:/app/scripts:ro" \
+  --bind "$code_root/src:/app/src:ro" --bind "$code_root/scripts:/app/scripts:ro" \
   --bind /home/jwj/venvs/gemma4-eval-v29:/home/jwj/venvs/gemma4-eval-v29:ro \
   --bind "$project_root/model/base/gemma-4-31b-it-qat-w4a16-ct-v2:/model:ro" \
   --bind "$train_run/train/adapter:/adapter:ro" --bind "$swe_dataset:/swe-data:ro" \

@@ -13,9 +13,9 @@ The generated Kaggle notebook subsequently runs in Kaggle's evaluation environme
 | [check_repository.py](check_repository.py) | Development Python + PyYAML and Bash | CPU checks for tracked syntax, configuration references, deterministic agent packaging, and maintained-document links |
 | [prepare_kaggle_runtime.py](prepare_kaggle_runtime.py) | Local | Private offline L4×4 notebook from `--agent-dir` plus `--task-id`, or an existing `--run-dir`; no local model/data needed in agent mode |
 | [prepare_kaggle_upload.py](prepare_kaggle_upload.py) | Local | Private CPU notebook that emits an already reviewed small ZIP; no model inference |
-| [prepare_eval_run.py](prepare_eval_run.py) | Local, with task data | Freeze agent, sanitized public task, and ZIP identity into a new run |
+| [prepare_eval_run.py](prepare_eval_run.py) | Local, with task data | Freeze agent, sanitized public task, runtime, and ZIP identity into a new run |
 | [slurm_eval_smoke.sh](slurm_eval_smoke.sh) | Trillium GPU allocation | Existing H100 compile → controls → inference → independent tests workflow |
-| [prepare_eval_suite.py](prepare_eval_suite.py) | Local, with task data | Freeze a candidate, public cohort, and runtime scripts for repeated evaluation |
+| [prepare_eval_suite.py](prepare_eval_suite.py) | Local, with task data | Freeze a candidate, public cohort, and runtime; `--runtime-from` preserves a verified comparator's runtime |
 | [slurm_eval_suite.sh](slurm_eval_suite.sh) | Trillium GPU allocation | One model startup per batch, cached controls, independent grading, and paired comparison |
 | [summarize_eval_suite.py](summarize_eval_suite.py) | Local, with completed runs | Coverage, resolution, cost, and task-by-task gains/regressions |
 | [check_kaggle_quota.py](check_kaggle_quota.py) | Kaggle CLI environment | Read quota with complete duration values and save a dated JSON report |
@@ -100,3 +100,17 @@ Read [the first LoRA guide](../docs/first-lora.md) for data boundaries and valid
 | [slurm_first_lora.sh](slurm_first_lora.sh) | Allocated, offline H100 pilot with a fresh-process resume |
 | [check_lora_serving.py](check_lora_serving.py) | Official quantized-vLLM reload and fixed held-out action comparison |
 | [slurm_check_lora.sh](slurm_check_lora.sh) | Isolated allocated serving compatibility check |
+
+## Complete-epoch SWE LoRA
+
+Read [the complete training protocol](../docs/swe-lora-v1.md) for research,
+data selection, memory checks and the version 29 evaluation gates.
+
+| Script | Purpose |
+| --- | --- |
+| [download_swesmith_shards.py](download_swesmith_shards.py) | Verify and download all pinned tool shards on a datamover |
+| [encode_sft_dataset.py](encode_sft_dataset.py) | Encode and deduplicate actions with held-out snapshot checks |
+| [train_swe_lora.py](train_swe_lora.py) | Complete epochs, token-normalized DDP, validation and resumable state |
+| [slurm_swe_lora_v1.sh](slurm_swe_lora_v1.sh) | Offline four-H100 training with a fresh-process restart |
+| [export_swe_lora_candidate.py](export_swe_lora_candidate.py) | Verify completed coverage and package the selected adapter |
+| [slurm_validate_swe_lora.sh](slurm_validate_swe_lora.sh) | Serving-effect check, submission smoke and matched fast evaluation; no upload |

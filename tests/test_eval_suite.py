@@ -75,6 +75,17 @@ class SuiteTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'allow-holdout'):
             prepare(self.root / 'sealed', ROOT / 'configs/baseline', self.path, self.benchmark, 'holdout')
 
+    def test_comparison_reuses_verified_runtime_and_rejects_tampering(self):
+        original = self.frozen()
+        candidate = self.root / 'candidate'
+        prepare(candidate, ROOT / 'configs/baseline', self.path, self.benchmark,
+                'fast', runtime_from=original)
+        self.assertEqual(verify_inputs(original)['runtime_sha256'], verify_inputs(candidate)['runtime_sha256'])
+        (original / 'inputs/runtime/local_eval_setup.py').write_text('# modified\n')
+        with self.assertRaisesRegex(ValueError, 'runtime changed'):
+            prepare(self.root / 'bad', ROOT / 'configs/baseline', self.path,
+                    self.benchmark, 'fast', runtime_from=original)
+
     def test_single_task_freezes_offline_runtime_and_rejects_mutation(self):
         run = self.root / 'single'
         with patch.object(sys, 'argv', ['prepare_eval_run', '--run-dir', str(run),
