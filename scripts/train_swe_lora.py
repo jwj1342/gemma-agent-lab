@@ -193,18 +193,23 @@ def main():
             dist.barrier()
 
     if args.probe and step == 0:
-        longest = max(train, key=lambda s: len(s['input_ids']))
         model.train()
         # Adam's two FP32 moments are allocated lazily. Reserve their footprint
         # during the probe so a forward/backward-only success is not misleading.
         moment_reserve = torch.empty(2 * sum(x.numel() for x in parameters), device=device)
-        loss, _ = loss_for(longest, wrapped)
-        loss.backward()
-        optimizer.zero_grad(set_to_none=True)
+        # Long targets stress the vocabulary projection and cross-entropy;
+        # they need a separate check from the longest total context.
+        candidates = [max(train, key=lambda s: len(s['input_ids'])),
+                      max(train, key=lambda s: len(s['input_ids']) - s['target_start'])]
+        for sample in {s['sample_id']: s for s in candidates}.values():
+            loss, count = loss_for(sample, wrapped)
+            loss.backward()
+            optimizer.zero_grad(set_to_none=True)
+            if rank == 0:
+                print('Memory probe backward passed', len(sample['input_ids']),
+                      'input tokens;', count, 'target tokens;',
+                      torch.cuda.max_memory_allocated() / 2**30, 'GiB', flush=True)
         del moment_reserve
-        if rank == 0:
-            print('Longest-example backward passed', len(longest['input_ids']),
-                  'tokens;', torch.cuda.max_memory_allocated() / 2**30, 'GiB', flush=True)
     if step == 0:
         evaluate()
     stop = min(total_steps, args.stop_after or total_steps)
