@@ -28,6 +28,14 @@ separate from the competition's artifact-format permission. Standard LoRA remain
 the first configuration; rsLoRA is a possible later ablation with its own loading
 check. DoRA is unsuitable for this pinned runtime.
 
+The organizer also clarifies that the evaluation system accepts LoRA adapters and
+is not configured to execute other submitted weight-update mechanisms in the
+[LoRA-only discussion](https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743383).
+The [adapter-effect discussion](https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743508)
+records a previously fixed adapter-zeroing bug. Therefore, seeing an adapter name in
+the server model list is insufficient: verify a measurable effect as well as loading.
+Both discussion threads were refreshed on October 9, 2026.
+
 ## Corpus construction
 
 1. Read all eight pinned SWE-smith tool shards and keep up to 768 distinct successful issues.
