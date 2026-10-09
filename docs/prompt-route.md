@@ -58,6 +58,13 @@ the rules explicitly ban every possible TTT method. Per-task gradient adaptation
 requires organizer clarification and a demonstrated supported runtime path before
 implementation. The initial route uses zero parameter updates.
 
+The organizer's [LoRA-only clarification](https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743383)
+supports this distinction: the system is configured to accept LoRA artifacts, and
+other submitted mechanisms can fail at the runtime interface even when the broad
+idea is not forbidden in principle. The [custom-tools clarification](https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/743573)
+directs custom scripts to sandboxed skills. These threads were refreshed on October
+9, 2026; neither establishes a live gradient-update interface for our agent.
+
 Keep memory within the current task. For cross-task experience, prepare and freeze
 a playbook using allowed training data before evaluation. Do not assume evaluation
 order, writable submission files, a persistent global service, network access, or
