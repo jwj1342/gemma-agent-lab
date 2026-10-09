@@ -34,6 +34,14 @@ class TraceAuditTests(unittest.TestCase):
         self.assertEqual(report['unparsed_observations'], 1)
         self.assertEqual(report['tool_error_events'], 0)
 
+    def test_official_command_error_keeps_nested_exit_code_and_message(self):
+        result = {'status': 'error', 'error_type': 'CommandError',
+                  'error_message': '1 failed, 82 passed', 'details': {'exit_code': 1}}
+        report = audit_trace({'steps': [step('run_command', result)]})
+        self.assertEqual(report['nonzero_command_results'], 1)
+        self.assertEqual(report['missing_argument_events'], 0)
+        self.assertEqual(report['error_frequencies'], {'1 failed, 82 passed': 1})
+
     def test_final_patch_paths_can_differ_from_workspace_edits(self):
         self.assertEqual(patch_files('diff --git a/src/x.py b/src/x.py\n'
                                     'diff --git "a/a b.py" "b/a b.py"\n'), ['src/x.py', 'a b.py'])

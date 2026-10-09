@@ -44,7 +44,8 @@ def audit_trace(trace):
             continue
         error = observation.get('error')
         if error or observation.get('status') == 'error':
-            signature = str(error or observation.get('message') or 'Unspecified tool error')
+            signature = str(error or observation.get('error_message') or observation.get('message')
+                            or 'Unspecified tool error')
             errors[signature] += 1
             missing += 'mandatory input parameters are not present' in signature
             streak = streak + 1 if signature == previous_error else 1
@@ -53,6 +54,8 @@ def audit_trace(trace):
         else:
             previous_error, streak = None, 0
         returncode = observation.get('returncode', observation.get('exit_code'))
+        if returncode is None and isinstance(observation.get('details'), dict):
+            returncode = observation['details'].get('exit_code')
         if any((c.get('function_name') or c.get('function', {}).get('name') or c.get('name')) == 'run_command'
                for c in recorded_calls) and isinstance(returncode, int) and returncode != 0:
             nonzero_commands += 1
