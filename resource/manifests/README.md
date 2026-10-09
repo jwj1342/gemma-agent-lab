@@ -13,6 +13,7 @@ workspace; those artifacts are not included in a Git clone.
 | [competition-submission.json](competition-submission.json) | Original upload receipt and tested ZIP identity |
 | [hpc-smoke.json](hpc-smoke.json) | H100 allocation, one-task results, controls, and artifact hashes |
 | [kaggle-runtime-smoke.json](kaggle-runtime-smoke.json) | L4×4 hardware, one-task results, timing, and artifact hashes |
+| [kaggle-wheelhouse-v29-smoke.json](kaggle-wheelhouse-v29-smoke.json) | October 9 L4×4 validation of the updated official wheelhouse, controls, agent repair, and artifact hashes |
 | [kaggle-pipeline.json](kaggle-pipeline.json) | CPU packaging notebook and byte-identical ZIP checks |
 | [kaggle-evaluation-status.json](kaggle-evaluation-status.json) | Dated queries of existing notebook/submission state |
 | [submission-route.json](submission-route.json) | Historical account eligibility and upload-route discovery |
