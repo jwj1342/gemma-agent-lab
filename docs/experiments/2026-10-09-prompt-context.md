@@ -78,6 +78,15 @@ All four candidate packages have now passed official compilation. The frozen
 reflection follow the baseline in the same batch job. Do not tune prompts against
 these task outcomes before finishing the registered comparison.
 
+### Fast-cohort coverage
+
+Under version 29, both the baseline and protocol runs have valid empty/reference
+controls for **11 of the fixed 12 tasks**. `fastapi_15745` remains listed but is
+ineligible: its reference patch yields 33 passed and 3 skipped tests, including a
+required asynchronous test. The official verifier rejects that skipped required
+test even though pytest exits successfully. Keep the verifier unchanged and report
+the 11/12 coverage alongside any eventual score; do not substitute another task.
+
 ## Provenance and next measurements
 
 - Branch: `experiment/prompt-icl-route`; [Issue #9](https://github.com/jwj1342/gemma-agent-lab/issues/9)
