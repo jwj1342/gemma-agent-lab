@@ -39,7 +39,7 @@ flowchart LR
 
 ## 📊 Verified results
 
-The submitted baseline uses `gemma-4-31b-it-qat-w4a16-ct` with no LoRA. The following are recorded results, last updated on **October 7, 2026**.
+The submitted baseline uses `gemma-4-31b-it-qat-w4a16-ct` with no LoRA. The following are recorded results, last updated on **October 9, 2026**.
 
 | Evaluation | Result | Evidence |
 | --- | --- | --- |
@@ -47,10 +47,14 @@ The submitted baseline uses `gemma-4-31b-it-qat-w4a16-ct` with no LoRA. The foll
 | Kaggle L4×4 smoke test | `rich_3454` resolved; **84 tests passed**, including one added regression test | [L4 run](resource/manifests/kaggle-runtime-smoke.json) |
 | Independent H100 smoke test | The same public task passed compilation, offline generation, and patch verification | [H100 run](resource/manifests/hpc-smoke.json) |
 | First LoRA pilot on H100 | 64 SFT updates across two phases; corrected agent completed `rich_3454` with **84 passed tests** | [Pilot report](docs/first-lora.md) |
+| Fixed local development cohort | Baseline **4/11**, first LoRA **2/11**, with **11/12 control coverage**; cached controls avoid about 18 minutes of repeated checks | [Batch evaluation](docs/experiments/2026-10-09-local-evaluation.md) |
 
 Controls reproduced the original failure (**1 failed / 82 passed**) and confirmed the reference patch (**83 passed**). On L4×4, the agent phase took **74.10 seconds**, excluding model startup; the notebook reached smoke completion in about **655 seconds**.
 
 These smoke tests cover one public task. They do not establish full-benchmark performance, a LoRA advantage, graph utility, or compliance with the global runtime budget. See the [submission guide](docs/submission.md) and [LoRA report](docs/first-lora.md) for evidence and remaining work.
+
+The local development cohort uses public tasks and H100 resources. Its resolution rate is separate
+from the competition leaderboard; evaluating a new method still requires fresh inference and grading.
 
 <a id="getting-started"></a>
 

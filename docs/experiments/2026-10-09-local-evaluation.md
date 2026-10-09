@@ -13,6 +13,8 @@ snapshot overlaps and the previously inspected smoke task are excluded from thes
 
 The metric is official task resolution, with environment coverage and clean agent completion reported
 separately. Timeouts and failed patches remain in the eligible-task denominator.
+The complete receipts, timing records, per-task outcomes, and hashes are in the
+[machine-readable evidence](../../resource/manifests/local-evaluation.json).
 
 ## Reproduction
 
@@ -63,21 +65,50 @@ The baseline resolved **4/11 eligible tasks**, with **11/12 coverage**. It solve
 four-minute agent timeout. The baseline made two graph-tool calls, both on an unresolved task.
 These observations do not establish whether graph access helps.
 
+The LoRA resolved **2/11**, solving `httpx_3672` and `requests_7502`. It gained no task and regressed on
+`rich_3278` and `fastapi_9753`, a descriptive difference of **−18.18 percentage points** on the same
+eligible mask. Three tasks produced nonempty patches and received independent verification; the other
+eight were recorded as failures without repeating known empty-patch tests.
+
+| Task | Baseline | LoRA |
+| --- | --- | --- |
+| `rich_4079` | Agent timeout | Turn limit; empty patch |
+| `rich_3506` | Agent timeout | Turn limit; empty patch |
+| `rich_3468` | Tests failed | Turn limit; empty patch |
+| `rich_3278` | Resolved | Context limit; empty patch |
+| `httpx_3672` | Resolved | Resolved |
+| `fastapi_14455` | Tests failed | Normal return; empty patch |
+| `fastapi_14266` | Tests failed | Turn limit; empty patch |
+| `fastapi_15745` | Excluded: invalid reference control | Same exclusion |
+| `fastapi_15800` | Tests failed | Turn limit; empty patch |
+| `fastapi_14609` | Agent timeout | Generated patch failed test collection |
+| `fastapi_9753` | Resolved | Turn limit; empty patch |
+| `requests_7502` | Resolved | Resolved |
+
+The candidate made **273 `submit_patch` calls**, versus nine for the baseline, and six tasks exhausted
+the 80-turn limit. Its three clean completions compare with eight for the baseline. This broader cohort
+exposes a stopping-policy problem that the earlier one-task smoke did not establish as fixed.
+Graph-tool attempts increased from two to eleven, including unmatched node identifiers in the logs.
+More attempts did not yield more resolved tasks. An adapter comparison alone cannot isolate the
+causal effect of graph access; a matched graph-disabled ablation would address that question.
+
 | Measurement | Observed result |
 | --- | ---: |
 | First baseline run, including uncached controls | 68.93 minutes |
+| Candidate run, with cached controls | 33.90 minutes |
 | Empty and reference control phases | 17.99 minutes |
-| Model startups across 11 eligible tasks | 1 |
-| Model startup | 187.15 seconds |
-| Per-task inference, summed | 39.17 minutes |
+| Model startups per method across 11 eligible tasks | 1 |
+| Baseline / candidate model startup | 187.15 / 225.18 seconds |
+| Baseline / candidate per-task inference, summed | 39.17 / 26.31 minutes |
 | Completed-run resume | 58.81 seconds |
 | New model/inference/test phases during resume | 0 |
 | Prediction and grade artifacts unchanged after resume | 22/22 |
 
 Baseline job `1060056` completed successfully. Resume job `1061885` hit all 12 control-cache entries
 and performed only identity checks and reporting. Candidate job `1061884` also hit all 12 entries,
-skipping the previously measured 17.99 minutes of controls. Candidate resolution and total runtime
-are pending completion; no LoRA gain is claimed here yet.
+skipping the previously measured 17.99 minutes of controls, and completed successfully at the runner
+level. Its failed model attempts remain in the score. The candidate's lower total time also reflects
+shorter failed trajectories and fewer nonempty patches to grade; it is not evidence of a better agent.
 
 The batch avoided ten additional model startups compared with one startup per eligible task.
 At the observed baseline startup duration, that is approximately **31.19 minutes of startup work**.
@@ -97,7 +128,9 @@ These files are excluded from Git; teammates need an owner-granted artifact tran
 run using the documented preparation commands. The first adapter's provenance is in the
 [LoRA report](../first-lora.md).
 
-The remaining comparison is the candidate's newly solved tasks and regressions on the same 11-task
-mask. Promising changes should then be checked on the wider development set and eventually on Kaggle
-L4 resources. Public tasks, repository overlap, a small cohort, and H100 timing limit generalization
-to the hidden leaderboard. This workflow submits no competition entry and retrains no model.
+Keep the submitted baseline. Before scaling this adapter's training, improve and validate stopping
+after submission, retaining a real patch, staying within context limits, and using valid graph-node
+identifiers. Use this same fast cohort for development regressions, followed by the wider development
+set and milestone holdout. The result is one stochastic attempt per method/task and does not establish
+statistical significance. Public tasks, repository overlap, a small cohort, and H100 timing limit
+generalization to the hidden leaderboard. This workflow submits no competition entry and retrains no model.

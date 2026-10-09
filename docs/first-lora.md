@@ -5,6 +5,12 @@ and review the implementation in [PR #3](https://github.com/jwj1342/gemma-agent-
 The follow-up [local evaluation workflow](local-evaluation.md) freezes public cohorts and batches
 inference with reusable environment controls. It separates repeated development from milestone holdout use.
 
+The [October 9 batch comparison](experiments/2026-10-09-local-evaluation.md) now resolves **2/11**
+eligible tasks with the corrected adapter versus **4/11** for the unchanged baseline, with **11/12**
+control coverage. It adds no successful task and regresses on two. Repeated submission, context limits,
+and empty patches remain visible beyond the original smoke task. Keep the submitted baseline while
+improving the pilot's action and stopping behavior.
+
 The first experiment uses successful SWE-smith trajectories to train repository repair actions and
 executed competition graph queries to train graph-tool arguments. It is a bounded SFT pilot. Its
 export and recovery checks are separate from any claim about issue-resolution gains.
