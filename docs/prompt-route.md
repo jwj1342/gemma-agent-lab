@@ -112,7 +112,7 @@ package is [configs/prompt-icl/](../configs/prompt-icl/README.md). Use the exist
 
 ## Evaluation sequence and expansion
 
-1. Compile all three packages with the version 29 official compiler and check that
+1. Compile each package with the version 29 official compiler and check that
    preparation from a clone works without local model/data paths or credentials.
 2. Run valid empty/gold controls and a smoke task. A smoke pass verifies integration,
    not effectiveness. Freeze prompt/agent/task/archive hashes before inference.

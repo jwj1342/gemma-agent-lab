@@ -5,7 +5,7 @@ task-local execution feedback and an optional repair playbook. It uses the offic
 base model with no adapter. Effectiveness is pending evaluation.
 
 See [the research and experiment plan](../../docs/prompt-route.md) for sources,
-competition constraints, ablations and cost accounting. Build smaller `workflow`
+competition constraints, ablations and cost accounting. Build `workflow`, `protocol`
 and `icl` controls with `scripts/build_prompt_candidate.py`; the default is `reflect`.
 
 The playbook and examples are team-authored generic guidance. They contain no
