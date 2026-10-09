@@ -44,7 +44,9 @@ Both discussion threads were refreshed on October 9, 2026.
 2. Exclude all frozen development and holdout snapshots. Partition remaining examples
    by repository and base commit, so mutations of one snapshot cannot cross splits.
 3. Regenerate graph-neighbor, subgraph, retrieval and fallback demonstrations using
-   the version 29 official tools on the permitted training snapshots.
+   the version 29 official tools on the permitted training snapshots. Select up to
+   64 symbols per snapshot with a snapshot-dependent hash; selecting the same four
+   symbols across nearby revisions produced mostly duplicates in the initial audit.
 4. Execute controlled Git/test/submission fixtures and add brief final-answer targets.
    These teach termination; they are component exercises, not evidence of real repair.
 5. Encode complete assistant targets with the official tokenizer and mask prompt and
@@ -69,7 +71,9 @@ normalized by supervised tokens across that batch. Graph and termination samples
 retain their natural corpus frequency rather than replacing half the SWE examples.
 
 Training uses 5% warmup, cosine decay to 10% of peak LR, BF16, gradient checkpointing,
-and gradient clipping. A fixed validation panel of up to 128 actions per source is
+and gradient clipping. BF16 autocast covers adapter projections while their master
+weights remain FP32. The longest-example memory probe also reserves the footprint of
+Adam's two moment tensors. A fixed validation panel of up to 128 actions per source is
 evaluated before training, every 100 updates and at each epoch boundary. Selection
 uses SWE validation NLL; graph and terminal losses are reported separately. Falling
 training loss alone does not establish convergence or repair improvement.

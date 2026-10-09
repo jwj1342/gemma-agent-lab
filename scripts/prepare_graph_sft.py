@@ -30,6 +30,7 @@ def main():
     parser.add_argument("--embeddings", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--max-graphs", type=int, default=16)
+    parser.add_argument("--symbols-per-graph", type=int, default=64)
     parser.add_argument("--eval-benchmark", type=Path, default=Path("configs/evaluation/public-v1.json"))
     args = parser.parse_args()
     from swegemma.tools.graph import get_code_neighbors, get_code_subgraph, search_similar_code
@@ -65,7 +66,7 @@ def main():
             degree[edge["source"]] += 1
             degree[edge["target"]] += 1
         nodes = sorted((n["id"] for n in graph["nodes"] if 1 < degree[n["id"]] < 15 and not n["id"].startswith(("tests.", "test_", "benchmarks."))),
-                       key=lambda n: hashlib.sha256(n.encode()).hexdigest())[:4]
+                       key=lambda n: hashlib.sha256((repo + commit + n).encode()).hexdigest())[:args.symbols_per_graph]
         group = repo + "." + commit[:8]
         split = split_for_group(group)
         ctx = SimpleNamespace(repo=repo, task={"repo": repo, "base_commit": commit}, graph_dir=args.graphs,
@@ -113,6 +114,7 @@ def main():
     for split, rows in records.items():
         (args.output / f"{split}.jsonl").write_text("".join(json.dumps(r) + "\n" for r in rows))
     manifest = {"harness_version": harness_version, "excluded_snapshot_commits": sorted(reserved), "graphs": len(selected),
+                "symbols_per_graph": args.symbols_per_graph,
                 "eval_benchmark_sha256": benchmark_hash,
                 "actions": {k: len(v) for k, v in records.items()}, "executed_components": executed,
                 "scope": "Graph query arguments, induced subgraph selection, and empty-result fallback. No end-to-end repairs generated."}
