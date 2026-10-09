@@ -11,3 +11,4 @@ Existing baseline results predate this convention. Their authoritative receipts 
 | --- | --- |
 | 2026-10-06 | [Repository navigation and Kaggle preparation](2026-10-06-repository-onboarding.md) |
 | 2026-10-09 | [Fast local evaluation: baseline and pilot adapter](2026-10-09-local-evaluation.md) |
+| 2026-10-09 | [Official wheelhouse migration](2026-10-09-wheelhouse-update.md) |

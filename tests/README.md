@@ -31,3 +31,7 @@ See [CI and review](../docs/ci-and-review.md) for the hosted workflow and local 
 Changes to inference, hardware settings, dependencies, or agent behavior also need a platform
 experiment with valid controls. Historical runtime evidence is indexed in
 [resource/manifests/](../resource/manifests/README.md).
+
+`test_wheelhouse_runtime.py` covers old/new snapshot selection, same-name byte changes,
+explicit record mode, package metadata, malformed registries, and mutations between
+setup and installation. The notebook tests also check policy embedding and receipts.
