@@ -16,4 +16,4 @@ tools:
       skip_summarization: true
 generate_content_config: !include configs/sampling.yaml
 skills:
-  - skills/repair_playbook
+  - skills/repair-playbook

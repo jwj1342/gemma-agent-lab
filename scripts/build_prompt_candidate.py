@@ -21,7 +21,7 @@ def build_candidate(source, output, variant):
     (output / 'prompts/system.md').write_text(prompt)
     if variant != 'reflect':
         config = output / 'agent.yaml'
-        config.write_text(config.read_text().replace('skills:\n  - skills/repair_playbook\n', ''))
+        config.write_text(config.read_text().replace('skills:\n  - skills/repair-playbook\n', ''))
         shutil.rmtree(output / 'skills')
     for part in VARIANTS['reflect']:
         (output / 'prompts' / (part + '.md')).unlink()
