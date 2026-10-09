@@ -174,16 +174,16 @@ def action_examples(messages, metadata):
                                 "target_kind": "tool" if message.get("tool_calls") else "terminal"}}
 
 
-def encode_example(example, tokenizer, max_length):
+def encode_example(example, tokenizer, max_length, history_actions=3, excerpt_chars=4000):
     """Mask the prompt; retain complete targets and skip actions that cannot fit."""
     messages = copy.deepcopy(example["messages"])
     assistant_indices = [i for i, m in enumerate(messages) if m["role"] == "assistant"]
-    if len(assistant_indices) > 3:
-        messages = messages[:2] + messages[assistant_indices[-3]:]
+    if len(assistant_indices) > history_actions:
+        messages = messages[:2] + messages[assistant_indices[-history_actions]:]
     for message in messages[:-1]:
         content = message.get("content", "")
-        limit = 6000 if message["role"] == "user" else 4000
-        if message["role"] in ("user", "tool") and len(content) > limit:
+        limit = 6000 if message["role"] == "user" else excerpt_chars
+        if limit and message["role"] in ("user", "tool") and len(content) > limit:
             message["content"] = content[:limit // 2] + "\n[Excerpt shortened for training]\n" + content[-limit // 2:]
     while True:
         prefix = tokenizer.apply_chat_template(messages[:-1], tools=example["tools"], tokenize=False,

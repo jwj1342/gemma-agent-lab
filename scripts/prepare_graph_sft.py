@@ -6,6 +6,7 @@ import argparse
 from collections import Counter
 import hashlib
 import json
+from importlib.metadata import version
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -33,6 +34,9 @@ def main():
     args = parser.parse_args()
     from swegemma.tools.graph import get_code_neighbors, get_code_subgraph, search_similar_code
     from swegemma.graph.graph_utils import clear_caches
+    harness_version = version('swegemma')
+    if harness_version != '0.2.10':
+        raise RuntimeError('This generation run requires the reviewed version 29 harness')
     if args.output.exists():
         raise ValueError("Output already exists")
     args.output.mkdir(parents=True)
@@ -89,7 +93,7 @@ def main():
             messages.extend([similar, observation(similar, similar_result)])
             metadata = {"source": "competition public graph", "group": group, "split": split,
                         "graph_sha256": hashlib.sha256(path.read_bytes()).hexdigest(), "symbol": node,
-                        "verification": "official swegemma 0.2.7 graph tools executed; component exercise, no repair claim"}
+                        "verification": f"official swegemma {harness_version} graph tools executed; component exercise, no repair claim"}
             records[split].extend(action_examples(messages, metadata))
             # The same tool's actual empty response supplies a grounded fallback demonstration.
             missing = node + ".__missing_symbol__"
@@ -108,7 +112,7 @@ def main():
         clear_caches()
     for split, rows in records.items():
         (args.output / f"{split}.jsonl").write_text("".join(json.dumps(r) + "\n" for r in rows))
-    manifest = {"harness_version": "0.2.7", "excluded_snapshot_commits": sorted(reserved), "graphs": len(selected),
+    manifest = {"harness_version": harness_version, "excluded_snapshot_commits": sorted(reserved), "graphs": len(selected),
                 "eval_benchmark_sha256": benchmark_hash,
                 "actions": {k: len(v) for k, v in records.items()}, "executed_components": executed,
                 "scope": "Graph query arguments, induced subgraph selection, and empty-result fallback. No end-to-end repairs generated."}

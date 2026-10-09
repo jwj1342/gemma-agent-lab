@@ -6,6 +6,7 @@ evaluation container in a Slurm allocation; no third-party patches are replayed 
 import argparse
 import hashlib
 import json
+from importlib.metadata import version
 from pathlib import Path
 import shlex
 import subprocess
@@ -35,6 +36,9 @@ def main():
     parser.add_argument("--fixtures", type=int, default=128)
     args = parser.parse_args()
     from swegemma.tools.execution import run_command, submit_patch, get_status
+    harness_version = version('swegemma')
+    if harness_version != '0.2.10':
+        raise RuntimeError('This generation run requires the reviewed version 29 harness')
     if args.output.exists():
         raise ValueError("Terminal dataset already exists")
     args.output.mkdir(parents=True)
@@ -84,10 +88,15 @@ def main():
                 messages.extend([{"role": "assistant", "content": "", "tool_calls": [{"id": call_id,
                     "type": "function", "function": {"name": "get_status", "arguments": {}}}]},
                     {"role": "tool", "tool_call_id": call_id, "name": "get_status", "content": result}])
-            messages.append({"role": "assistant", "content": "The patch is submitted."})
+            endings = [
+                f"Updated example.answer to return {number + 1}. The assertion passed, and the patch is submitted.",
+                "The requested change is complete. The regression check passed and the patch has been captured.",
+                f"Validation confirmed the expected result ({number + 1}). Submitted the patch.",
+                "The patch is submitted. The focused test passed."]
+            messages.append({"role": "assistant", "content": endings[number % len(endings)]})
             metadata = {"source": "controlled submission protocol fixture", "group": group, "split": split,
                 "label_origin": "team-authored terminal answer after an observed successful submission",
-                "verification": "official swegemma 0.2.7 tools executed against a real temporary Git working tree",
+                "verification": f"official swegemma {harness_version} tools executed against a real temporary Git working tree",
                 "scope": "submission control flow; no SWE repair label"}
             terminal = list(action_examples(messages, metadata))[-1]
             if terminal["metadata"]["target_kind"] != "terminal":
@@ -98,7 +107,7 @@ def main():
                 "observations": [m for m in messages if m["role"] == "tool"]})
     for split, values in records.items():
         (args.output / f"{split}.jsonl").write_text("".join(json.dumps(x) + "\n" for x in values))
-    manifest = {"harness_version": "0.2.7", "fixtures": args.fixtures,
+    manifest = {"harness_version": harness_version, "fixtures": args.fixtures,
         "examples": {s: len(v) for s, v in records.items()}, "executed_fixtures": evidence,
         "scope": "Real test/submission/status observations on controlled fixtures; synthetic final text, no repair claim"}
     (args.output / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
