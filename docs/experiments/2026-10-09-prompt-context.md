@@ -28,8 +28,9 @@ version 29. Runs used one H100, the required W4A16 base model and seed 42.
 | `icl` | Passed | No | No; four-minute timeout | 32 |
 | Original `reflect` | Failed skill frontmatter validation | Not run | Not run | Not measured |
 | Corrected `reflect-v2` | Passed | Yes | Yes; agent time 90.69 seconds | 7 |
+| `protocol` | Passed | Yes | Yes; agent time 73.52 seconds | 3 |
 
-Both executed candidates repeatedly omitted the mandatory `old_string` argument
+The first two candidates repeatedly omitted the mandatory `old_string` argument
 from `edit_file`. The harness returned that error each time. Workflow eventually
 left a passing patch through a different editing tool, while ICL did not. Neither
 trace called graph tools. This single task cannot establish ICL's overall value or
@@ -63,7 +64,19 @@ A separate `protocol` candidate adds the three editor argument names and a bound
 recovery policy: after a repeated invocation error, use an asserted source rewrite
 through `run_command`, inspect the diff, test and finish. This is generic tool-use
 guidance derived from the exposed smoke trace, with no task-specific solution.
-Its smoke and fast-cohort evaluations are pending.
+Its smoke passed with 22 LLM calls, 16 budget-counted tool calls and 214,220
+input/output tokens including repeated context. Inference including sandbox setup
+took 108.52 seconds. Three malformed editor calls remained, and the trace did not
+use the suggested command-based editing fallback. It also edited a protected test
+file, then submitted twice after noticing that the submission tool filtered that
+file. The final graded patch changed only the implementation file. This gives a
+concrete remaining target: explain protected-file filtering and successful
+termination clearly. It does not prove that the recovery policy caused the repair.
+
+All four candidate packages have now passed official compilation. The frozen
+12-task baseline and protocol runs are executing; workflow, ICL and corrected
+reflection follow the baseline in the same batch job. Do not tune prompts against
+these task outcomes before finishing the registered comparison.
 
 ## Provenance and next measurements
 
