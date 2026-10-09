@@ -23,7 +23,7 @@ for the competition's required QAT W4A16 checkpoint.
 
 ## Corpus construction
 
-1. Read the pinned SWE-smith shard and keep up to 768 distinct successful issues.
+1. Read all eight pinned SWE-smith tool shards and keep up to 768 distinct successful issues.
    Reject unsupported editor actions and entire trajectories containing explicit
    dependency or network installation commands. Preserve actual upstream observations.
 2. Exclude all frozen development and holdout snapshots. Partition remaining examples
@@ -35,7 +35,9 @@ for the competition's required QAT W4A16 checkpoint.
 5. Encode complete assistant targets with the official tokenizer and mask prompt and
    tool-output tokens. Keep up to six actions of history, shorten long observations
    explicitly, and remove complete older turns when needed. Reject targets that do
-   not fit. Deduplicate encoded examples and check split separation again.
+   not fit. Deduplicate encoded examples and check split separation again. If two
+   snapshots yield identical encoded graph exercises across splits, remove their
+   training copy and keep the validation copy.
 
 The 8K window is an initial compute/context tradeoff. The longest encoded example
 must pass a backward-memory check. It does not establish performance across the
@@ -71,6 +73,7 @@ issues. Keep the holdout protected from prompt/checkpoint tuning. A manual compe
 submission follows successful artifact validation; record its receipt and eventual
 score without interpreting a small local panel as a reliable leaderboard estimate.
 
-Local run artifacts live under `runs/20261009-swe-lora-v1/`. Actual corpus sizes,
+Initial preparation artifacts live under `runs/20261009-swe-lora-v1/`; the expanded
+corpus run uses `runs/20261009-swe-lora-v1-full/`. Actual corpus sizes,
 training completion, measured losses and submission status belong in the final
 experiment report; this document describes the initial protocol.

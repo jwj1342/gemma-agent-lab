@@ -33,7 +33,7 @@ def main():
     config = json.loads(args.config.read_text())
     tokenizer = AutoTokenizer.from_pretrained(args.base, local_files_only=True)
     buckets = {'train': [], 'validation': []}
-    seen, rejected, files, stats = {}, Counter(), {}, {}
+    seen, cross_split, rejected, files, stats = {}, set(), Counter(), {}, {}
     for split in buckets:
         for kind in ('swe', 'graph', 'terminal'):
             path = getattr(args, kind) / (split + '.jsonl')
@@ -60,9 +60,13 @@ def main():
                 identity = hashlib.sha256(json.dumps(encoded['input_ids']).encode()).hexdigest()
                 if identity in seen:
                     if seen[identity] != split:
-                        raise ValueError('Identical example crosses the data split')
-                    rejected[split + ':' + kind + ':duplicate'] += 1
-                    continue
+                        # Identical graph exercises can arise at different snapshots.
+                        # Reserve their encoded context for validation and purge training copies.
+                        cross_split.add(identity)
+                        rejected['train:cross-split encoded duplicate'] += 1
+                    else:
+                        rejected[split + ':' + kind + ':duplicate'] += 1
+                        continue
                 seen[identity] = split
                 target_start = next(i for i, t in enumerate(encoded['labels']) if t != -100)
                 buckets[split].append({'input_ids': torch.tensor(encoded['input_ids'], dtype=torch.int32),
@@ -70,6 +74,9 @@ def main():
                     'metadata': encoded['metadata']})
                 if len(buckets[split]) % 500 == 0:
                     print(split, len(buckets[split]), flush=True)
+    buckets['train'] = [s for s in buckets['train'] if s['sample_id'] not in cross_split]
+    if {s['sample_id'] for s in buckets['train']} & {s['sample_id'] for s in buckets['validation']}:
+        raise ValueError('Encoded example leakage after duplicate removal')
     train_groups = {s['metadata']['group'].lower() for s in buckets['train']}
     val_groups = {s['metadata']['group'].lower() for s in buckets['validation']}
     if train_groups & val_groups:

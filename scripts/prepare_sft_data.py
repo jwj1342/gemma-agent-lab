@@ -18,6 +18,8 @@ SHARD_SHA256 = "e41ffbd3f9d1571917ac5b9f4d0108ded4799d9776f597a054203467135a5715
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--parquet", type=Path, required=True)
+    parser.add_argument("--shard-manifest", type=Path,
+                        help="Verify and combine every listed shard from the parquet file's directory")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--max-trajectories", type=int, default=128)
     parser.add_argument("--seed", type=int, default=42)
@@ -30,10 +32,23 @@ def main():
     import pyarrow.parquet as pq
     if args.output.exists():
         raise ValueError("Output already exists; preserve the prior dataset")
-    shard_digest = hashlib.sha256(args.parquet.read_bytes()).hexdigest()
-    if shard_digest != SHARD_SHA256:
-        raise ValueError("Pilot shard differs from the pinned upstream artifact")
-    rows = pq.read_table(args.parquet).to_pylist()
+    if args.shard_manifest:
+        pinned = json.loads(args.shard_manifest.read_text())
+        if pinned['dataset'] != DATASET or pinned['revision'] != REVISION:
+            raise ValueError('Unexpected dataset revision')
+        shards = [(args.parquet.parent / Path(item['path']).name, item['sha256']) for item in pinned['files']]
+    else:
+        shards = [(args.parquet, SHARD_SHA256)]
+    rows, shard_hashes = [], {}
+    for path, expected in shards:
+        with path.open('rb') as stream:
+            actual = hashlib.file_digest(stream, 'sha256').hexdigest()
+        if actual != expected:
+            raise ValueError('Shard differs from the pinned artifact: ' + path.name)
+        shard_hashes[path.name] = actual
+        for row in pq.read_table(path).to_pylist():
+            row['source_shard'] = path.name
+            rows.append(row)
     args.output.mkdir(parents=True)
     examples = {"train": [], "validation": []}
     rejected = Counter()
@@ -68,6 +83,7 @@ def main():
         seen.add(row["instance_id"])
         split = split_for_group(group, args.seed)
         metadata = {"source": DATASET, "revision": REVISION, "license": "MIT", "instance_id": row["instance_id"],
+                    "source_shard": row['source_shard'],
                     "traj_id": row["traj_id"], "group": group, "split": split, "teacher_model": row["model"],
                     "verification": "upstream resolved=True; target-tool replay not performed"}
         selected.append(metadata)
@@ -76,8 +92,8 @@ def main():
     assert groups["train"].isdisjoint(groups["validation"])
     for split, records in examples.items():
         (args.output / f"{split}.jsonl").write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in records))
-    manifest = {"dataset": DATASET, "revision": REVISION, "license": "MIT", "shard": args.parquet.name,
-                "sha256": shard_digest, "seed": args.seed,
+    manifest = {"dataset": DATASET, "revision": REVISION, "license": "MIT", "shards_sha256": shard_hashes,
+                "seed": args.seed,
                 "rows_in_shard": len(rows), "selected_trajectories": len(selected),
                 "actions": {k: len(v) for k, v in examples.items()}, "groups": {k: sorted(v) for k, v in groups.items()},
                 "selected": selected, "rejected": dict(rejected), "reserved_evaluation_groups": sorted(reserved),

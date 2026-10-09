@@ -26,6 +26,7 @@ configuration=configs/training/swe-lora-v1.json
 base="$project_root/model/base/gemma-4-31b-it-qat-w4a16-ct-v2"
 if [[ ! -d "$run_dir/swe-data" ]]; then
   python -m scripts.prepare_sft_data --parquet "$project_root/data/raw/swesmith/tool-00004-of-00008.parquet" \
+    --shard-manifest resource/manifests/swesmith-tool-shards.json \
     --output "$run_dir/swe-data" --max-trajectories 768 --reject-setup-actions \
     --tasks "$project_root/data/raw/gemma-4-developer-agent/tasks.jsonl"
 fi
