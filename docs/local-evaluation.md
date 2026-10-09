@@ -186,6 +186,9 @@ agents on identical tasks and budgets before claiming graph utility. More graph 
 
 ## Timing and scoring scope
 
+The [measured validation report](experiments/2026-10-09-local-evaluation.md) records baseline resolution,
+control-cache reuse, startup cost, unchanged artifacts on resume, and the current coverage limitation.
+
 Batching saves repeated startup and setup checks while retaining the official required-test criterion.
 H100 memory, tensor parallelism, CPU allocation, and command execution differ from Kaggle L4×4.
 Even the same per-task wall-clock limit permits different amounts of computation. Use H100 for frequent
