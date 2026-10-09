@@ -1,7 +1,7 @@
 # Prompt and context adaptation: initial execution record
 
 Status on October 9, 2026: research, portable candidate construction and repository
-CI are complete. The first two version 29 smoke executions are recorded below.
+CI are complete. The first version 29 smoke executions are recorded below.
 Multi-task effectiveness is not yet measured, and no weight updates are used.
 
 ## Question and comparison
@@ -27,6 +27,7 @@ version 29. Runs used one H100, the required W4A16 base model and seed 42.
 | `workflow` | Passed | Yes | No; four-minute timeout | 20 |
 | `icl` | Passed | No | No; four-minute timeout | 32 |
 | Original `reflect` | Failed skill frontmatter validation | Not run | Not run | Not measured |
+| Corrected `reflect-v2` | Passed | Yes | Yes; agent time 90.69 seconds | 11 |
 
 Both executed candidates repeatedly omitted the mandatory `old_string` argument
 from `edit_file`. The harness returned that error each time. Workflow eventually
@@ -41,7 +42,10 @@ tokens for workflow and 446,834 for ICL, including repeated conversation context
 
 The playbook failure was repaired by using the official loader's kebab-case name
 `repair-playbook` and its `references/` directory. The corrected `reflect-v2`
-package passed official compilation; inference is pending completion.
+package passed official compilation and smoke verification. It made 24 LLM calls,
+15 budget-counted tool calls and one submission; total inference including setup
+took 120.45 seconds. It did not call a graph or skill tool, so this success does not
+establish a benefit from playbook retrieval. Editor invocation errors remain.
 
 A separate `protocol` candidate adds the three editor argument names and a bounded
 recovery policy: after a repeated invocation error, use an asserted source rewrite
