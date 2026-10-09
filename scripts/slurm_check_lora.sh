@@ -8,9 +8,11 @@
 set -eo pipefail
 project_root=${1:?project root}
 train_run=${2:?completed training run}
-swe_dataset=${3:-first-swe-graph-lora}
+swe_dataset=${3:-"$project_root/data/processed/first-swe-graph-lora"}
+graph_dataset=${4:-"$project_root/data/processed/first-graph-lora"}
+if [[ "$swe_dataset" != /* ]]; then swe_dataset="$project_root/data/processed/$swe_dataset"; fi
 module load StdEnv/2023 apptainer/1.4.5
-test -f "$train_run/train/training-result.json"
+test -f "$train_run/train/training-result.json" || test -f "$train_run/train/completed.json"
 mkdir -p "$train_run/serving-work/tmp" "$train_run/serving-work/cache"
 unset APPTAINER_BIND APPTAINER_BINDPATH APPTAINER_MOUNT SINGULARITY_BIND SINGULARITY_BINDPATH
 terminal_mounts=()
@@ -30,10 +32,11 @@ apptainer exec --nv --cleanenv --containall --no-home --no-mount hostfs,bind-pat
   --bind "$project_root/src:/app/src:ro" --bind "$project_root/scripts:/app/scripts:ro" \
   --bind /home/jwj/venvs/gemma4-eval-v29:/home/jwj/venvs/gemma4-eval-v29:ro \
   --bind "$project_root/model/base/gemma-4-31b-it-qat-w4a16-ct-v2:/model:ro" \
-  --bind "$train_run/train/adapter:/adapter:ro" --bind "$project_root/data/processed:/data:ro" \
+  --bind "$train_run/train/adapter:/adapter:ro" --bind "$swe_dataset:/swe-data:ro" \
+  --bind "$graph_dataset:/graph-data:ro" \
   --bind "$train_run/serving-work:/output" --bind "$train_run/serving-work/tmp:/tmp" \
   "${terminal_mounts[@]}" \
   "$project_root/resource/downloads/images/vllm-0.19.1.sif" \
   /home/jwj/venvs/gemma4-eval-v29/bin/python -m scripts.check_lora_serving \
-  --base /model --adapter /adapter --data "/data/$swe_dataset" --graph-data /data/first-graph-lora \
+  --base /model --adapter /adapter --data /swe-data --graph-data /graph-data \
   --output /output/check "${terminal_args[@]}"
