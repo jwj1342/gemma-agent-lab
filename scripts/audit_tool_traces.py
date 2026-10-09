@@ -108,6 +108,8 @@ def main():
         rows.append(row)
     result = {'agent_sha256': manifest['agent_archive_sha256'],
         'public_task_sha256': manifest['public_task_sha256'], 'tasks': rows,
+        'audit_source_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        'summary_sha256': hashlib.sha256((args.run_dir / 'summary.json').read_bytes()).hexdigest(),
         'scope': 'Post-hoc trace audit. Tool errors are observed feedback events, not a complete schema validator. '
                  'A nonzero command can be an intended reproduction. Missing traces are not clean runs. '
                  'Workspace edit attempts and final protected-file-filtered patches can differ.'}

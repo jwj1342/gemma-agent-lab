@@ -47,6 +47,18 @@ package passed official compilation and smoke verification. It made 24 LLM calls
 took 120.45 seconds. It did not call a graph or skill tool, so this success does not
 establish a benefit from playbook retrieval. Editor invocation errors remain.
 
+The independent trace audit counted longest identical-error streaks of nine,
+thirteen and four calls for workflow, ICL and corrected reflection respectively.
+Reflection also edited a protected test file while debugging its generated case.
+The official submission/verification code strips protected test changes; its graded
+patch contained the implementation change and a temporary reproduction file.
+Thus, repair success does not establish instruction compliance or a minimal patch.
+Keep generated checks separate from the independent grading result.
+
+Run `scripts/audit_tool_traces.py` after a cohort finishes to reproduce these
+diagnostics. It writes trace/source hashes and distinguishes missing arguments from
+nonzero command results. It operates outside the frozen evaluation runtime.
+
 A separate `protocol` candidate adds the three editor argument names and a bounded
 recovery policy: after a repeated invocation error, use an asserted source rewrite
 through `run_command`, inspect the diff, test and finish. This is generic tool-use
