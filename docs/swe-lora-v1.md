@@ -56,8 +56,12 @@ Both discussion threads were refreshed on October 9, 2026.
    snapshots yield identical encoded graph exercises across splits, remove their
    training copy and keep the validation copy.
 
-The 8K window is an initial compute/context tradeoff. The longest encoded example
-must pass a backward-memory check. It does not establish performance across the
+The initial 8K backward probe exceeded one H100's memory with the BF16 frozen base,
+including after enabling autocast. The first complete run therefore uses 4K context,
+with complete assistant targets and removal of older history turns. Both the longest
+context and longest assistant target must pass backward-memory checks with optimizer
+state space reserved. Longer-context training needs a separate sharding study.
+This setting does not establish performance across the
 full competition context window. The corpus manifest records retained/rejected
 counts, input lengths, supervised tokens, source hashes and group counts.
 
