@@ -9,6 +9,7 @@ import subprocess
 from build_submission import build, collect_files, sha256
 from prepare_eval_task import PUBLIC_FIELDS
 from prepare_eval_suite import RUNTIME_FILES
+from eval_suite_lib import read_tasks
 
 
 def main():
@@ -19,7 +20,7 @@ def main():
     parser.add_argument('--tasks', type=Path, default=Path('data/raw/gemma-4-developer-agent/tasks.jsonl'))
     args = parser.parse_args()
     source, files = collect_files(args.agent_dir)
-    rows = [json.loads(line) for line in args.tasks.read_text().splitlines() if line.strip()]
+    rows = read_tasks(args.tasks)
     rows = [row for row in rows if row['instance_id'] == args.task_id]
     if len(rows) != 1:
         raise ValueError('Expected one matching public task')
