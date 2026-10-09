@@ -108,7 +108,8 @@ def main():
     server = VllmServer(VllmConfig(model=str(args.base), host="127.0.0.1", port=int(os.environ.get("LORA_SERVING_PORT", "8001")), tensor_parallel_size=1,
                          max_model_len=32768, dtype="bfloat16", gpu_memory_utilization=0.80,
                          tool_call_parser="gemma4", reasoning_parser="gemma4", enable_auto_tool_choice=True,
-                         enable_lora=True, startup_timeout=1200),
+                         enable_lora=True, startup_timeout=1200,
+                         extra_args=['--no-enable-prefix-caching']),
                         lora_modules={"first_lora": str(args.adapter), "zero_lora": str(zero_adapter)})
     rows = []
     try:
@@ -175,6 +176,8 @@ def main():
                                  "response": response.model_dump(mode="json")})
         report = {"served_model_ids": models, "adapter_loaded": True,
                   "zero_control_B_matrices": zeroed_matrices,
+                  "effect_protocol": "Prefix caching disabled so repeated probes perform identical full prefills; "
+                                     "trained adapter compared to zero-update adapter with a repeated-zero control.",
                   "adapter_effect_checked": any(e['measurable_effect'] for e in effects),
                   "adapter_effect_probes": effects, "requests": rows,
                   "summary": {kind: {name: {"schema_valid": sum(r["schema_valid"] for r in rows if r["kind"] == kind and r["model"] == name),
