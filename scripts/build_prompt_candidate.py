@@ -6,7 +6,7 @@ from pathlib import Path
 import shutil
 
 
-VARIANTS = {'workflow': ['workflow'], 'icl': ['workflow', 'fewshot'],
+VARIANTS = {'workflow': ['workflow'], 'protocol': ['workflow', 'protocol'], 'icl': ['workflow', 'fewshot'],
             'reflect': ['workflow', 'fewshot', 'reflection']}
 
 
@@ -23,7 +23,7 @@ def build_candidate(source, output, variant):
         config = output / 'agent.yaml'
         config.write_text(config.read_text().replace('skills:\n  - skills/repair-playbook\n', ''))
         shutil.rmtree(output / 'skills')
-    for part in VARIANTS['reflect']:
+    for part in {part for parts in VARIANTS.values() for part in parts}:
         (output / 'prompts' / (part + '.md')).unlink()
     receipt = {'variant': variant, 'weight_updates': 0, 'prompt_characters': len(prompt),
         'prompt_sha256': hashlib.sha256(prompt.encode()).hexdigest(),

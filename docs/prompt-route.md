@@ -76,6 +76,7 @@ the final patch contains the intended implementation changes.
 | Variant | Intervention | Weight updates |
 | --- | --- | --- |
 | `workflow` | A concise locate–edit–verify–submit policy with source-grounded graph navigation | 0 |
+| `protocol` | The workflow plus explicit editor arguments and recovery after repeated invocation errors | 0 |
 | `icl` | The workflow plus three short team-authored decision examples | 0 |
 | `reflect` | ICL plus failure-driven revision, task-local evidence summaries and an optional short playbook | 0 |
 
@@ -84,6 +85,13 @@ SWE-Replay. The original base model, analyzer configuration, generation settings
 per-task limits remain the same across these candidates. The `reflect` stage adds
 a skill toolset as part of its declared intervention. Compare `workflow` with the
 original baseline separately, because its instructions have been rewritten.
+
+The `protocol` variant was added after the exposed smoke task revealed repeated
+missing-argument errors: 20 editor calls for workflow and 32 for ICL. It contains
+general invocation guidance and no smoke-task fix. Treat this observation as a
+debugging finding; compare the candidate on the frozen fast cohort before claiming
+effectiveness. The model's native Gemma tool-call serialization differs from JSON;
+the guidance focuses on argument semantics and allows a shell-based edit fallback.
 
 The toy examples cover a falsey-value/default distinction, graph-query fallback,
 and final submission. They contain no public benchmark solution or gold patch.
