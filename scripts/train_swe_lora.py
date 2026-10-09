@@ -133,8 +133,11 @@ def main():
     def loss_for(sample, network):
         ids = sample['input_ids'].to(device=device, dtype=torch.long).unsqueeze(0)
         positions = torch.arange(sample['target_start'], ids.shape[-1], device=device)
-        output = network(input_ids=ids, attention_mask=torch.ones_like(ids),
-                         logits_to_keep=positions - 1, use_cache=False)
+        # PEFT keeps adapter master weights in FP32. Autocast is also needed
+        # for their projections; a BF16 frozen base alone does not enable AMP.
+        with torch.autocast(device_type='cuda', dtype=torch.bfloat16):
+            output = network(input_ids=ids, attention_mask=torch.ones_like(ids),
+                             logits_to_keep=positions - 1, use_cache=False)
         loss = F.cross_entropy(output.logits[0].float(), ids[0, positions])
         return loss, len(positions)
 
@@ -192,9 +195,13 @@ def main():
     if args.probe and step == 0:
         longest = max(train, key=lambda s: len(s['input_ids']))
         model.train()
+        # Adam's two FP32 moments are allocated lazily. Reserve their footprint
+        # during the probe so a forward/backward-only success is not misleading.
+        moment_reserve = torch.empty(2 * sum(x.numel() for x in parameters), device=device)
         loss, _ = loss_for(longest, wrapped)
         loss.backward()
         optimizer.zero_grad(set_to_none=True)
+        del moment_reserve
         if rank == 0:
             print('Longest-example backward passed', len(longest['input_ids']),
                   'tokens;', torch.cuda.max_memory_allocated() / 2**30, 'GiB', flush=True)
