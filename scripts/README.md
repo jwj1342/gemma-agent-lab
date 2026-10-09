@@ -16,7 +16,8 @@ The generated Kaggle notebook subsequently runs in Kaggle's evaluation environme
 | [prepare_eval_run.py](prepare_eval_run.py) | Local, with task data | Freeze agent, sanitized public task, and ZIP identity into a new run |
 | [slurm_eval_smoke.sh](slurm_eval_smoke.sh) | Trillium GPU allocation | Existing H100 compile → controls → inference → independent tests workflow |
 | [prepare_eval_suite.py](prepare_eval_suite.py) | Local, with task data | Freeze a candidate, public cohort, and runtime scripts for repeated evaluation |
-| [build_prompt_candidate.py](build_prompt_candidate.py) | Any machine, without models/data | Build workflow, ICL and reflection ablations |
+| [build_prompt_candidate.py](build_prompt_candidate.py) | Any machine, without models/data | Build workflow, protocol, ICL and reflection ablations |
+| [audit_tool_traces.py](audit_tool_traces.py) | Completed evaluation traces | Count observed errors, recovery loops, graph/skill use and final patch paths without changing frozen evaluation code |
 | [slurm_eval_suite.sh](slurm_eval_suite.sh) | Trillium GPU allocation | One model startup per batch, cached controls, independent grading, and paired comparison |
 | [summarize_eval_suite.py](summarize_eval_suite.py) | Local, with completed runs | Coverage, resolution, cost, and task-by-task gains/regressions |
 | [check_kaggle_quota.py](check_kaggle_quota.py) | Kaggle CLI environment | Read quota with complete duration values and save a dated JSON report |
