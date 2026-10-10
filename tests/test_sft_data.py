@@ -110,10 +110,22 @@ class SFTDataTests(unittest.TestCase):
         tokenizer = ProtocolTokenizer()
         for assistant, expected in [({"role": "assistant", "content": "", "tool_calls": [upstream_call("submit", {})]}, "CALL<|tool_response>"),
                                     ({"role": "assistant", "content": "Done."}, "Done.<turn|>")]:
+            metadata = {"group": "graph.snapshot", "component": "empty-result fallback"}
             encoded = encode_example({"messages": [{"role": "user", "content": "prompt"}, assistant],
-                                      "tools": [], "metadata": {}}, tokenizer, 100)
+                                      "tools": [], "metadata": metadata}, tokenizer, 100)
             supervised = "".join(chr(t) for t in encoded["labels"] if t != -100)
             self.assertEqual(supervised, expected)
+            self.assertEqual(encoded["metadata"]["target_kind"],
+                             "tool" if assistant.get("tool_calls") else "terminal")
+            self.assertEqual(encoded["metadata"]["group"], metadata["group"])
+            self.assertNotIn("target_kind", metadata)
+
+    def test_conflicting_target_metadata_is_rejected(self):
+        example = {"messages": [{"role": "user", "content": "Submit"},
+                                 {"role": "assistant", "tool_calls": [upstream_call("submit", {})]}],
+                   "tools": [], "metadata": {"target_kind": "terminal"}}
+        with self.assertRaisesRegex(ValueError, "metadata disagrees"):
+            encode_example(example, None, 100)
 
     def test_missing_tool_handoff_token_is_rejected(self):
         class BrokenProtocolTokenizer:

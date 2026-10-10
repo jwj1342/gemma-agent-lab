@@ -177,6 +177,13 @@ def action_examples(messages, metadata):
 def encode_example(example, tokenizer, max_length, history_actions=3, excerpt_chars=4000):
     """Mask the prompt; retain complete targets and skip actions that cannot fit."""
     messages = copy.deepcopy(example["messages"])
+    target_kind = "tool" if messages[-1].get("tool_calls") else "terminal"
+    metadata = dict(example["metadata"])
+    if metadata.get("target_kind", target_kind) != target_kind:
+        raise ValueError("Target metadata disagrees with the final assistant message")
+    # Graph fallback fixtures can be constructed without action_examples().
+    # Derive the contract from the actual target for every source.
+    metadata["target_kind"] = target_kind
     assistant_indices = [i for i, m in enumerate(messages) if m["role"] == "assistant"]
     if len(assistant_indices) > history_actions:
         messages = messages[:2] + messages[assistant_indices[-history_actions]:]
@@ -212,4 +219,4 @@ def encode_example(example, tokenizer, max_length, history_actions=3, excerpt_ch
     if not target or len(target) >= max_length // 2:
         return None
     return {"input_ids": prefix_ids + target, "labels": [-100] * len(prefix_ids) + target,
-            "attention_mask": [1] * (len(prefix_ids) + len(target)), "metadata": example["metadata"]}
+            "attention_mask": [1] * (len(prefix_ids) + len(target)), "metadata": metadata}

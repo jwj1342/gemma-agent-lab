@@ -54,7 +54,11 @@ fi
 if [[ ! -d "$run_dir/terminal-data" ]]; then
   "${container[@]}" /bin/bash -c 'source /home/jwj/venvs/gemma4-eval-v29/bin/activate; exec python -m scripts.prepare_terminal_sft --output /output/terminal-data'
 fi
-if [[ ! -d "$run_dir/encoded-data" ]]; then
+if [[ -d "$run_dir/encoded-data" && ! -f "$run_dir/encoded-data/manifest.json" ]]; then
+  echo 'Incomplete encoded corpus: preserve this attempt and prepare a new run directory' >&2
+  exit 2
+fi
+if [[ ! -f "$run_dir/encoded-data/manifest.json" ]]; then
   python -m scripts.encode_sft_dataset --base "$base" --swe "$run_dir/swe-data" \
     --graph "$run_dir/graph-data" --terminal "$run_dir/terminal-data" --config "$configuration" \
     --output "$run_dir/encoded-data"

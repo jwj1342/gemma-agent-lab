@@ -43,6 +43,20 @@ Launchers: [training](../../scripts/slurm_swe_lora_light.sh) and
 These launchers are Trillium-specific; dataset selection and the trainer are
 separate Python modules.
 
+## Preparation audit
+
+The first allocation (`1072210`) stopped during the native-token audit, before
+loading the model or starting training. Graph fallback fixtures lacked
+`target_kind` metadata. The encoder now derives it from the actual assistant
+target for every source and rejects conflicting metadata. Regression coverage
+includes fixtures without that field. Its three dependent jobs were cancelled
+without running. The preparation attempt used 7m39s on one H100.
+
+The corrected retry uses a separate run directory, preserving the failed
+preparation artifacts. An existing encoded-data directory without a completed
+manifest is rejected rather than treated as a usable corpus. Data budgets,
+training length, validation tasks, and release requirements remain unchanged.
+
 ## Cost evidence and budget
 
 The earlier final continuation occupied four H100s for 9h50m11s, or 39.35 physical
