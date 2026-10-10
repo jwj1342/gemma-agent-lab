@@ -116,8 +116,10 @@ for both models; the autonomous agent retains the baseline thinking configuratio
 On `rich_3454`, the autonomous adapter inspected and edited source, ran a small
 test, and captured a 656-character source patch after about 24 seconds. It then
 repeatedly ran invented test names after submission, exhausted 40 budgeted tool
-calls, and timed out at four minutes. The patch has not been independently graded
-at this stage. The run is not a clean completion or a repair success. The native
+calls, and timed out at four minutes. A separate diagnostic (`1072519`) subsequently
+graded the captured patch with the unchanged official verifier: the tests passed
+(`resolved=true`, exit zero). The original agent still failed the clean-completion
+gate. This separates a successful code change from failed control flow. The native
 tool handoff worked across separate calls; post-submission termination remained
 broken. The 14m48s validation allocation failed, and both dependent jobs were
 cancelled without running. No adapter was uploaded.
@@ -144,6 +146,44 @@ The combined corrective experiment changes sampling, loss weighting and learning
 rate, so its outcome cannot isolate their individual effects. The stopped task's
 trace is used for diagnosis only; its patch or answer is not added to training.
 
+## Balanced partial checkpoint: observed behavior
+
+The 512-action run encoded 384 SWE actions, 64 graph actions and 64 terminal
+actions, totaling 1,233,068 input tokens and 70,771 supervised tokens. Its full
+validation file is byte-identical to the preceding run. The memory probes passed
+with a 70.42 GiB peak; checkpoint eight restored optimizer/RNG state and proceeded
+to update nine. Job `1072507` completed preparation and 32 updates in 17m11s on
+one H100. Those updates presented 103 SWE, 14 graph and 11 terminal actions.
+
+| Fixed validation family | Initial NLL | Step 32 NLL |
+| --- | ---: | ---: |
+| SWE | 0.506931 | 0.325754 |
+| Graph | 0.858223 | 0.237467 |
+| Termination | 3.520047 | 1.340907 |
+
+Official W4A16 loading and the trained-versus-zero-adapter effect check passed.
+All four short terminal contexts ended cleanly, compared with zero of four for
+the preceding recipe. Graph calls were schema-valid in four of four contexts,
+but matched the expected tool in only two of four, versus three of four for the
+base. These observations do not establish a graph reasoning improvement.
+
+The first autonomous task still failed the clean-completion gate. With valid
+empty/gold controls, the model edited source, tested, and first submitted after
+about 30 seconds. It then repeated `submit_patch`, reaching 68 submission calls
+and exhausting 80 LLM turns. The captured patch contained 657 characters; this
+run's patch has not yet been independently graded. The harness counted 12
+budgeted calls because submission calls are accounted differently; the trace
+contains 80 actual tool invocations. Job `1072508` failed after 11m03s, and jobs
+`1072509` and `1072510` were cancelled without starting. No adapter was uploaded.
+
+The short probe uses thinking disabled, whereas the autonomous baseline uses a
+2,048-token thinking budget. Diagnostic job `1072797` tests the same step-32
+weights with thinking disabled on the same three registered tasks, preserving
+the prompt, tools, budgets, controls and clean-output gate. This is a generation
+configuration diagnostic; it neither completes training nor establishes that
+LoRA alone improves repair performance. No continuation is scheduled while its
+outcome is pending.
+
 ## Cost evidence and budget
 
 The earlier final continuation occupied four H100s for 9h50m11s, or 39.35 physical
@@ -160,12 +200,25 @@ about 27 minutes, including the subsequent training step; this is not a dedicate
 profiler's estimate of checkpoint overhead. Most recorded time was in ordinary
 training intervals. We have not measured GPU utilization or kernel-level efficiency.
 
-The new recipe has 1,024 action presentations versus the earlier 33,982. Based on
+The initial bounded recipe had 1,024 action presentations versus the earlier 33,982. Based on
 the earlier throughput, training is expected to take roughly an hour on one H100;
 this is an estimate, and preparation plus inference/verification add cost. The
 initial training allocation is capped at 45 minutes and stops at update 32.
 Only a successful autonomous probe permits the remaining one-epoch continuation,
-capped at 90 minutes. No automatic two-epoch or full-corpus fallback is authorized.
+capped at 90 minutes. That continuation was cancelled after the behavioral check.
+
+The 512-action corrective run starts at frozen source
+`e6522a6c90b3000de691346b37ee1a5695bc7196`, under
+`runs/20261010-swe-lora-balanced/`. Jobs `1072507`–`1072510` cover preparation and
+32 updates, partial behavior validation, the remaining one-epoch training, and
+release validation in that order. Each later stage requires the preceding stage
+to succeed. Repository checks and 76 tests passed in the initial allocation and
+[CI run 38089579952](https://github.com/jwj1342/gemma-agent-lab/actions/runs/38089579952).
+The initial allocation was shortened before starting from 45 to 30 minutes,
+based on the measured 17m08s predecessor; the amendment is recorded. Remaining
+training is capped at 45 minutes. No automatic two-epoch or full-corpus fallback
+is authorized. The data size, update count and allocation limits describe a
+budget, not a measured runtime or successful completion.
 
 ## Team access on four L4 GPUs
 
