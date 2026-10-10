@@ -9,6 +9,49 @@ scaling. The earlier four-GPU replacement jobs (`1071755`,
 `1071772`, `1071773`, `1071774`) were cancelled before starting; their elapsed
 compute time is zero. Existing artifacts and provenance are retained.
 
+## Current measured stage: 128-action training completed
+
+Run `runs/20261010-swe-lora-protocol-r2/`, frozen at
+`1fcc891bd7a44adce6b7cc2b08f488b3dd933a7e`, completed one epoch and 32 updates.
+Job `1072976` used one H100 for 15m47s (0.263 physical GPU hours), including
+fixture generation, encoding, memory checks, training and checkpoint recovery.
+Repository checks and 76 tests passed in the allocation and in
+[CI run 38093147750](https://github.com/jwj1342/gemma-agent-lab/actions/runs/38093147750).
+Official serving and autonomous acceptance are still pending; this is a training
+milestone rather than a release or a repair-score claim.
+
+| Training source | Actions | Snapshot/fixture groups | Input tokens | Target tokens |
+| --- | ---: | ---: | ---: | ---: |
+| SWE | 32 | 30 | 105,087 | 3,903 |
+| Graph | 32 | 10 | 26,148 | 1,196 |
+| Termination | 64 | 64 | 104,786 | 1,096 |
+| Total | 128 | — | 236,021 | 6,195 |
+
+Each selected action was presented exactly once. SWE selection covers all five
+tool types but only 32 of 484 available snapshot/tool strata; graph selection
+covers all four tool types and 32 of 40 strata. The 64 selected terminal contexts
+contain 29 single-file, 16 two-file and 19 three-file source patches, with actual
+official test/submission observations. The entire encoded validation population
+remains byte-identical to preceding runs.
+
+The selected export is checkpoint 32, so its coverage matches the complete
+epoch. It has 122,429,440 trainable parameters. Peak recorded training allocation
+was 67.38 GiB. A fresh process restored checkpoint eight's optimizer/RNG state
+and continued with a finite update nine; exact numerical equivalence to an
+uninterrupted run was not tested.
+
+| Fixed validation family | Initial NLL | Step 8 NLL | Step 32 NLL |
+| --- | ---: | ---: | ---: |
+| SWE | 0.506931 | 0.482471 | 0.424963 |
+| Graph | 0.858223 | 0.719940 | 0.380186 |
+| Termination | 3.520047 | 2.961483 | 1.622376 |
+
+These likelihood changes do not establish convergence, clean agent completion
+or repair gains. The registered acceptance job is `1072977`; release/fast
+evaluation `1072978` runs only after acceptance succeeds. The training evidence,
+sample coverage, source hashes and recovery receipt are under this run's
+`training-evidence.json`, `encoded-data/manifest.json` and `recovery-gate.json`.
+
 ## Initial 1,024-action protocol
 
 - Required base: `google/gemma-4/Other/gemma-4-31b-it-qat-w4a16-ct/2`.
