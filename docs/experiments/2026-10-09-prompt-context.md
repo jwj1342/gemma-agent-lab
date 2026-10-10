@@ -154,7 +154,8 @@ regressions on a larger development cohort before a final holdout decision.
 Job `1067715` evaluates baseline then ICL on the pre-existing 40-task development
 cohort. Both agent ZIPs are byte-identical to their fast-cohort packages; no prompt
 was revised after inspecting fast outcomes. Both reuse the exact version 29 runtime
-and generation budget from the frozen fast baseline. Results are pending.
+and generation budget from the frozen fast baseline. Baseline results are complete;
+ICL and the paired comparison are pending.
 
 The development cohort contains the original 12 fast tasks and 28 additional
 tasks. Report all 40 with control coverage and also report the additional 28
@@ -190,8 +191,39 @@ reference-patch failure. Any later change to dependency preparation or control
 eligibility needs a separately frozen comparison for both candidates. This run
 keeps its original runtime, task list, control cache and gate unchanged.
 `runs/20261010-prompt-dev/control-audit.json` records the source control hash,
-individual outcomes and this classification. Inference and paired results remain
-pending; the holdout remains sealed.
+individual outcomes and this classification. The holdout remains sealed.
+
+### Completed development baseline
+
+The unchanged baseline completed all 31 eligible tasks. Independent verification
+accepted 16 patches; 14 came from clean agent completions. The other two were
+recovered after a session timeout (`rich_3063`) or turn-budget exhaustion
+(`fastapi_14372`). All eligible tasks remain in the denominator, including failures.
+
+| Reporting group | Selected | Eligible | Passing patches | Clean passing patches | Clean completions |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Full development cohort | 40 | 31 | 16 | 14 | 24 |
+| Registered additional tasks | 28 | 20 | 13 | 11 | 15 |
+| Previously exposed fast tasks, freshly evaluated | 12 | 11 | 3 | 3 | 9 |
+
+The freshly evaluated fast subset differs from the earlier 2/11 baseline result
+despite an unchanged agent and evaluation settings. Keep each comparison paired
+within its own run; do not substitute the earlier outcome for this fresh baseline.
+The full-development result is a local public-task result with reduced control
+coverage, not a competition leaderboard score or evidence that ICL improves it.
+
+Baseline inference took 99.21 minutes across the 31 tasks, excluding model startup,
+controls and grading. Recorded cost was 1,023 model calls and 9,839,582 model tokens,
+including repeated input context. The trace audit found no graph or skill calls
+and 53 missing-argument feedback events. Of these, 49 occurred on `fastapi_14372`,
+including a streak of 48 identical errors. Some other tool errors were intentional
+reproductions; the audit does not label every nonzero command as misuse.
+
+Evidence is in `runs/20261010-prompt-dev/baseline/summary.json` and
+`tool-audit.json`. Both live run manifests retain their original fast-cohort agent
+hashes. Runtime input records match apart from asset-check timing. ICL is now
+running with its frozen configuration; no prompt was changed using these baseline
+outcomes. Its completed results are required before producing the paired report.
 
 After both development runs finish, reproduce the registered partition report:
 
