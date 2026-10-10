@@ -64,7 +64,7 @@ async def run(args):
         raise ValueError('Inference input contains validation labels')
     args.results.mkdir(parents=True, exist_ok=True)
     budget = yaml.safe_load((args.agent_dir / 'eval_config.yaml').read_text())['evaluation']
-    if batch and args.mode == 'verify':
+    if args.mode == 'verify':
         # Submission budgets govern inference. Independent grading uses the
         # official default command timeout, including longer repository tests.
         budget = {**budget, 'timeout_seconds': 300}

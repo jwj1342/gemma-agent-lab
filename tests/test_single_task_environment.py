@@ -19,7 +19,8 @@ class SingleTaskEnvironmentTests(unittest.TestCase):
         for batch in (False, True):
             with self.subTest(batch=batch), tempfile.TemporaryDirectory() as directory:
                 root = Path(directory)
-                (root / 'eval_config.yaml').write_text('evaluation: {}\n')
+                (root / 'eval_config.yaml').write_text(
+                    'evaluation:\n  timeout_seconds: 60\n  max_time_minutes: 4\n')
                 configured = []
 
                 class Evaluator:
@@ -32,6 +33,10 @@ class SingleTaskEnvironmentTests(unittest.TestCase):
                     configured.append(evaluator)
 
                 async def verify(manager, config, task, snapshot, **kwargs):
+                    # Offline grading has the same command allowance in both
+                    # modes; it must not inherit the agent's 60-second limit.
+                    self.assertEqual(config.timeout_seconds, 300)
+                    self.assertEqual(config.max_time_minutes, 4)
                     # Model a collection failure when setup was skipped. This
                     # exercises the real single/batch orchestration, not imports.
                     isolated = not manager.sandbox.system_site_packages
