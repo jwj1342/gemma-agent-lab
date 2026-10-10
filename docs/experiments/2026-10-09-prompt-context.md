@@ -1,10 +1,12 @@
 # Prompt and context adaptation: initial execution record
 
-Status on October 10, 2026: research, portable candidate construction, official
-compilation, controlled smoke tests and the first matched fast-cohort comparison
-are complete. ICL resolved 3/11 eligible tasks versus the baseline's 2/11, with two
-gains and one regression. One attempt per task on this small public cohort does not
-establish a reliable improvement. All candidates use zero weight updates.
+Status on October 10, 2026: the fast comparison and registered development
+expansion are complete. ICL's initial 3/11 versus 2/11 result did not carry over:
+on development tasks, it resolved 11/31 versus the baseline's 16/31, and 8/20
+versus 13/20 on the additional eligible tasks. This candidate is not promoted.
+Keep the baseline policy for the first LoRA comparison and the 70-task holdout
+sealed. All prompt candidates use zero weight updates; each task has one stochastic
+attempt, so these observations do not establish a general effect of ICL.
 
 ## Question and comparison
 
@@ -143,9 +145,9 @@ these counts do not establish a graph benefit.
 The protocol candidate used about 12% fewer model tokens than baseline while
 resolving the same tasks, but took slightly longer and had fewer clean successes.
 ICL used about 1.3% more tokens. None of the prompts consistently improved repair,
-tool validity and completion together. A practical next comparison should retain
-ICL, address malformed calls with task-independent schema guidance, and measure
-regressions on a larger development cohort before a final holdout decision.
+tool validity and completion together. These fast results motivated the larger,
+unchanged-ICL comparison below. Its regressions supersede the initial case for
+promoting this package; malformed-call recovery remains an open research problem.
 
 ## Provenance and next measurements
 
@@ -154,8 +156,8 @@ regressions on a larger development cohort before a final holdout decision.
 Job `1067715` evaluates baseline then ICL on the pre-existing 40-task development
 cohort. Both agent ZIPs are byte-identical to their fast-cohort packages; no prompt
 was revised after inspecting fast outcomes. Both reuse the exact version 29 runtime
-and generation budget from the frozen fast baseline. Baseline results are complete;
-ICL and the paired comparison are pending.
+and generation budget from the frozen fast baseline. Both evaluations and the
+paired comparison are complete. The job finished successfully in 4h58m37s.
 
 The development cohort contains the original 12 fast tasks and 28 additional
 tasks. Report all 40 with control coverage and also report the additional 28
@@ -221,11 +223,77 @@ reproductions; the audit does not label every nonzero command as misuse.
 
 Evidence is in `runs/20261010-prompt-dev/baseline/summary.json` and
 `tool-audit.json`. Both live run manifests retain their original fast-cohort agent
-hashes. Runtime input records match apart from asset-check timing. ICL is now
-running with its frozen configuration; no prompt was changed using these baseline
-outcomes. Its completed results are required before producing the paired report.
+hashes. Runtime input records match apart from asset-check timing. ICL ran with
+its frozen configuration; no prompt was changed using these baseline outcomes.
 
-After both development runs finish, reproduce the registered partition report:
+### Completed development comparison
+
+The registered reporter verified matching model, runtime, budget, task identities
+and control masks. The unchanged ICL package resolved **11/31** eligible tasks
+against **16/31** for baseline: one gain and six regressions, a descriptive change
+of -16.1 percentage points. The additional subset has **8/20 versus 13/20**, with
+no gains and five regressions. The freshly evaluated fast subset is tied at 3/11.
+
+| Reporting group | Eligible | Baseline passing | ICL passing | Baseline clean passing | ICL clean passing |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Full development cohort | 31/40 | 16 | 11 | 14 | 10 |
+| Registered additional tasks | 20/28 | 13 | 8 | 11 | 7 |
+| Previously exposed fast tasks, freshly evaluated | 11/12 | 3 | 3 | 3 | 3 |
+
+ICL gained `rich_3278` and regressed on `rich_4079`, `rich_2943`, `fastapi_5624`,
+`fastapi_14463`, `fastapi_9425` and `requests_7505`. Its only unclean passing
+patch was `rich_3063`, recovered after a session timeout. Baseline's two unclean
+passing patches are described above. All valid-control tasks stay in each
+denominator; the nine excluded controls have not been relabeled as model failures.
+
+| Full-development measurement | Baseline | ICL |
+| --- | ---: | ---: |
+| Clean completions | 24/31 | 22/31 |
+| Session timeouts | 6 | 9 |
+| Turn-budget exhaustion | 1 | 0 |
+| Inference minutes | 99.21 | 114.47 |
+| Model calls | 1,023 | 1,083 |
+| Model tokens, including repeated context | 9,839,582 | 10,000,002 |
+| Missing-argument feedback events | 53 | 92 |
+| Longest identical-error streak | 48 | 35 |
+| Graph calls | 0 | 7 |
+| Skill calls | 0 | 0 |
+
+ICL took 15.4% more inference time and used 1.6% more model tokens. Its shorter
+whole-run time reflects control-cache reuse and different setup costs, not faster
+inference. Both variants have all 31 traces and token totals. Each has one
+unparsed tool observation, so feedback counts have that explicit coverage limit.
+
+Three regressed tasks account for 84 of ICL's 92 missing-argument events:
+`fastapi_14463` (29), `requests_7505` (35), and `rich_2943` (20). The dominant
+recorded editor call supplies `filepath` and `new_string` but omits the required
+`old_string`. The harness returns actionable feedback, yet repeated calls can
+consume the session. This identifies a concrete failure mode; the normalized
+trace alone does not establish whether the omission began in generation or
+parsing. `icl/argument-feedback-diagnostic.json` preserves the observed argument
+keys and feedback with source and trace hashes.
+
+ICL used graph tools on four tasks. `fastapi_14794` and `fastapi_14372` passed;
+both also passed with baseline, which made no graph calls. `fastapi_14609` and
+`fastapi_14306` failed. These observations establish actual graph use but do not
+isolate its effect: the prompt changes several behaviors, and graph use is selected
+by the agent rather than assigned in a matched graph-only ablation.
+
+The current decision is to keep this ICL package as a documented negative
+experiment and retain the baseline policy for the first LoRA comparison. Its
+broader regression and higher inference cost do not justify a holdout run or
+combining it with the first trained adapter. Future prompt work should prioritize
+tool-call validity and recovery, using training-only examples and a newly frozen
+comparison. The development results are now exposed; retain the holdout for a
+later milestone. This is a decision about this package, not evidence that all ICL
+or retrieval methods are ineffective.
+
+The versioned [development manifest](../../resource/manifests/prompt-dev-v29.json)
+contains paired task outcomes, coverage, cost, audit summaries and source hashes.
+Raw artifacts remain in `runs/20261010-prompt-dev/`. The job completed with exit
+code `0:0`; both suite summaries and the registered expansion report are complete.
+
+Reproduce the registered partition report in a new output path:
 
 ```bash
 python scripts/summarize_eval_expansion.py \
@@ -233,7 +301,7 @@ python scripts/summarize_eval_expansion.py \
   --baseline runs/20261010-prompt-dev/baseline \
   --fast-baseline runs/20261009-prompt-icl/baseline/fast \
   --registration runs/20261010-prompt-dev/registration.json \
-  --output runs/20261010-prompt-dev/expansion-report.json
+  --output runs/20261010-prompt-dev/expansion-report-reproduced.json
 ```
 
 Use these paths from the artifact workspace; the reporter itself can be invoked

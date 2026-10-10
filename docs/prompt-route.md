@@ -107,7 +107,8 @@ python scripts/build_submission.py --agent-dir runs/my-prompt-candidate/agent \
 ```
 
 Check the packaging CLI's `--help` if using another branch. The checked-in default
-package is [configs/prompt-icl/](../configs/prompt-icl/README.md). Use the existing
+package is [configs/prompt-icl/](../configs/prompt-icl/README.md), an experimental
+reflection candidate rather than a promoted submission policy. Use the existing
 [Kaggle runtime workflow](kaggle-runtime.md) for team members without cluster access.
 
 ## Evaluation sequence and expansion
@@ -115,10 +116,15 @@ package is [configs/prompt-icl/](../configs/prompt-icl/README.md). Use the exist
 The first matched version 29 fast comparison is complete: baseline 2/11, workflow
 2/11, ICL 3/11, reflection 2/11 and protocol 2/11, with 11/12 control coverage.
 ICL gained two tasks and regressed on one; reflection/playbook retrieval did not
-establish a benefit. See the [execution report](experiments/2026-10-09-prompt-context.md)
-for clean-completion counts, costs and trace diagnostics. This is a small, single-seed
-public comparison. Larger development evaluation and the later expansion ideas
-below remain future milestones.
+establish a benefit. The completed development expansion reversed the initial
+ICL signal: baseline resolved 16/31 eligible tasks and ICL 11/31. On the registered
+additional subset, the counts were 13/20 and 8/20. ICL took 15.4% more inference
+time and had 92 missing-argument feedback events versus 53 for baseline. Keep this
+package as a negative experiment and retain the baseline for the first LoRA
+comparison. See the [execution report](experiments/2026-10-09-prompt-context.md)
+for coverage, paired outcomes, clean completion, costs and trace diagnostics.
+These are single-attempt public comparisons; the holdout remains sealed. Retrieval,
+offline prompt search and the later expansion ideas below remain future work.
 
 1. Compile each package with the version 29 official compiler and check that
    preparation from a clone works without local model/data paths or credentials.

@@ -2,7 +2,10 @@
 
 The default package combines a concise workflow, illustrative decision examples,
 task-local execution feedback and an optional repair playbook. It uses the official
-base model with no adapter. Effectiveness is pending evaluation.
+base model with no adapter. These are research candidates, not a promoted
+submission policy. The fast comparison did not establish a reliable benefit,
+and ICL regressed in the larger development comparison. See the
+[execution report](../../docs/experiments/2026-10-09-prompt-context.md) for results.
 
 See [the research and experiment plan](../../docs/prompt-route.md) for sources,
 competition constraints, ablations and cost accounting. Build `workflow`, `protocol`
