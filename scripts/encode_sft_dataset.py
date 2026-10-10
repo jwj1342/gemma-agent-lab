@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 
 from src.sft_data import encode_example, read_jsonl
+from src.sft_subset import select_training_subset
 
 
 def digest(path):
@@ -79,6 +80,8 @@ def main():
                         raise ValueError('Tool handoff stop token is missing from supervised targets')
                 buckets[split].append({'input_ids': torch.tensor(encoded['input_ids'], dtype=torch.int32),
                     'target_start': target_start, 'kind': kind, 'sample_id': identity,
+                    'target_tool': (sample['messages'][-1]['tool_calls'][0]['function']['name']
+                                    if sample['messages'][-1].get('tool_calls') else 'final_answer'),
                     'metadata': encoded['metadata']})
                 if len(buckets[split]) % 500 == 0:
                     print(split, len(buckets[split]), flush=True)
@@ -89,7 +92,24 @@ def main():
     val_groups = {s['metadata']['group'].lower() for s in buckets['validation']}
     if train_groups & val_groups:
         raise ValueError('Cross-source snapshot leakage')
+    subset = None
+    if config.get('training_subset'):
+        buckets['train'], coverage = select_training_subset(
+            buckets['train'], config['training_subset'], config['seed'])
+        subset = {'budgets': config['training_subset'], 'seed': config['seed'],
+                  'method': 'Round-robin over repository/commit and target-tool strata; hashed order',
+                  'coverage': coverage, 'validation_population_unchanged': True,
+                  'sample_ids': [row['sample_id'] for row in buckets['train']]}
+    protocol_examples = []
     for split, samples in buckets.items():
+        for sample in samples:
+            # The native template closes a final answer with <turn|> followed
+            # by a newline. Pending calls end directly at <|tool_response>.
+            expected = ([stop_id] if sample['metadata']['target_kind'] == 'tool'
+                        else tokenizer.encode('<turn|>\n', add_special_tokens=False))
+            if (not 0 < sample['target_start'] < len(sample['input_ids'])
+                    or sample['input_ids'][-len(expected):].tolist() != expected):
+                raise ValueError('Native-tokenizer target boundary or termination contract failed')
         for kind in ('swe', 'graph', 'terminal'):
             rows = [s for s in samples if s['kind'] == kind]
             if not rows:
@@ -102,22 +122,30 @@ def main():
                 'assistant_tokens': sum(len(s['input_ids']) - s['target_start'] for s in rows),
                 'length_p50': lengths[len(lengths)//2], 'length_p95': lengths[int(len(lengths)*.95)],
                 'length_max': lengths[-1]}
+            representative = rows[0]
+            protocol_examples.append({'split': split, 'kind': kind, 'sample_id': representative['sample_id'],
+                'target_start': representative['target_start'],
+                'target_prefix': tokenizer.decode(representative['input_ids'][representative['target_start']:representative['target_start'] + 24].tolist()),
+                'target_suffix': tokenizer.decode(representative['input_ids'][-24:].tolist()),
+                'final_token_id': int(representative['input_ids'][-1])})
         torch.save(samples, args.output / (split + '.pt'))
     manifest = {'config': config, 'source_files_sha256': files, 'statistics': stats,
         'encoding_protocol': {
             'tool_handoff_stop_token': stop_token, 'tool_handoff_stop_id': stop_id,
             'tool_handoff_is_supervised': True,
             'source_sha256': {str(p): digest(p) for p in
-                             (Path('src/sft_data.py'), Path('scripts/encode_sft_dataset.py'))},
+                             (Path('src/sft_data.py'), Path('src/sft_subset.py'), Path('scripts/encode_sft_dataset.py'))},
             'base_protocol_sha256': {name: digest(args.base / name) for name in
                                     ('chat_template.jinja', 'tokenizer.json', 'generation_config.json')},
             'tool_targets_by_split': {split: sum(s['metadata']['target_kind'] == 'tool' for s in samples)
                                      for split, samples in buckets.items()}},
-        'rejected': dict(rejected), 'sampling': 'Every accepted example once per epoch, no replacement',
+        'training_subset': subset,
+        'rejected': dict(rejected), 'sampling': 'Every selected training example once per epoch, no replacement',
         'split': 'Disjoint repository/base-commit groups; protected benchmark snapshots excluded upstream',
         'encoded_files_sha256': {s: digest(args.output / (s + '.pt')) for s in buckets},
         'caveat': 'SWE success is an upstream label; graph/terminal examples are executed component exercises.'}
     (args.output / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
+    (args.output / 'protocol-examples.json').write_text(json.dumps(protocol_examples, indent=2) + '\n')
     print(json.dumps(manifest, indent=2), flush=True)
 
 

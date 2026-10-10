@@ -13,3 +13,4 @@ Existing baseline results predate this convention. Their authoritative receipts 
 | 2026-10-09 | [Fast local evaluation: baseline and pilot adapter](2026-10-09-local-evaluation.md) |
 | 2026-10-09 | [Official wheelhouse migration](2026-10-09-wheelhouse-update.md) |
 | 2026-10-09 | [Complete-epoch SWE LoRA execution](2026-10-09-swe-lora-v1.md) |
+| 2026-10-10 | [Bounded SWE LoRA training and evaluation](2026-10-10-swe-lora-light.md) |

@@ -11,6 +11,9 @@ project_root=${1:?project root}
 run_dir=${2:?frozen run directory}
 code_root=${3:-"$run_dir/inputs/training"}
 stop_after=${4:-}
+configuration=${5:-configs/training/swe-lora-v1.json}
+workers=${6:-4}
+[[ "$workers" =~ ^[1-9][0-9]*$ ]] || { echo 'workers must be a positive integer' >&2; exit 2; }
 stop_args=()
 if [[ -n "$stop_after" ]]; then
   [[ "$stop_after" =~ ^[0-9]+$ && "$stop_after" -ge 8 ]] || { echo 'stop_after must be at least 8' >&2; exit 2; }
@@ -30,7 +33,6 @@ unset APPTAINER_BIND APPTAINER_BINDPATH APPTAINER_MOUNT SINGULARITY_BIND SINGULA
 source /home/jwj/venvs/gemma4-train/bin/activate
 python scripts/check_repository.py
 python -m unittest discover -s tests -v
-configuration=configs/training/swe-lora-v1.json
 base="$project_root/model/base/gemma-4-31b-it-qat-w4a16-ct-v2"
 if [[ ! -d "$run_dir/swe-data" ]]; then
   python -m scripts.prepare_sft_data --parquet "$project_root/data/raw/swesmith/tool-00004-of-00008.parquet" \
@@ -59,7 +61,7 @@ if [[ ! -d "$run_dir/encoded-data" ]]; then
 fi
 train_args=(--base "$base" --data "$run_dir/encoded-data" --config "$configuration" --output "$run_dir/train")
 if [[ ! -f "$run_dir/train/latest.json" ]]; then
-  torchrun --standalone --nproc_per_node=4 -m scripts.launch_training_rank "${train_args[@]}" --probe --stop-after 8
+  torchrun --standalone --nproc_per_node="$workers" -m scripts.launch_training_rank "${train_args[@]}" --probe --stop-after 8
 fi
 checkpoint=$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["checkpoint"])' "$run_dir/train/latest.json")
-torchrun --standalone --nproc_per_node=4 -m scripts.launch_training_rank "${train_args[@]}" --resume "$run_dir/train/$checkpoint" "${stop_args[@]}"
+torchrun --standalone --nproc_per_node="$workers" -m scripts.launch_training_rank "${train_args[@]}" --resume "$run_dir/train/$checkpoint" "${stop_args[@]}"

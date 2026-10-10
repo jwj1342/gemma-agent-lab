@@ -10,6 +10,8 @@ set -eo pipefail
 project_root=${1:?project asset root}
 train_run=${2:?partial training run}
 code_root=${3:?frozen validation source}
+probe_steps=${4:-100}
+[[ "$probe_steps" =~ ^[1-9][0-9]*$ ]] || { echo 'probe_steps must be a positive integer' >&2; exit 2; }
 cd "$code_root"
 module load StdEnv/2023 python/3.12.4 apptainer/1.4.5
 source /home/jwj/venvs/gemma4-compiler/bin/activate
@@ -20,18 +22,19 @@ python -m unittest discover -s tests -v
 
 # This is an explicitly partial training probe. Never manufacture completed.json
 # or modify the resumable training directory to make a release gate pass.
-python - "$train_run" "$code_root" <<'PY'
+python - "$train_run" "$code_root" "$probe_steps" <<'PY'
 from pathlib import Path
 import hashlib
 import json
 import shutil
 import sys
 
-run, code = map(Path, sys.argv[1:])
+run, code = map(Path, sys.argv[1:3])
+probe_steps = int(sys.argv[3])
 latest = json.loads((run / 'train/latest.json').read_text())
 recovery = json.loads((run / 'train/resume-check.json').read_text())
-if latest['step'] != 100 or not recovery['contract_matches'] or not recovery['optimizer_and_rng_restored']:
-    raise ValueError('Require the registered 100-step probe and successful recovery')
+if latest['step'] != probe_steps or not recovery['contract_matches'] or not recovery['optimizer_and_rng_restored']:
+    raise ValueError('Require the registered partial probe and successful recovery')
 source = run / 'train' / latest['checkpoint']
 probe = run / 'preflight-validation'
 probe.mkdir()
@@ -42,7 +45,7 @@ for name in ('adapter_config.json', 'adapter_model.safetensors'):
     shutil.copy2(source / name, adapter / name)
     with (adapter / name).open('rb') as stream:
         hashes[name] = hashlib.file_digest(stream, 'sha256').hexdigest()
-record = {'status': 'Partial 100-step protocol probe; not completed training or a release candidate',
+record = {'status': f'Partial {probe_steps}-step protocol probe; not completed training or a release candidate',
           'source_checkpoint': str(source), 'step': latest['step'], 'adapter_sha256': hashes,
           'recovery': recovery}
 (probe / 'train/training-result.json').write_text(json.dumps(record, indent=2) + '\n')
