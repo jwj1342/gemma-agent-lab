@@ -67,6 +67,11 @@ receives gradients, that the export lands at `adapters/<name>/adapter_model.safe
 filename `adk_submission.discovery` groups a PEFT directory around — and that the exported adapter
 reloads with matching weights. It proves wiring, never accuracy.
 
+Before spending a training budget, run the serving-path check in
+[the serving risk note](../../../docs/experiments/2026-10-11-lora-serving-risk.md). LoRA on a
+compressed-tensors W4A16 base has failed silently in this competition before, and
+`scripts/make_lora_probe.py` builds the loud probe adapter that settles it without any training.
+
 ## Producing the weights
 
 `scripts/train_lora_adapter.py` is the training and export entry point. Run it where the base model,
