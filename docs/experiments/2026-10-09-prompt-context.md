@@ -149,6 +149,25 @@ regressions on a larger development cohort before a final holdout decision.
 
 ## Provenance and next measurements
 
+### Registered development expansion, October 10
+
+Job `1067715` evaluates baseline then ICL on the pre-existing 40-task development
+cohort. Both agent ZIPs are byte-identical to their fast-cohort packages; no prompt
+was revised after inspecting fast outcomes. Both reuse the exact version 29 runtime
+and generation budget from the frozen fast baseline. Results are pending.
+
+The development cohort contains the original 12 fast tasks and 28 additional
+tasks. Report all 40 with control coverage and also report the additional 28
+separately: the nested full cohort cannot serve as wholly independent confirmation
+of a candidate selected on fast results. Keep the 70-task holdout sealed. This
+comparison still has one stochastic attempt per task and does not establish
+cross-repository or leaderboard generalization.
+
+Local artifacts and the pre-inference registration are in
+`runs/20261010-prompt-dev/`. The registration lists the exact additional task IDs,
+unchanged agent hashes are recorded in each run manifest, and the runner reuses
+eligible cached controls while generating fresh predictions for each candidate.
+
 - Branch: `experiment/prompt-icl-route`; [Issue #9](https://github.com/jwj1342/gemma-agent-lab/issues/9)
   and [PR #10](https://github.com/jwj1342/gemma-agent-lab/pull/10).
 - Initial candidates: `f3cebb5`; corrected skill: `26bada6`; protocol candidate: `4c64dd9`.
