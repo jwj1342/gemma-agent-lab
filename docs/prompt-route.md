@@ -112,6 +112,14 @@ package is [configs/prompt-icl/](../configs/prompt-icl/README.md). Use the exist
 
 ## Evaluation sequence and expansion
 
+The first matched version 29 fast comparison is complete: baseline 2/11, workflow
+2/11, ICL 3/11, reflection 2/11 and protocol 2/11, with 11/12 control coverage.
+ICL gained two tasks and regressed on one; reflection/playbook retrieval did not
+establish a benefit. See the [execution report](experiments/2026-10-09-prompt-context.md)
+for clean-completion counts, costs and trace diagnostics. This is a small, single-seed
+public comparison. Larger development evaluation and the later expansion ideas
+below remain future milestones.
+
 1. Compile each package with the version 29 official compiler and check that
    preparation from a clone works without local model/data paths or credentials.
 2. Run valid empty/gold controls and a smoke task. A smoke pass verifies integration,

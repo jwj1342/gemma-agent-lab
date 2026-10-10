@@ -1,8 +1,10 @@
 # Prompt and context adaptation: initial execution record
 
-Status on October 9, 2026: research, portable candidate construction and repository
-CI are complete. The first version 29 smoke executions are recorded below.
-Multi-task effectiveness is not yet measured, and no weight updates are used.
+Status on October 10, 2026: research, portable candidate construction, official
+compilation, controlled smoke tests and the first matched fast-cohort comparison
+are complete. ICL resolved 3/11 eligible tasks versus the baseline's 2/11, with two
+gains and one regression. One attempt per task on this small public cohort does not
+establish a reliable improvement. All candidates use zero weight updates.
 
 ## Question and comparison
 
@@ -73,19 +75,77 @@ file. The final graded patch changed only the implementation file. This gives a
 concrete remaining target: explain protected-file filtering and successful
 termination clearly. It does not prove that the recovery policy caused the repair.
 
-All four candidate packages have now passed official compilation. The frozen
-12-task baseline and protocol runs are executing; workflow, ICL and corrected
-reflection follow the baseline in the same batch job. Do not tune prompts against
-these task outcomes before finishing the registered comparison.
+All four candidate packages passed official compilation. The registered five-way
+comparison has now finished. Prompt packages stayed frozen throughout execution.
 
 ### Fast-cohort coverage
 
-Under version 29, both the baseline and protocol runs have valid empty/reference
+Under version 29, all five runs have valid empty/reference
 controls for **11 of the fixed 12 tasks**. `fastapi_15745` remains listed but is
 ineligible: its reference patch yields 33 passed and 3 skipped tests, including a
 required asynchronous test. The official verifier rejects that skipped required
 test even though pytest exits successfully. Keep the verifier unchanged and report
-the 11/12 coverage alongside any eventual score; do not substitute another task.
+the 11/12 coverage alongside each score; do not substitute another task.
+
+## Completed fast-cohort comparison
+
+The [versioned result record](../../resource/manifests/prompt-fast-v29.json) contains
+task outcomes, agent/runtime hashes, paired comparisons and trace-audit hashes.
+All suites used one H100, seed 42, the required W4A16 model and identical
+four-minute / 40-tool / 80-turn limits. The comparator checked task membership,
+control masks, model, verifier, benchmark and budget identities before pairing.
+
+| Candidate | Resolved / eligible | Clean and resolved | Clean completion | Timeouts | Inference minutes | LLM calls |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Baseline | 2/11 | 2 | 8/11 | 2 | 39.89 | 413 |
+| Workflow | 2/11 | 2 | 7/11 | 4 | 42.97 | 418 |
+| ICL | 3/11 | 3 | 7/11 | 2 | 38.62 | 434 |
+| Reflection | 2/11 | 1 | 6/11 | 3 | 40.70 | 468 |
+| Protocol recovery | 2/11 | 1 | 7/11 | 3 | 41.21 | 373 |
+
+Resolution uses independent verification of the recovered patch. Reflection and
+protocol both left a passing `httpx_3672` patch after timing out; those outcomes
+are not clean completions. Inference minutes include per-task setup but exclude
+model startup, controls, grading and queue time. Whole-run timing is affected by
+control-cache reuse and should not be used directly to rank prompt efficiency.
+These H100 timings do not establish L4 timing.
+
+| Candidate | Newly resolved versus baseline | Regressions |
+| --- | --- | --- |
+| Workflow | `rich_3278` | `requests_7502` |
+| ICL | `rich_3278`, `fastapi_9753` | `requests_7502` |
+| Reflection | `fastapi_9753` | `requests_7502` |
+| Protocol recovery | None | None |
+
+ICL's net gain is one task, or 9.1 percentage points on the eligible cohort.
+Its descriptive 95% binomial interval is wide; task correlation, stochastic
+generation and adaptive development further limit interpretation. Keep it as a
+candidate for a larger frozen comparison, with the holdout still sealed.
+
+### Tool behavior and cost
+
+| Candidate | Missing-argument events | Longest repeated-error streak | Graph calls | Skill calls | Total model tokens |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Baseline | 0 | 3 | 0 | 0 | 4,046,028 |
+| Workflow | 31 | 13 | 5 | 0 | 3,851,510 |
+| ICL | 13 | 4 | 4 | 0 | 4,100,594 |
+| Reflection | 104 | 65 | 1 | 0 | 4,564,302 |
+| Protocol recovery | 12 | 4 | 0 | 0 | 3,559,466 |
+
+Token totals include repeatedly supplied conversation context. Every eligible
+task had a trace; missing-argument events are observed tool feedback, rather than
+a complete schema validator. Nonzero commands may be intentional reproductions.
+Reflection entered a 65-call malformed-write loop on `rich_4079`. Its optional
+playbook was never retrieved in these runs, so its utility remains unmeasured.
+Graph use occurred in some candidates, but no matched graph-only ablation was run;
+these counts do not establish a graph benefit.
+
+The protocol candidate used about 12% fewer model tokens than baseline while
+resolving the same tasks, but took slightly longer and had fewer clean successes.
+ICL used about 1.3% more tokens. None of the prompts consistently improved repair,
+tool validity and completion together. A practical next comparison should retain
+ICL, address malformed calls with task-independent schema guidance, and measure
+regressions on a larger development cohort before a final holdout decision.
 
 ## Provenance and next measurements
 
