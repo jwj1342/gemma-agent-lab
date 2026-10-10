@@ -9,7 +9,8 @@
 set -eo pipefail
 project_root=${1:?project root}
 run_dir=${2:?frozen run directory}
-cd "$run_dir/inputs/training"
+code_root=${3:-"$run_dir/inputs/training"}
+cd "$code_root"
 module load StdEnv/2023 python/3.12.4 cuda/12.9 arrow/25.0.0 apptainer/1.4.5
 mkdir -p "$run_dir/cache" "$run_dir/tmp"
 export HF_HOME="$run_dir/cache/hf" XDG_CACHE_HOME="$run_dir/cache/xdg"
@@ -52,7 +53,7 @@ if [[ ! -d "$run_dir/encoded-data" ]]; then
 fi
 train_args=(--base "$base" --data "$run_dir/encoded-data" --config "$configuration" --output "$run_dir/train")
 if [[ ! -f "$run_dir/train/latest.json" ]]; then
-  torchrun --standalone --nproc_per_node=4 -m scripts.train_swe_lora "${train_args[@]}" --probe --stop-after 8
+  torchrun --standalone --nproc_per_node=4 -m scripts.launch_training_rank "${train_args[@]}" --probe --stop-after 8
 fi
 checkpoint=$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["checkpoint"])' "$run_dir/train/latest.json")
-torchrun --standalone --nproc_per_node=4 -m scripts.train_swe_lora "${train_args[@]}" --resume "$run_dir/train/$checkpoint"
+torchrun --standalone --nproc_per_node=4 -m scripts.launch_training_rank "${train_args[@]}" --resume "$run_dir/train/$checkpoint"
