@@ -50,8 +50,6 @@ def main():
     world = int(os.environ.get('WORLD_SIZE', 1))
     torch.cuda.set_device(local_rank)
     device = torch.device('cuda', local_rank)
-    if world > 1:
-        dist.init_process_group('nccl')
     torch.set_num_threads(4)
     config = json.loads(args.config.read_text())
     random.seed(config['seed'] + rank)
@@ -61,8 +59,6 @@ def main():
         if args.output.exists() and not args.resume:
             raise ValueError('Use a fresh run directory or explicit resume')
         args.output.mkdir(parents=True, exist_ok=True)
-    if world > 1:
-        dist.barrier()
     started = time.monotonic()
     manifest = json.loads((args.data / 'manifest.json').read_text())
     train = torch.load(args.data / 'train.pt', weights_only=True)
@@ -75,7 +71,10 @@ def main():
                  for kind in ('swe', 'graph', 'terminal')}
     steps_per_epoch = math.ceil(len(train) / (world * config['gradient_accumulation']))
     total_steps = config['epochs'] * steps_per_epoch
-    contract = {'config': config, 'data_manifest_sha256': digest(args.data / 'manifest.json'),
+    dependencies = {n: importlib.metadata.version(n) for n in
+                    ('torch', 'transformers', 'peft', 'compressed-tensors', 'accelerate')}
+    contract = {'config': config, 'dependencies': dependencies,
+                'data_manifest_sha256': digest(args.data / 'manifest.json'),
                 'world_size': world, 'base_config_sha256': digest(args.base / 'config.json'),
                 'base_weights_sha256': digest(args.base / 'model.safetensors'),
                 'source_sha256': {str(x): digest(x) for x in
@@ -100,6 +99,12 @@ def main():
     model.gradient_checkpointing_enable(gradient_checkpointing_kwargs={'use_reentrant': False})
     model.config.use_cache = False
     model.enable_input_require_grads()
+    # Load each complete replica before starting DDP. PEFT 0.19.1 otherwise
+    # enters its legacy tensor-parallel checkpoint loader merely because a
+    # process group exists; that path is incompatible with Transformers 5.18.
+    # This trainer uses full replicas on explicit local devices, never TP.
+    if world > 1:
+        dist.init_process_group('nccl')
     parameters = [x for x in model.parameters() if x.requires_grad]
     optimizer = torch.optim.AdamW(parameters, lr=config['learning_rate'], weight_decay=config['weight_decay'])
     step, best, completed_samples, completed_tokens = 0, float('inf'), 0, 0
@@ -121,8 +126,7 @@ def main():
         record = {'contract': contract, 'slurm_job_id': os.environ['SLURM_JOB_ID'],
             'git_revision': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
             'modules': os.environ.get('LOADEDMODULES', ''),
-            'dependencies': {n: importlib.metadata.version(n) for n in
-                             ('torch', 'transformers', 'peft', 'compressed-tensors', 'accelerate')},
+            'dependencies': dependencies,
             'trainable_parameters': sum(x.numel() for x in parameters),
             'target_modules': targets, 'total_steps': total_steps, 'steps_per_epoch': steps_per_epoch,
             'train_actions': len(train), 'validation_actions': {k: len(v) for k, v in fixed_val.items()},
