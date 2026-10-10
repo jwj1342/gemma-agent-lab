@@ -19,6 +19,8 @@ workspace; those artifacts are not included in a Git clone.
 | [kaggle-evaluation-status.json](kaggle-evaluation-status.json) | Dated queries of existing notebook/submission state |
 | [submission-route.json](submission-route.json) | Historical account eligibility and upload-route discovery |
 | [pipeline-local-checks.json](pipeline-local-checks.json) | Local packaging/preparation checks before GPU evaluation |
+| [swe-lora-v1-training.json](swe-lora-v1-training.json) | Full two-epoch coverage, checkpoint selection, and failed autonomous release smoke |
+| [swe-lora-v1-handoff.json](swe-lora-v1-handoff.json) | Conditional tool-stop probabilities and zero-update controls for the failed v1 adapter |
 
 ## Data and reference inventories
 
