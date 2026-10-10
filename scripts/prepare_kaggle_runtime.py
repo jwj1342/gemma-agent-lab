@@ -3,14 +3,33 @@ import argparse
 import base64
 import gzip
 import hashlib
+import io
 import json
 from pathlib import Path
 import subprocess
+import tarfile
 import tempfile
 
 from build_submission import build, collect_files
 from prepare_eval_task import PUBLIC_FIELDS
 from verify_eval_run import verify_inputs
+
+# Test-only dependencies installed offline before the harness runs. The subprocess sandbox used
+# on Kaggle never installs wheels (see resource/discussions/743973-full.json and the harness
+# source), so repository test imports must exist in the notebook interpreter. Packages the image
+# already provides at a task-relevant version (pytest, rich, pydantic, starlette, flask, ...) are
+# deliberately excluded.
+TEST_DEPENDENCY_WHEELS = (
+    'asttokens-3.0.2-py3-none-any.whl',
+    'executing-2.2.1-py2.py3-none-any.whl',
+    'dirty_equals-0.11-py3-none-any.whl',
+    'inline_snapshot-0.36.0-py3-none-any.whl',
+    'pytest_httpbin-2.1.0-py3-none-any.whl',
+    'httpbin-0.10.0-py2.py3-none-any.whl',
+    'python_multipart-0.0.32-py3-none-any.whl',
+    'ujson-6.0.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl',
+    'orjson-3.13.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl',
+)
 
 
 def cell(kind, source):
@@ -18,6 +37,55 @@ def cell(kind, source):
     if kind == 'code':
         result.update(execution_count=None, outputs=[])
     return result
+
+
+def build_test_dependency_blob(deps_dir):
+    """Pack the reviewed test-only wheels and return (base85 tarball, manifest record)."""
+    manifest_path = deps_dir / 'test-deps-manifest.json'
+    manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
+    by_name = {item['path']: item for item in manifest['wheels']}
+    install = []
+    buffer = io.BytesIO()
+    with tarfile.open(fileobj=buffer, mode='w') as archive:
+        for name in TEST_DEPENDENCY_WHEELS:
+            if name not in by_name:
+                raise ValueError(f'{name} missing from {deps_dir}; rebuild the dependency set')
+            wheel = deps_dir / name
+            payload = wheel.read_bytes()
+            info = tarfile.TarInfo(name=name)
+            info.size = len(payload)
+            info.mtime = 0
+            info.mode = 0o644
+            archive.addfile(info, io.BytesIO(payload))
+            install.append({'name': name, 'sha256': by_name[name]['sha256'],
+                            'bytes': by_name[name]['bytes']})
+    blob = base64.b85encode(gzip.compress(buffer.getvalue(), mtime=0)).decode()
+    record = {'manifest_sha256': hashlib.sha256(manifest_path.read_bytes()).hexdigest(),
+              'install': install}
+    return blob, record
+
+
+def test_dependency_cell(blob, record):
+    """Install the reviewed test-only wheels offline, never upgrading image packages."""
+    return cell('code', '# Install reviewed test-only dependencies; nothing else changes.\n'
+                        'TEST_DEPS_B85 = ' + repr(blob) + '\n'
+                        'TEST_DEPS = ' + json.dumps(record) + '\n'
+                        'import base64 as _b64, gzip as _gzip, hashlib as _hash, io as _io, tarfile as _tar\n'
+                        'import subprocess as _sp, sys as _sys\n'
+                        "DEPOT = Path('/tmp/reviewed-test-deps'); DEPOT.mkdir(parents=True, exist_ok=True)\n"
+                        'with _tar.open(fileobj=_io.BytesIO(_gzip.decompress(_b64.b85decode(TEST_DEPS_B85)))) as _a:\n'
+                        '    _a.extractall(DEPOT)\n'
+                        '_selected = []\n'
+                        "for _item in TEST_DEPS['install']:\n"
+                        '    _wheel = DEPOT / _item[\'name\']\n'
+                        '    assert _hash.sha256(_wheel.read_bytes()).hexdigest() == _item[\'sha256\'], \'test dependency changed\'\n'
+                        '    _selected.append(str(_wheel))\n'
+                        '_install = _sp.run([_sys.executable, \'-m\', \'pip\', \'install\', \'--no-index\',\n'
+                        '                    \'--no-deps\', \'--force-reinstall\', *_selected],\n'
+                        '                   capture_output=True, text=True)\n'
+                        'print(_install.stdout[-3000:]); print(_install.stderr[-2000:])\n'
+                        '_install.check_returncode()\n'
+                        'print(\'reviewed test-only dependencies installed.\')\n')
 
 
 def main():
@@ -31,6 +99,20 @@ def main():
     parser.add_argument('--title', help='Display title; defaults to the slug with spaces')
     parser.add_argument('--wheel-manifest', type=Path,
                         help='Reviewed wheel inventory JSON; defaults to the October 9 snapshot')
+    parser.add_argument('--test-deps-dir', type=Path,
+                        help='Directory from scripts/build_test_dependency_set.py; installs the '
+                             'reviewed test-only wheels offline before the harness runs')
+    parser.add_argument('--adapter-dir', type=Path,
+                        help='Local PEFT adapter directory (adapter_config.json plus '
+                             'adapter_model.safetensors). Adapters exceed the inline bundle limit, so '
+                             'this is mounted and staged into the run instead of embedded')
+    parser.add_argument('--adapter-mount', default=None,
+                        help='Kaggle mount path of the adapter, e.g. '
+                             '/kaggle/input/gemma4-lora-adapter/main_lora; needs --adapter-dir')
+    parser.add_argument('--adapter-name', default='main_lora',
+                        help='Adapter directory name the agent YAML references')
+    parser.add_argument('--adapter-dataset-source', default=None,
+                        help='Kaggle dataset handle holding the adapter, recorded in kernel metadata')
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
@@ -38,6 +120,10 @@ def main():
         parser.error('--agent-dir requires --task-id')
     if args.run_dir and args.task_id:
         parser.error('--run-dir already records its task; omit --task-id')
+    if bool(args.adapter_dir) != bool(args.adapter_mount):
+        parser.error('--adapter-dir and --adapter-mount must be given together')
+    if args.adapter_mount and not args.adapter_dataset_source:
+        parser.error('--adapter-mount needs --adapter-dataset-source for the kernel metadata')
     if args.output.exists():
         raise ValueError('Output directory exists; choose a new path to preserve previous notebook evidence')
     try:
@@ -72,8 +158,32 @@ def main():
     wheel_manifest = args.wheel_manifest or root / 'resource/manifests/eval-wheelhouse-2026-10-09.json'
     assets = json.loads(wheel_manifest.read_text(encoding='utf-8'))
     wheel_manifest_sha256 = hashlib.sha256(wheel_manifest.read_bytes()).hexdigest()
+    test_deps_blob = None
+    test_deps_record = None
+    if args.test_deps_dir:
+        test_deps_blob, test_deps_record = build_test_dependency_blob(args.test_deps_dir)
+    if args.adapter_dir:
+        # An adapter is far too large to embed; it is mounted and staged at run time. Fail here rather
+        # than inside a paid GPU session.
+        for required in ('adapter_config.json', 'adapter_model.safetensors'):
+            if not (args.adapter_dir / required).is_file():
+                raise ValueError(f'adapter directory is missing {required}: {args.adapter_dir}')
+        adapter_ranks = json.loads((args.adapter_dir / 'adapter_config.json').read_text())
+        if not isinstance(adapter_ranks.get('r'), int) or adapter_ranks['r'] <= 0:
+            raise ValueError('adapter_config.json must carry a positive integer r')
+        if not args.agent_dir:
+            raise ValueError('--adapter-dir requires --agent-dir so the adapter can be referenced')
     payload = {'bundle': base64.b64encode(bundle).decode(), 'bundle_sha256': run['agent_archive_sha256'],
                'archive_manifest': archive_manifest,
+               'adapter': ({'name': args.adapter_name,
+                            'mount': args.adapter_mount,
+                            'config': json.loads((args.adapter_dir / 'adapter_config.json').read_text()),
+                            'config_sha256': hashlib.sha256(
+                                (args.adapter_dir / 'adapter_config.json').read_bytes()).hexdigest(),
+                            'weights_sha256': hashlib.sha256(
+                                (args.adapter_dir / 'adapter_model.safetensors').read_bytes()).hexdigest(),
+                            'weights_bytes': (args.adapter_dir / 'adapter_model.safetensors').stat().st_size}
+                           if args.adapter_dir else None),
                'public_task': public_task, 'public_fields': sorted(PUBLIC_FIELDS), 'task_id': run['task_id'],
                'git_revision': git_revision,
                'source_run_git_revision': run.get('git_revision') if args.run_dir else None,
@@ -120,6 +230,25 @@ with zipfile.ZipFile(io.BytesIO(raw)) as archive:
         path=Path(name)
         assert not path.is_absolute() and '..' not in path.parts
     archive.extractall(AGENT)
+# Stage a mounted PEFT adapter into the run's agent directory. Adapters are far too large to embed
+# in the notebook, so they arrive as a versioned dataset input and are copied in before validation.
+ADAPTER = PAYLOAD.get('adapter')
+if ADAPTER:
+    import shutil
+    source = Path(ADAPTER['mount'])/ADAPTER['name']
+    assert source.is_dir(), f'Adapter mount missing: {source}'
+    destination = AGENT/'adapters'/ADAPTER['name']
+    destination.mkdir(parents=True, exist_ok=True)
+    for item in ('adapter_config.json', 'adapter_model.safetensors'):
+        candidate = source/item
+        assert candidate.is_file(), f'Adapter mount is incomplete, missing {item}: {candidate}'
+        shutil.copy(candidate, destination/item)
+    actual_config = hashlib.sha256((destination/'adapter_config.json').read_bytes()).hexdigest()
+    actual_weights = hashlib.sha256((destination/'adapter_model.safetensors').read_bytes()).hexdigest()
+    assert actual_config == ADAPTER['config_sha256'], 'Mounted adapter_config.json differs from the reviewed one'
+    assert actual_weights == ADAPTER['weights_sha256'], 'Mounted adapter_model.safetensors differs from the reviewed one'
+    print('Staged adapter', ADAPTER['name'], 'rank', ADAPTER['config'].get('r'),
+          'bytes', ADAPTER['weights_bytes'], flush=True)
 (WORK/'inputs/submission.zip').write_bytes(raw)
 archive_manifest = dict(PAYLOAD['archive_manifest'], archive=str(WORK/'inputs/submission.zip'))
 (WORK/'inputs/submission.manifest.json').write_text(json.dumps(archive_manifest, indent=2) + '\\n')
@@ -132,6 +261,8 @@ archive_manifest = dict(PAYLOAD['archive_manifest'], archive=str(WORK/'inputs/su
     'agent_archive_sha256': PAYLOAD['bundle_sha256'],
     'public_task_sha256': hashlib.sha256(task_text.encode()).hexdigest(),
     'public_fields': sorted(public_task),
+    'adapter': (dict(PAYLOAD['adapter'], mount=str(PAYLOAD['adapter']['mount']))
+                if PAYLOAD.get('adapter') else None),
     'model_handle': 'google/gemma-4/Other/gemma-4-31b-it-qat-w4a16-ct/2',
     'tensor_parallel_size': 4, 'gpu_memory_utilization': 0.90,
     'input_paths': {'data': str(DATA), 'wheels': str(WHEELS), 'model': str(MODEL)},
@@ -222,7 +353,9 @@ print('One-task smoke complete; this notebook has NOT submitted a competition en
           'metadata': {'kernelspec': {'display_name': 'Python 3', 'language': 'python', 'name': 'python3'}},
           'cells': [cell('markdown', '# Official L4 × 4 runtime smoke\nPrivate, offline, one public task. Not a competition submission or benchmark.\nThe official subprocess backend is used; Kaggle inputs remain mounted by the platform.'),
                     cell('code', 'PAYLOAD_B85 = '+repr(encoded)+'\n'+setup),
-                    cell('code', install), cell('code', evaluate)]}
+                    cell('code', install)]
+                    + ([test_dependency_cell(test_deps_blob, test_deps_record)] if test_deps_blob else [])
+                    + [cell('code', evaluate)]}
     # Kaggle rejects notebook source over 1 MB, including inline payloads.
     if len(json.dumps(nb).encode('utf-8')) >= 1_000_000:
         raise ValueError('Notebook source exceeds Kaggle 1 MB limit; use smaller agent assets')
@@ -234,7 +367,9 @@ print('One-task smoke complete; this notebook has NOT submitted a competition en
                 'machine_shape': 'NvidiaL4', 'docker_image': official['dockerImage'],
                 'docker_image_pinning_type': 'original',
                 'competition_sources': ['gemma-4-developer-agent'],
-                'dataset_sources': ['metric/gemma-4-developer-agent-wheelhouse'], 'kernel_sources': [],
+                'dataset_sources': (['metric/gemma-4-developer-agent-wheelhouse']
+                                    + ([args.adapter_dataset_source] if args.adapter_dataset_source else [])),
+                'kernel_sources': [],
                 'model_sources': ['google/gemma-4/Other/gemma-4-31b-it-qat-w4a16-ct/2']}
     (args.output / 'kernel-metadata.json').write_text(json.dumps(metadata, indent=2)+'\n')
     (args.output / 'preparation.json').write_text(json.dumps({
@@ -242,6 +377,8 @@ print('One-task smoke complete; this notebook has NOT submitted a competition en
         'git_revision': git_revision, 'source_run_git_revision': payload['source_run_git_revision'],
         'script_sha256': payload['script_sha256'], 'kernel': metadata['id'],
         'wheel_manifest_sha256': wheel_manifest_sha256,
+        'test_deps_manifest_sha256': test_deps_record['manifest_sha256'] if test_deps_record else None,
+        'test_deps_installed': [item['name'] for item in test_deps_record['install']] if test_deps_record else [],
         'task_source': 'frozen run checked against Kaggle inputs' if args.run_dir else 'Kaggle inputs at runtime',
         'status': 'notebook generated locally; no GPU execution or upload'
     }, indent=2) + '\n')
