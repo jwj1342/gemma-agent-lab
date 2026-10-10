@@ -168,6 +168,31 @@ Local artifacts and the pre-inference registration are in
 unchanged agent hashes are recorded in each run manifest, and the runner reuses
 eligible cached controls while generating fresh predictions for each candidate.
 
+### Development control coverage
+
+The baseline control phase completed before inference with **31/40 eligible
+tasks**: 11/12 from the fast cohort and 20/28 from the additional development
+tasks. Nine tasks are excluded from repair-rate denominators under the frozen
+control policy. This is reduced coverage, not nine model failures.
+
+| Excluded tasks | Observed reason |
+| --- | --- |
+| `rich_3472` | Both controls fail collection because `attr` is unavailable. |
+| `fastapi_14791`, `fastapi_11194`, `fastapi_14953` | Both controls require the missing `python-multipart` dependency. |
+| `fastapi_14964` | Both controls fail collection because `sqlalchemy` is unavailable. |
+| `requests_6757` | The reference patch fails an mTLS test with an expired-certificate SSL error. |
+| `fastapi_15745` | The official verifier rejects a skipped required asynchronous test. |
+| `fastapi_14978` | The reference patch passes; the empty patch has collection errors for the missing `strict_content_type` API. The local eligibility gate excludes this failure form. |
+| `fastapi_14512` | The reference patch passes; the empty patch has Pydantic fixture/setup errors. The local eligibility gate excludes this failure form. |
+
+The last two cases concern our conservative negative-control gate, rather than
+reference-patch failure. Any later change to dependency preparation or control
+eligibility needs a separately frozen comparison for both candidates. This run
+keeps its original runtime, task list, control cache and gate unchanged.
+`runs/20261010-prompt-dev/control-audit.json` records the source control hash,
+individual outcomes and this classification. Inference and paired results remain
+pending; the holdout remains sealed.
+
 - Branch: `experiment/prompt-icl-route`; [Issue #9](https://github.com/jwj1342/gemma-agent-lab/issues/9)
   and [PR #10](https://github.com/jwj1342/gemma-agent-lab/pull/10).
 - Initial candidates: `f3cebb5`; corrected skill: `26bada6`; protocol candidate: `4c64dd9`.
