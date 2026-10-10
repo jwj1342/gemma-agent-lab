@@ -2,7 +2,7 @@
   "schema_version": 1,
   "experiment": "SWE LoRA v1 complete shuffled-epoch SFT",
   "artifact_root": "runs/20261010-swe-lora-v1-ddp",
-  "status": "Full training completed; final serving, repair evaluation and competition upload pending",
+  "status": "Full training completed; serving passed; autonomous repair smoke failed; candidate not submitted",
   "training_job": {
     "id": 1067810,
     "state": "COMPLETED",
@@ -1211,6 +1211,23 @@
   ],
   "validation_job": {
     "id": 1067811,
-    "status_at_recording": "RUNNING; outcomes pending"
+    "state": "FAILED",
+    "exit_code": "1:0",
+    "elapsed": "00:12:46",
+    "serving_effect_passed": true,
+    "compiler_passed": true,
+    "empty_gold_controls_valid": true,
+    "smoke_inference_error": "Context window exceeded after 230 tool calls in one 8192-token response",
+    "patch_empty": true,
+    "fast_cohort_started": false,
+    "competition_uploaded": false
+  },
+  "encoding_defect": {
+    "description": "The original encoder removed the supervised tool-handoff stop token.",
+    "token": "<|tool_response>",
+    "token_id": 50,
+    "listed_as_model_eos": true,
+    "source": "https://ai.google.dev/gemma/docs/core/prompt-formatting-gemma4",
+    "causal_scope": "Definite protocol-supervision bug. Its contribution to the observed generation failure requires a corrected-run comparison."
   }
 }

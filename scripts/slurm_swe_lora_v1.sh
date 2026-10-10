@@ -5,11 +5,17 @@
 #SBATCH --gpus-per-node=4
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=96
-#SBATCH --time=08:00:00
+#SBATCH --time=12:00:00
 set -eo pipefail
 project_root=${1:?project root}
 run_dir=${2:?frozen run directory}
 code_root=${3:-"$run_dir/inputs/training"}
+stop_after=${4:-}
+stop_args=()
+if [[ -n "$stop_after" ]]; then
+  [[ "$stop_after" =~ ^[0-9]+$ && "$stop_after" -ge 8 ]] || { echo 'stop_after must be at least 8' >&2; exit 2; }
+  stop_args=(--stop-after "$stop_after")
+fi
 cd "$code_root"
 module load StdEnv/2023 python/3.12.4 cuda/12.9 arrow/25.0.0 apptainer/1.4.5
 mkdir -p "$run_dir/cache" "$run_dir/tmp"
@@ -56,4 +62,4 @@ if [[ ! -f "$run_dir/train/latest.json" ]]; then
   torchrun --standalone --nproc_per_node=4 -m scripts.launch_training_rank "${train_args[@]}" --probe --stop-after 8
 fi
 checkpoint=$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["checkpoint"])' "$run_dir/train/latest.json")
-torchrun --standalone --nproc_per_node=4 -m scripts.launch_training_rank "${train_args[@]}" --resume "$run_dir/train/$checkpoint"
+torchrun --standalone --nproc_per_node=4 -m scripts.launch_training_rank "${train_args[@]}" --resume "$run_dir/train/$checkpoint" "${stop_args[@]}"

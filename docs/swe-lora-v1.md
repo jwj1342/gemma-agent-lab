@@ -89,6 +89,14 @@ Final exports contain only PEFT configuration and safetensors adapter weights.
 
 ## Evaluation and release gates
 
+Tool-call targets must include Gemma's `<|tool_response>` handoff token. It is
+an inference stop sequence (ID 50 in the required local model), not observation
+content to strip from the target. The encoder checks it against the model's EOS
+configuration. See the [official format](https://ai.google.dev/gemma/docs/core/prompt-formatting-gemma4).
+Before a long continuation, run an autonomous smoke with the trained probe adapter:
+short greedy action completions alone do not test stopping under the full agent's
+prompt and generation settings.
+
 Check adapter loading and effect with the official quantized server. Use explicit
 token IDs and verify consumed-token counts. A zero-update LoRA control distinguishes
 trained-weight effects from the numerical adapter execution path. Freeze the

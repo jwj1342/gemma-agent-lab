@@ -190,10 +190,11 @@ def encode_example(example, tokenizer, max_length, history_actions=3, excerpt_ch
                                                add_generation_prompt=True, enable_thinking=True)
         whole = tokenizer.apply_chat_template(messages, tools=example["tools"], tokenize=False,
                                               add_generation_prompt=False, enable_thinking=True)
-        # The official template appends an observation prompt after a pending function call.
-        # It belongs to the tool boundary, not the assistant's supervised answer.
-        if messages[-1].get("tool_calls") and whole.endswith("<|tool_response>"):
-            whole = whole[:-len("<|tool_response>")]
+        # Gemma emits this token to hand control to the tool executor. It is
+        # an inference stop token and must remain in the assistant's targets.
+        # The observation body is absent because this example ends at the call.
+        if messages[-1].get("tool_calls") and not whole.endswith("<|tool_response>"):
+            raise ValueError("Gemma tool target must include its tool-response stop token")
         if len(tokenizer.encode(whole, add_special_tokens=False)) <= max_length:
             break
         # Remove complete earlier action/observation turns while retaining the issue and latest evidence.

@@ -32,6 +32,11 @@ def main():
     args.output.mkdir(parents=True)
     config = json.loads(args.config.read_text())
     tokenizer = AutoTokenizer.from_pretrained(args.base, local_files_only=True)
+    stop_token = '<|tool_response>'
+    stop_id = tokenizer.convert_tokens_to_ids(stop_token)
+    generation = json.loads((args.base / 'generation_config.json').read_text())
+    if stop_id not in generation['eos_token_id']:
+        raise ValueError('Tool handoff token is absent from the model stop-token configuration')
     buckets = {'train': [], 'validation': []}
     seen, cross_split, rejected, files, stats = {}, set(), Counter(), {}, {}
     for split in buckets:
@@ -69,6 +74,9 @@ def main():
                         continue
                 seen[identity] = split
                 target_start = next(i for i, t in enumerate(encoded['labels']) if t != -100)
+                if sample['messages'][-1].get('tool_calls'):
+                    if encoded['input_ids'][-1] != stop_id or encoded['labels'][-1] != stop_id:
+                        raise ValueError('Tool handoff stop token is missing from supervised targets')
                 buckets[split].append({'input_ids': torch.tensor(encoded['input_ids'], dtype=torch.int32),
                     'target_start': target_start, 'kind': kind, 'sample_id': identity,
                     'metadata': encoded['metadata']})
@@ -96,6 +104,15 @@ def main():
                 'length_max': lengths[-1]}
         torch.save(samples, args.output / (split + '.pt'))
     manifest = {'config': config, 'source_files_sha256': files, 'statistics': stats,
+        'encoding_protocol': {
+            'tool_handoff_stop_token': stop_token, 'tool_handoff_stop_id': stop_id,
+            'tool_handoff_is_supervised': True,
+            'source_sha256': {str(p): digest(p) for p in
+                             (Path('src/sft_data.py'), Path('scripts/encode_sft_dataset.py'))},
+            'base_protocol_sha256': {name: digest(args.base / name) for name in
+                                    ('chat_template.jinja', 'tokenizer.json', 'generation_config.json')},
+            'tool_targets_by_split': {split: sum(s['metadata']['target_kind'] == 'tool' for s in samples)
+                                     for split, samples in buckets.items()}},
         'rejected': dict(rejected), 'sampling': 'Every accepted example once per epoch, no replacement',
         'split': 'Disjoint repository/base-commit groups; protected benchmark snapshots excluded upstream',
         'encoded_files_sha256': {s: digest(args.output / (s + '.pt')) for s in buckets},

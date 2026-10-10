@@ -94,7 +94,7 @@ class SFTDataTests(unittest.TestCase):
         self.assertEqual(converted[-1]["tool_calls"][0]["function"]["name"], "submit_patch")
         self.assertEqual(len(list(action_examples(converted, {}))), 1)
 
-    def test_target_keeps_final_stop_but_excludes_tool_response_prompt(self):
+    def test_target_supervises_tool_handoff_and_final_answer_stops(self):
         class ProtocolTokenizer:
             def apply_chat_template(self, messages, add_generation_prompt=False, **kwargs):
                 text = "".join(m.get("content", "") for m in messages)
@@ -108,12 +108,23 @@ class SFTDataTests(unittest.TestCase):
                 return [ord(c) for c in text]
 
         tokenizer = ProtocolTokenizer()
-        for assistant, expected in [({"role": "assistant", "content": "", "tool_calls": [upstream_call("submit", {})]}, "CALL"),
+        for assistant, expected in [({"role": "assistant", "content": "", "tool_calls": [upstream_call("submit", {})]}, "CALL<|tool_response>"),
                                     ({"role": "assistant", "content": "Done."}, "Done.<turn|>")]:
             encoded = encode_example({"messages": [{"role": "user", "content": "prompt"}, assistant],
                                       "tools": [], "metadata": {}}, tokenizer, 100)
             supervised = "".join(chr(t) for t in encoded["labels"] if t != -100)
             self.assertEqual(supervised, expected)
+
+    def test_missing_tool_handoff_token_is_rejected(self):
+        class BrokenProtocolTokenizer:
+            def apply_chat_template(self, messages, add_generation_prompt=False, **kwargs):
+                return "PROMPT" if add_generation_prompt else "PROMPT<|tool_call>call:submit_patch{}<tool_call|>"
+
+        example = {"messages": [{"role": "user", "content": "Submit"},
+                                 {"role": "assistant", "tool_calls": [upstream_call("submit", {})]}],
+                   "tools": [], "metadata": {}}
+        with self.assertRaisesRegex(ValueError, "stop token"):
+            encode_example(example, BrokenProtocolTokenizer(), 100)
 
     def test_snapshot_group_prevents_mutation_leakage(self):
         first = group_key("owner__repo.abcdef.mutation_a__x")
