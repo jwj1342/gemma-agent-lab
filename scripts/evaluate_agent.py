@@ -122,9 +122,11 @@ async def run(args):
                                 events_compaction_config=EventsCompactionConfig(compaction_interval=15, overlap_size=2,
                                                                                token_threshold=14336, event_retention_size=5))
             evaluator = Evaluator(config)
-            if batch:
-                from local_eval_setup import configure
-                configure(evaluator)
+            # Single-task smoke and batch evaluation need the same isolated
+            # offline dependencies. A host import must not accidentally make
+            # one repository pass while another cannot collect its tests.
+            from local_eval_setup import configure
+            configure(evaluator)
             snapshot = args.data_dir / 'snapshots' / (task.instance_id + '.tgz')
             start = time.perf_counter()
             try:

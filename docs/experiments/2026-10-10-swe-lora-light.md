@@ -52,6 +52,29 @@ evaluation `1072978` runs only after acceptance succeeds. The training evidence,
 sample coverage, source hashes and recovery receipt are under this run's
 `training-evidence.json`, `encoded-data/manifest.json` and `recovery-gate.json`.
 
+### First acceptance attempt and environment correction
+
+The official serving checks passed, including a trained-versus-zero-adapter
+effect and four clean terminal answers. The autonomous `rich_3454` run then
+completed cleanly and passed official patch verification. It took 108.68 seconds
+excluding model startup, made 27 LLM calls and 17 budget-counted calls, and
+submitted four times. The trace contains 26 actual tool calls, with no graph
+queries. This is one exposed development task and leaves efficiency work open.
+
+Acceptance job `1072977` stopped before FastAPI inference: both its empty and
+gold controls returned test-collection errors because `inline_snapshot` was
+missing. The single-task runner had skipped the isolated offline dependency
+setup already used by batch evaluation. This is an environment failure, not a
+failed model prediction. The release dependency was cancelled without running.
+
+The runner now applies the existing setup to single-task and batch execution.
+A regression test exercises both orchestration paths and requires isolation
+before verification. Validation is retried in a separate output directory with
+the exact completed adapter and the same three tasks; all controls are rerun.
+The trained model and its data/configuration contract stay unchanged. The final
+fast comparison will still reuse the baseline's frozen batch runtime, where
+this setup was already active.
+
 ## Initial 1,024-action protocol
 
 - Required base: `google/gemma-4/Other/gemma-4-31b-it-qat-w4a16-ct/2`.

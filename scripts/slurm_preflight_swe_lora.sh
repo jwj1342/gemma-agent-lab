@@ -11,7 +11,9 @@ project_root=${1:?project asset root}
 train_run=${2:?partial training run}
 code_root=${3:?frozen validation source}
 probe_steps=${4:-100}
+probe_name=${5:-preflight-validation}
 [[ "$probe_steps" =~ ^[1-9][0-9]*$ ]] || { echo 'probe_steps must be a positive integer' >&2; exit 2; }
+[[ "$probe_name" =~ ^[a-zA-Z0-9_-]+$ ]] || { echo 'probe_name must be a simple directory name' >&2; exit 2; }
 cd "$code_root"
 module load StdEnv/2023 python/3.12.4 apptainer/1.4.5
 source /home/jwj/venvs/gemma4-compiler/bin/activate
@@ -22,7 +24,7 @@ python -m unittest discover -s tests -v
 
 # This is an explicitly partial training probe. Never manufacture completed.json
 # or modify the resumable training directory to make a release gate pass.
-python - "$train_run" "$code_root" "$probe_steps" <<'PY'
+python - "$train_run" "$code_root" "$probe_steps" "$probe_name" <<'PY'
 from pathlib import Path
 import hashlib
 import json
@@ -36,7 +38,7 @@ recovery = json.loads((run / 'train/resume-check.json').read_text())
 if latest['step'] != probe_steps or not recovery['contract_matches'] or not recovery['optimizer_and_rng_restored']:
     raise ValueError('Require the registered partial probe and successful recovery')
 source = run / 'train' / latest['checkpoint']
-probe = run / 'preflight-validation'
+probe = run / sys.argv[4]
 probe.mkdir()
 adapter = probe / 'train/adapter'
 adapter.mkdir(parents=True)
@@ -65,7 +67,7 @@ definition.write_text(definition.read_text() + 'adapter: swe_lora_v1\n')
 print(json.dumps(record, indent=2))
 PY
 
-probe="$train_run/preflight-validation"
+probe="$train_run/$probe_name"
 bash scripts/slurm_check_lora.sh "$project_root" "$probe" "$train_run/swe-data" "$train_run/graph-data"
 smoke="$probe/smoke"
 python scripts/prepare_eval_run.py --run-dir "$smoke" --agent-dir "$probe/agent" \
