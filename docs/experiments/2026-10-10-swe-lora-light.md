@@ -213,6 +213,23 @@ not isolate causal effects or guarantee an increase in repair rate.
 
 Configuration: [swe-lora-light-protocol.json](../../configs/training/swe-lora-light-protocol.json).
 
+Before model training started, a further fixture audit found that every old
+terminal observation reported two changed files and a patch size of 658–660
+characters. The generator ran Python without excluding bytecode artifacts.
+The first preparation attempt (`1072906`) and its unstarted successors were
+cancelled during encoding, before a model checkpoint or optimizer update existed.
+
+The corrected generator executes the same official tools against real fixtures
+with one, two or three edited source files. It commits a bytecode ignore rule,
+runs checks with `python3 -B`, and asserts that the captured changed-file count
+equals the intended source-file count. Four task phrasings replace the old
+uniform request that explicitly told the model to provide a completion message.
+Final text remains synthetic, while test/submission/status observations are
+actually executed. The existing 19 held-out records are retained byte for byte;
+their reference and hash are recorded separately from newly generated fixture
+evidence. These changes broaden the completion contexts without importing a
+development task or inventing tool observations.
+
 ## Cost evidence and budget
 
 The earlier final continuation occupied four H100s for 9h50m11s, or 39.35 physical

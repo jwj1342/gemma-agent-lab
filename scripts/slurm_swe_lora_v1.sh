@@ -52,7 +52,12 @@ if [[ ! -d "$run_dir/graph-data" ]]; then
     --tasks /data/tasks.jsonl --graphs /data/graphs --embeddings /data/embeddings --output /output/graph-data
 fi
 if [[ ! -d "$run_dir/terminal-data" ]]; then
-  "${container[@]}" /bin/bash -c 'source /home/jwj/venvs/gemma4-eval-v29/bin/activate; exec python -m scripts.prepare_terminal_sft --output /output/terminal-data'
+  terminal_options=()
+  if [[ -f "$run_dir/retained-terminal-validation.jsonl" ]]; then
+    terminal_options=(--validation-from /output/retained-terminal-validation.jsonl)
+  fi
+  "${container[@]}" /bin/bash -c 'source /home/jwj/venvs/gemma4-eval-v29/bin/activate; exec python -m scripts.prepare_terminal_sft "$@"' \
+    bash --output /output/terminal-data "${terminal_options[@]}"
 fi
 if [[ -d "$run_dir/encoded-data" && ! -f "$run_dir/encoded-data/manifest.json" ]]; then
   echo 'Incomplete encoded corpus: preserve this attempt and prepare a new run directory' >&2
