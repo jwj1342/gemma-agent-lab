@@ -45,7 +45,12 @@ for name in ('adapter_config.json', 'adapter_model.safetensors'):
     shutil.copy2(source / name, adapter / name)
     with (adapter / name).open('rb') as stream:
         hashes[name] = hashlib.file_digest(stream, 'sha256').hexdigest()
-record = {'status': f'Partial {probe_steps}-step protocol probe; not completed training or a release candidate',
+complete = run / 'train/completed.json'
+training_completed = complete.exists() and json.loads(complete.read_text())['steps'] == probe_steps
+status = (f'Completed {probe_steps}-step training; autonomous acceptance and release checks pending'
+          if training_completed else
+          f'Partial {probe_steps}-step protocol probe; not completed training or a release candidate')
+record = {'status': status, 'training_completed': training_completed,
           'source_checkpoint': str(source), 'step': latest['step'], 'adapter_sha256': hashes,
           'recovery': recovery}
 (probe / 'train/training-result.json').write_text(json.dumps(record, indent=2) + '\n')

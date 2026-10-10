@@ -1,7 +1,8 @@
 # Bounded SWE LoRA training and evaluation
 
-The current corrective recipe uses 512 actions and one epoch, with termination
-and complete-agent checks after 32 updates. The initial 1,024-action recipe was
+The current corrective recipe uses 128 actions and one epoch, ending after 32
+updates before autonomous acceptance checks. The preceding 512-action recipe
+stopped at its partial behavioral gate. The initial 1,024-action recipe was
 stopped at update 32 when a real task exposed repeated actions after a successful
 submission. The user requested a small training/evaluation loop before further
 scaling. The earlier four-GPU replacement jobs (`1071755`,
@@ -181,8 +182,36 @@ The short probe uses thinking disabled, whereas the autonomous baseline uses a
 weights with thinking disabled on the same three registered tasks, preserving
 the prompt, tools, budgets, controls and clean-output gate. This is a generation
 configuration diagnostic; it neither completes training nor establishes that
-LoRA alone improves repair performance. No continuation is scheduled while its
-outcome is pending.
+LoRA alone improves repair performance. No continuation was scheduled during
+this diagnostic.
+
+## Complete 128-action protocol pilot
+
+The generation diagnostic also failed: thinking disabled still produced a patch
+and then repeated tests, status queries and submissions until the 80-turn limit.
+It made 35 command calls, 21 submission calls and 18 status calls, plus six file
+actions. No training occurred in that 9m50s allocation. This rejects disabling
+thinking as a sufficient fix for this checkpoint on the exposed task.
+
+The next bounded pilot completes a smaller corpus: 32 SWE, 32 graph and 64
+terminal actions, with one epoch and 32 total optimizer updates. All 64 terminal
+actions will be presented, compared with 11 seen before the balanced run's
+partial gate. Training terminal contexts use the existing baseline system prompt,
+whose content hash becomes part of dataset provenance. This addresses the gap
+between the short training instruction and the full deployment policy; it does
+not add the failed task, its patch or trace to training. Validation contexts stay
+unchanged. The small SWE sample has lower snapshot/tool coverage, which must be
+reported rather than extrapolated to broad repair learning.
+
+Use a fresh base/optimizer, the same rank 16 / alpha 32 projections, LR 2e-5,
+example-normalized objective, 4K limit, single H100 and accumulation four.
+Save/restart at eight, finish at 32, then run the same short official-runtime
+checks and three real-task probes. A full epoch and lower NLL still require clean
+autonomous artifacts and the fixed fast cohort before release. Use the original
+baseline thinking configuration. This combined sampling/prompt correction does
+not isolate causal effects or guarantee an increase in repair rate.
+
+Configuration: [swe-lora-light-protocol.json](../../configs/training/swe-lora-light-protocol.json).
 
 ## Cost evidence and budget
 

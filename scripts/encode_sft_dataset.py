@@ -40,6 +40,13 @@ def main():
         raise ValueError('Tool handoff token is absent from the model stop-token configuration')
     buckets = {'train': [], 'validation': []}
     seen, cross_split, rejected, files, stats = {}, set(), Counter(), {}, {}
+    terminal_prompt = None
+    if config.get('training_terminal_system_prompt'):
+        prompt_path = Path(config['training_terminal_system_prompt'])
+        terminal_prompt = prompt_path.read_text()
+        if not terminal_prompt.strip():
+            raise ValueError('The training terminal system prompt must be nonempty')
+        files[str(prompt_path.resolve())] = digest(prompt_path)
     for split in buckets:
         for kind in ('swe', 'graph', 'terminal'):
             path = getattr(args, kind) / (split + '.jsonl')
@@ -52,6 +59,10 @@ def main():
                     'argument names. After a successful submission, return a brief final completion '
                     'message. Use graph observations to guide source inspection. An empty graph result '
                     'warrants a repository search. Some demonstrations retain upstream tool output formats.')
+                if split == 'train' and kind == 'terminal' and terminal_prompt is not None:
+                    # Align completion exercises with the actual agent policy.
+                    # Keep held-out contexts and their encoded identities unchanged.
+                    sample['messages'][0]['content'] = terminal_prompt
                 for tool in sample['tools']:
                     function = tool['function']
                     if function['name'] == 'get_code_neighbors':
