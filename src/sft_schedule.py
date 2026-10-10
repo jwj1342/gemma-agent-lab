@@ -3,6 +3,21 @@ import math
 import random
 
 
+def loss_weights(token_counts, example_weights, normalization='token'):
+    """Return global-batch coefficients before DDP averages rank gradients."""
+    if normalization not in ('token', 'example'):
+        raise ValueError('Unknown loss normalization')
+    if (not token_counts or len(token_counts) != len(example_weights)
+            or any(n <= 0 for n in token_counts) or any(w < 0 for w in example_weights)):
+        raise ValueError('Invalid token counts or example weights')
+    masses = [w * (n if normalization == 'token' else 1)
+              for n, w in zip(token_counts, example_weights)]
+    denominator = sum(masses)
+    if denominator <= 0:
+        raise ValueError('At least one real example is required')
+    return [mass / denominator for mass in masses]
+
+
 def epoch_batches(size, world_size, accumulation, seed, epoch):
     if min(size, world_size, accumulation) < 1:
         raise ValueError('Positive dataset and batch dimensions are required')

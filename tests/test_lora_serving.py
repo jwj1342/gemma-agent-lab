@@ -2,10 +2,25 @@
 import unittest
 from unittest.mock import Mock
 
-from scripts.check_lora_serving import adapter_effect, completion_token_ids
+from scripts.check_lora_serving import adapter_effect, completion_token_ids, terminal_behavior
 
 
 class ServingProbeTests(unittest.TestCase):
+    def test_trained_adapter_must_finish_each_terminal_probe(self):
+        rows = [{'kind': 'terminal', 'model': 'first_lora',
+                 'clean_final_answer': True, 'output_limit_reached': False} for _ in range(4)]
+        self.assertTrue(terminal_behavior(rows))
+        self.assertFalse(terminal_behavior(rows[:3]))
+        rows[0]['clean_final_answer'] = False
+        self.assertFalse(terminal_behavior(rows))
+        # A healthy base cannot compensate for a regressed adapter.
+        rows.extend({'kind': 'terminal', 'model': '/model',
+                     'clean_final_answer': True, 'output_limit_reached': False} for _ in range(4))
+        self.assertFalse(terminal_behavior(rows))
+        rows[0]['clean_final_answer'] = True
+        rows[1]['output_limit_reached'] = True
+        self.assertFalse(terminal_behavior(rows))
+
     def test_explicit_integer_prompt(self):
         tokenizer = Mock()
         tokenizer.apply_chat_template.return_value = [2, 55, 106]

@@ -1,4 +1,4 @@
-"""Train complete shuffled epochs with token-normalized DDP and resumable checkpoints.
+"""Train complete epochs with token/example loss normalization and resumable checkpoints.
 
 Use torchrun in a Slurm allocation. Inputs are trusted local encoded tensors; never
 load arbitrary third-party pickle training states. Final exports contain safetensors only.
@@ -17,7 +17,7 @@ import shutil
 import subprocess
 import time
 
-from src.sft_schedule import epoch_batches, lr_factor
+from src.sft_schedule import epoch_batches, lr_factor, loss_weights
 
 
 def digest(path):
@@ -230,18 +230,22 @@ def main():
             for group in optimizer.param_groups:
                 group['lr'] = lr
             batch_tokens = sum((len(train[i]['input_ids']) - train[i]['target_start']) * weight for i, weight in batch)
+            coefficients = loss_weights(
+                [len(train[i]['input_ids']) - train[i]['target_start'] for i, _ in batch],
+                [weight for _, weight in batch], config.get('loss_normalization', 'token'))
             losses = []
-            for micro, (index, weight) in enumerate(batch[rank::world]):
+            for micro, ((index, weight), coefficient) in enumerate(
+                    zip(batch[rank::world], coefficients[rank::world], strict=True)):
                 sample = train[index]
                 sync = wrapped.no_sync() if world > 1 and micro + 1 < config['gradient_accumulation'] else nullcontext()
                 with sync:
                     loss, count = loss_for(sample, wrapped)
                     if not torch.isfinite(loss):
                         raise ValueError('Non-finite training loss')
-                    (loss * count * weight * world / batch_tokens).backward()
+                    (loss * coefficient * world).backward()
                 losses.append({'sample_id': sample['sample_id'], 'kind': sample['kind'],
                     'group': sample['metadata']['group'], 'loss': float(loss.detach()),
-                    'tokens': count * weight, 'weight': weight})
+                    'tokens': count * weight, 'weight': weight, 'loss_coefficient': coefficient})
             norm = torch.nn.utils.clip_grad_norm_(parameters, 1.0)
             if not torch.isfinite(norm) or norm <= 0:
                 raise ValueError('Non-finite or zero gradient')
@@ -257,7 +261,9 @@ def main():
             if rank == 0:
                 rows = [x for rank_rows in gathered for x in rank_rows]
                 metric = {'step': step, 'epoch': epoch + (batch_no + 1) / steps_per_epoch,
-                    'loss': sum(x['loss'] * x['tokens'] for x in rows) / batch_tokens,
+                    'loss': sum(x['loss'] * x['loss_coefficient'] for x in rows),
+                    'token_weighted_loss': sum(x['loss'] * x['tokens'] for x in rows) / batch_tokens,
+                    'loss_normalization': config.get('loss_normalization', 'token'),
                     'learning_rate': lr, 'gradient_norm': float(norm), 'samples_seen': completed_samples,
                     'assistant_tokens_seen': completed_tokens, 'microsteps': rows,
                     'peak_gib': torch.cuda.max_memory_allocated() / 2**30, 'elapsed_s': time.monotonic() - started}

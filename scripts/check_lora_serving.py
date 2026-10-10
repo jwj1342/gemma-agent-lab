@@ -34,6 +34,13 @@ def adapter_effect(zero, repeated_zero, trained):
              change['max_logprob_difference'] > max(1e-5, 10 * jitter['max_logprob_difference']))}
 
 
+def terminal_behavior(rows):
+    """Require all four held-out submission contexts to end without another call."""
+    terminal = [r for r in rows if r['kind'] == 'terminal' and r['model'] == 'first_lora']
+    return len(terminal) >= 4 and all(r['clean_final_answer'] and not r['output_limit_reached']
+                                     for r in terminal)
+
+
 def create_zero_adapter(source, destination):
     """Keep the adapter path active with a mathematically zero LoRA update."""
     from safetensors.torch import load_file, save_file
@@ -175,6 +182,7 @@ def main():
                                  "output_limit_reached": response.choices[0].finish_reason == "length",
                                  "response": response.model_dump(mode="json")})
         report = {"served_model_ids": models, "adapter_loaded": True,
+                  "terminal_behavior_checked": terminal_behavior(rows) if args.terminal_data else None,
                   "zero_control_B_matrices": zeroed_matrices,
                   "effect_protocol": "Prefix caching disabled so repeated probes perform identical full prefills; "
                                      "trained adapter compared to zero-update adapter with a repeated-zero control.",
@@ -191,6 +199,8 @@ def main():
         print(json.dumps({k: v for k, v in report.items() if k != "requests"}, indent=2))
         if not report['adapter_effect_checked']:
             raise RuntimeError('Adapter loading succeeded but no measurable effect was found')
+        if args.terminal_data and not report['terminal_behavior_checked']:
+            raise RuntimeError('Adapter loaded, but held-out submission contexts did not terminate cleanly')
     except Exception as exc:
         (args.output / "failure.json").write_text(json.dumps({"error_type": type(exc).__name__, "message": str(exc)}, indent=2) + "\n")
         raise

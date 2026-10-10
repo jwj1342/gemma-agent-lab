@@ -1,12 +1,14 @@
 # Bounded SWE LoRA training and evaluation
 
-The revised experiment uses 1,024 training actions and one epoch, with a complete
-agent check after 32 updates. The user requested a small training/evaluation loop
-before further scaling. The earlier four-GPU replacement jobs (`1071755`,
+The current corrective recipe uses 512 actions and one epoch, with termination
+and complete-agent checks after 32 updates. The initial 1,024-action recipe was
+stopped at update 32 when a real task exposed repeated actions after a successful
+submission. The user requested a small training/evaluation loop before further
+scaling. The earlier four-GPU replacement jobs (`1071755`,
 `1071772`, `1071773`, `1071774`) were cancelled before starting; their elapsed
 compute time is zero. Existing artifacts and provenance are retained.
 
-## Registered protocol
+## Initial 1,024-action protocol
 
 - Required base: `google/gemma-4/Other/gemma-4-31b-it-qat-w4a16-ct/2`.
 - Use the corrected native tool-handoff supervision, rank 16 / alpha 32,
@@ -56,6 +58,91 @@ The corrected retry uses a separate run directory, preserving the failed
 preparation artifacts. An existing encoded-data directory without a completed
 manifest is rejected rather than treated as a usable corpus. Data budgets,
 training length, validation tasks, and release requirements remain unchanged.
+
+## Corrected run: observed preparation and recovery
+
+The corrected run is `runs/20261010-swe-lora-light-r2/`, frozen at training source
+`55fb9b9b9e73c36021e46e3aeaadfb2c216e495c`. Repository checks and 72 tests passed
+in its allocation and in
+[CI run 38087195294](https://github.com/jwj1342/gemma-agent-lab/actions/runs/38087195294).
+
+| Selected source | Actions | Snapshot groups | Input tokens | Target tokens |
+| --- | ---: | ---: | ---: | ---: |
+| SWE repair | 896 | 97 | 2,627,353 | 152,382 |
+| Graph exercises | 112 | 10 | 91,028 | 4,355 |
+| Terminal exercises | 16 | 16 | 12,567 | 261 |
+| Total | 1,024 | — | 2,730,948 | 156,998 |
+
+SWE actions cover 412 upstream trajectories and all 484 available snapshot/tool
+strata; graph actions cover all 40 available strata. Every one of the 1,008 tool
+targets ends at the supervised handoff token 50. The terminal targets retain the
+native `<turn|>` and following newline. All 4,290 encoded validation actions are
+preserved; the checkpoint-selection panel contains 32 SWE, 32 graph, and 19
+terminal actions. These counts describe actions with context, not 1,024 complete
+repair trajectories.
+
+Both backward memory probes passed: the longest input (4,096 tokens) and longest
+target (1,959 tokens). The highest Torch allocation recorded in the probes was
+70.42 GiB. One allocator retry was logged; the backward operation completed.
+Checkpoint eight was saved, loaded in a fresh process, and followed by a successful
+update nine. Configuration/data/dependency contracts matched, and optimizer/RNG
+state was restored. `recovery-gate.json` retains this evidence; exact equivalence
+to an uninterrupted numerical run was not tested.
+
+The initial allocation (`1072257`) completed successfully in 17m08s on one H100,
+including full-corpus encoding, the memory probes, save/restart and 32 updates.
+Those updates presented 128 selected actions and 20,008 supervised tokens.
+
+| Fixed validation family | Actions | Initial NLL | Step 32 NLL |
+| --- | ---: | ---: | ---: |
+| SWE | 32 | 0.506931 | 0.243458 |
+| Graph | 32 | 0.858223 | 0.099037 |
+| Termination | 19 | 3.520047 | 1.596865 |
+
+These teacher-forced losses establish progress on the training objective.
+Autonomous interaction and repair outcomes are separate checks. The partial
+adapter and its hashes are retained under `preflight-validation/`; this checkpoint
+does not count as completing the selected-data epoch.
+
+## Termination diagnosis and 512-action retry
+
+Partial validation job `1072258` loaded the adapter in the official W4A16 runtime
+and measured a weight effect against a repeated zero-update control. All eight
+short tool-context requests produced schema-valid calls. However, all four
+held-out submission contexts generated another tool call instead of a final
+answer; the base ended correctly in all four. These short probes disable thinking
+for both models; the autonomous agent retains the baseline thinking configuration.
+
+On `rich_3454`, the autonomous adapter inspected and edited source, ran a small
+test, and captured a 656-character source patch after about 24 seconds. It then
+repeatedly ran invented test names after submission, exhausted 40 budgeted tool
+calls, and timed out at four minutes. The patch has not been independently graded
+at this stage. The run is not a clean completion or a repair success. The native
+tool handoff worked across separate calls; post-submission termination remained
+broken. The 14m48s validation allocation failed, and both dependent jobs were
+cancelled without running. No adapter was uploaded.
+
+Only 261 of the selected corpus's 156,998 supervised tokens were terminal answers
+(0.17%). The first 32 updates saw three terminal actions. This motivates a bounded
+corrective hypothesis, rather than proving a unique cause:
+
+- Select 384 SWE, 64 graph and 64 terminal actions: 512 total, one epoch and 128
+  optimizer updates. Keep the same raw sources, snapshot exclusions and seed.
+- Average token loss within each action, then weight real actions equally within
+  a global batch. Thus short completion answers receive the same example weight
+  as long tool calls. Keep token-weighted validation NLL and also log token-weighted
+  training loss; the two training objectives should not be compared as one curve.
+- Reduce LR from 5e-5 to 2e-5. Keep rank 16, alpha 32 and the 4K context limit.
+- Start a new adapter from the required frozen base. Preserve the stopped run;
+  do not reuse its optimizer or alter its source contract.
+- Save/restart at eight, stop at 32, and require all four terminal probes to end
+  before running the same three real-task probes. Keep the empty/gold controls,
+  nonempty-clean-artifact requirement, fast cohort and protected holdout unchanged.
+
+Configuration: [swe-lora-light-balanced.json](../../configs/training/swe-lora-light-balanced.json).
+The combined corrective experiment changes sampling, loss weighting and learning
+rate, so its outcome cannot isolate their individual effects. The stopped task's
+trace is used for diagnosis only; its patch or answer is not added to training.
 
 ## Cost evidence and budget
 
