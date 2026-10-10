@@ -2,6 +2,94 @@
 
 This file is the persistent handoff record for work performed in this repository. Read it before starting a task and update it before finishing.
 
+## Resume point (written 2026-10-11 ~08:00 Asia/Shanghai, work paused at the user's request)
+
+**Read this section first; it is the state a future session needs in one place.**
+
+### Where the LoRA SFT objective stands
+
+Everything that can be done without a GPU session is done and verified. Nothing has been trained:
+no `adapter_model.safetensors` exists anywhere, and no GPU quota has been spent (102,698.778 s of
+108,000 s remain, refresh 2026-10-17). Seven commits were made on branch
+`feature/localization-v1-skill`; the newest is `0e49957`.
+
+Ready and validated offline:
+
+| Piece | State |
+| --- | --- |
+| SFT dataset | `artifacts/sft-public-v1.jsonl`, 116 records from 129 public tasks (13 dropped as `patch_too_long`) |
+| Adapter experiment | `configs/experiments/lora-trajectory-v1/`: `adapter: main_lora`, rank 32, `q_proj`+`o_proj` only |
+| Config check | `scripts/check_lora_adapter.py` -> `status: ok` (rank 32 to vLLM bucket 32, `max_loras` 1) |
+| PEFT self-check | `scripts/train_lora_adapter.py --self-check` -> export and reload verified on a tiny model |
+| Training stack | Verified end to end: 3 SFT steps, loss 5.4698 -> 5.4269, export 66,584 bytes, reload matches |
+| Offline wheels | `artifacts/training-wheels/` (10 Linux/CPython-3.12 wheels, 55.4 MB); inventory `resource/manifests/training-wheels-sft-v1.json` |
+| Training notebook | `scripts/prepare_lora_notebook.py` generates it; its setup cell was executed standalone and hash-verified |
+| Adapter mounting | `scripts/prepare_kaggle_runtime.py --adapter-dir/--adapter-mount/--adapter-dataset-source` stages and hash-verifies a mounted adapter |
+| Serving probe | `artifacts/lora-probe/` built by `scripts/make_lora_probe.py` (loud random A and B, rank 8) |
+| Measurement | `scripts/analyze_paired_power.py`: 4 control-valid tasks, all in `rich` |
+
+### The three things that are blocked, in priority order
+
+1. **The serving check (highest information value, needs one short GPU session).** LoRA on this
+   competition's compressed-tensors W4A16 base has silently failed before (discussion 743508) and the
+   same symptom is reported upstream for int4 bases. Run the loud probe on the competition model and
+   compare greedy logprobs with and without the adapter. Unchanged logprobs means LoRA is inert and the
+   whole line should be retired before spending training budget. Evidence and sources:
+   `docs/experiments/2026-10-11-lora-serving-risk.md`.
+2. **The platform decision, which gates training.** Kaggle needs the wheel set published as a dataset
+   first (the account has 0 datasets today; publishing needs the user's go-ahead, and creating
+   datasets has failed with 403 on this account before). Trillium H100 can take the 62.6 GB
+   unquantized QAT base and needs no dataset publishing.
+3. **The measurement instrument, which gates interpretability.** Only 4 control-valid tasks exist, all
+   from one repository. A 10-point gain needs 78 tasks at 80% power, so even a successful adapter
+   could not be read as better or worse today. Growth is CPU-side work: the control yield is 4 of 8
+   attempted, and the collection-error (`exit 2`) failures are the most fixable class.
+
+### Exact next commands
+
+```powershell
+# Local Python is NOT on PATH; use the absolute interpreter and set both path variables.
+$py = 'C:\Users\32747\miniconda3\python.exe'
+$env:PYTHONPATH = 'E:\Desktop\CodingAI\artifacts\combo-test;E:\Desktop\CodingAI\.pylibs'
+$env:PYTHONUTF8  = '1'
+$env:HF_HOME     = 'E:\Desktop\CodingAI\artifacts\hf-cache'   # datasets refuses to cache outside the workspace
+
+# Re-verify everything that is already built
+& $py scripts/check_lora_adapter.py
+& $py scripts/analyze_paired_power.py --json-out artifacts/paired-power.json
+& $py scripts/make_lora_probe.py --check --output artifacts/lora-probe
+
+# Rebuild the SFT dataset and the training notebook (needs data/public/tasks.jsonl, which is gitignored)
+& $py scripts/build_sft_dataset.py --output artifacts/sft-public-v1.jsonl
+& $py scripts/prepare_lora_notebook.py --dataset artifacts/sft-public-v1.jsonl --owner <KAGGLE_USER> `
+      --slug gemma4-lora-sft-v1 --output artifacts/lora-sft-notebook `
+      --wheels-dir artifacts/training-wheels --wheels-source <KAGGLE_USER>/gemma4-training-wheels
+
+# Generate a runtime notebook that evaluates the probe adapter (the serving check)
+& $py scripts/prepare_kaggle_runtime.py --owner <KAGGLE_USER> --slug gemma4-lora-serving-probe `
+      --agent-dir configs/experiments/lora-trajectory-v1 --task-id rich_3454 `
+      --adapter-dir artifacts/lora-probe --adapter-mount /kaggle/input/gemma4-lora-probe/main_lora `
+      --adapter-dataset-source <KAGGLE_USER>/gemma4-lora-probe --output artifacts/adapter-notebook
+```
+
+### Environment facts that cost time to rediscover
+
+- **File permissions:** Python cannot create files in pre-existing workspace directories (`data/`,
+  `data/processed`, `scripts/`, `runs/`, `dist/`, `resource/manifests/`, `.git`). Freshly created
+  directories accept writes. An ACL repair verified two grants without restoring the operation, so do
+  not repeat it; write generated artifacts to `artifacts/` (gitignored) or a new directory, and expect
+  `git add` to need elevated access. Two undeletable leftovers remain: `gemma-ci-4qsxtd5l/` and
+  `.tmp-check/`.
+- **Python:** `C:\Users\32747\miniconda3\python.exe` (3.14.6), not on PATH. `pip install` needs an
+  approved unconfined run because its unpack temp directory is outside the workspace.
+- **Kaggle:** credentials authenticate (`~/.kaggle/access_token`); account `junzhejiao` has 14 kernels
+  and 0 datasets. The patched `vllm-0.19.1` wheel is not on PyPI and the wheelhouse dataset has no
+  vLLM wheel; it ships inside the Docker image.
+- **Two skills are installed and should be loaded at the start of coding work:**
+  `basic-programming-principles` (rules A-F, including "present reasoning in Chinese" and "log every
+  piece of work") at `.agents/skills/basic-programming-principles/SKILL.md` and an identical copy at
+  `C:\Users\32747\.dsh\skills\basic-programming-principles\SKILL.md`. Keep both in sync.
+
 ## Current project state
 
 - The canonical remote is `origin` at `https://github.com/jwj1342/gemma-agent-lab.git`; future references to the project remote mean this repository unless the user says otherwise. `origin/main` is `3054da842f794c854f438a5478ea9437b119e9bc`.
