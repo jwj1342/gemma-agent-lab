@@ -52,6 +52,20 @@ This file is the persistent handoff record for work performed in this repository
 
 ## Work history
 
+### 2026-10-11 02:40 (Asia/Shanghai) - Offline SFT stack proven end to end and the training wheel set pinned, hashed, and recorded
+
+- Objective: remove the dependency risk from the LoRA SFT path before any GPU session. The Kaggle route cannot fine-tune without training wheels, and Trillium would fail the same way if the versions were wrong, so this work serves both platforms.
+- The stack trains, measured not asserted: `scripts/check_training_stack.py` (new) builds a tiny `transformers` causal LM, wraps the configured `q_proj`/`o_proj` with LoRA, loads the real 116-record JSONL through `datasets`, runs `SFTTrainer` with `completion_only_loss=True` for 3 optimisation steps, exports the adapter, and reloads it. Result: `status: ok`, loss **5.4698 -> 5.4269** across 3 steps with `num_tokens` 256/512/768 (the completion mask is doing something), 8 LoRA tensors, `adapter_model.safetensors` 66,584 bytes, `reload_matches: true`, exit code 0.
+- Two real version defects found by running it, both of which would have burned a GPU session:
+  - **`transformers==5.13.1` requires `huggingface-hub>=1.5.0,<2.0`.** The first attempt resolved hub 2.2.0 and died at `import transformers` with `ImportError`. Pinned to 1.33.0.
+  - **`trl 1.15.0` cannot train here at all.** `SFTTrainer.__init__` patches a fused LM head and calls it every step, but that path needs the `trl.kernels` extension; without it the step fails with `AttributeError: 'NoneType' object has no attribute 'apply'`. Downgraded to **trl 0.24.0**, which needs only `transformers>=4.56.1`. `datasets` additionally needs `pandas` and `multiprocess`, neither carried by the wheelhouse.
+- Pinned and recorded: `configs/training.requirements.txt` now carries the verified set with each constraint explained, and `resource/manifests/training-wheels-sft-v1.json` lists **10 Linux/CPython-3.12 wheels, 58,045,422 bytes total**, each with its SHA256. All 10 hashes were re-verified against the downloaded files (10 ok, 0 mismatch, 0 missing). `scripts/record_training_wheels.py` (new) regenerates that manifest and documents the exact `pip download` command.
+- Verified version set: transformers 5.13.1, peft 0.21.2, trl 0.24.0, accelerate 1.15.0, datasets 5.1.0, huggingface-hub 1.33.0, plus pandas/pyarrow/xxhash/dill/multiprocess. The Linux wheels resolve pandas 2.3.2 and pyarrow 20.0.0, while the Windows verification used pandas 3.0.6; that difference is recorded in the manifest rather than hidden.
+- Scope limit stated in the check's own output: the tokenizer was a local byte-level stand-in because no Gemma tokenizer was cached and no download was allowed, so this proves the training loop and export layout, **not** tokenizer fidelity or accuracy. The real tokenizer comes from the base model at run time.
+- Environment note for future rounds: `datasets` caches under `~/.cache/huggingface`, which the sandbox refuses, so any local run needs `HF_HOME`/`HF_DATASETS_CACHE` pointed inside the workspace.
+- Changed files this round: `scripts/check_training_stack.py` (new), `scripts/record_training_wheels.py` (new), `configs/training.requirements.txt` (pinned), `resource/manifests/training-wheels-sft-v1.json` (new), `resource/manifests/README.md`. The wheel files themselves live in ignored `artifacts/training-wheels/`.
+- Remaining follow-up, unchanged in substance: the platform decision. Kaggle now needs only one manual step -- publish `artifacts/training-wheels/` as a private dataset (or let me attempt `kaggle datasets create`) and pass its handle to `scripts/prepare_lora_notebook.py`. GPU quota still untouched: 102,698.778 s of 108,000 s.
+
 ### 2026-10-11 00:20 (Asia/Shanghai) - LoRA SFT dataset produced and the training notebook generator built and executed offline
 
 - Objective: continue the LoRA SFT work with platform-independent deliverables, without spending GPU quota, while the platform choice is still open.

@@ -1,10 +1,26 @@
 # Offline training environment only. Keep this separate from configs/ci.requirements.txt and from the
 # evaluation container; the competition supplies patched vLLM 0.19.1, which does not belong here.
-# Verify the resolved versions against the target model at implementation time.
-torch
-transformers
-peft
-trl
-datasets
-accelerate
-bitsandbytes
+#
+# Versions below are the set verified end to end on 2026-10-11 by scripts/check_training_stack.py
+# (3 SFT steps on a tiny causal LM, adapter exported and reloaded with matching weights). The hashed
+# wheel inventory for the Linux target is resource/manifests/training-wheels-sft-v1.json.
+#
+# Why the pins matter, each learned from a failed run:
+#   * transformers 5.13.1 is the wheelhouse version; it needs huggingface-hub>=1.5.0,<2.0, and 2.2.0
+#     breaks the import outright.
+#   * trl 1.15.0 patches a fused LM head and calls it every step, but that path needs the trl kernels
+#     extension; without it training dies with "'NoneType' object has no attribute 'apply'". 0.24.0
+#     uses the standard loss path and works.
+#   * datasets imports pandas and multiprocess, which the competition wheelhouse does not carry.
+transformers==5.13.1
+peft==0.21.2
+trl==0.24.0
+accelerate==1.15.0
+datasets==5.1.0
+huggingface-hub>=1.5.0,<2.0
+pandas
+multiprocess
+dill
+xxhash
+pyarrow
+# torch and bitsandbytes come from the starter image; pin them only when a host must install them.
