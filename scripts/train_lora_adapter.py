@@ -17,6 +17,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
+from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_EXPERIMENT = ROOT / 'configs/experiments/lora-trajectory-v1'
@@ -140,7 +141,8 @@ def train(args: argparse.Namespace) -> dict:
     }
 
 
-def self_check(experiment_dir: Path, adapter_name: str, work_dir: Path) -> dict:
+def self_check(experiment_dir: Path, adapter_name: str, work_dir: Path,
+               override_targets: list[str] | None = None) -> dict:
     """Exercise the whole export path on a tiny local model, with no GPU, download, or base weights.
 
     This catches the failure mode that costs a GPU session: a wrong PEFT or harness keyword, a target
@@ -151,7 +153,7 @@ def self_check(experiment_dir: Path, adapter_name: str, work_dir: Path) -> dict:
     from peft import LoraConfig, PeftModel, get_peft_model
 
     config = load_adapter_config(experiment_dir, adapter_name)
-    targets = config.get('target_modules')
+    targets = override_targets or config.get('target_modules')
     targets = [targets] if isinstance(targets, str) else list(targets or [])
     rank = int(config.get('r'))
     hidden, layers = 64, 2
@@ -170,57 +172,105 @@ def self_check(experiment_dir: Path, adapter_name: str, work_dir: Path) -> dict:
         def forward(self, x):
             return self.down_proj(self.up_proj(self.o_proj(self.v_proj(self.k_proj(self.q_proj(x))))))
 
+    class ModelConfig(dict):
+        """Self-check stand-in for a transformers config: PEFT reads attributes and tests membership."""
+
+        def __init__(self, **values: Any) -> None:
+            super().__init__(values)
+            self.__dict__ = self
+
     class Tiny(torch.nn.Module):
         def __init__(self) -> None:
             super().__init__()
+            # PeftModel reads base_model.config.model_type and .use_cache, and looks up keys such as
+            # "_name_or_path" while saving; a real transformers config behaves the same way.
+            self.config = ModelConfig(model_type='tiny', use_cache=False)
             self.model = torch.nn.Module()
             self.model.language_model = torch.nn.Module()
             self.model.language_model.layers = torch.nn.ModuleList([Block() for _ in range(layers)])
             self.head = torch.nn.Linear(hidden, hidden, bias=False)
 
-        def forward(self, x):
+        def forward(self, input_ids=None, attention_mask=None, labels=None, **kwargs):
+            # Mirror a causal-LM signature: PeftModel forwards these keyword arguments by name.
+            x = input_ids if input_ids is not None else torch.randn(2, 4, hidden)
+            if x.dim() == 2:
+                x = x.unsqueeze(-1).expand(-1, -1, hidden)
             for block in self.model.language_model.layers:
                 x = block(x) + x
             return self.head(x)
 
+        def prepare_inputs_for_generation(self, *args, **kwargs):
+            # PeftModel for CAUSAL_LM reads this from the wrapped model; every real transformers
+            # causal LM provides it, so the stand-in must too.
+            return {}
+
     torch.manual_seed(0)
-    model = get_peft_model(Tiny(), LoraConfig(
+    base = Tiny()
+    # Mirror resolve_targets: a target the base model does not expose must fail loudly here rather
+    # than being silently ignored (PEFT warns and wraps nothing when a target is absent).
+    available = {name.rsplit('.', 1)[-1] for name, module in base.named_modules()
+                 if isinstance(module, torch.nn.Linear)}
+    absent = sorted(set(targets) - available)
+    if absent:
+        raise SystemExit(f'self-check: target modules absent from the base model: {absent}')
+    model = get_peft_model(base, LoraConfig(
         r=rank, lora_alpha=int(config.get('lora_alpha')), lora_dropout=float(config.get('lora_dropout', 0.0)),
         bias=str(config.get('bias', 'none')), task_type='CAUSAL_LM', target_modules=targets))
     trainable = [name for name, parameter in model.named_parameters() if parameter.requires_grad]
     if not trainable:
         raise SystemExit('self-check: no trainable LoRA parameters were created')
-    loss = model(torch.randn(2, 4, hidden)).pow(2).mean()
-    loss.backward()
-    gradients_present = any(parameter.grad is not None and parameter.grad.abs().sum() > 0
-                            for _, parameter in model.named_parameters() if parameter.requires_grad)
-
+    # Verify the configured targets really got wrapped. PEFT parameter names look like
+    # ...layers.0.q_proj.lora_A.default.weight, so match the module name as a path segment.
+    unresolved = [target for target in targets
+                  if not any(f'.{target}.' in f'.{name}.' for name in trainable)]
+    if unresolved:
+        raise SystemExit(f'self-check: configured target modules were not wrapped: {unresolved}')
     # Export into the exact layout the competition expects: adapters/<name>/adapter_model.safetensors,
     # which is how adk_submission.discovery groups a PEFT directory.
     export_dir = work_dir / 'adapters' / adapter_name
     export_dir.mkdir(parents=True, exist_ok=True)
+
+    # A B=0 adapter makes the reload comparison meaningful: nonzero B with zero A would also match
+    # while proving nothing about the exported weights.
+    zeroed = 0
+    for name, parameter in model.named_parameters():
+        if 'lora_B' in name:
+            with torch.no_grad():
+                parameter.zero_()
+            zeroed += 1
+    loss = model(input_ids=torch.randn(2, 4, hidden)).pow(2).mean()
+    loss.backward()
+    gradients_present = any(parameter.grad is not None and parameter.grad.abs().sum() > 0
+                            for _, parameter in model.named_parameters() if parameter.requires_grad)
+    if not gradients_present:
+        raise SystemExit('self-check: LoRA parameters received no gradient; training would not learn')
+
+    before = {name: parameter.detach().clone() for name, parameter in model.named_parameters()
+              if 'lora_B' in name}
     model.save_pretrained(str(export_dir))
     (export_dir / 'adapter_config.json').write_text(
         json.dumps(config, indent=2) + '\n', encoding='utf-8')
     weights = export_dir / 'adapter_model.safetensors'
 
-    reloaded = PeftModel.from_pretrained(Tiny(), str(export_dir))
-    identically_zero = all(
-        torch.equal(reloaded.state_dict()[key], model.state_dict()[key])
-        for key in model.state_dict() if 'lora_' in key
-    )
+    fresh = PeftModel.from_pretrained(Tiny(), str(export_dir))
+    after = {name: parameter.detach().clone() for name, parameter in fresh.named_parameters()
+             if 'lora_B' in name}
+    reload_matches = set(before) == set(after) and all(
+        torch.equal(before[name], after[name]) for name in before)
     discovered = sorted(path.parent.name for path in work_dir.glob('adapters/*/adapter_model.safetensors'))
     return {
         'mode': 'self-check',
         'work_dir': str(work_dir),
-        'target_modules_resolved': sorted({name.split('.')[-2] for name in trainable}),
+        'target_modules_resolved': targets,
+        'target_modules_verified_wrapped': not unresolved,
         'trainable_parameter_tensors': len(trainable),
         'trainable_parameters': sum(parameter.numel() for _, parameter in model.named_parameters()
                                     if parameter.requires_grad),
         'forward_backward_ok': gradients_present,
         'weights_filename_matches_discovery': weights.name == 'adapter_model.safetensors',
         'weights_written': weights.is_file(),
-        'reload_matches_export': identically_zero,
+        'reload_matches_export': reload_matches,
+        'lora_b_tensors_zeroed_for_roundtrip': zeroed,
         'adapter_names_discoverable': discovered,
         'note': 'PEFT mechanics and export layout only. The real base model is still required, and no '
                 'claim about accuracy follows from this check.',
@@ -256,7 +306,8 @@ def main() -> int:
                         help='Run real training; requires base weights, CUDA, and training dependencies')
     parser.add_argument('--self-check', action='store_true',
                         help='Exercise PEFT wiring and export layout on a tiny CPU model; needs torch and peft only')
-    parser.add_argument('--self-check-dir', type=Path, default=ROOT / 'runs/lora-trajectory-v1/self-check')
+    parser.add_argument('--self-check-dir', type=Path, default=ROOT / 'runs/lora-trajectory-v1-self-check',
+                        help='Must be a writable location; the harness layout adapters/<name>/ is created here')
     args = parser.parse_args()
     args.experiment_dir = args.experiment_dir.resolve()
 
@@ -272,7 +323,8 @@ def main() -> int:
 
     if args.self_check:
         print(json.dumps(self_check(args.experiment_dir, args.adapter_name,
-                                    args.self_check_dir.resolve()), indent=2))
+                                    args.self_check_dir.resolve(),
+                                    list(args.target_modules or [])), indent=2))
         return 0
     if not args.train:
         print(json.dumps(dry_run(args.experiment_dir, args.adapter_name, args.base_model,

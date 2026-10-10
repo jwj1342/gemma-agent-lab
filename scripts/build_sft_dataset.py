@@ -55,7 +55,7 @@ def build(tasks_path: Path, output: Path, max_patch_chars: int, holdout_repos: l
     unknown_holdouts = sorted(set(holdout_repos) - set(repos))
     if unknown_holdouts:
         raise SystemExit(f'holdout repositories not present in {tasks_path}: {unknown_holdouts}')
-    if len(holdout_repos) >= len(repos):
+    if holdout_repos and len(holdout_repos) >= len(repos):
         raise SystemExit('every repository is held out; no training data would remain')
 
     kept, dropped = [], Counter()
@@ -86,15 +86,28 @@ def build(tasks_path: Path, output: Path, max_patch_chars: int, holdout_repos: l
 
     counts = Counter(record['split'] for record in kept)
     train_repos = sorted({record['repo'] for record in kept if record['split'] == 'train'})
+    holdout_counts = {repo: sum(1 for task in tasks if task['repo'] == repo) for repo in holdout_repos}
+    warnings: list[str] = []
+    if not holdout_repos:
+        warnings.append('No holdout repository requested. The public set has only four repositories '
+                        '(httpx contributes one task), so a repository-disjoint validation split is '
+                        'not achievable at this size; evaluate on control-verified tasks instead.')
+    elif counts.get('holdout', 0) == 0:
+        warnings.append(f'The requested holdout repositories {sorted(holdout_repos)} contributed no '
+                        'records (missing from the tasks file, or every patch exceeded '
+                        f'--max-patch-chars={max_patch_chars}). There is no held-out data here; do not '
+                        'report a held-out metric from this file.')
     return {
         'output': str(output),
         'records_written': len(kept),
         'split_counts': dict(counts),
         'train_repositories': train_repos,
         'holdout_repositories': sorted(holdout_repos),
+        'holdout_task_counts': holdout_counts,
         'tasks_total': len(tasks),
         'dropped': dict(dropped),
         'max_patch_chars': max_patch_chars,
+        'warnings': warnings,
         'schema': 'prompt/completion JSONL; train with completion_only_loss=True',
         'caveat': 'Issue-to-reference-patch supervision. It cannot teach the tool loop, and the four '
                   'public repositories are hidden at scoring time, so transfer is limited to format '
@@ -109,7 +122,9 @@ def main() -> int:
     parser.add_argument('--tasks', type=Path, default=DEFAULT_TASKS)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--max-patch-chars', type=int, default=8000)
-    parser.add_argument('--holdout-repos', nargs='+', default=['encode/httpx'])
+    parser.add_argument('--holdout-repos', nargs='*', default=[],
+                        help='Repositories to exclude from training. Default: none, because the public '
+                             'set is too small for a repository-disjoint split (see warnings).')
     args = parser.parse_args()
     print(json.dumps(build(args.tasks, args.output, args.max_patch_chars, args.holdout_repos),
                      indent=2))
