@@ -66,3 +66,9 @@ __pycache__/
 /.tmp-tests/
 submission.zip
 *.parquet
+
+# Workspace-local Python installs and caches for offline checks. Large and machine-specific;
+# recreate them with `pip install --target .pylibs ...` rather than committing them.
+/.pylibs/
+/.pipcache/
+

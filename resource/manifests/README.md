@@ -31,6 +31,7 @@ workspace; those artifacts are not included in a Git clone.
 | [snapshots-audit.json](snapshots-audit.json) | Repository archive structure |
 | [wheels-audit.json](wheels-audit.json) | Competition test-wheel inventory inspection |
 | [sample-adapters.json](sample-adapters.json) | Supplied adapter examples; not team training evidence |
+| model-modules.json (**not yet recorded**) | Real projection names and shapes of the loaded base model, from `scripts/probe_model_modules.py`; takes precedence over the sample adapter as LoRA target evidence once it exists |
 | [harness-wheels.json](harness-wheels.json) | Official harness package metadata |
 | [research-collection.json](research-collection.json) | Coverage of pages, notebooks, discussions, models, and rankings |
 
@@ -39,7 +40,8 @@ workspace; those artifacts are not included in a Git clone.
 | File | Purpose |
 | --- | --- |
 | [wheelhouse-files.json](wheelhouse-files.json) | Official evaluation dependency inventory |
-| [eval-assets-verification.json](eval-assets-verification.json) | Base model and wheel hashes; used by notebook preparation |
+| [eval-assets-verification.json](eval-assets-verification.json) | Historical October 5 base model and wheel hashes |
+| [eval-wheelhouse-2026-10-09.json](eval-wheelhouse-2026-10-09.json) | October 9 official wheel hashes; current notebook preparation default |
 | [eval-git.json](eval-git.json) | Container Git installation, package identity, and basic behavior checks |
 | [vllm-image.json](vllm-image.json) | Prepared Apptainer image identity and checks |
 | [vllm-image-inspect.json](vllm-image-inspect.json) | Container inspection metadata |

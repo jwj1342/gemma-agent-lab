@@ -82,7 +82,8 @@ No upload, GPU job, remote deployment, or automatic background continuation was 
 
 ## Verification status
 
-The preceding implementation checks passed all 25 focused tests; full-suite results were 39/46,
-with seven Windows-dependent ZIP/path expectations still failing. Repository syntax, configuration,
-packaging, and documentation checks passed. Official compilation and model execution remain pending.
-The handoff changes documentation only and do not change the frozen experiment or its ZIP.
+The October 9 continuation fixed the seven Windows-dependent ZIP/path test expectations;
+the full suite now passes 46/46. Tests compare generated bundles against a direct build and
+each source member, and preserve exact task bytes when restoring tampered fixtures.
+All 114 frozen cases and 18 pilot notebooks passed a fresh integrity audit; their hashes
+are unchanged. Official compilation and model execution remain pending.

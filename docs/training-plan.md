@@ -27,6 +27,12 @@ verification on `rich_3454`. See [runtime status](cluster-runtime.md). This vali
 
 ## Proposed sequence
 
+The method comparison behind this sequence -- PEFT versus SFT versus RL, with expected effects, costs,
+and risks -- is recorded in the
+[PEFT/SFT/RL adjudication](experiments/2026-10-10-lora-sft-rl-adjudication.md). The configured adapter
+experiment is [configs/experiments/lora-trajectory-v1](../configs/experiments/lora-trajectory-v1/README.md);
+it has a PEFT config and an offline check but no trained weights.
+
 1. Fix grouped public splits and establish unpatched failure plus gold-patch success for chosen
    tasks. Exclude incomplete or invalid environments. Group by repository/base commit to prevent snapshot overlap.
 2. Stage the required v2 base, tokenizer/configuration, data, and caches. Use a short allocated

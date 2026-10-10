@@ -1,0 +1,10 @@
+# Offline training environment only. Keep this separate from configs/ci.requirements.txt and from the
+# evaluation container; the competition supplies patched vLLM 0.19.1, which does not belong here.
+# Verify the resolved versions against the target model at implementation time.
+torch
+transformers
+peft
+trl
+datasets
+accelerate
+bitsandbytes

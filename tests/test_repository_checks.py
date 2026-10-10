@@ -89,7 +89,7 @@ class RepositoryCheckTests(unittest.TestCase):
         self.git('add', 'configs/baseline/callback.py')
         result = self.check()
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn('configs/baseline/callback.py', result.stderr)
+        self.assertIn(str(Path('configs/baseline/callback.py')), result.stderr)
 
     def test_missing_include_and_invalid_yaml_fail(self):
         self.write('configs/baseline/agent.yaml', 'instruction: !include missing.md\n')
@@ -99,7 +99,7 @@ class RepositoryCheckTests(unittest.TestCase):
         self.write('configs/baseline/agent.yaml', 'tools: [unterminated\n')
         result = self.check()
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn('configs/baseline/agent.yaml', result.stderr)
+        self.assertIn(str(Path('configs/baseline/agent.yaml')), result.stderr)
 
     def test_reference_links_are_checked_but_example_code_is_skipped(self):
         self.write('README.md', '[Agent][agent]\n\n[agent]: configs/baseline/agent.yaml\n'
@@ -124,7 +124,7 @@ class RepositoryCheckTests(unittest.TestCase):
         self.git('add', 'src/broken.py')
         result = self.check()
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn('src/broken.py', result.stderr)
+        self.assertIn(str(Path('src/broken.py')), result.stderr)
 
 
 if __name__ == '__main__':

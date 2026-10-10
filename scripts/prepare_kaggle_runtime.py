@@ -1,6 +1,7 @@
 """Generate a private, offline L4x4 notebook for one real official-harness smoke task."""
 import argparse
 import base64
+import gzip
 import hashlib
 import json
 from pathlib import Path
@@ -27,7 +28,9 @@ def main():
     source.add_argument('--agent-dir', type=Path, help='Agent configuration; no local competition data needed')
     parser.add_argument('--task-id', help='Public task to select from Kaggle inputs, with --agent-dir')
     parser.add_argument('--slug', default='gemma4-official-runtime-smoke')
-    parser.add_argument('--title', default='Gemma4 Official Runtime Smoke')
+    parser.add_argument('--title', help='Display title; defaults to the slug with spaces')
+    parser.add_argument('--wheel-manifest', type=Path,
+                        help='Reviewed wheel inventory JSON; defaults to the October 9 snapshot')
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
@@ -66,7 +69,9 @@ def main():
     if hashlib.sha256(bundle).hexdigest() != run['agent_archive_sha256']:
         raise ValueError('Run bundle hash changed')
     official = json.loads((root / 'resource/notebooks/official/kernel-metadata.json').read_text())
-    assets = json.loads((root / 'resource/manifests/eval-assets-verification.json').read_text())
+    wheel_manifest = args.wheel_manifest or root / 'resource/manifests/eval-wheelhouse-2026-10-09.json'
+    assets = json.loads(wheel_manifest.read_text(encoding='utf-8'))
+    wheel_manifest_sha256 = hashlib.sha256(wheel_manifest.read_bytes()).hexdigest()
     payload = {'bundle': base64.b64encode(bundle).decode(), 'bundle_sha256': run['agent_archive_sha256'],
                'archive_manifest': archive_manifest,
                'public_task': public_task, 'public_fields': sorted(PUBLIC_FIELDS), 'task_id': run['task_id'],
@@ -75,18 +80,25 @@ def main():
                'scripts': {name: (root / 'scripts' / name).read_text() for name in
                            ['validate_agent.py', 'evaluate_agent.py', 'summarize_eval_smoke.py',
                             'verify_eval_run.py', 'build_submission.py', 'prepare_eval_task.py']},
-               'wheels': {item['path']: item['sha256'] for item in assets['wheelhouse_files']}}
+               'wheels': {item['path']: item['sha256'] for item in assets['wheelhouse_files']},
+               'wheel_manifest_sha256': wheel_manifest_sha256}
     payload['script_sha256'] = {name: hashlib.sha256(source.encode()).hexdigest()
                                 for name, source in payload['scripts'].items()}
-    encoded = base64.b64encode(json.dumps(payload).encode()).decode()
-    setup = '''import base64, hashlib, json, os, subprocess, sys, zipfile, io
+    encoded = base64.b85encode(gzip.compress(json.dumps(payload).encode(), mtime=0)).decode()
+    setup = '''import base64, gzip, hashlib, json, os, subprocess, sys, zipfile, io
 from pathlib import Path
-PAYLOAD = json.loads(base64.b64decode(PAYLOAD_B64))
+PAYLOAD = json.loads(gzip.decompress(base64.b85decode(PAYLOAD_B85)))
 WORK = Path('/kaggle/working/runtime-smoke')
 DATA = Path('/kaggle/input/competitions/gemma-4-developer-agent')
 WHEELS = Path('/kaggle/input/datasets/metric/gemma-4-developer-agent-wheelhouse')
 MODEL = Path('/kaggle/input/models/google/gemma-4/other/gemma-4-31b-it-qat-w4a16-ct/2')
-assert DATA.is_dir() and WHEELS.is_dir() and MODEL.is_dir(), 'Attach the competition, official wheelhouse, and model v2 inputs.'
+if not DATA.is_dir():
+    DATA = Path('/kaggle/input/gemma-4-developer-agent')
+if not WHEELS.is_dir():
+    WHEELS = Path('/kaggle/input/gemma-4-developer-agent-wheelhouse')
+mounts = {str(path): path.is_dir() for path in (DATA, WHEELS, MODEL)}
+assert all(mounts.values()), 'Required Kaggle inputs missing: ' + repr(mounts)
+print('Input mounts:', mounts, flush=True)
 with (DATA/'tasks.jsonl').open() as stream:
     matches = [task for line in stream if line.strip()
                for task in [json.loads(line)] if task['instance_id'] == PAYLOAD['task_id']]
@@ -116,11 +128,13 @@ archive_manifest = dict(PAYLOAD['archive_manifest'], archive=str(WORK/'inputs/su
     'task_id': PAYLOAD['task_id'], 'git_revision': PAYLOAD['git_revision'],
     'source_run_git_revision': PAYLOAD['source_run_git_revision'],
     'script_sha256': PAYLOAD['script_sha256'],
+    'wheel_manifest_sha256': PAYLOAD['wheel_manifest_sha256'],
     'agent_archive_sha256': PAYLOAD['bundle_sha256'],
     'public_task_sha256': hashlib.sha256(task_text.encode()).hexdigest(),
     'public_fields': sorted(public_task),
     'model_handle': 'google/gemma-4/Other/gemma-4-31b-it-qat-w4a16-ct/2',
     'tensor_parallel_size': 4, 'gpu_memory_utilization': 0.90,
+    'input_paths': {'data': str(DATA), 'wheels': str(WHEELS), 'model': str(MODEL)},
     'status': 'inputs prepared; see smoke-summary.json for executed results'
 }, indent=2) + '\\n')
 for name, source in PAYLOAD['scripts'].items():
@@ -207,11 +221,14 @@ print('One-task smoke complete; this notebook has NOT submitted a competition en
     nb = {'nbformat': 4, 'nbformat_minor': 4,
           'metadata': {'kernelspec': {'display_name': 'Python 3', 'language': 'python', 'name': 'python3'}},
           'cells': [cell('markdown', '# Official L4 × 4 runtime smoke\nPrivate, offline, one public task. Not a competition submission or benchmark.\nThe official subprocess backend is used; Kaggle inputs remain mounted by the platform.'),
-                    cell('code', 'PAYLOAD_B64 = '+repr(encoded)+'\n'+setup),
+                    cell('code', 'PAYLOAD_B85 = '+repr(encoded)+'\n'+setup),
                     cell('code', install), cell('code', evaluate)]}
+    # Kaggle rejects notebook source over 1 MB, including inline payloads.
+    if len(json.dumps(nb).encode('utf-8')) >= 1_000_000:
+        raise ValueError('Notebook source exceeds Kaggle 1 MB limit; use smaller agent assets')
     args.output.mkdir(parents=True)
     (args.output / 'runtime.ipynb').write_text(json.dumps(nb, indent=2)+'\n')
-    metadata = {'id': args.owner+'/'+args.slug, 'title': args.title,
+    metadata = {'id': args.owner+'/'+args.slug, 'title': args.title or args.slug.replace('-', ' '),
                 'code_file': 'runtime.ipynb', 'language': 'python', 'kernel_type': 'notebook',
                 'is_private': True, 'enable_gpu': True, 'enable_tpu': False, 'enable_internet': False,
                 'machine_shape': 'NvidiaL4', 'docker_image': official['dockerImage'],
@@ -224,6 +241,7 @@ print('One-task smoke complete; this notebook has NOT submitted a competition en
         'task_id': run['task_id'], 'agent_archive_sha256': run['agent_archive_sha256'],
         'git_revision': git_revision, 'source_run_git_revision': payload['source_run_git_revision'],
         'script_sha256': payload['script_sha256'], 'kernel': metadata['id'],
+        'wheel_manifest_sha256': wheel_manifest_sha256,
         'task_source': 'frozen run checked against Kaggle inputs' if args.run_dir else 'Kaggle inputs at runtime',
         'status': 'notebook generated locally; no GPU execution or upload'
     }, indent=2) + '\n')

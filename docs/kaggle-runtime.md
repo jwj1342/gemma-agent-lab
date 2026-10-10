@@ -34,6 +34,10 @@ slug for each experiment. To try a prompt change, copy the baseline to `configs/
 and pass that directory instead. Only small bundles can be embedded; adapters need a separately
 implemented, versioned private-input workflow.
 
+Notebook payloads use gzip/base85 transport without changing agent ZIP bytes. Preparation rejects
+source exceeding Kaggle's 1 MB limit before creating the output directory. The default display title
+is derived from the slug so a custom slug also has a matching title.
+
 An existing frozen H100 run can also be prepared for Kaggle using `--run-dir runs/<run>` instead of
 `--agent-dir` and `--task-id`. Its bundle/task hashes are checked, and the notebook compares the frozen
 public task with the mounted competition data. This is useful for matched-input comparisons.
@@ -90,6 +94,15 @@ installation uses only recorded entries and rechecks them before pip runs. No Gi
 is embedded in the notebook. `git_revision` identifies the preparation checkout; `source_run_git_revision`
 identifies the original frozen run, when supplied. Embedded script hashes record the exact helper code,
 including any uncommitted edits present during generation.
+
+The October 9 launch observed flat competition/dataset paths on GPU notebooks and namespaced paths
+on a CPU script; preparation supports both and records the selected paths. Model revision 2 retains
+its explicit namespaced path. The default wheel inventory is the reviewed
+[October 9 snapshot](../resource/manifests/eval-wheelhouse-2026-10-09.json): `swegemma 0.2.10`,
+`adk-submission 0.2.13`, and a changed `adk-eval-core 0.1.0` wheel. Other 38 wheel hashes match the
+historical inventory. Use `--wheel-manifest PATH` for an explicitly reviewed alternative; its SHA256
+is embedded in the notebook and run record. All comparison arms must use the same inventory.
+Changed upstream wheels still stop execution until reviewed; historical manifests remain unchanged.
 
 ## 4. Read the result and keep the evidence
 
