@@ -193,6 +193,24 @@ keeps its original runtime, task list, control cache and gate unchanged.
 individual outcomes and this classification. Inference and paired results remain
 pending; the holdout remains sealed.
 
+After both development runs finish, reproduce the registered partition report:
+
+```bash
+python scripts/summarize_eval_expansion.py \
+  --candidate runs/20261010-prompt-dev/icl \
+  --baseline runs/20261010-prompt-dev/baseline \
+  --fast-baseline runs/20261009-prompt-icl/baseline/fast \
+  --registration runs/20261010-prompt-dev/registration.json \
+  --output runs/20261010-prompt-dev/expansion-report.json
+```
+
+Use these paths from the artifact workspace; the reporter itself can be invoked
+by its absolute path from the prompt worktree. It consumes completed suite
+summaries, checks matched evaluation identities and control masks, and verifies
+that the registered additional tasks plus the fast cohort exactly cover the
+development cohort. It records source hashes and preserves existing output.
+It does not rerun raw-artifact verification or modify the frozen runner.
+
 - Branch: `experiment/prompt-icl-route`; [Issue #9](https://github.com/jwj1342/gemma-agent-lab/issues/9)
   and [PR #10](https://github.com/jwj1342/gemma-agent-lab/pull/10).
 - Initial candidates: `f3cebb5`; corrected skill: `26bada6`; protocol candidate: `4c64dd9`.
