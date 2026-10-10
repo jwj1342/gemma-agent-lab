@@ -76,6 +76,48 @@ def tasks_required(baseline_rate: float, expected_gain: float, alpha: float = 0.
     return None
 
 
+COLLECTION_FAILURE_MARKERS = (
+    'errors during collection',
+    'error during collection',
+    'Interrupted: ',
+    'ModuleNotFoundError',
+    'ImportError',
+)
+
+
+def empty_arm_failed_as_expected(record: dict) -> tuple[bool, str]:
+    """Decide whether the unpatched arm failed in a way that makes the task measurable.
+
+    A task can legitimately fail the empty arm two ways: the tests run and fail (pytest exit 1), or
+    collection itself fails because the tests import symbols that the task's own reference patch
+    introduces (exit 2). Discarding the second kind undercounts usable tasks badly: `rich_3930`
+    imports `CellSpan`, `split_graphemes` and `cell_len` from `rich.cells`, and that task's patch adds
+    exactly those. What must never count is a collection failure that survives the gold patch, since
+    then the harness never exercised the issue at all.
+    """
+    empty = record.get('empty')
+    if not empty or empty.get('resolved') is not False or empty.get('error'):
+        return False, 'empty arm did not fail cleanly'
+    code = empty.get('test_exit_code')
+    if code == 1:
+        return True, 'tests ran and failed'
+    if code == 2:
+        text = empty.get('test_output') or ''
+        if any(marker in text for marker in COLLECTION_FAILURE_MARKERS):
+            return True, 'collection failed on symbols the patch introduces'
+        return False, 'exit 2 without a recognizable collection error'
+    return False, f'unexpected empty-arm exit code {code!r}'
+
+
+def gold_arm_passed_cleanly(record: dict) -> tuple[bool, str]:
+    gold = record.get('gold')
+    if not gold:
+        return False, 'no gold control'
+    if gold.get('resolved') is not True or gold.get('test_exit_code') != 0 or gold.get('error'):
+        return False, 'gold arm did not pass cleanly'
+    return True, 'reference patch passed'
+
+
 def collect_controls(runs_dir: Path) -> dict[str, dict]:
     """Find per-task empty/gold controls anywhere under runs/ and judge each task."""
     found: dict[str, dict] = {}
@@ -93,16 +135,14 @@ def collect_controls(runs_dir: Path) -> dict[str, dict]:
             'resolved': data.get('resolved') is True,
             'test_exit_code': data.get('test_exit_code'),
             'error': bool(data.get('error_message')),
+            'test_output': data.get('test_output') or '',
         }
     for record in found.values():
-        empty, gold = record.get('empty'), record.get('gold')
-        # The empty arm must fail by running tests and failing them, which pytest reports as exit 1.
-        # Exit 0 would mean the tests passed without the fix, and exit 2 or higher is a collection or
-        # infrastructure error, not evidence that the task is measurable.
-        record['valid'] = bool(
-            empty and gold
-            and empty['resolved'] is False and empty['test_exit_code'] == 1 and not empty['error']
-            and gold['resolved'] is True and gold['test_exit_code'] == 0 and not gold['error'])
+        empty_ok, empty_reason = empty_arm_failed_as_expected(record)
+        gold_ok, gold_reason = gold_arm_passed_cleanly(record)
+        record['valid'] = empty_ok and gold_ok
+        record['empty_reason'] = empty_reason
+        record['gold_reason'] = gold_reason
     return found
 
 
@@ -155,6 +195,10 @@ def summarize(runs_dir: Path) -> dict:
         'control_tasks_total': len(controls),
         'control_valid_tasks': valid,
         'control_invalid_tasks': invalid,
+        'control_rationale': {task: {'empty': record.get('empty_reason'),
+                                     'gold': record.get('gold_reason'),
+                                     'valid': record['valid']}
+                              for task, record in sorted(controls.items())},
         'control_valid_count': n,
         'valid_by_repository': dict(repositories),
         'single_repository_only': len(repositories) == 1,

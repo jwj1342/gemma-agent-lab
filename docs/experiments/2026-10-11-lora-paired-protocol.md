@@ -15,26 +15,34 @@ knowing before a GPU hour is spent, so the protocol and its power are fixed here
 
 ## Control validity: what "measurable" means
 
-A task is usable only when the unpatched repository fails its own tests and the reference patch
-passes them. The exit codes are not interchangeable, and reading them wrongly silently discards real
-tasks (an earlier version of the analysis script did exactly that, requiring exit 0 for the empty arm
-and reporting zero usable tasks):
+A task is usable only when the unpatched repository fails and the reference patch passes. The exit
+codes are not interchangeable, and reading them wrongly silently discards real tasks. Two defects of
+exactly that kind were found and fixed while writing this note: the first version of the analysis
+script required the empty arm to exit 0 and reported **zero** usable tasks, and the second version
+still rejected empty-arm collection failures and reported three when four were usable.
 
 | Arm | Required | Meaning |
 | --- | --- | --- |
-| empty | `resolved: false`, `test_exit_code == 1`, no error | Tests ran and failed, so the issue is real |
+| empty | `resolved: false`, no error, and either exit 1 (tests ran and failed) or exit 2 caused by a collection error | The issue is real; the tests either fail or cannot import the symbols the fix introduces |
 | gold | `resolved: true`, `test_exit_code == 0`, no error | The reference fix resolves it, so the task is solvable |
+
+The second empty-arm shape matters more than it looks. `rich_3930` imports `CellSpan`,
+`split_graphemes`, `cell_len`, `get_character_cell_size` and `split_text` from `rich.cells`, and that
+task's own source patch adds exactly those names, so collection *must* fail before the fix. Requiring
+a clean test failure would have discarded a perfectly measurable task. The rule that keeps this safe
+is the gold arm: if collection also fails with the reference patch applied, the harness never
+exercised the issue and the task is unusable.
 
 Anything else is a different kind of evidence:
 
 | Observed | Reading | Example |
 | --- | --- | --- |
-| empty exit 2 | Test collection or environment error; the harness never exercised the issue | `rich_3930`, `fastapi_14786` |
-| empty exit 124 | Timeout in both arms; the task is too slow to measure here | `requests_7433` |
-| empty exit 1, gold exit 1 | Base already passes; there is nothing to fix | `rich_3296` |
+| collection error in **both** arms | Test-environment gap, not the issue; the gold control fails | `fastapi_13713`, `fastapi_14786` |
+| timeout in both arms (exit 124) | Too slow to measure under this budget | `requests_7433` |
+| empty exit 1, gold exit 1 | Base already passes; nothing to fix | `rich_3296` |
 
-Measured on the existing control sweep (8 tasks attempted):
-**3 usable tasks — `rich_3454`, `rich_3675`, `rich_3676` — all from a single repository.**
+Measured on the existing control sweep (8 tasks attempted): **4 usable tasks — `rich_3454`,
+`rich_3675`, `rich_3676`, `rich_3930` — all from a single repository.**
 
 ## Power: what three tasks can and cannot show
 
@@ -49,14 +57,14 @@ Pairwise scores are pass/fail, so only tasks where the two arms disagree carry i
 | 20 points | 40 |
 | 30 points | 26 |
 
-With 3 tasks, power is effectively zero for every one of those gains, and the minimum detectable
-gain is undefined — the experiment would need the baseline to resolve nothing and the adapter to
-resolve all three before the result clears the significance bar.
+With 4 tasks, power is effectively zero for every one of those gains and the minimum detectable gain
+is undefined: the run would need the baseline to resolve nothing and the adapter to resolve all four
+before the result clears the significance bar.
 
 Two consequences:
 
 1. **The public set cannot fund the experiment.** It holds 129 tasks, and the observed control yield
-   so far is 3 of 8 attempted. Even a perfect yield of all 129 would leave a 10-point effect
+   so far is 4 of 8 attempted. Even a perfect yield across all 129 would leave a 10-point effect
    undetectable with a paired design.
 2. **A single-repository task set cannot attribute the effect.** All usable tasks are `rich`, so a
    win could be repository memorisation rather than a transferable improvement. This is the same
