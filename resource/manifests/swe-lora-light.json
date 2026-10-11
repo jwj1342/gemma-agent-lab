@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "recorded_at": "2026-10-11T00:15:26.042219+00:00",
+  "recorded_at": "2026-10-11T00:44:53.117357+00:00",
   "run_root": "runs/20261010-swe-lora-protocol-r2",
   "training_revision": "1fcc891bd7a44adce6b7cc2b08f488b3dd933a7e",
   "validation_revision": "afa0397be57554642e6be6a305a901d067dd625c",
@@ -404,6 +404,70 @@
           "local_eval_setup.py": "4076d7916ed7b4e75b8993b627ea0d011c232f79c42a60246e998997d9c2418f"
         }
       }
+    },
+    {
+      "checked_at": "2026-10-11T00:29:23.787329+00:00",
+      "task_id": "fastapi_14455",
+      "checks": {
+        "empty_patch_fails_tests": true,
+        "gold_patch_passes_tests": true,
+        "official_compiler_passed": true,
+        "real_nonempty_prediction": false,
+        "llm_was_called": true,
+        "agent_tests_executed": true
+      },
+      "controls_valid": true,
+      "agent_resolved": false,
+      "inference_seconds": 275.2412388290104,
+      "pipeline_executed": false,
+      "scope": "One public task. Not a benchmark score, training validation, L4 timing result, or Kaggle submission.",
+      "inference": {
+        "llm_calls": 40,
+        "tool_calls": 40,
+        "duration_seconds": 275.2412388290104,
+        "agent_seconds": 239.98643289197935,
+        "error": "Agent exceeded session timeout (4 min)",
+        "patch_characters": 3343
+      },
+      "actual_tool_calls": {
+        "run_command": 16,
+        "read_file": 21,
+        "write_file": 1,
+        "edit_file": 2
+      }
+    },
+    {
+      "checked_at": "2026-10-11T00:42:11.990108+00:00",
+      "task_id": "requests_7502",
+      "checks": {
+        "empty_patch_fails_tests": true,
+        "gold_patch_passes_tests": true,
+        "official_compiler_passed": true,
+        "real_nonempty_prediction": true,
+        "llm_was_called": true,
+        "agent_tests_executed": true
+      },
+      "controls_valid": true,
+      "agent_resolved": false,
+      "inference_seconds": 199.49278537000646,
+      "pipeline_executed": true,
+      "scope": "One public task. Not a benchmark score, training validation, L4 timing result, or Kaggle submission.",
+      "inference": {
+        "llm_calls": 35,
+        "tool_calls": 30,
+        "duration_seconds": 199.49278537000646,
+        "agent_seconds": 163.62972539200564,
+        "error": null,
+        "patch_characters": 1410
+      },
+      "actual_tool_calls": {
+        "run_command": 14,
+        "read_file": 9,
+        "write_file": 5,
+        "edit_file": 3,
+        "submit_patch": 2,
+        "get_status": 1
+      }
     }
   ],
   "release_gate_passed": false,
@@ -451,6 +515,22 @@
     {
       "path": "runs/20261010-swe-lora-protocol-r2/acceptance-r3/smoke/infer/prediction.json",
       "sha256": "73c294248417c1eef74e6e08a277247b2c6b10326bde701f2deb4ea8a7866408"
+    },
+    {
+      "path": "runs/20261010-swe-lora-protocol-r2/acceptance-r3/smoke-fastapi_14455/smoke-summary.json",
+      "sha256": "aeb00e9ed9d59028b480925b9acfc0492503d9ce1d78cbae70c69305a1cb0b42"
+    },
+    {
+      "path": "runs/20261010-swe-lora-protocol-r2/acceptance-r3/smoke-fastapi_14455/infer/prediction.json",
+      "sha256": "ef801d2abecf32ba802ddba5c631cd0128596051cbdd8f5345ad3c20c6f9f973"
+    },
+    {
+      "path": "runs/20261010-swe-lora-protocol-r2/acceptance-r3/smoke-requests_7502/smoke-summary.json",
+      "sha256": "ef17cfb60f72a68f92a43f22ebd850a902e6fd8338473d575b7852173dd6d1a5"
+    },
+    {
+      "path": "runs/20261010-swe-lora-protocol-r2/acceptance-r3/smoke-requests_7502/infer/prediction.json",
+      "sha256": "548ef65c1f533f0319b2ad1d2c60a3c24f37632d664061e9ab1da8d2909e068a"
     }
   ],
   "limitations": [
@@ -693,19 +773,19 @@
     },
     {
       "job_id": 1073600,
-      "state": "PENDING",
-      "elapsed_seconds": 0,
+      "state": "COMPLETED",
+      "elapsed_seconds": 844,
       "exit_code": "0:0",
-      "allocated_tres": "",
-      "physical_h100_hours": 0
+      "allocated_tres": "billing=1,cpu=24,gres/gpu=1,mem=187.50G,node=1",
+      "physical_h100_hours": 0.23444444444444446
     },
     {
       "job_id": 1073601,
-      "state": "PENDING",
-      "elapsed_seconds": 0,
+      "state": "RUNNING",
+      "elapsed_seconds": 994,
       "exit_code": "0:0",
-      "allocated_tres": "",
-      "physical_h100_hours": 0
+      "allocated_tres": "billing=1,cpu=24,gres/gpu=1,mem=187.50G,node=1",
+      "physical_h100_hours": 0.2761111111111111
     }
   ],
   "release_smoke": null,

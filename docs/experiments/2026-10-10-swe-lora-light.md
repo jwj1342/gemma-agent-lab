@@ -19,8 +19,8 @@ Repository checks and 76 tests passed in the allocation and in
 [CI run 38093147750](https://github.com/jwj1342/gemma-agent-lab/actions/runs/38093147750).
 Official serving passed and the first real task completed and resolved.
 FastAPI subsequently exceeded its inference time limit, so the three-task
-release gate has not passed. The remaining probe and fixed fast comparison
-are diagnostic measurements in progress; no improvement or release is claimed.
+release gate has not passed. All three probes now have recorded outcomes;
+the fixed fast comparison is in progress. No improvement or release is claimed.
 
 | Training source | Actions | Snapshot/fixture groups | Input tokens | Target tokens |
 | --- | ---: | ---: | ---: | ---: |
@@ -128,6 +128,27 @@ Requests task, and run the unchanged fixed fast cohort against the matching
 baseline. These measurements characterize the completed weights. The failed
 release gate remains in force, with no upload or promotion. No task is replaced,
 no timeout is relaxed for inference, and no development trace enters training.
+
+### Three-task probe outcomes
+
+| Task | Valid controls | Clean nonempty completion | Official patch result |
+| --- | --- | --- | --- |
+| `rich_3454` | Yes | Yes; 15 LLM calls, one submission | Resolved; 83 tests passed |
+| `fastapi_14455` | Yes | No; 40 calls, four-minute timeout, no submission | Unresolved; 1 failed, 3 passed, 1 error |
+| `requests_7502` | Yes | Yes; 35 LLM calls, two submissions | Unresolved in this attempt; 1 failed, 337 passed, 1 skipped, 1 xfailed |
+
+Requests inference took 199.49 seconds excluding model startup, with 163.63
+seconds recorded by the agent timer. Its only failing test reported a refused
+connection to the local HTTPS fixture. The patch changes file-like-object
+detection in `models.py`, while the failing test exercises TLS connection pools.
+This raises an environment-stability question, but does not prove flakiness or
+justify replacing the recorded failure with a pass. The original result remains
+unresolved. Job `1073600` completed independent FastAPI grading and the Requests
+probe in 14m04s on one H100. None of the three traces used a graph tool.
+
+The frozen fast evaluation (`1073601`) has matching runtime, task, model, budget
+and verification hashes, the same valid-control mask as the baseline, and 12
+control-cache hits. Its results are pending.
 
 ### Review and follow-up ownership
 
