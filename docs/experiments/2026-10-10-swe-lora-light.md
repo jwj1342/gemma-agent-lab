@@ -116,6 +116,11 @@ session limit while still locating and revising the implementation. It never
 called `submit_patch`; the harness recovered a 3,343-character working-tree
 patch. This differs from the earlier post-submission repetition failure, but it
 still fails the registered clean-completion gate. Its result is retained.
+Trace timestamps attribute about 3.14 seconds to observed tool execution,
+including 2.82 seconds across the 16 commands. The remaining time includes
+model processing and harness overhead. The trace is not a GPU profiler, but it
+does rule out long shell commands as the principal cause in this attempt.
+`fastapi-trace-diagnosis.json` records the extraction and trace hash.
 
 `diagnostic-registration.json` records the next measurements before execution:
 independently grade the already captured patch, finish the originally selected

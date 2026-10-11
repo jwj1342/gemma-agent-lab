@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "recorded_at": "2026-10-11T00:07:25.562499+00:00",
+  "recorded_at": "2026-10-11T00:15:26.042219+00:00",
   "run_root": "runs/20261010-swe-lora-protocol-r2",
   "training_revision": "1fcc891bd7a44adce6b7cc2b08f488b3dd933a7e",
   "validation_revision": "afa0397be57554642e6be6a305a901d067dd625c",
@@ -315,6 +315,26 @@
     "/scratch/jwj/kaggle_gemma4_agent/runs/20261009-swe-lora-v1-full/swe-data/validation.jsonl": "b58b3459702c4ae8bc718c927509dfd25a3d56c011008c79f82b58205eae2b40",
     "/scratch/jwj/kaggle_gemma4_agent/runs/20261009-swe-lora-v1-complete/graph-data/validation.jsonl": "bd391d78bcf2b970fa115eca790dbdd4c806331c8d1fac4e6d2a03bb468b2109",
     "/scratch/jwj/kaggle_gemma4_agent/runs/20261010-swe-lora-protocol-r2/terminal-data/validation.jsonl": "3be333b2017414a6eea9aa4ddb5cee9151dbe7b4d2769562ae8812f4e7db1f95"
+  },
+  "fastapi_trace_diagnosis": {
+    "recorded_at": "2026-10-11T00:12:30.116471+00:00",
+    "task_id": "fastapi_14455",
+    "trace_sha256": "a52d8b73d03385ea755cbc0c819e3f2a832e1c801b640273585d222783b51a82",
+    "actual_tool_calls": {
+      "run_command": 16,
+      "read_file": 21,
+      "write_file": 1,
+      "edit_file": 2
+    },
+    "observed_tool_seconds": {
+      "run_command": 2.824822425842285,
+      "read_file": 0.25282859802246094,
+      "write_file": 0.024927854537963867,
+      "edit_file": 0.0389256477355957
+    },
+    "total_observed_tool_seconds": 3.1415045261383057,
+    "interpretation": "The agent timed out during continued code localization/revision, without a submit call. Commands were short, so extending command execution limits is not a remedy. Observed gaps between tools include model processing and harness overhead; they are not a precise GPU profiler.",
+    "next_decision": "Inspect the fixed cohort before selecting a broader SWE or budget-awareness training change; preserve the original failure and current adapter."
   },
   "trainable_parameters": 122429440,
   "runtime_modules": "CCconfig:gentoo/2023:gcccore/.12.3:gcc/12.3:hwloc/2.9.1:ucx/1.14.1:libfabric/1.18.0:pmix/4.2.4:ucc/1.2.0:openmpi/4.1.5:flexiblas/3.3.1:aocl-blas/5.1:aocl-lapack/5.1:StdEnv/2023:python/3.12.4:cudacore/.12.9.1:gdrcopy/2.3.1:ucx-cuda/1.14.1:nccl/2.27.7:ucc-cuda/1.2.0:cuda/12.9:arrow/25.0.0:apptainer/1.4.5",
