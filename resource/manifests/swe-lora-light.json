@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "recorded_at": "2026-10-11T00:05:55.976380+00:00",
+  "recorded_at": "2026-10-11T00:07:25.562499+00:00",
   "run_root": "runs/20261010-swe-lora-protocol-r2",
   "training_revision": "1fcc891bd7a44adce6b7cc2b08f488b3dd933a7e",
   "validation_revision": "afa0397be57554642e6be6a305a901d067dd625c",
@@ -386,6 +386,7 @@
       }
     }
   ],
+  "release_gate_passed": false,
   "evidence": [
     {
       "path": "runs/20261010-swe-lora-protocol-r2/training-evidence.json",
@@ -689,5 +690,14 @@
   ],
   "release_smoke": null,
   "competition_upload": null,
-  "status": "Training completed; autonomous acceptance and fixed-cohort evaluation in progress"
+  "fixed_evaluation_complete": false,
+  "failed_acceptance": {
+    "task_id": "fastapi_14455",
+    "error": "Agent exceeded session timeout (4 min)",
+    "llm_calls": 40,
+    "patch_characters": 3343,
+    "prediction_sha256": "ef801d2abecf32ba802ddba5c631cd0128596051cbdd8f5345ad3c20c6f9f973",
+    "meaning": "Agent was still locating and revising code; no submit call. The original release gate remains failed."
+  },
+  "status": "Training, recovery and serving completed; release acceptance failed; fixed-cohort diagnostic pending"
 }
