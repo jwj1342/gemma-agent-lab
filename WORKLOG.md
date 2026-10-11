@@ -8,21 +8,27 @@ This file is the persistent handoff record for work performed in this repository
 
 Current position at a glance:
 
-- The serving probe **is running on Kaggle now** (`junzhejiao/gemma4-lora-serving-probe`, version 3,
-  pushed 13:17 Asia/Shanghai). Versions 1 and 2 failed on environment defects that are now fixed; no
-  verdict exists yet, and `probe-result.json` appears only when the session ends.
-- GPU quota is therefore no longer pristine: at 14:27 it was **94,315.809 s of 108,000 s remaining**
-  (used 13,684.191 s, refresh 2026-10-17). Recheck before any new launch.
-- Two commits are on `feature/lora-serving-probe-run`: `7e4b53f` (the probe generator) and `30e413f`
-  (the Kaggle fixes). The earlier pause point was `0e49957` on `feature/localization-v1-skill`.
+- **The serving check is answered, and the answer is positive.** The competition stack applies LoRA:
+  two base runs differ by 0.0 in logprobs, and mounting the probe adapter moves them by up to 1.187468
+  at 35/35 positions. The aliasing wipe is not present on this wheelhouse. Evidence and scope limits:
+  `docs/experiments/2026-10-11-lora-serving-risk.md`.
+- Still open before spending training budget: the **rank-32 all-layer** configuration we actually plan
+  to train has not been probed (the positive result is rank 8 on two projections of one layer), and the
+  training platform is undecided.
+- GPU quota is no longer pristine: at 16:37 it was **78,734 s of 108,000 s remaining** (used 29,265.7 s,
+  refresh 2026-10-17); recheck before any new launch.
+- Commits are on `feature/lora-serving-probe-run`: `7e4b53f`, `30e413f`, `0a09ba1`, `dd88e95`, `c2dd97e`.
+  The earlier pause point was `0e49957` on `feature/localization-v1-skill`.
 - Image facts measured on the competition `dockerImage` (do not re-derive them): Python 3.12.13;
   torch 2.10.0+cu128, transformers 5.0.0, peft 0.19.1, datasets 5.0.0, accelerate 1.13.0,
   safetensors 0.7.0, pandas 2.3.3, pyarrow 24.0.0 present; **trl, bitsandbytes and vLLM absent**; the
-  wheelhouse mount adds transformers 5.13.1, bitsandbytes 0.46.1 and the patched vLLM 0.19.1 only.
-  The CPU image is Python 3.13, so never infer the interpreter from a CPU notebook.
+  wheelhouse mount adds transformers 5.13.1, bitsandbytes 0.46.1 and the patched vLLM 0.19.1, and it
+  installs in 53 s. The CPU image is Python 3.13, so never infer the interpreter from a CPU notebook.
 - Dataset upload from this machine is **blocked with evidence** (two attempts stalled: 40 min via CLI,
   20 min at 0.9 s CPU via SDK, `dataset_list(mine=True)` empty both times) while read paths answer
-  instantly. Kaggle training needs the wheels to reach Kaggle another way; Trillium needs no dataset.
+  instantly. Kaggle training needs the wheels uploaded through the web UI; Trillium needs no dataset.
+- Note for the next probe run: a failed notebook leaves its worker holding four GPUs, and `kaggle
+  kernels logs` returns nothing until the session ends, so budget for that.
 
 ### Where the LoRA SFT objective stands
 
@@ -47,18 +53,14 @@ Ready and validated offline:
 
 ### The three things that are blocked, in priority order
 
-1. **The serving check (running, result pending).** LoRA on this competition's compressed-tensors
-   W4A16 base has silently failed before (discussion 743508) and the same symptom is reported upstream
-   for int4 bases. Kernel version 3 compares greedy vLLM logprobs with and without the loud probe
-   adapter on the competition base. Unchanged logprobs means LoRA is inert and the whole line should be
-   retired before spending training budget. Evidence, the four verdicts, and the execution log:
-   `docs/experiments/2026-10-11-lora-serving-risk.md`. Next step is to read
-   `probe-result.json` (`kaggle kernels output junzhejiao/gemma4-lora-serving-probe -p <dir>`).
-2. **The platform decision, which gates training.** Kaggle needs the wheel set published as a dataset
-   first, and uploading it from this machine currently stalls (see above), so either publish it
-   manually through the Kaggle web UI or train on Trillium H100, which takes the 62.6 GB unquantized
-   QAT base and needs no dataset. The image already provides most of the stack, which shrinks the
-   dataset question to trl, peft and the pinned transformers.
+1. **The rank-32 coverage question (narrower than before, and cheap).** LoRA is now measured as applied,
+   but only for rank 8 on `q_proj`/`o_proj` of one layer. Our experiment is rank 32 on those two
+   projections of every layer, and upstream issue #50059 warns specifically about wide, higher-rank
+   adapters on compressed-tensors int4 bases. Re-run the same notebook with a runtime-generated rank-32
+   probe (an embedded rank-32 adapter would blow the 1 MB notebook limit) before trusting the plan.
+2. **The platform decision, which gates training.** Kaggle needs the wheel set uploaded as a dataset
+   through the web UI, because CLI/SDK uploads from this machine stall (see above); Trillium H100 needs
+   no dataset and can take the 62.6 GB unquantized QAT base.
 3. **The measurement instrument, which gates interpretability.** Only 4 control-valid tasks exist, all
    from one repository. A 10-point gain needs 78 tasks at 80% power, so even a successful adapter
    could not be read as better or worse today. Growth is CPU-side work: the control yield is 4 of 8
@@ -166,6 +168,19 @@ $env:HF_HOME     = 'E:\Desktop\CodingAI\artifacts\hf-cache'   # datasets refuses
 
 ## Work history
 
+### 2026-10-11 17:55 (Asia/Shanghai) - MEASURED: the competition stack does apply LoRA, with a reproducibility control
+
+- Objective: finish the serving check that the whole adapter line depends on, and make its answer trustworthy rather than merely positive.
+- Result, measured on `junzhejiao/gemma4-lora-serving-probe` version 7 (private, L4x4, competition model `gemma-4-31b-it-qat-w4a16-ct` v2, wheelhouse vLLM 0.19.1 installed from the mount, `quantization=compressed-tensors`, `tensor_parallel_size=4`, `max_model_len=4096`, `gpu_memory_utilization=0.90`, `enable_lora=True`, `max_loras=1`, `max_lora_rank=128`, `enforce_eager=True`, greedy with `logprobs=3`): **LoRA is applied on this stack.** Two independent base generations produced **0.0 maximum absolute logprob delta** (the engine is reproducible), while mounting the rank-8 layer-0 probe adapter produced a **1.187468 maximum absolute delta at 35 of 35 positions**. Greedy text and token ids were identical in all three generations.
+- Why the control was necessary, and it changed the conclusion: version 6 already showed "all 35 positions differ", but with a single base run that could equally have been run-to-run nondeterminism in the engine. The repeat-base control is what turns the observation into evidence, and it is now part of the notebook rather than a note in the report.
+- What this does and does not license, recorded so the result is not over-read: it rules out the aliasing wipe of discussion 743508 on this wheelhouse and proves the adapter is honoured on a compressed-tensors W4A16 Gemma 4. It does **not** validate our planned configuration (rank 32 across every layer, whereas the probe is rank 8 on two projections of one layer -- exactly the corner upstream issue #50059 warns about), it says nothing about a *trained* adapter's effect on resolution, and it used the model path directly rather than `adk_submission.VllmServer`, whose flags and adapter enumeration differ.
+- Measurement caveat found the same way: the engine's own `Successfully loaded LoRA weights` / `No LoRA weights found` lines were **not** captured (`lora_loaded_modules: 0`), because vLLM loads adapters inside a spawned `EngineCore` process that does not inherit the notebook's logging handler. Those lines must not be used as evidence from a notebook; the logprob deltas carry the result.
+- Cost and timing, from notebook output rather than estimate: staging 8 s, wheelhouse inventory 16 s, installing 41 wheels / 880,842,253 bytes 53 s, `import vllm` 80 s, engine init 57 s, each 35-token greedy generation 4-14 s. A correct probe costs about **eight minutes of L4x4 wall time**. GPU quota after the run should be rechecked before the next launch.
+- Defects found and fixed this round, all mine and all caught by running rather than reading: doubled braces in the generated probe cell (two separate sites, `{{}}` in a non-f-string cell and a dict comprehension written as a set literal) caused `TypeError: unhashable type: 'dict'`; and the comparison logic had no noise floor. Three offline checks now stand guard over that class: `artifacts/tmp/check_set_literals.py` flags unhashable set literals in any generated notebook (verified against a synthetic defect and against the current generation), `artifacts/tmp/check_stage_helper.py` executes the generated `stage()` helper and round-trips `progress.json`, and `artifacts/tmp/check_comparison_logic.py` runs the generated `top_map`/`divergence` functions on fixtures (identical generations give 0.0, a 0.8 shift is detected, unshared positions are ignored).
+- Honest note on the session's efficiency: the version-3 session and the two record-hash failures cost roughly 27 % of the GPU allocation for no result, almost all of it because a failed notebook leaves its worker holding four GPUs and because the CLI shows nothing until a session ends. The eight-minute figure above is what the same probe costs now that it is correct.
+- Changed files: `scripts/prepare_lora_probe_notebook.py` (repeat-base control, attributable-verdict logic, dict() instead of set-literal comprehensions), `docs/experiments/2026-10-11-lora-serving-risk.md` (result section, execution log with all five attempts), `resource/manifests/eval-wheelhouse-2026-10-09.json` (`observed_drift`), `WORKLOG.md`. Commits `dd88e95`, `c2dd97e` on `feature/lora-serving-probe-run`.
+- Remaining follow-up, in order: (1) probe the **rank-32 all-layer** configuration we actually intend to train, since the current result covers rank 8 on two projections of one layer; (2) decide the platform for training (Kaggle needs the wheel set uploaded through the web UI because CLI uploads stall here; Trillium needs no dataset); (3) the measurement instrument remains the gate on interpretability -- 4 control-valid tasks, 78 needed for a 10-point gain at 80 % power.
+
 ### 2026-10-11 14:30 (Asia/Shanghai) - Kaggle execution of the serving probe: two environment defects found and fixed, image dependency map measured
 
 - Objective: with the user's approval, actually run the serving probe pushed at 13:11 rather than leaving it offline-verified, and keep the training route unblocked while it runs.
@@ -173,6 +188,10 @@ $env:HF_HOME     = 'E:\Desktop\CodingAI\artifacts\hf-cache'   # datasets refuses
 - Defect 1, found only by running it: **the official/starter GPU image does not ship vLLM at all** (`ModuleNotFoundError: No module named 'vllm'`). The patched 0.19.1 is not on PyPI and exists only inside the wheelhouse mount, so any notebook that needs vLLM must install that mount offline first. This also means the harness never imports out of the image; it comes from `metric/gemma-4-developer-agent-wheelhouse`.
 - Defect 2, also only visible by running it: my install cell demanded all 41 reviewed wheels, and the mount is missing exactly `swegemma-0.2.10-py3-none-any.whl` -- the wheel the organizers deleted when they republished the dataset in place on 2026-10-09. The cell now requires only vLLM and its runtime dependencies (`transformers`, `compressed_tensors`, `xgrammar`, `flashinfer_*`, `bitsandbytes`, `tokenizers`, `safetensors`) and records missing non-critical wheels as drift in `install-result.json`, which is the honest way to treat a dataset the organizers mutate under us.
 - Evidence that the probe logic itself works on Kaggle: version 1 and 2 both staged the embedded adapter and reported `Input mounts: {'/kaggle/input/models/google/gemma-4/other/gemma-4-31b-it-qat-w4a16-ct/2': True, '/kaggle/input': True}`. The adapter files inside the Kaggle session are **byte-identical to the local probe** (`adapter_model.safetensors` `b43e139956c95f2a…`, `adapter_config.json` `6a3cb6d1df48b8fb…`), which verifies the gzip+base85 embedding path end to end on the real run image, not just locally.
+- Defect 3, found by waiting rather than by reading: **kernel version 3 ran for over 3.5 hours without publishing a single log line.** Kaggle emits a cell's output only when that cell finishes, so a slow or stalled cell is invisible from the CLI -- `kernels logs` and `kernels files` both returned nothing for the whole run. Version 4 (pushed 16:40; queued behind version 3 under the two-session GPU limit) therefore writes `progress.json` on disk after every phase -- inventory, install-start, install-done, import-check, engine-start, engine-ready, base-generated, adapter-generated -- with elapsed seconds, so even a stall leaves retrievable evidence. It also adds `enforce_eager=True` (graph capture is the slowest part of a 31B vLLM start-up and irrelevant to a logprob comparison) and pins the offline install to `--no-build-isolation --only-binary=:all: --retries 0 --timeout 15`, because plain `--no-index --no-deps` can still try to resolve or build and then wait on a network that does not exist.
+- The wait paid off with real numbers, and they clear the install of suspicion. Kernel version 3's log, retrieved only after the session ended, shows: `[inventory]` at 25 s (41 wheels mounted, `swegemma-0.2.10` absent, `adk_eval_core`/`adk_submission` hashes changed -- the republish), `[install-start]` 880,842,253 bytes at 25 s, `[install-done] returncode 0` at **78 s**, `[import-check] {"vllm": "0.19.1"}` at **109 s**, and `vLLM 0.19.1 | GPUs 4 | ['NVIDIA L4, 23034 MiB' x4]` at 147 s. So the offline wheelhouse install takes **53 seconds**, not hours, and the patched vLLM does import on this image.
+- Defect 4, mine, found by exactly that log: the probe cell died at 149 s with `TypeError: unhashable type: 'dict'` inside `stage()`. The helper had been written with doubled braces copied from the neighbouring f-string cell, so `json.loads(...) if ... else {{}}` was emitted literally and `record[name] = ...` was applied to a `set`. The run therefore never reached the engine at all -- the 3.5 hours were spent after the crash, waiting for the session to be reclaimed, not on vLLM. Fixed to a plain `{}` in a non-f-string cell, and now verified by executing the helper **out of the generated notebook** (`artifacts/tmp/check_stage_helper.py`): `progress.json` round-trips two phases correctly. Version 5 was pushed at 17:44 with this fix.
+- Honest correction to the earlier guess in this entry: vLLM start-up was never proven to be the slow part. The version-3 session consumed its ~13,900 GPU-seconds mostly *after* its notebook had already failed, because nothing stopped the worker; the lesson recorded is to read a finished session's log before blaming the model.
 - Image dependency map, measured on the same `dockerImage` as the official notebook (`gcr.io/kaggle-private-byod/python@sha256:37c64f7d…`) with a CPU-only kernel (`junzhejiao/gemma4-training-deps-probe`, no GPU quota): Python 3.12.13; present are torch 2.10.0+cu128, transformers 5.0.0, peft 0.19.1, datasets 5.0.0, accelerate 1.13.0, safetensors 0.7.0, pandas 2.3.3, pyarrow 24.0.0, multiprocess 0.70.16, dill 0.4.1, xxhash; **absent are trl, bitsandbytes and vllm**; the wheelhouse adds transformers 5.13.1 and bitsandbytes 0.46.1 but nothing else training-related. Consequence: the offline SFT wheel set is still required, so publishing it as a dataset remains the one manual step gating Kaggle training.
 - Interpreter correction, because two images disagree and the earlier note named only one: the competition wheelhouse GPU image is **CPython 3.12** (`/usr/local/lib/python3.12/dist-packages`, Python 3.12.13), while the CPU control-sweep image is 3.13. The cp312 training wheel set is therefore correct for a GPU notebook on the competition image. `scripts/record_training_wheels.py` now derives `interpreter_abi`/`binary_wheel_abis` from the wheel filenames and **refuses to record** a set whose cp3xx tags do not match `--python-version`; verified both ways (cp312 wheels recorded as 3.12; the same directory claimed as 3.13 exits 1 naming pandas, pyarrow and xxhash). `resource/manifests/training-wheels-sft-v1.json` was regenerated with those fields and all 10 hashes re-verified (10 ok, 0 mismatch, 0 missing).
 - Dataset publication attempted again (a third try) and it is now **blocked from this environment, with evidence**: `kaggle datasets create -p artifacts/dataset-training-wheels --dir-mode zip` hung for 40 minutes with no progress and no dataset in `kaggle datasets list --mine`, and a second attempt directly through `KaggleApi.dataset_create_new` ran 20 minutes at 0.9 s CPU time, again leaving `dataset_list(mine=True) == []`. The read paths work instantly (`api.authenticate()` then an empty list), so the failure is specifically the upload, not authentication or permissions; earlier rounds saw 403 instead. Both attempts were stopped rather than left burning. Consequence: Kaggle SFT training cannot start until the wheels reach Kaggle by some other route (manual web upload, or Trillium), and the immediate blocker for this line is therefore the platform, not the code.

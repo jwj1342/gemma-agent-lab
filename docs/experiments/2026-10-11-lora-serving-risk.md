@@ -1,7 +1,8 @@
 # Serving-path risk: does LoRA actually apply to the W4A16 base?
 
-**Status: external evidence gathered, local determination still open.** Prepared 2026-10-11. Nothing
-here was measured on the competition stack; every claim is labelled with its source kind.
+**Status: measured on the competition stack on 2026-10-11 -- LoRA is applied (see the result section).
+The rank-32 plan is still unvalidated.** Nothing here is inferred; the positive result below carries
+its own reproducibility control, and every negative or inconclusive statement is labelled as such.
 
 ## Why this is checked before training
 
@@ -18,6 +19,43 @@ this repository's own collected material:
 
 A third-party report on the same pattern exists outside the competition, which is why this is treated
 as a property of the stack rather than a one-off competition bug.
+
+## Result: LoRA is applied on the competition stack (measured 2026-10-11, kernel version 7)
+
+Run: `junzhejiao/gemma4-lora-serving-probe` version 7, private, L4x4, competition model
+`gemma-4-31b-it-qat-w4a16-ct` v2, wheelhouse vLLM 0.19.1 installed from the mount, `torch 2.10.0+cu128`,
+`quantization=compressed-tensors`, `tensor_parallel_size=4`, `max_model_len=4096`,
+`gpu_memory_utilization=0.90`, `enable_lora=True`, `max_loras=1`, `max_lora_rank=128`,
+`enforce_eager=True`, `temperature=0`, `logprobs=3`.
+
+| Measurement | Value |
+| --- | --- |
+| Base generated twice, logprob deltas | **0.0 maximum absolute delta** across 35 positions -- the engine is reproducible |
+| Base versus adapter, logprob deltas | **1.187468 maximum absolute delta**, changed at **35 of 35** positions |
+| Greedy text and token ids | identical in all three generations (`2, 3, 5, 7, 11, 13, 17, 19, 23, 29`, 35 tokens) |
+| Verdict emitted by the probe | `applied: the engine reproduces its own logprobs exactly, and mounting the adapter moves them` |
+| Adapter | rank 8, `q_proj` + `o_proj` at layer 0, random `lora_A` (std 0.02) and `lora_B` (std 1.0), SHA256 `b43e139956c95f2a…` |
+
+What this settles: the aliasing wipe of [discussion 743508](../../resource/discussions/743508.txt) does
+**not** reproduce on this wheelhouse, the adapter is honoured on a compressed-tensors W4A16 Gemma 4, and
+a loud adapter moves the served distribution even when it does not change greedy text -- which is why an
+unchanged *text* is not evidence of an inert adapter.
+
+What it does not settle, stated so it cannot be over-read:
+
+- **The planned adapter configuration is wider than the probe.** The probe is rank 8 on two projections
+  of one layer; our experiment is rank 32 on `q_proj` and `o_proj` of every layer. Upstream
+  [#50059](https://github.com/vllm-project/vllm/issues/50059) is precisely about a rank-32, wide-coverage
+  adapter degrading on a compressed-tensors int4 base, so the rank-32 case still needs its own probe.
+- **No trained adapter has been served.** This shows the mechanism works with random weights; it says
+  nothing about whether trained weights help resolution, which is the paired-experiment question.
+- **The probe used the model path directly, not `adk_submission.VllmServer`.** The harness's own launch
+  path differs in flags (`max_model_len` 32768) and in how it enumerates adapters, so a submission can
+  still fail where this notebook succeeded.
+- The engine's own `Successfully loaded LoRA weights` / `No LoRA weights found` lines were **not**
+  captured: vLLM loads adapters inside a spawned `EngineCore` process, so the in-notebook logging
+  handler saw none of them (`lora_loaded_modules: 0`). Those log lines cannot be used as evidence from
+  a notebook; the logprob comparison is what carries the result.
 
 ## External evidence (untrusted sources, read as data)
 
@@ -117,6 +155,14 @@ because they apply to every future GPU notebook on this competition image, not j
 | --- | --- | --- |
 | 1 | ERROR after ~30 s | `ModuleNotFoundError: No module named 'vllm'`. The starter and official GPU images ship vLLM **nowhere**; the patched 0.19.1 exists only inside the wheelhouse mount, so any notebook that needs vLLM must install that mount offline first |
 | 2 | ERROR after ~10 s | `Wheelhouse mount is incomplete; missing 1: ['swegemma-0.2.10-py3-none-any.whl']` -- the organizers' in-place republish of 2026-10-09 removed exactly that wheel |
+| 3 | ERROR, session lingered 3.5 h | Two of my own defects in the progress helper (`TypeError: unhashable type: 'dict'` from doubled braces), which killed the notebook 149 s in; the worker then kept holding the GPUs until it was reclaimed |
+| 6 | COMPLETE in 8 min | First full measurement: identical greedy text, different top logprobs at all 35 positions -- but without a repeat-base control that is not yet evidence |
+| 7 | COMPLETE in 8 min | Same, plus the repeat-base control: base noise 0.0, base-versus-adapter delta 1.187468. This is the measured result above |
+
+The useful timing numbers, all from notebook output rather than estimate: staging the embedded adapter
+8 s, wheelhouse inventory 16 s, installing 41 wheels / 880,842,253 bytes 53 s, `import vllm` 80 s,
+engine initialisation 57 s after start, and each 35-token greedy generation 4-14 s. A full probe
+therefore costs about eight minutes of L4x4 wall time once the notebook is correct.
 
 Version 3 therefore installs the wheelhouse the way the reviewed runtime already does (drop the
 `cutlass*.pth` shims, normalise the directory names from wheel METADATA, `pip install --no-index
