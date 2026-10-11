@@ -107,7 +107,7 @@ ADAPTER_NAME = 'main_lora'
 MODEL_PATH = Path({model_path!r})
 PROBE = {{'prompt': {PROMPT!r}, 'temperature': 0, 'max_tokens': 40, 'logprobs': 3,
           'tensor_parallel_size': 4, 'gpu_memory_utilization': 0.90, 'max_model_len': 4096,
-          'enable_lora': True, 'max_loras': 1, 'max_lora_rank': 128}}
+          'enable_lora': True, 'max_loras': 1, 'max_lora_rank': 128, 'enforce_eager': True}}
 
 WORK = Path('/kaggle/working/lora-serving-probe') if Path('/kaggle/working').is_dir() \\
     else Path.cwd() / 'lora-serving-probe'
@@ -152,7 +152,7 @@ def build_install(manifest: dict) -> str:
     # missing non-critical wheel is recorded as drift instead of aborting the run.
     required = ['vllm', 'transformers', 'compressed_tensors', 'xgrammar', 'flashinfer_python',
                 'flashinfer_cubin', 'bitsandbytes', 'tokenizers', 'safetensors']
-    return f'''import glob, json, subprocess, sys, zipfile
+    return f'''import glob, json, subprocess, sys, time, zipfile
 from pathlib import Path
 
 # The starter and official images do not ship vLLM: a first attempt to run this probe failed at
@@ -163,6 +163,19 @@ WHEELHOUSE_HASHES = {hashes!r}
 REQUIRED_PACKAGES = {required!r}
 WORK = Path('/kaggle/working/lora-serving-probe') if Path('/kaggle/working').is_dir() \\
     else Path.cwd() / 'lora-serving-probe'
+PROGRESS = WORK / 'progress.json'
+STARTED = time.time()
+
+
+def stage(name, **fields):
+    """Record each phase on disk: Kaggle only publishes a cell's output when it finishes, so a stalled
+    cell leaves no log at all. This file is the only way to see where a long run actually stopped."""
+    record = json.loads(PROGRESS.read_text(encoding='utf-8')) if PROGRESS.is_file() else {{}}
+    record[name] = dict(fields, at_seconds=round(time.time() - STARTED, 1))
+    PROGRESS.write_text(json.dumps(record, indent=2) + '\\n', encoding='utf-8')
+    print('[' + name + ']', json.dumps(fields), flush=True)
+
+
 candidates = [Path('/kaggle/input/datasets/metric/gemma-4-developer-agent-wheelhouse'),
               Path('/kaggle/input/gemma-4-developer-agent-wheelhouse'),
               Path('/kaggle/input/gemma-4-developer-agent-wheelhouse/gemma-4-developer-agent-wheelhouse')]
@@ -177,9 +190,13 @@ mismatched = [name for name, expected in WHEELHOUSE_HASHES.items()
 absent_required = [package for package in REQUIRED_PACKAGES
                    if not any(name.startswith(package + '-') for name in mounted)]
 assert not absent_required, f'Wheelhouse is missing required packages: {{absent_required}}'
+stage('inventory', wheelhouse=str(WHEELS), mounted=len(mounted), absent=missing,
+      hash_mismatches=mismatched, absent_required=absent_required)
 
 # Mirror the reviewed runtime path: drop the cutlass .pth shims, then install every mounted wheel
-# offline with --no-deps so nothing reaches for the network.
+# offline with --no-deps so nothing reaches for the network. --no-build-isolation and
+# --only-binary=:all: keep pip from resolving or building anything, which is what an offline session
+# cannot afford to wait on.
 for pattern in ('/usr/local/lib/python*/dist-packages/*cutlass*.pth',
                 '/usr/local/lib/python*/site-packages/*cutlass*.pth'):
     for shim in glob.glob(pattern):
@@ -201,14 +218,23 @@ for name in sorted(mounted):
     if not target.exists():
         target.symlink_to(source)
     packages.append(str(target))
+stage('install-start', packages=len(packages),
+      total_bytes=sum(mounted[name].stat().st_size for name in mounted if 'cutlass' not in name))
 with (WORK / 'installation.log').open('w') as log:
     completed = subprocess.run([sys.executable, '-m', 'pip', 'install', '--no-index', '--no-deps',
-                                '--force-reinstall', *packages], stdout=log, stderr=subprocess.STDOUT)
+                                '--no-build-isolation', '--only-binary=:all:', '--retries', '0',
+                                '--timeout', '15', '--force-reinstall', *packages],
+                               stdout=log, stderr=subprocess.STDOUT)
+stage('install-done', returncode=completed.returncode,
+      log_tail=(WORK / 'installation.log').read_text(errors='replace')[-600:])
+assert completed.returncode == 0, 'Wheelhouse installation failed; see progress.json and installation.log'
 
 # Prove the import in a fresh interpreter so an installed-but-unimportable vLLM cannot pass silently.
 probe = subprocess.run(
     [sys.executable, '-c', 'import json, vllm; print(json.dumps({{"vllm": vllm.__version__}}))'],
     capture_output=True, text=True)
+stage('import-check', returncode=probe.returncode, stdout=probe.stdout.strip()[-300:],
+      stderr=probe.stderr.strip()[-800:])
 (WORK / 'install-result.json').write_text(json.dumps({{
     'wheelhouse': str(WHEELS), 'mounted_wheels': len(mounted),
     'reviewed_wheels': len(WHEELHOUSE_HASHES),
@@ -223,13 +249,12 @@ probe = subprocess.run(
 print('Wheelhouse:', WHEELS, '| mounted', len(mounted), '| absent', missing,
       '| hash mismatches', mismatched, flush=True)
 print('vLLM import:', probe.returncode, probe.stdout.strip()[-200:], flush=True)
-assert completed.returncode == 0, 'Wheelhouse installation failed; see install-result.json'
 assert probe.returncode == 0, 'vLLM is not importable after installing the wheelhouse; see install-result.json'
 '''
 
 
 def build_probe() -> str:
-    return '''import json, logging, os
+    return '''import json, logging, os, time
 from pathlib import Path
 
 # This cell re-derives everything it needs from the files the staging cell wrote, so the two cells
@@ -246,6 +271,16 @@ ADAPTER_WEIGHTS_SHA256 = PROBE['adapter_weights_sha256']
 ADAPTER_CONFIG = PROBE['adapter_config']
 MODEL_PATH = Path(PROBE['model_path'])
 RESULT = WORK / 'probe-result.json'
+PROGRESS = WORK / 'probe-progress.json'
+STARTED = time.time()
+
+
+def stage(name, **fields):
+    """Phases go to disk because Kaggle publishes a cell's output only when it finishes."""
+    record = json.loads(PROGRESS.read_text(encoding='utf-8')) if PROGRESS.is_file() else {{}}
+    record[name] = dict(fields, at_seconds=round(time.time() - STARTED, 1))
+    PROGRESS.write_text(json.dumps(record, indent=2) + '\\n', encoding='utf-8')
+    print('[' + name + ']', json.dumps(fields), flush=True)
 
 
 def finish(status, **fields):
@@ -272,6 +307,8 @@ visible = torch.cuda.device_count()
 print('vLLM', vllm.__version__, '| GPUs', visible, '|', hardware, flush=True)
 assert visible >= PROBE['tensor_parallel_size'], \\
     f"probe needs {PROBE['tensor_parallel_size']} GPUs but {visible} are visible"
+stage('environment', vllm=vllm.__version__, torch=torch.__version__, visible_gpus=visible,
+      hardware=hardware)
 
 # Capture the engine's own LoRA loader messages: the aliasing defect appears as successful loads
 # followed by silent skips, and that distinction matters if the logprobs come back unchanged.
@@ -284,10 +321,16 @@ handler.setLevel(logging.DEBUG)
 root_logger.addHandler(handler)
 
 # Construction mirrors the harness defaults (adk_submission/server.py) rather than inventing flags.
+# `enforce_eager` skips CUDA-graph capture: the probe measures whether the adapter changes the logits,
+# not throughput, and graph capture on a 31B model is the slowest part of a vLLM start-up.
+stage('engine-start', config={{key: PROBE[key] for key in
+                              ('tensor_parallel_size', 'max_model_len', 'gpu_memory_utilization',
+                               'enable_lora', 'max_loras', 'max_lora_rank', 'enforce_eager')}})
 llm = LLM(model=str(MODEL_PATH), tensor_parallel_size=PROBE['tensor_parallel_size'],
           max_model_len=PROBE['max_model_len'], gpu_memory_utilization=PROBE['gpu_memory_utilization'],
           enable_lora=PROBE['enable_lora'], max_loras=PROBE['max_loras'],
-          max_lora_rank=PROBE['max_lora_rank'])
+          max_lora_rank=PROBE['max_lora_rank'], enforce_eager=PROBE['enforce_eager'])
+stage('engine-ready')
 sampling = SamplingParams(temperature=PROBE['temperature'], max_tokens=PROBE['max_tokens'],
                           logprobs=PROBE['logprobs'])
 request = LoRARequest(ADAPTER_NAME, 1, str(ADAPTER))
@@ -306,7 +349,9 @@ def run(lora_request=None):
 
 
 base = run()
+stage('base-generated', tokens=len(base['token_ids']), text=base['text'][:80])
 adapter = run(request)
+stage('adapter-generated', tokens=len(adapter['token_ids']), text=adapter['text'][:80])
 root_logger.removeHandler(handler)
 handler.close()
 for previous in handlers_before:
