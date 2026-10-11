@@ -34,6 +34,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 OFFICIAL_METADATA = ROOT / 'resource/notebooks/official/kernel-metadata.json'
 WHEELHOUSE_MANIFEST = ROOT / 'resource/manifests/eval-wheelhouse-2026-10-09.json'
+RUNTIME_ADAPTER_TEMPLATE = ROOT / 'resource/lora_probe/runtime_adapter.py'
 BASE_MODEL_HANDLE = 'google/gemma-4/other/gemma-4-31b-it-qat-w4a16-ct/2'
 MODEL_SOURCE = 'google/gemma-4/Other/gemma-4-31b-it-qat-w4a16-ct/2'
 MODEL_PATH = '/kaggle/input/models/google/gemma-4/other/gemma-4-31b-it-qat-w4a16-ct/2'
@@ -253,9 +254,36 @@ assert probe.returncode == 0, 'vLLM is not importable after installing the wheel
 '''
 
 
-def build_probe() -> str:
+def build_runtime_adapter(rank: int, targets: list[str]) -> str:
+    """Render the runtime wide-probe module from its template.
+
+    An all-layer rank-32 adapter is hundreds of megabytes and cannot be embedded in a 1 MB notebook, so
+    it is generated inside the session with PEFT -- the same library that will export a trained adapter
+    -- and its tensor keys and shapes are recorded. The template lives in
+    `resource/lora_probe/runtime_adapter.py` so it can be compiled and tested on its own; the seed and
+    the A/B scales match the verified embedded probe, because a weaker runtime adapter would look like
+    an inert serving path.
+    """
+    template = RUNTIME_ADAPTER_TEMPLATE.read_text(encoding='utf-8')
+    substitutions = {
+        '__RANK__': repr(rank), '__TARGETS__': repr(list(targets)), '__SEED__': '1234',
+        '__A_STD__': '0.02', '__B_STD__': '1.0',
+        # Recorded in resource/manifests/sample-adapters.json: the only verified shapes for this base.
+        '__EXPECTED_Q__': '(5376, 8192)', '__EXPECTED_O__': '(8192, 5376)',
+    }
+    for token, value in substitutions.items():
+        if token not in template:
+            raise SystemExit('runtime adapter template is missing ' + token)
+        template = template.replace(token, value)
+    compile(template, 'runtime_adapter_template', 'exec')
+    return template
+
+
+def build_probe(runtime_adapter_source: str) -> str:
     return '''import json, logging, os, time
 from pathlib import Path
+
+RUNTIME_ADAPTER_SOURCE = ''' + repr(runtime_adapter_source) + '''
 
 # This cell re-derives everything it needs from the files the staging cell wrote, so the two cells
 # stay independent rather than relying on shared notebook globals.
@@ -284,7 +312,7 @@ def stage(name, **fields):
     print('[' + name + ']', json.dumps(fields), flush=True)
 
 
-def finish(status, **fields):
+def emit(status, **fields):
     payload = dict(status=status, **fields)
     RESULT.write_text(json.dumps(payload, indent=2) + '\\n', encoding='utf-8')
     print(json.dumps(payload, indent=2), flush=True)
@@ -358,6 +386,26 @@ base_repeat = run()
 stage('base-repeat-generated', tokens=len(base_repeat['token_ids']), text=base_repeat['text'][:80])
 adapter = run(request)
 stage('adapter-generated', tokens=len(adapter['token_ids']), text=adapter['text'][:80])
+# The wide probe: rank 32 on every layer, which is the configuration we actually intend to train and
+# the corner upstream issue #50059 warns about. It cannot be embedded (hundreds of megabytes), so it is
+# generated here with PEFT -- the same library that will export the trained adapter.
+runtime_request = None
+runtime = None
+try:
+    with (WORK / 'runtime_adapter.py').open('w', encoding='utf-8') as stream:
+        stream.write(RUNTIME_ADAPTER_SOURCE)
+    namespace = {'__name__': 'runtime_adapter'}
+    exec(compile(RUNTIME_ADAPTER_SOURCE, 'runtime_adapter', 'exec'), namespace)
+    runtime_path = WORK / 'runtime-adapter'
+    runtime_info = (namespace['build'](runtime_path, MODEL_PATH, stage)
+                    if namespace.get('build') else {})
+    if runtime_info:
+        stage('runtime-adapter', **runtime_info)
+    runtime_request = LoRARequest('runtime_lora', 2, str(runtime_path))
+    runtime = run(runtime_request)
+    stage('runtime-adapter-generated', tokens=len(runtime['token_ids']), text=runtime['text'][:80])
+except Exception as error:
+    stage('runtime-adapter-failed', error=repr(error)[:400])
 root_logger.removeHandler(handler)
 handler.close()
 for previous in handlers_before:
@@ -368,12 +416,6 @@ loaded = [line for line in log_lines if 'Successfully loaded LoRA weights for mo
 skipped = [line for line in log_lines if 'No LoRA weights found for module' in line]
 
 shared = min(len(base['top_logprobs']), len(adapter['top_logprobs']))
-changed_positions = [position for position in range(shared)
-                     if base['top_logprobs'][position]['top'] != adapter['top_logprobs'][position]['top']]
-token_ids_changed = base['token_ids'] != adapter['token_ids']
-text_changed = base['text'] != adapter['text']
-where = next((position for position in range(shared) if base['token_ids'][position]
-              != adapter['token_ids'][position]), None)
 
 
 def top_map(entries):
@@ -392,53 +434,65 @@ def divergence(left, right):
     return deltas
 
 
-noise = divergence(base, base_repeat)
-signal = divergence(base, adapter)
-noise_max = max(noise) if noise else 0.0
-signal_max = max(signal) if signal else 0.0
-# The adapter is only credited when its effect exceeds what the engine produces on its own.
-reproducible = bool(noise) and noise_max <= 1e-6
-attributable = bool(signal) and signal_max > max(noise_max, 1e-6)
-changed_positions = changed_positions if attributable else []
+def compare(candidate):
+    """Score one adapter against the base, with the repeat-base run as the noise floor."""
+    signal = divergence(base, candidate)
+    changed = [position for position in range(shared)
+               if base['top_logprobs'][position]['top'] != candidate['top_logprobs'][position]['top']]
+    return dict(
+        delta_max=round(max(signal) if signal else 0.0, 8),
+        changed_positions=len(changed),
+        text_changed=base['text'] != candidate['text'],
+        token_ids_changed=base['token_ids'] != candidate['token_ids'])
 
-if attributable:
-    verdict = ('applied: the engine reproduces its own logprobs exactly, and mounting the adapter moves '
-               'them (mostly the distribution, with the same greedy text)'
-               if not (text_changed or token_ids_changed) else
-               'applied: the engine reproduces its own logprobs exactly, and mounting the adapter changes '
-               'the generated tokens')
-elif not reproducible:
-    verdict = ('inconclusive: two base runs already differ in logprobs, so this engine is not '
-               'reproducible and a base-versus-adapter difference cannot be attributed to the adapter')
-elif loaded and skipped:
-    verdict = ('inert: the engine loaded the adapter under the layer names and then skipped the YOLO '
-               'decoder aliases, which is the exact aliasing wipe of discussion 743508')
-elif loaded:
-    verdict = ('inert: the engine reports the adapter as loaded and the logprobs are still identical, '
-               'so LoRA is dropped downstream of loading (upstream issue #50059 pattern)')
-else:
-    verdict = ('inert: identical logprobs and no LoRA load messages, so the adapter never reached the '
-               'engine at all')
+
+noise = divergence(base, base_repeat)
+noise_max = max(noise) if noise else 0.0
+# An adapter is only credited when its effect exceeds what the engine produces on its own.
+reproducible = bool(noise) and noise_max <= 1e-6
+embedded = compare(adapter)
+wide = compare(runtime) if runtime is not None else None
+
+
+def verdict_for(result, label, loaded_lines, skipped_lines):
+    if result is None:
+        return label + ': not measured (the runtime adapter was not generated, or its generation failed)'
+    if not reproducible:
+        return (label + ': inconclusive -- two base runs already differ, so a difference cannot be '
+                'attributed to the adapter')
+    if result['delta_max'] > max(noise_max, 1e-6):
+        return (label + ': applied -- the engine reproduces its own logprobs exactly and the adapter '
+                'moves them' + ('' if not (result['text_changed'] or result['token_ids_changed'])
+                                else ', changing the generated tokens'))
+    if loaded_lines and skipped_lines:
+        return (label + ': inert -- weights loaded under the layer names and the YOLO decoder aliases '
+                'were then skipped (the aliasing wipe of discussion 743508)')
+    return label + ': inert -- identical logprobs, so LoRA is not reaching the served model'
+
+
+verdict = verdict_for(embedded, 'embedded rank-8 adapter', loaded, skipped)
+if wide is not None:
+    verdict += ' | ' + verdict_for(wide, 'runtime rank-32 all-layer adapter', loaded, skipped)
 
 if not base['top_logprobs'] or not adapter['top_logprobs']:
     raise SystemExit('Base or adapter generation returned no logprobs; the probe would not measure anything.')
 
-finish(
+emit(
     'measured',
-    applied=bool(changed_positions or (attributable and (token_ids_changed or text_changed))),
+    applied=embedded['delta_max'] > max(noise_max, 1e-6),
+    wide_applied=(wide['delta_max'] > max(noise_max, 1e-6)) if wide else None,
     verdict=verdict,
     engine_reproducible=reproducible,
     base_repeat_noise_max_abs_logprob_delta=round(noise_max, 8),
-    base_vs_adapter_max_abs_logprob_delta=round(signal_max, 8),
+    embedded=embedded, wide_configuration=wide,
     compared_positions=shared,
-    changed_logprob_positions=len(changed_positions),
-    first_changed_position=where if where is not None else (changed_positions[0] if changed_positions else None),
-    text_changed=text_changed,
-    token_ids_changed=token_ids_changed,
+    text_changed=embedded['text_changed'], token_ids_changed=embedded['token_ids_changed'],
     base_text=base['text'], adapter_text=adapter['text'],
     base_token_ids=base['token_ids'][:16], adapter_token_ids=adapter['token_ids'][:16],
     base_top_logprobs=base['top_logprobs'][:8], adapter_top_logprobs=adapter['top_logprobs'][:8],
     base_repeat_top_logprobs=base_repeat['top_logprobs'][:8],
+    wide_top_logprobs=(runtime['top_logprobs'][:8] if runtime else None),
+    runtime_adapter_info=(namespace.get('RUNTIME') if runtime is not None else None),
     lora_loaded_modules=len(loaded), lora_skipped_modules=len(skipped),
     lora_skip_example=skipped[0] if skipped else None,
     lora_load_example=loaded[0] if loaded else None,
@@ -460,6 +514,8 @@ def main() -> int:
     parser.add_argument('--title', default=None)
     parser.add_argument('--model-path', default=MODEL_PATH,
                         help='Base model path inside the Kaggle session')
+    parser.add_argument('--wide-rank', type=int, default=32,
+                        help='Rank of the runtime-generated all-layer probe (the training configuration)')
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--check', action='store_true',
                         help='Validate an already generated output directory instead of writing one')
@@ -487,7 +543,7 @@ def main() -> int:
                  'wheelhouse offline and prove `import vllm`, (3) run the paired logprob probe.\n'),
             cell('code', build_setup(adapter, args.model_path)),
             cell('code', build_install(wheelhouse)),
-            cell('code', build_probe()),
+            cell('code', build_probe(build_runtime_adapter(args.wide_rank, adapter['targets']))),
         ],
     }
     if len(json.dumps(notebook).encode('utf-8')) >= 1_000_000:

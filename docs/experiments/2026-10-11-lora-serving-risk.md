@@ -31,27 +31,35 @@ Run: `junzhejiao/gemma4-lora-serving-probe` version 7, private, L4x4, competitio
 | Measurement | Value |
 | --- | --- |
 | Base generated twice, logprob deltas | **0.0 maximum absolute delta** across 35 positions -- the engine is reproducible |
-| Base versus adapter, logprob deltas | **1.187468 maximum absolute delta**, changed at **35 of 35** positions |
-| Greedy text and token ids | identical in all three generations (`2, 3, 5, 7, 11, 13, 17, 19, 23, 29`, 35 tokens) |
-| Verdict emitted by the probe | `applied: the engine reproduces its own logprobs exactly, and mounting the adapter moves them` |
-| Adapter | rank 8, `q_proj` + `o_proj` at layer 0, random `lora_A` (std 0.02) and `lora_B` (std 1.0), SHA256 `b43e139956c95f2a…` |
+| Base versus embedded rank-8 adapter | **1.187468 maximum absolute delta**, changed at **35 of 35** positions; greedy text and token ids unchanged |
+| Base versus runtime rank-32 all-layer adapter | **10.069917 maximum absolute delta**, changed at **35 of 35** positions, and the **greedy text and token ids changed** (35 to 40 tokens) |
+| Verdict emitted by the probe | `embedded rank-8 adapter: applied ... | runtime rank-32 all-layer adapter: applied ..., changing the generated tokens` |
+| Embedded adapter | rank 8, `q_proj` + `o_proj` at layer 0, random `lora_A` (std 0.02) and `lora_B` (std 1.0), SHA256 `b43e139956c95f2a…` |
+| Runtime adapter | rank 32, `q_proj` + `o_proj` on **all 60 layers** (240 tensors, 104,238,416 bytes), generated in-session |
 
 What this settles: the aliasing wipe of [discussion 743508](../../resource/discussions/743508.txt) does
 **not** reproduce on this wheelhouse, the adapter is honoured on a compressed-tensors W4A16 Gemma 4, and
 a loud adapter moves the served distribution even when it does not change greedy text -- which is why an
 unchanged *text* is not evidence of an inert adapter.
 
-What it does not settle, stated so it cannot be over-read:
+The rank-32 all-layer run also closes the specific worry that motivated it: the degradation of wide,
+higher-rank adapters reported in [#50059](https://github.com/vllm-project/vllm/issues/50059) does not
+show up here as a dropped adapter on this stack. It does **not** show that a rank-32 adapter is a good
+idea: a *random* rank-32 adapter with `lora_B` scaled to std 1.0 is expected to wreck the output, and
+destroying the greedy text is exactly what a loud random adapter should do. The plan's adapter
+configuration is therefore servable, not validated.
 
-- **The planned adapter configuration is wider than the probe.** The probe is rank 8 on two projections
-  of one layer; our experiment is rank 32 on `q_proj` and `o_proj` of every layer. Upstream
-  [#50059](https://github.com/vllm-project/vllm/issues/50059) is precisely about a rank-32, wide-coverage
-  adapter degrading on a compressed-tensors int4 base, so the rank-32 case still needs its own probe.
+What remains unsettled, stated so it cannot be over-read:
+
 - **No trained adapter has been served.** This shows the mechanism works with random weights; it says
   nothing about whether trained weights help resolution, which is the paired-experiment question.
 - **The probe used the model path directly, not `adk_submission.VllmServer`.** The harness's own launch
   path differs in flags (`max_model_len` 32768) and in how it enumerates adapters, so a submission can
   still fail where this notebook succeeded.
+- **The checkpoint exposes no weight index and no readable projection shapes.** The runtime adapter's
+  shapes came from the recorded evidence in `resource/manifests/sample-adapters.json`, and the probe
+  reported `recorded_evidence_match: true` with a `WARNING` rather than measuring them. They are
+  therefore assumed, not confirmed on this run.
 - The engine's own `Successfully loaded LoRA weights` / `No LoRA weights found` lines were **not**
   captured: vLLM loads adapters inside a spawned `EngineCore` process, so the in-notebook logging
   handler saw none of them (`lora_loaded_modules: 0`). Those log lines cannot be used as evidence from
@@ -157,7 +165,16 @@ because they apply to every future GPU notebook on this competition image, not j
 | 2 | ERROR after ~10 s | `Wheelhouse mount is incomplete; missing 1: ['swegemma-0.2.10-py3-none-any.whl']` -- the organizers' in-place republish of 2026-10-09 removed exactly that wheel |
 | 3 | ERROR, session lingered 3.5 h | Two of my own defects in the progress helper (`TypeError: unhashable type: 'dict'` from doubled braces), which killed the notebook 149 s in; the worker then kept holding the GPUs until it was reclaimed |
 | 6 | COMPLETE in 8 min | First full measurement: identical greedy text, different top logprobs at all 35 positions -- but without a repeat-base control that is not yet evidence |
-| 7 | COMPLETE in 8 min | Same, plus the repeat-base control: base noise 0.0, base-versus-adapter delta 1.187468. This is the measured result above |
+| 7 | COMPLETE in 8 min | Same, plus the repeat-base control: base noise 0.0, base-versus-adapter delta 1.187468. This is the measured rank-8 result above |
+| 8 | COMPLETE in 8 min | First rank-32 attempt died at `AttributeError: 'Gemma4Config' object has no attribute 'num_hidden_layers'` -- the decoder fields live under `text_config`, and the generator then used a guess instead of the checkpoint |
+| 9 | COMPLETE in 8 min | Rank-32 generation reached PEFT and died on `ImportError: Found an incompatible version of torchao. Found version 0.10.0, but only versions above 0.16.0 are supported` -- the wheelhouse's transformers 5.13.1 rejects the image's torchao |
+| 10 | COMPLETE in 8 min | Dropping the `transformers` import was not enough: `peft` itself pulls the quantizer stack, so the same torchao error returned |
+| 11 | COMPLETE in 8 min | The runtime adapter is now written with `safetensors` alone, using the key scheme the embedded probe proved, and shapes come from checkpoint headers when available: rank 32 on all 60 layers, applied, delta 10.069917 |
+
+The torchao constraint is the sharp one: this image's torchao is 0.10.0, the wheelhouse's transformers
+5.13.1 requires above 0.16.0, and no torchao wheel is in the wheelhouse mount. Any notebook on this
+image that imports `transformers` **after** installing the wheelhouse hits it, so the probe avoids both
+libraries and the SFT notebook must plan for it explicitly.
 
 The useful timing numbers, all from notebook output rather than estimate: staging the embedded adapter
 8 s, wheelhouse inventory 16 s, installing 41 wheels / 880,842,253 bytes 53 s, `import vllm` 80 s,
