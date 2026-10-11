@@ -21,6 +21,7 @@ workspace; those artifacts are not included in a Git clone.
 | [pipeline-local-checks.json](pipeline-local-checks.json) | Local packaging/preparation checks before GPU evaluation |
 | [swe-lora-v1-training.json](swe-lora-v1-training.json) | Full two-epoch coverage, checkpoint selection, and failed autonomous release smoke |
 | [swe-lora-v1-handoff.json](swe-lora-v1-handoff.json) | Conditional tool-stop probabilities and zero-update controls for the failed v1 adapter |
+| [swe-lora-light.json](swe-lora-light.json) | Bounded 128-action training, recovery, acceptance status and fixed-cohort comparison |
 
 ## Data and reference inventories
 

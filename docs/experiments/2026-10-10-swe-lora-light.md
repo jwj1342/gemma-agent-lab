@@ -17,8 +17,10 @@ Job `1072976` used one H100 for 15m47s (0.263 physical GPU hours), including
 fixture generation, encoding, memory checks, training and checkpoint recovery.
 Repository checks and 76 tests passed in the allocation and in
 [CI run 38093147750](https://github.com/jwj1342/gemma-agent-lab/actions/runs/38093147750).
-Official serving and autonomous acceptance are still pending; this is a training
-milestone rather than a release or a repair-score claim.
+Official serving passed and the first real task completed and resolved.
+FastAPI subsequently exceeded its inference time limit, so the three-task
+release gate has not passed. The remaining probe and fixed fast comparison
+are diagnostic measurements in progress; no improvement or release is claimed.
 
 | Training source | Actions | Snapshot/fixture groups | Input tokens | Target tokens |
 | --- | ---: | ---: | ---: | ---: |
@@ -46,9 +48,12 @@ uninterrupted run was not tested.
 | Graph | 0.858223 | 0.719940 | 0.380186 |
 | Termination | 3.520047 | 2.961483 | 1.622376 |
 
-These likelihood changes do not establish convergence, clean agent completion
-or repair gains. The registered acceptance job is `1072977`; release/fast
-evaluation `1072978` runs only after acceptance succeeds. The training evidence,
+These likelihood changes do not establish convergence or repair gains.
+After the environment corrections below, acceptance recovery job `1073459`
+passed rich but failed FastAPI's completion gate; release job `1073460` was
+cancelled without starting. Diagnostic jobs `1073600` and `1073601` finish the
+third probe and the fixed comparison without promoting the adapter. Neither
+job retrains it. The training evidence,
 sample coverage, source hashes and recovery receipt are under this run's
 `training-evidence.json`, `encoded-data/manifest.json` and `recovery-gate.json`.
 
@@ -74,6 +79,60 @@ the exact completed adapter and the same three tasks; all controls are rerun.
 The trained model and its data/configuration contract stay unchanged. The final
 fast comparison will still reuse the baseline's frozen batch runtime, where
 this setup was already active.
+
+Validation source is `84d191dad10501d4ff89a558070903fc0f7722bf`;
+[CI run 38095159667](https://github.com/jwj1342/gemma-agent-lab/actions/runs/38095159667)
+passed all 77 tests. `validation-r2-registration.json` records the correction,
+unchanged adapter hashes, task IDs and output paths before execution.
+
+### Grading recovery preserves completed inference
+
+The environment-corrected `rich_3454` inference completed with 15 LLM calls,
+14 actual tool calls and one submission, followed by a final answer. It produced
+a 1,570-character two-file patch. Independent grading then stopped during
+snapshot extraction, before tests ran. Single-task verification still inherited
+the agent's 60-second command limit, while batch grading used 300 seconds.
+Job `1073256` failed after 16m01s; its release dependency did not start.
+
+Commit `afa0397be57554642e6be6a305a901d067dd625c` gives both grading paths the
+existing 300-second allowance. Inference budgets remain unchanged. The regression
+test checks this separation; [CI run 38096242975](https://github.com/jwj1342/gemma-agent-lab/actions/runs/38096242975)
+passed all 77 tests. Recovery registers the completed prediction's hash and
+reuses it byte-for-byte after confirming identical agent/task identities. Empty
+and gold controls run again before grading; no new rich inference is sampled.
+The other two predeclared tasks run normally. `validation-r3-registration.json`
+and `inference-reuse.json` preserve both runtime identities and this recovery.
+
+Recovered grading of that exact prediction passed all **83 official tests** on
+`rich_3454`. Its empty/gold controls were valid and the execution gate passed.
+The run used 13 budget-counted calls and 14 actual tool invocations, including
+one submission and no graph calls.
+
+### FastAPI acceptance and broader diagnostic comparison
+
+`fastapi_14455` passed its environment controls. The model then made 40 LLM/tool
+calls (21 reads, 16 commands, two edits and one write) and reached the four-minute
+session limit while still locating and revising the implementation. It never
+called `submit_patch`; the harness recovered a 3,343-character working-tree
+patch. This differs from the earlier post-submission repetition failure, but it
+still fails the registered clean-completion gate. Its result is retained.
+
+`diagnostic-registration.json` records the next measurements before execution:
+independently grade the already captured patch, finish the originally selected
+Requests task, and run the unchanged fixed fast cohort against the matching
+baseline. These measurements characterize the completed weights. The failed
+release gate remains in force, with no upload or promotion. No task is replaced,
+no timeout is relaxed for inference, and no development trace enters training.
+
+### Review and follow-up ownership
+
+After acceptance and fixed-cohort evaluation, PR #8 will request reviews from
+**KaltistEsperanta** and **liaodid**, with the measured outcomes and evidence
+manifest linked from the PR. KaltistEsperanta owns adapter/runtime review and
+the separate four-L4 training feasibility task (#13); liaodid owns data and
+tool-boundary auditing (#14). Four-L4 training remains unverified. The present
+BF16 training replica peaks above one L4's memory capacity; four GPUs do not
+automatically pool their memory. No full training sweep is part of this handoff.
 
 ## Initial 1,024-action protocol
 

@@ -1,0 +1,693 @@
+{
+  "schema_version": 1,
+  "recorded_at": "2026-10-11T00:05:55.976380+00:00",
+  "run_root": "runs/20261010-swe-lora-protocol-r2",
+  "training_revision": "1fcc891bd7a44adce6b7cc2b08f488b3dd933a7e",
+  "validation_revision": "afa0397be57554642e6be6a305a901d067dd625c",
+  "required_base": "google/gemma-4/Other/gemma-4-31b-it-qat-w4a16-ct/2",
+  "training": {
+    "slurm_job": 1072976,
+    "elapsed_seconds_including_preparation_training_recovery": 947,
+    "physical_gpu_hours": 0.26305555555555554,
+    "completed": {
+      "steps": 32,
+      "epochs": 1,
+      "samples_seen": 128,
+      "assistant_tokens_seen": 6195,
+      "expected_samples": 128,
+      "selected": {
+        "checkpoint": "checkpoint-00032",
+        "step": 32,
+        "swe_nll": 0.42496257823588446
+      },
+      "export_sha256": {
+        "adapter_config.json": "ff656d4bfcbf19df6dab0b1a301ca1fc7e1a0d451e80ac0d3398b5aaa12575d5",
+        "adapter_model.safetensors": "3aa925e0a61b679ddb800797023e7181be23cccefb49a905579a35bb7e66a519"
+      },
+      "claim": "Completed SFT; issue-resolution gain remains unproven until evaluated."
+    },
+    "exactly_one_presentation_per_selected_action": true,
+    "presented_by_source": {
+      "graph": 32,
+      "terminal": 64,
+      "swe": 32
+    },
+    "selected_terminal_file_counts": {
+      "3": 19,
+      "1": 29,
+      "2": 16
+    },
+    "statistics": {
+      "train:swe": {
+        "actions": 32,
+        "trajectories": 31,
+        "groups": 30,
+        "input_tokens": 105087,
+        "assistant_tokens": 3903,
+        "length_p50": 3537,
+        "length_p95": 4079,
+        "length_max": 4096
+      },
+      "train:graph": {
+        "actions": 32,
+        "trajectories": 32,
+        "groups": 10,
+        "input_tokens": 26148,
+        "assistant_tokens": 1196,
+        "length_p50": 769,
+        "length_p95": 1126,
+        "length_max": 1205
+      },
+      "train:terminal": {
+        "actions": 64,
+        "trajectories": 64,
+        "groups": 64,
+        "input_tokens": 104786,
+        "assistant_tokens": 1096,
+        "length_p50": 1646,
+        "length_p95": 1697,
+        "length_max": 1701
+      },
+      "validation:swe": {
+        "actions": 2799,
+        "trajectories": 121,
+        "groups": 21,
+        "input_tokens": 8227560,
+        "assistant_tokens": 413034,
+        "length_p50": 3127,
+        "length_p95": 4019,
+        "length_max": 4096
+      },
+      "validation:graph": {
+        "actions": 1472,
+        "trajectories": 368,
+        "groups": 6,
+        "input_tokens": 1196389,
+        "assistant_tokens": 58773,
+        "length_p50": 769,
+        "length_p95": 1090,
+        "length_max": 1336
+      },
+      "validation:terminal": {
+        "actions": 19,
+        "trajectories": 19,
+        "groups": 19,
+        "input_tokens": 14829,
+        "assistant_tokens": 329,
+        "length_p50": 758,
+        "length_p95": 822,
+        "length_max": 822
+      }
+    },
+    "selection_coverage": {
+      "graph": {
+        "population_actions": 1734,
+        "selected_actions": 32,
+        "population_strata": 40,
+        "selected_strata": 32,
+        "selected_groups": 10,
+        "tools": [
+          "get_code_neighbors",
+          "get_code_subgraph",
+          "run_command",
+          "search_similar_code"
+        ]
+      },
+      "swe": {
+        "population_actions": 15148,
+        "selected_actions": 32,
+        "population_strata": 484,
+        "selected_strata": 32,
+        "selected_groups": 30,
+        "tools": [
+          "edit_file",
+          "read_file",
+          "run_command",
+          "submit_patch",
+          "write_file"
+        ]
+      },
+      "terminal": {
+        "population_actions": 109,
+        "selected_actions": 64,
+        "population_strata": 109,
+        "selected_strata": 64,
+        "selected_groups": 64,
+        "tools": [
+          "final_answer"
+        ]
+      }
+    },
+    "encoded_files_sha256": {
+      "train": "5f1ef8f7a156e4c93516d708e6f32ed4622cba17a3f828b7d3046078e3a59760",
+      "validation": "92d1441b9d861756aa151b7707780f81c683c56f2613a088db90912964e139ef"
+    },
+    "validation_population_unchanged": true,
+    "validation": [
+      {
+        "step": 0,
+        "epoch": 0.0,
+        "scores": {
+          "swe": {
+            "assistant_nll": 0.5069311487205167,
+            "tokens": 5898,
+            "actions": 32
+          },
+          "graph": {
+            "assistant_nll": 0.8582232043191835,
+            "tokens": 1332,
+            "actions": 32
+          },
+          "terminal": {
+            "assistant_nll": 3.5200469602567446,
+            "tokens": 329,
+            "actions": 19
+          }
+        }
+      },
+      {
+        "step": 8,
+        "epoch": 0.25,
+        "scores": {
+          "swe": {
+            "assistant_nll": 0.4824709674656434,
+            "tokens": 5898,
+            "actions": 32
+          },
+          "graph": {
+            "assistant_nll": 0.7199404742624667,
+            "tokens": 1332,
+            "actions": 32
+          },
+          "terminal": {
+            "assistant_nll": 2.9614826136447014,
+            "tokens": 329,
+            "actions": 19
+          }
+        }
+      },
+      {
+        "step": 32,
+        "epoch": 1.0,
+        "scores": {
+          "swe": {
+            "assistant_nll": 0.42496257823588446,
+            "tokens": 5898,
+            "actions": 32
+          },
+          "graph": {
+            "assistant_nll": 0.3801863781503729,
+            "tokens": 1332,
+            "actions": 32
+          },
+          "terminal": {
+            "assistant_nll": 1.622376113314759,
+            "tokens": 329,
+            "actions": 19
+          }
+        }
+      }
+    ],
+    "peak_training_gib": 67.38113355636597,
+    "recovery": {
+      "recorded_at": "2026-10-10T23:08:39.052065+00:00",
+      "slurm_job_id": 1072976,
+      "source_revision": "1fcc891bd7a44adce6b7cc2b08f488b3dd933a7e",
+      "resume": {
+        "restored_step": 8,
+        "optimizer_and_rng_restored": true,
+        "contract_matches": true
+      },
+      "resume_record_sha256": "c5baee604028bfa5669b28245acccb8f9dc931dd59909d22ea244edc30b943eb",
+      "successful_update_after_restore": {
+        "step": 9,
+        "epoch": 0.28125,
+        "loss": 1.8177214190363884,
+        "token_weighted_loss": 0.8139418562676044,
+        "loss_normalization": "example",
+        "learning_rate": 1.8164837591350794e-05,
+        "gradient_norm": 17.064504623413086,
+        "samples_seen": 36,
+        "assistant_tokens_seen": 1846,
+        "peak_gib": 66.79222774505615,
+        "elapsed_s": 37.761132148996694
+      },
+      "scope": "Fresh-process checkpoint restoration followed by a finite optimizer update; exact equivalence to uninterrupted training was not tested."
+    }
+  },
+  "training_contract": {
+    "config": {
+      "seed": 42,
+      "max_length": 4096,
+      "history_actions": 6,
+      "excerpt_chars": 12000,
+      "rank": 16,
+      "lora_alpha": 32,
+      "target_suffixes": [
+        "q_proj",
+        "k_proj",
+        "v_proj",
+        "o_proj",
+        "gate_proj",
+        "up_proj",
+        "down_proj"
+      ],
+      "learning_rate": 2e-05,
+      "weight_decay": 0.0,
+      "gradient_accumulation": 4,
+      "epochs": 1,
+      "warmup_fraction": 0.05,
+      "minimum_lr_ratio": 0.1,
+      "checkpoint_every": 32,
+      "validation_actions": 32,
+      "checkpoint_selection": "lowest token-weighted SWE validation NLL among trained checkpoints",
+      "objective": "Mean assistant-token NLL within each action, averaged equally over real actions in the global batch",
+      "base_loading": "official v2 compressed-tensors dequantized to BF16; frozen base",
+      "scope": "128-action one-epoch protocol-focused pilot; 32 updates. Fixed real-task gates and held-out population; no score claim.",
+      "training_subset": {
+        "swe": 32,
+        "graph": 32,
+        "terminal": 64
+      },
+      "training_terminal_system_prompt": "configs/baseline/prompts/system.md",
+      "loss_normalization": "example"
+    },
+    "dependencies": {
+      "torch": "2.14.1+computecanada",
+      "transformers": "5.18.0+computecanada",
+      "peft": "0.19.1+computecanada",
+      "compressed-tensors": "0.17.1+computecanada",
+      "accelerate": "1.14.0+computecanada"
+    },
+    "data_manifest_sha256": "e1f58480695779ec79c9c6f674a8f5a99e2d849542c98d6450275db35f04d852",
+    "world_size": 1,
+    "base_config_sha256": "b100d85e571c25b688e82919d819253063a1defb0e6cee3b9b1c1fbad99bd0c2",
+    "base_weights_sha256": "1b9b1d622a93f02c0d33f98e502f233b5d707443af6ddc464ed0bf5498506c20",
+    "source_sha256": {
+      "scripts/train_swe_lora.py": "3c81114f37a58f8a53a582dec706baa495c5911135d2677eade4ea385baafa3f",
+      "src/sft_schedule.py": "d5d06291c6857f5e018cc224402510f32a6c49905386d0643a9c69fe68d59d85"
+    }
+  },
+  "encoding_protocol": {
+    "tool_handoff_stop_token": "<|tool_response>",
+    "tool_handoff_stop_id": 50,
+    "tool_handoff_is_supervised": true,
+    "source_sha256": {
+      "src/sft_data.py": "e040e8c5b98f744bb988c528bac6b55237d4a07d2169cff905baaa0dca414f49",
+      "src/sft_subset.py": "844ad773580b10a7672e540bb1d1f59d7112b58d10222b8f792c1c530c1978a4",
+      "scripts/encode_sft_dataset.py": "52780c0349e50757b301820f7e63e45167ee889577af6d6617a6cd13adf8044b"
+    },
+    "base_protocol_sha256": {
+      "chat_template.jinja": "94899c0f917d93f6fe81c95744d1e8ddab2d21d39228d2e4aec1fb2a25bff413",
+      "tokenizer.json": "cc8d3a0ce36466ccc1278bf987df5f71db1719b9ca6b4118264f45cb627bfe0f",
+      "generation_config.json": "70110aa886fa7ee25ce47346d102dd29ca5f967500490b4362fc72068e1db70a"
+    },
+    "tool_targets_by_split": {
+      "train": 64,
+      "validation": 4271
+    }
+  },
+  "source_files_sha256": {
+    "/scratch/jwj/kaggle_gemma4_agent/runs/20261010-swe-lora-protocol-r2/inputs/code/configs/baseline/prompts/system.md": "60d82b7ac53f642e182de0f3a2056b64ef0c1ff03c48ca4aef6ee0ec5f591234",
+    "/scratch/jwj/kaggle_gemma4_agent/runs/20261009-swe-lora-v1-full/swe-data/train.jsonl": "12fd084073fccacd47c7789c87677e786f45f8987c9eec184315092f0f7b00aa",
+    "/scratch/jwj/kaggle_gemma4_agent/runs/20261009-swe-lora-v1-complete/graph-data/train.jsonl": "45650ecceb95a31927175a7d478d8d15c9bd6cf4f6e1b7bf8a5086dd030c0c22",
+    "/scratch/jwj/kaggle_gemma4_agent/runs/20261010-swe-lora-protocol-r2/terminal-data/train.jsonl": "7bacee8698669e00ea1f31d476081235a4eba0f4f82c5db4ed5790c87c5519a6",
+    "/scratch/jwj/kaggle_gemma4_agent/runs/20261009-swe-lora-v1-full/swe-data/validation.jsonl": "b58b3459702c4ae8bc718c927509dfd25a3d56c011008c79f82b58205eae2b40",
+    "/scratch/jwj/kaggle_gemma4_agent/runs/20261009-swe-lora-v1-complete/graph-data/validation.jsonl": "bd391d78bcf2b970fa115eca790dbdd4c806331c8d1fac4e6d2a03bb468b2109",
+    "/scratch/jwj/kaggle_gemma4_agent/runs/20261010-swe-lora-protocol-r2/terminal-data/validation.jsonl": "3be333b2017414a6eea9aa4ddb5cee9151dbe7b4d2769562ae8812f4e7db1f95"
+  },
+  "trainable_parameters": 122429440,
+  "runtime_modules": "CCconfig:gentoo/2023:gcccore/.12.3:gcc/12.3:hwloc/2.9.1:ucx/1.14.1:libfabric/1.18.0:pmix/4.2.4:ucc/1.2.0:openmpi/4.1.5:flexiblas/3.3.1:aocl-blas/5.1:aocl-lapack/5.1:StdEnv/2023:python/3.12.4:cudacore/.12.9.1:gdrcopy/2.3.1:ucx-cuda/1.14.1:nccl/2.27.7:ucc-cuda/1.2.0:cuda/12.9:arrow/25.0.0:apptainer/1.4.5",
+  "acceptance": [
+    {
+      "checked_at": "2026-10-10T23:51:45.646600+00:00",
+      "task_id": "rich_3454",
+      "checks": {
+        "empty_patch_fails_tests": true,
+        "gold_patch_passes_tests": true,
+        "official_compiler_passed": true,
+        "real_nonempty_prediction": true,
+        "llm_was_called": true,
+        "agent_tests_executed": true
+      },
+      "controls_valid": true,
+      "agent_resolved": true,
+      "inference_seconds": 183.06995892699342,
+      "pipeline_executed": true,
+      "scope": "One public task. Not a benchmark score, training validation, L4 timing result, or Kaggle submission.",
+      "inference": {
+        "llm_calls": 15,
+        "tool_calls": 13,
+        "duration_seconds": 183.06995892699342,
+        "agent_seconds": 94.61389913997846,
+        "error": null,
+        "patch_characters": 1570
+      },
+      "actual_tool_calls": {
+        "read_file": 4,
+        "run_command": 5,
+        "write_file": 2,
+        "edit_file": 2,
+        "submit_patch": 1
+      },
+      "inference_reuse": {
+        "source": "/scratch/jwj/kaggle_gemma4_agent/runs/20261010-swe-lora-protocol-r2/acceptance-r2/smoke",
+        "prediction_sha256": "73c294248417c1eef74e6e08a277247b2c6b10326bde701f2deb4ea8a7866408",
+        "inference_rerun": false,
+        "reason": "Retry independent grading after snapshot extraction timed out; inference is preserved byte-for-byte.",
+        "inference_runtime_sha256": {
+          "build_submission.py": "2527cb82e509c5b5b90e10af25c762a100410063879356386f2cb78a4161df26",
+          "prepare_eval_task.py": "91e6a2dba1177480cd79e10668d848ab2bd974fa11ce3668e49e5ec2c0da5871",
+          "verify_eval_run.py": "6f4a5e610009777a64844e2af11de314339e10585803de1729b4ede2e36d5a7e",
+          "eval_suite_lib.py": "1a4826a3633a5ca488c974f839908d3435742f657047f9309043b2d0409ac819",
+          "evaluate_agent.py": "d14a7e9d6dfc18c74aece408453b1aecb0c7067019cd36b11c8f689ae9adecf7",
+          "validate_agent.py": "f1b822d5e5fe6c90a93ed5be9cf0354e65999c8ca00a7bf11c4615ee119bc3a0",
+          "summarize_eval_smoke.py": "8f33f7679198e7c9dcc7ae2313ce987983f06a9de0cc7cbc57c4bba5ca26283e",
+          "run_eval_container.sh": "64762c93cdd54c9534dbdf0b8ab379e2317eebd502f6169983e1bf4616a8cb91",
+          "container_entry.sh": "9370333368f2eef7bdad2db855e7dd2ca4cf2bc14e217c4531a8ca329da664d9",
+          "run_eval_suite.py": "f5f223f52f34d5a1043534db17d2ed8e894fdb7929a990e4da6dfa1155fbc459",
+          "summarize_eval_suite.py": "f30f92e3d0b035f8ef0de2ceb67444f3f2ed60f126893417fef97ad7801a6d08",
+          "local_eval_setup.py": "4076d7916ed7b4e75b8993b627ea0d011c232f79c42a60246e998997d9c2418f"
+        },
+        "verification_runtime_sha256": {
+          "build_submission.py": "2527cb82e509c5b5b90e10af25c762a100410063879356386f2cb78a4161df26",
+          "prepare_eval_task.py": "91e6a2dba1177480cd79e10668d848ab2bd974fa11ce3668e49e5ec2c0da5871",
+          "verify_eval_run.py": "6f4a5e610009777a64844e2af11de314339e10585803de1729b4ede2e36d5a7e",
+          "eval_suite_lib.py": "1a4826a3633a5ca488c974f839908d3435742f657047f9309043b2d0409ac819",
+          "evaluate_agent.py": "213acd18f9d7e7589554c1fc92d4b5f3dfde38285baa948e7f814b52e8c88d10",
+          "validate_agent.py": "f1b822d5e5fe6c90a93ed5be9cf0354e65999c8ca00a7bf11c4615ee119bc3a0",
+          "summarize_eval_smoke.py": "8f33f7679198e7c9dcc7ae2313ce987983f06a9de0cc7cbc57c4bba5ca26283e",
+          "run_eval_container.sh": "64762c93cdd54c9534dbdf0b8ab379e2317eebd502f6169983e1bf4616a8cb91",
+          "container_entry.sh": "9370333368f2eef7bdad2db855e7dd2ca4cf2bc14e217c4531a8ca329da664d9",
+          "run_eval_suite.py": "f5f223f52f34d5a1043534db17d2ed8e894fdb7929a990e4da6dfa1155fbc459",
+          "summarize_eval_suite.py": "f30f92e3d0b035f8ef0de2ceb67444f3f2ed60f126893417fef97ad7801a6d08",
+          "local_eval_setup.py": "4076d7916ed7b4e75b8993b627ea0d011c232f79c42a60246e998997d9c2418f"
+        }
+      }
+    }
+  ],
+  "evidence": [
+    {
+      "path": "runs/20261010-swe-lora-protocol-r2/training-evidence.json",
+      "sha256": "3644773fdbd038c0b665c3a712907f5c50a1bbb10cfb4b584d008dc9dd3bb2b3"
+    },
+    {
+      "path": "runs/20261010-swe-lora-protocol-r2/recovery-gate.json",
+      "sha256": "38c1424c070cfeaa962640cb88b01bfded8ac4ceb9ea373b0555c85a9249a827"
+    },
+    {
+      "path": "runs/20261010-swe-lora-protocol-r2/terminal-fixture-audit.json",
+      "sha256": "6f87f0e8ad371bd7204e7c904103ad032ea42f7f1b3ebe8ceb5074d8b108dfc7"
+    },
+    {
+      "path": "runs/20261010-swe-lora-protocol-r2/encoded-data/manifest.json",
+      "sha256": "e1f58480695779ec79c9c6f674a8f5a99e2d849542c98d6450275db35f04d852"
+    },
+    {
+      "path": "runs/20261010-swe-lora-protocol-r2/validation-r2-registration.json",
+      "sha256": "40fd0d2ef1e2ee74c364855f0c557741426565ce4f4c3381d1741cbd135abebe"
+    },
+    {
+      "path": "runs/20261010-swe-lora-protocol-r2/validation-r3-registration.json",
+      "sha256": "34203faecffac044e53d603260e1688bc90d5fcbf6d3584f96a391bdc11ad9eb"
+    },
+    {
+      "path": "runs/20261010-swe-lora-protocol-r2/diagnostic-registration.json",
+      "sha256": "f4a5fd46eed5f91707b11e3b53eff3941390f03686ecff4437498673a704f6a8"
+    },
+    {
+      "path": "runs/20261010-swe-lora-protocol-r2/acceptance-r2/serving-work/check/result.json",
+      "sha256": "df8f1e9d5a6634d980f8a400d7b6dadc78849d1972dafaa4626ac571d0e80814"
+    },
+    {
+      "path": "runs/20261010-swe-lora-protocol-r2/acceptance-r3/smoke/inference-reuse.json",
+      "sha256": "f698f29cb7a50ec5293292b5d9dab3f7310240e648e42af2ed96713dc1bd75aa"
+    },
+    {
+      "path": "runs/20261010-swe-lora-protocol-r2/acceptance-r3/smoke/smoke-summary.json",
+      "sha256": "ac0fbc8a7b58226bd22cdc0e8802760eedefa765aaf8946d4bf0e9ca474efab2"
+    },
+    {
+      "path": "runs/20261010-swe-lora-protocol-r2/acceptance-r3/smoke/infer/prediction.json",
+      "sha256": "73c294248417c1eef74e6e08a277247b2c6b10326bde701f2deb4ea8a7866408"
+    }
+  ],
+  "limitations": [
+    "128 actions with context are not 128 complete repair trajectories.",
+    "The same exposed development tasks informed bounded corrective experiments; this is not an unbiased test set.",
+    "The protected holdout remains sealed.",
+    "Loss changes do not establish convergence, repair gains, or graph-tool benefits.",
+    "This BF16 full-replica training run requires H100-class memory; four-L4 training is not validated.",
+    "Fresh-process optimizer/RNG restoration passed; exact equivalence to an uninterrupted run was not tested."
+  ],
+  "serving": {
+    "adapter_loaded": true,
+    "adapter_effect_checked": true,
+    "effect_protocol": "Prefix caching disabled so repeated probes perform identical full prefills; trained adapter compared to zero-update adapter with a repeated-zero control.",
+    "terminal_behavior_checked": true,
+    "summary": {
+      "swe": {
+        "/model": {
+          "schema_valid": 4,
+          "expected_tool_match": 4,
+          "clean_final_answer": 0,
+          "output_limit_reached": 0,
+          "actions": 4
+        },
+        "first_lora": {
+          "schema_valid": 4,
+          "expected_tool_match": 3,
+          "clean_final_answer": 0,
+          "output_limit_reached": 0,
+          "actions": 4
+        }
+      },
+      "graph": {
+        "/model": {
+          "schema_valid": 3,
+          "expected_tool_match": 3,
+          "clean_final_answer": 1,
+          "output_limit_reached": 0,
+          "actions": 4
+        },
+        "first_lora": {
+          "schema_valid": 3,
+          "expected_tool_match": 2,
+          "clean_final_answer": 1,
+          "output_limit_reached": 0,
+          "actions": 4
+        }
+      },
+      "terminal": {
+        "/model": {
+          "schema_valid": 0,
+          "expected_tool_match": 0,
+          "clean_final_answer": 4,
+          "output_limit_reached": 0,
+          "actions": 4
+        },
+        "first_lora": {
+          "schema_valid": 0,
+          "expected_tool_match": 0,
+          "clean_final_answer": 4,
+          "output_limit_reached": 0,
+          "actions": 4
+        }
+      }
+    }
+  },
+  "prior_bounded_cost": {
+    "recorded_at": "2026-10-10T22:59:04.033467+00:00",
+    "jobs": [
+      {
+        "job_id": 1072210,
+        "name": "swe-lora-light-32",
+        "state": "FAILED",
+        "elapsed_seconds": 459,
+        "allocated_gpus": 1,
+        "physical_gpu_hours": 0.1275,
+        "exit_code": "1:0",
+        "start": "2026-10-10T17:10:07",
+        "end": "2026-10-10T17:17:46"
+      },
+      {
+        "job_id": 1072257,
+        "name": "swe-light-r2-32",
+        "state": "COMPLETED",
+        "elapsed_seconds": 1028,
+        "allocated_gpus": 1,
+        "physical_gpu_hours": 0.28555555555555556,
+        "exit_code": "0:0",
+        "start": "2026-10-10T17:20:10",
+        "end": "2026-10-10T17:37:18"
+      },
+      {
+        "job_id": 1072258,
+        "name": "swe-light-r2-check",
+        "state": "FAILED",
+        "elapsed_seconds": 888,
+        "allocated_gpus": 1,
+        "physical_gpu_hours": 0.24666666666666667,
+        "exit_code": "1:0",
+        "start": "2026-10-10T17:37:23",
+        "end": "2026-10-10T17:52:11"
+      },
+      {
+        "job_id": 1072507,
+        "name": "swe-balanced-32",
+        "state": "COMPLETED",
+        "elapsed_seconds": 1031,
+        "allocated_gpus": 1,
+        "physical_gpu_hours": 0.2863888888888889,
+        "exit_code": "0:0",
+        "start": "2026-10-10T18:04:36",
+        "end": "2026-10-10T18:21:47"
+      },
+      {
+        "job_id": 1072508,
+        "name": "swe-balanced-check",
+        "state": "FAILED",
+        "elapsed_seconds": 663,
+        "allocated_gpus": 1,
+        "physical_gpu_hours": 0.18416666666666667,
+        "exit_code": "1:0",
+        "start": "2026-10-10T18:22:09",
+        "end": "2026-10-10T18:33:12"
+      },
+      {
+        "job_id": 1072519,
+        "name": "lora-patch-diagnostic",
+        "state": "COMPLETED",
+        "elapsed_seconds": 39,
+        "allocated_gpus": 1,
+        "physical_gpu_hours": 0.010833333333333334,
+        "exit_code": "0:0",
+        "start": "2026-10-10T18:05:07",
+        "end": "2026-10-10T18:05:46"
+      },
+      {
+        "job_id": 1072797,
+        "name": "swe-thinking-check",
+        "state": "FAILED",
+        "elapsed_seconds": 590,
+        "allocated_gpus": 1,
+        "physical_gpu_hours": 0.1638888888888889,
+        "exit_code": "1:0",
+        "start": "2026-10-10T18:35:12",
+        "end": "2026-10-10T18:45:02"
+      },
+      {
+        "job_id": 1072906,
+        "name": "swe-protocol-128",
+        "state": "CANCELLED by 3158161",
+        "elapsed_seconds": 318,
+        "allocated_gpus": 1,
+        "physical_gpu_hours": 0.08833333333333333,
+        "exit_code": "0:0",
+        "start": "2026-10-10T18:48:02",
+        "end": "2026-10-10T18:53:20"
+      },
+      {
+        "job_id": 1072907,
+        "name": "swe-protocol-check",
+        "state": "CANCELLED by 3158161",
+        "elapsed_seconds": 0,
+        "allocated_gpus": 0,
+        "physical_gpu_hours": 0.0,
+        "exit_code": "0:0",
+        "start": "None",
+        "end": "2026-10-10T18:53:20"
+      },
+      {
+        "job_id": 1072908,
+        "name": "swe-protocol-release",
+        "state": "CANCELLED by 3158161",
+        "elapsed_seconds": 0,
+        "allocated_gpus": 0,
+        "physical_gpu_hours": 0.0,
+        "exit_code": "0:0",
+        "start": "None",
+        "end": "2026-10-10T18:53:20"
+      }
+    ],
+    "total_physical_gpu_hours": 1.3933333333333333,
+    "scope": "Earlier bounded attempts, diagnostics and cancelled fixture preparation only. Excludes original full-corpus run, current 128-action retry and historical baseline evaluation."
+  },
+  "current_run_jobs": [
+    {
+      "job_id": 1072976,
+      "state": "COMPLETED",
+      "elapsed_seconds": 947,
+      "exit_code": "0:0",
+      "allocated_tres": "billing=1,cpu=24,gres/gpu=1,mem=187.50G,node=1",
+      "physical_h100_hours": 0.26305555555555554
+    },
+    {
+      "job_id": 1072977,
+      "state": "FAILED",
+      "elapsed_seconds": 793,
+      "exit_code": "1:0",
+      "allocated_tres": "billing=1,cpu=24,gres/gpu=1,mem=187.50G,node=1",
+      "physical_h100_hours": 0.22027777777777777
+    },
+    {
+      "job_id": 1072978,
+      "state": "CANCELLED",
+      "elapsed_seconds": 0,
+      "exit_code": "0:0",
+      "allocated_tres": "",
+      "physical_h100_hours": 0
+    },
+    {
+      "job_id": 1073256,
+      "state": "FAILED",
+      "elapsed_seconds": 961,
+      "exit_code": "1:0",
+      "allocated_tres": "billing=1,cpu=24,gres/gpu=1,mem=187.50G,node=1",
+      "physical_h100_hours": 0.26694444444444443
+    },
+    {
+      "job_id": 1073257,
+      "state": "CANCELLED",
+      "elapsed_seconds": 0,
+      "exit_code": "0:0",
+      "allocated_tres": "",
+      "physical_h100_hours": 0
+    },
+    {
+      "job_id": 1073459,
+      "state": "FAILED",
+      "elapsed_seconds": 824,
+      "exit_code": "1:0",
+      "allocated_tres": "billing=1,cpu=24,gres/gpu=1,mem=187.50G,node=1",
+      "physical_h100_hours": 0.2288888888888889
+    },
+    {
+      "job_id": 1073460,
+      "state": "CANCELLED",
+      "elapsed_seconds": 0,
+      "exit_code": "0:0",
+      "allocated_tres": "",
+      "physical_h100_hours": 0
+    },
+    {
+      "job_id": 1073600,
+      "state": "PENDING",
+      "elapsed_seconds": 0,
+      "exit_code": "0:0",
+      "allocated_tres": "",
+      "physical_h100_hours": 0
+    },
+    {
+      "job_id": 1073601,
+      "state": "PENDING",
+      "elapsed_seconds": 0,
+      "exit_code": "0:0",
+      "allocated_tres": "",
+      "physical_h100_hours": 0
+    }
+  ],
+  "release_smoke": null,
+  "competition_upload": null,
+  "status": "Training completed; autonomous acceptance and fixed-cohort evaluation in progress"
+}

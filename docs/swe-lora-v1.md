@@ -1,5 +1,9 @@
 # First complete SWE LoRA training run
 
+This document preserves the initial full-run research and protocol. Current work
+uses the [bounded 128-action pilot](experiments/2026-10-10-swe-lora-light.md),
+with a complete short epoch and real agent checks before any larger run.
+
 This run targets the official version 29 environment (`swegemma 0.2.10`,
 `adk-submission 0.2.13`). Its purpose is to complete a reproducible training and
 submission cycle. An improvement in repair rate is a hypothesis until measured.
