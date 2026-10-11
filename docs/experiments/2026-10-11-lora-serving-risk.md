@@ -108,6 +108,29 @@ reports `status: ok` and returns 1 on a one-byte tamper, and an incomplete adapt
 refused with no output written. **No GPU session has run**, so no verdict exists yet; the notebook also
 cannot be exercised locally beyond that wall because vLLM is not installed here.
 
+## Execution log on Kaggle (two failed versions, both environment, no verdict yet)
+
+Running it produced two findings that no amount of local work could have surfaced. Both are recorded
+because they apply to every future GPU notebook on this competition image, not just this probe.
+
+| Version | Outcome | Cause, measured |
+| --- | --- | --- |
+| 1 | ERROR after ~30 s | `ModuleNotFoundError: No module named 'vllm'`. The starter and official GPU images ship vLLM **nowhere**; the patched 0.19.1 exists only inside the wheelhouse mount, so any notebook that needs vLLM must install that mount offline first |
+| 2 | ERROR after ~10 s | `Wheelhouse mount is incomplete; missing 1: ['swegemma-0.2.10-py3-none-any.whl']` -- the organizers' in-place republish of 2026-10-09 removed exactly that wheel |
+
+Version 3 therefore installs the wheelhouse the way the reviewed runtime already does (drop the
+`cutlass*.pth` shims, normalise the directory names from wheel METADATA, `pip install --no-index
+--no-deps`, then prove `import vllm` in a fresh interpreter) and treats only vLLM and its runtime
+dependencies as required, recording `swegemma`'s absence as drift. The wheelhouse is still the same
+dataset version-1 mount, so the two failures are properties of the image and the dataset, not of the
+probe logic: version 1 and 2 both proved the embedded adapter stages correctly on Kaggle, with hashes
+matching the local probe byte for byte and the base model mount present at
+`/kaggle/input/models/google/gemma-4/other/gemma-4-31b-it-qat-w4a16-ct/2`.
+
+Interpreter note for the SFT route, from the same logs: this GPU image reports
+`/usr/local/lib/python3.12/dist-packages`, while the CPU control-sweep image reports `python3.13`. The
+offline training wheel set is cp312, so it is correct for a GPU notebook on this image.
+
 ## Open questions that only a run can answer
 
 - Does the competition's patched 0.19.1 apply LoRA to a compressed-tensors W4A16 Gemma 4, and does it

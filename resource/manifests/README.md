@@ -31,7 +31,7 @@ workspace; those artifacts are not included in a Git clone.
 | [snapshots-audit.json](snapshots-audit.json) | Repository archive structure |
 | [wheels-audit.json](wheels-audit.json) | Competition test-wheel inventory inspection |
 | [sample-adapters.json](sample-adapters.json) | Supplied adapter examples; not team training evidence |
-| [training-wheels-sft-v1.json](training-wheels-sft-v1.json) | Hashed offline SFT wheel inventory (Linux/CPython 3.12) and the version constraints measured by `scripts/check_training_stack.py` |
+| [training-wheels-sft-v1.json](training-wheels-sft-v1.json) | Hashed offline SFT wheel inventory (Linux/CPython 3.12, `interpreter_abi: cp312`) and the version constraints measured by `scripts/check_training_stack.py`; `scripts/record_training_wheels.py` refuses to record a set whose binary wheels carry another cp3xx tag |
 | model-modules.json (**not yet recorded**) | Real projection names and shapes of the loaded base model, from `scripts/probe_model_modules.py`; takes precedence over the sample adapter as LoRA target evidence once it exists |
 | [harness-wheels.json](harness-wheels.json) | Official harness package metadata |
 | [research-collection.json](research-collection.json) | Coverage of pages, notebooks, discussions, models, and rankings |

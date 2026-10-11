@@ -33,9 +33,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 OFFICIAL_METADATA = ROOT / 'resource/notebooks/official/kernel-metadata.json'
+WHEELHOUSE_MANIFEST = ROOT / 'resource/manifests/eval-wheelhouse-2026-10-09.json'
 BASE_MODEL_HANDLE = 'google/gemma-4/other/gemma-4-31b-it-qat-w4a16-ct/2'
 MODEL_SOURCE = 'google/gemma-4/Other/gemma-4-31b-it-qat-w4a16-ct/2'
 MODEL_PATH = '/kaggle/input/models/google/gemma-4/other/gemma-4-31b-it-qat-w4a16-ct/2'
+WHEELHOUSE_SOURCE = 'metric/gemma-4-developer-agent-wheelhouse'
 PROMPT = 'Count from 2 to 29, listing only the prime numbers, separated by commas.'
 # Mirrors the patched build the scorer uses; see resource/manifests/eval-wheelhouse-2026-10-09.json.
 VLLM_VERSION = '0.19.1'
@@ -140,6 +142,89 @@ print('Input mounts:', inputs, flush=True)
          adapter_weights_bytes=ADAPTER_WEIGHTS_BYTES,
          model_path=str(MODEL_PATH), model_handle={MODEL_SOURCE!r},
          vllm_version={VLLM_VERSION!r}), indent=2) + '\\n', encoding='utf-8')
+'''
+
+
+def build_install(manifest: dict) -> str:
+    hashes = {item['path']: item['sha256'] for item in manifest['wheelhouse_files']}
+    # vLLM and its runtime dependencies are the only wheels this probe cannot run without. The
+    # organizers republished the wheelhouse in place on 2026-10-09 (swegemma 0.2.10 -> 0.2.11), so a
+    # missing non-critical wheel is recorded as drift instead of aborting the run.
+    required = ['vllm', 'transformers', 'compressed_tensors', 'xgrammar', 'flashinfer_python',
+                'flashinfer_cubin', 'bitsandbytes', 'tokenizers', 'safetensors']
+    return f'''import glob, json, subprocess, sys, zipfile
+from pathlib import Path
+
+# The starter and official images do not ship vLLM: a first attempt to run this probe failed at
+# `ModuleNotFoundError: No module named 'vllm'`. The patched build is not on PyPI either, so the only
+# offline source is the wheelhouse mount. Every wheel's identity is checked against the reviewed
+# manifest before installation.
+WHEELHOUSE_HASHES = {hashes!r}
+REQUIRED_PACKAGES = {required!r}
+WORK = Path('/kaggle/working/lora-serving-probe') if Path('/kaggle/working').is_dir() \\
+    else Path.cwd() / 'lora-serving-probe'
+candidates = [Path('/kaggle/input/datasets/metric/gemma-4-developer-agent-wheelhouse'),
+              Path('/kaggle/input/gemma-4-developer-agent-wheelhouse'),
+              Path('/kaggle/input/gemma-4-developer-agent-wheelhouse/gemma-4-developer-agent-wheelhouse')]
+WHEELS = next((path for path in candidates if path.is_dir()), None)
+assert WHEELS is not None, 'Wheelhouse mount missing; attach ' + {WHEELHOUSE_SOURCE!r} + ' to this kernel.'
+
+import hashlib
+mounted = {{path.name: path for path in sorted(WHEELS.glob('*.whl'))}}
+missing = sorted(set(WHEELHOUSE_HASHES) - set(mounted))
+mismatched = [name for name, expected in WHEELHOUSE_HASHES.items()
+              if name in mounted and hashlib.sha256(mounted[name].read_bytes()).hexdigest() != expected]
+absent_required = [package for package in REQUIRED_PACKAGES
+                   if not any(name.startswith(package + '-') for name in mounted)]
+assert not absent_required, f'Wheelhouse is missing required packages: {{absent_required}}'
+
+# Mirror the reviewed runtime path: drop the cutlass .pth shims, then install every mounted wheel
+# offline with --no-deps so nothing reaches for the network.
+for pattern in ('/usr/local/lib/python*/dist-packages/*cutlass*.pth',
+                '/usr/local/lib/python*/site-packages/*cutlass*.pth'):
+    for shim in glob.glob(pattern):
+        Path(shim).unlink(missing_ok=True)
+normalized = Path('/tmp/gemma4-probe-wheels')
+normalized.mkdir(exist_ok=True)
+packages = []
+for name in sorted(mounted):
+    source = mounted[name]
+    if 'cutlass' in source.name.lower():
+        continue
+    with zipfile.ZipFile(source) as archive:
+        metadata = next(entry for entry in archive.namelist() if entry.endswith('.dist-info/METADATA'))
+        version = next(line[9:] for line in archive.read(metadata).decode().splitlines()
+                       if line.startswith('Version: '))
+    parts = source.name.split('-')
+    parts[1] = version
+    target = normalized / '-'.join(parts)
+    if not target.exists():
+        target.symlink_to(source)
+    packages.append(str(target))
+with (WORK / 'installation.log').open('w') as log:
+    completed = subprocess.run([sys.executable, '-m', 'pip', 'install', '--no-index', '--no-deps',
+                                '--force-reinstall', *packages], stdout=log, stderr=subprocess.STDOUT)
+
+# Prove the import in a fresh interpreter so an installed-but-unimportable vLLM cannot pass silently.
+probe = subprocess.run(
+    [sys.executable, '-c', 'import json, vllm; print(json.dumps({{"vllm": vllm.__version__}}))'],
+    capture_output=True, text=True)
+(WORK / 'install-result.json').write_text(json.dumps({{
+    'wheelhouse': str(WHEELS), 'mounted_wheels': len(mounted),
+    'reviewed_wheels': len(WHEELHOUSE_HASHES),
+    'absent_reviewed_wheels': missing, 'hash_mismatches': mismatched,
+    'absent_required_packages': absent_required,
+    'mounted_names': sorted(mounted), 'installed': len(packages),
+    'pip_returncode': completed.returncode,
+    'pip_log_tail': (WORK / 'installation.log').read_text(errors='replace')[-1500:],
+    'import_returncode': probe.returncode,
+    'import_stdout': probe.stdout.strip()[-500:], 'import_stderr': probe.stderr.strip()[-2000:],
+}}, indent=2) + '\\n', encoding='utf-8')
+print('Wheelhouse:', WHEELS, '| mounted', len(mounted), '| absent', missing,
+      '| hash mismatches', mismatched, flush=True)
+print('vLLM import:', probe.returncode, probe.stdout.strip()[-200:], flush=True)
+assert completed.returncode == 0, 'Wheelhouse installation failed; see install-result.json'
+assert probe.returncode == 0, 'vLLM is not importable after installing the wheelhouse; see install-result.json'
 '''
 
 
@@ -300,6 +385,7 @@ def main() -> int:
         return check_output(args.output.resolve(), adapter)
 
     official = json.loads(OFFICIAL_METADATA.read_text(encoding='utf-8'))
+    wheelhouse = json.loads(WHEELHOUSE_MANIFEST.read_text(encoding='utf-8'))
     notebook = {
         'nbformat': 4, 'nbformat_minor': 4,
         'metadata': {'kernelspec': {'display_name': 'Python 3', 'language': 'python',
@@ -311,8 +397,11 @@ def main() -> int:
                  f"{adapter['config']['r']}, targets {adapter['targets']}) and compares greedy vLLM\n"
                  'logprobs between the base model name and the adapter name on one fixed prompt, on the\n'
                  'competition base. It trains nothing, needs no competition submission, and spends one\n'
-                 'short L4x4 session. Identical logprobs mean LoRA is inert on this stack.\n'),
+                 'short L4x4 session. Identical logprobs mean LoRA is inert on this stack.\n\n'
+                 'Cells: (1) stage and hash-verify the embedded adapter, (2) install the reviewed\n'
+                 'wheelhouse offline and prove `import vllm`, (3) run the paired logprob probe.\n'),
             cell('code', build_setup(adapter, args.model_path)),
+            cell('code', build_install(wheelhouse)),
             cell('code', build_probe()),
         ],
     }
@@ -357,6 +446,7 @@ def main() -> int:
     print(json.dumps({'kernel': metadata['id'], 'output': str(args.output),
                       'tensors': len(adapter['tensors']), 'assets': len(adapter['targets']),
                       'weights_bytes': adapter['weights_bytes'],
+                      'reviewed_wheels': len(wheelhouse['wheelhouse_files']),
                       'notebook_bytes': (args.output / 'probe.ipynb').stat().st_size}, indent=2))
     return 0
 
@@ -382,12 +472,14 @@ def check_output(output: Path, adapter: dict) -> int:
         preparation['adapter_config_sha256'] == adapter['config_sha256'],
         preparation['adapter_weights_bytes'] == adapter['weights_bytes'],
         f"ADAPTER_WEIGHTS_SHA256 = {adapter['weights_sha256']!r}" in ''.join(code_cells[0]['source']),
+        f'vllm-{VLLM_VERSION}-' in ''.join(code_cells[1]['source']),
     ])
     return finish_check({
         'status': 'ok' if identity_ok else 'mismatch',
         'output': str(output), 'code_cells': len(code_cells),
         'tensors': len(adapter['tensors']),
         'adapter_weights_sha256': adapter['weights_sha256'],
+        'vllm_wheel_pinned': f'vllm-{VLLM_VERSION}-' in json.dumps(notebook),
         'identity_fields_match': identity_ok,
     })
 

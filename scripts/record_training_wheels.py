@@ -12,11 +12,17 @@ was actually proven to train and export an adapter by `scripts/check_training_st
 The wheel set itself is not committed; regenerate it for the target platform with:
 
     python -m pip download --no-deps --only-binary=:all: \
-        --platform manylinux2014_x86_64 --python-version 3.12 --implementation cp --abi cp312 \
+        --platform manylinux2014_x86_64 --python-version 3.13 --implementation cp --abi cp313 \
         --dest artifacts/training-wheels \
         --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple \
         peft==0.21.2 trl==0.24.0 accelerate==1.15.0 datasets==5.1.0 \
         "huggingface-hub>=1.5.0,<2.0" pandas multiprocess dill xxhash pyarrow
+
+The `--python-version`/`--abi` pair must match the interpreter of the image that will run the notebook,
+and this script refuses to record a set whose binary wheels carry a different ABI tag. Two Kaggle
+images disagree: a GPU notebook on the competition wheelhouse image reports
+`/usr/local/lib/python3.12/dist-packages`, while the CPU notebook image reports `python3.13`. The
+training notebook pins the wheelhouse image, so cp312 is correct there.
 
 Then publish that directory as a private Kaggle dataset and pass it to
 `scripts/prepare_lora_notebook.py` as `--wheels-dir`/`--wheels-source`.
@@ -51,9 +57,32 @@ CONSTRAINTS = [
     'fused path needs the trl kernels extension. Without it, training dies with '
     "AttributeError: 'NoneType' object has no attribute 'apply'. Use trl 0.24.0.",
     'datasets needs pandas and multiprocess at import time; neither is in the competition wheelhouse.',
-    'target platform is CPython 3.12 on manylinux2014_x86_64; local verification ran on Windows '
-    'CPython 3.14, so the wheels here are the Linux builds of the verified version set.',
+    'the interpreter tag must match the image that will run the notebook: the wheelhouse/CUDA image '
+    'reports /usr/local/lib/python3.12/dist-packages, while a CPU notebook without the wheelhouse image '
+    'reports python3.13. A cp312 set is correct for a GPU notebook on the competition image and is '
+    'rejected by a 3.13 interpreter, so check the image before trusting either one.',
 ]
+
+
+def wheel_tags(filename: str) -> tuple[str, str]:
+    """Return (python tag, abi tag) from a wheel filename."""
+    stem = filename[:-4] if filename.endswith('.whl') else filename
+    parts = stem.split('-')
+    if len(parts) < 5:
+        raise SystemExit(f'cannot parse wheel filename: {filename}')
+    return parts[-3], parts[-2]
+
+
+def abi_set(wheels: list[Path]) -> dict:
+    """Classify wheels by interpreter tag so a wrong-target set cannot be recorded as ready."""
+    classified = {'pure_python': [], 'binary': {}}
+    for path in wheels:
+        python_tag, abi_tag = wheel_tags(path.name)
+        if abi_tag == 'none' and python_tag.startswith('py'):
+            classified['pure_python'].append(path.name)
+        else:
+            classified['binary'].setdefault(abi_tag, []).append(path.name)
+    return classified
 
 
 def wheel_name(filename: str) -> tuple[str, str]:
@@ -63,10 +92,19 @@ def wheel_name(filename: str) -> tuple[str, str]:
     return match.group('name').replace('_', '-'), match.group('version')
 
 
-def build(wheels_dir: Path) -> dict:
+def build(wheels_dir: Path, python_version: str) -> dict:
     wheels = sorted(wheels_dir.glob('*.whl'))
     if not wheels:
         raise SystemExit(f'no wheels in {wheels_dir}')
+    classified = abi_set(wheels)
+    expected_abi = 'cp' + python_version.replace('.', '')
+    # `none`/`py3` wheels and the stable-ABI `abi3` tag install on any 3.x; a cp3xx tag does not.
+    unexpected = {abi: names for abi, names in classified['binary'].items()
+                  if abi.startswith('cp3') and abi != expected_abi}
+    if unexpected:
+        raise SystemExit(
+            f'binary wheels do not match the declared target CPython {python_version}: '
+            f'{ {abi: names for abi, names in unexpected.items()} }')
     inventory = []
     for path in wheels:
         name, version = wheel_name(path.name)
@@ -80,7 +118,10 @@ def build(wheels_dir: Path) -> dict:
     return {
         'recorded_at': datetime.now(timezone.utc).isoformat(),
         'purpose': 'Offline SFT dependencies to attach as a Kaggle dataset input',
-        'target_platform': 'CPython 3.12, manylinux2014_x86_64',
+        'target_platform': f'CPython {python_version}, manylinux2014_x86_64',
+        'interpreter_abi': expected_abi,
+        'pure_python_wheels': len(classified['pure_python']),
+        'binary_wheel_abis': {abi: len(names) for abi, names in sorted(classified['binary'].items())},
         'wheel_count': len(inventory),
         'total_bytes': sum(item['bytes'] for item in inventory),
         'verified_versions': VERIFIED_VERSIONS,
@@ -97,14 +138,17 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('--wheels-dir', type=Path, required=True)
+    parser.add_argument('--python-version', default='3.12',
+                        help='Interpreter of the image that will install these wheels')
     parser.add_argument('--output', type=Path,
                         default=ROOT / 'resource/manifests/training-wheels-sft-v1.json')
     args = parser.parse_args()
-    result = build(args.wheels_dir.resolve())
+    result = build(args.wheels_dir.resolve(), args.python_version)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, indent=2) + '\n', encoding='utf-8')
     print(json.dumps({k: result[k] for k in
-                      ('wheel_count', 'total_bytes', 'target_platform')}, indent=2))
+                      ('wheel_count', 'total_bytes', 'target_platform', 'interpreter_abi',
+                       'binary_wheel_abis')}, indent=2))
     for item in result['wheels']:
         print(f"  {item['package']:18s} {item['version']:10s} {item['sha256'][:12]}...")
     print(f'wrote {args.output}')

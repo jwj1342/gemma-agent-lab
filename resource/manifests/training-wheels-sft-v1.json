@@ -1,7 +1,12 @@
 {
-  "recorded_at": "2026-10-10T18:37:51.742882+00:00",
+  "recorded_at": "2026-10-11T05:19:05.910099+00:00",
   "purpose": "Offline SFT dependencies to attach as a Kaggle dataset input",
   "target_platform": "CPython 3.12, manylinux2014_x86_64",
+  "interpreter_abi": "cp312",
+  "pure_python_wheels": 7,
+  "binary_wheel_abis": {
+    "cp312": 3
+  },
   "wheel_count": 10,
   "total_bytes": 58045422,
   "verified_versions": {
@@ -18,7 +23,7 @@
     "transformers==5.13.1 (the wheelhouse version) requires huggingface-hub>=1.5.0,<2.0; 2.2.0 raises ImportError at transformers import time.",
     "trl 1.15.0 patches a fused LM head in SFTTrainer.__init__ and calls it on every step, but the fused path needs the trl kernels extension. Without it, training dies with AttributeError: 'NoneType' object has no attribute 'apply'. Use trl 0.24.0.",
     "datasets needs pandas and multiprocess at import time; neither is in the competition wheelhouse.",
-    "target platform is CPython 3.12 on manylinux2014_x86_64; local verification ran on Windows CPython 3.14, so the wheels here are the Linux builds of the verified version set."
+    "the interpreter tag must match the image that will run the notebook: the wheelhouse/CUDA image reports /usr/local/lib/python3.12/dist-packages, while a CPU notebook without the wheelhouse image reports python3.13. A cp312 set is correct for a GPU notebook on the competition image and is rejected by a 3.13 interpreter, so check the image before trusting either one."
   ],
   "verification": "scripts/check_training_stack.py ran 3 SFT steps on a tiny causal LM with this version set: loss 5.4698 -> 5.4269, adapter exported (66,584 bytes, 8 LoRA tensors) and reloaded with matching weights",
   "provided_by_starter_image": [
