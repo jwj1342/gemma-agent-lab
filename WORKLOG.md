@@ -36,6 +36,12 @@ Ready and validated offline:
    compare greedy logprobs with and without the adapter. Unchanged logprobs means LoRA is inert and the
    whole line should be retired before spending training budget. Evidence and sources:
    `docs/experiments/2026-10-11-lora-serving-risk.md`.
+   **A runnable runner now exists** (added 2026-10-11 13:08): `scripts/prepare_lora_probe_notebook.py`
+   generates `artifacts/lora-probe-notebook/` -- an offline private L4x4 notebook with the probe
+   adapter embedded, no dataset publishing required -- and its two cells plus `--check` were verified
+   locally. It has **not been executed on a GPU**, so no verdict exists. Run it with:
+   `kaggle kernels push -p artifacts/lora-probe-notebook` (or run the same two cells on Trillium),
+   then read `probe-result.json` and the cell log.
 2. **The platform decision, which gates training.** Kaggle needs the wheel set published as a dataset
    first (the account has 0 datasets today; publishing needs the user's go-ahead, and creating
    datasets has failed with 403 on this account before). Trillium H100 can take the 62.6 GB
@@ -70,6 +76,13 @@ $env:HF_HOME     = 'E:\Desktop\CodingAI\artifacts\hf-cache'   # datasets refuses
       --agent-dir configs/experiments/lora-trajectory-v1 --task-id rich_3454 `
       --adapter-dir artifacts/lora-probe --adapter-mount /kaggle/input/gemma4-lora-probe/main_lora `
       --adapter-dataset-source <KAGGLE_USER>/gemma4-lora-probe --output artifacts/adapter-notebook
+
+# Generate the logprob probe that decides whether LoRA applies at all (no dataset publication needed),
+# then push it as a private kernel and read probe-result.json from the session output.
+& $py scripts/prepare_lora_probe_notebook.py --adapter-dir artifacts/lora-probe `
+      --owner <KAGGLE_USER> --slug gemma4-lora-serving-probe --output artifacts/lora-probe-notebook
+& $py scripts/prepare_lora_probe_notebook.py --adapter-dir artifacts/lora-probe `
+      --owner <KAGGLE_USER> --output artifacts/lora-probe-notebook --check
 ```
 
 ### Environment facts that cost time to rediscover
@@ -139,6 +152,18 @@ $env:HF_HOME     = 'E:\Desktop\CodingAI\artifacts\hf-cache'   # datasets refuses
 - Programming v1 is implemented as a prompt-only planning-gate experiment with localization and all runtime settings fixed. Its paired smoke test found no resolution gain, only 1/2 complete plan compliance, higher latency and edit churn, and fewer failed tool calls; keep it as an ablation and retain retrieval v1 as the control.
 
 ## Work history
+
+### 2026-10-11 13:08 (Asia/Shanghai) - The serving check gained a runnable, offline-verified probe notebook
+
+- Objective: continue last night's work by advancing its self-declared highest-value, no-training item -- deciding whether LoRA is applied at all when serving the compressed-tensors W4A16 competition base -- without spending GPU quota before the user picks the execution route.
+- Gap found by inspection, not assumption: `scripts/prepare_kaggle_runtime.py` stages and hash-verifies a mounted adapter, but it runs the official harness end to end and **measures no logprobs**. The plan written at 07:20 ("compare greedy logprobs with and without the adapter") therefore had no executor. The probe adapter itself did exist and was re-checked this round: `artifacts/lora-probe/` holds `adapter_config.json` plus `adapter_model.safetensors` (434,760 bytes, rank 8, `q_proj`/`o_proj`), and `scripts/check_lora_adapter.py` still exits 0 with `served_max_lora_rank: 32`, `max_loras: 1`.
+- Delivery: `scripts/prepare_lora_probe_notebook.py` (new) generates a private, offline L4x4 notebook (`probe.ipynb`, 512,266 bytes) that embeds the loud adapter as gzip+base85 -- so **no Kaggle dataset publication is needed**, removing the 403-prone step -- proves its SHA256 before vLLM sees it, and then compares greedy logprobs on one fixed prompt between the base model name and the adapter name: `LLM(..., tensor_parallel_size=4, max_model_len=4096, gpu_memory_utilization=0.90, enable_lora=True, max_loras=1, max_lora_rank=128)` with `SamplingParams(temperature=0, max_tokens=40, logprobs=3)` and `LoRARequest('main_lora', 1, ADAPTER)`. The constructor arguments mirror the harness defaults in `resource/harness-source/adk_submission/server.py` instead of inventing a different server, and the model handle (`google/gemma-4/Other/gemma-4-31b-it-qat-w4a16-ct/2`) plus the official `dockerImage` come from the existing generators and `resource/notebooks/official/kernel-metadata.json`.
+- Why the result is readable either way: the probe cell records, in `probe-result.json`, the first eight top-logprob positions of both arms, token-id and text differences, and the engine's own LoRA log lines split into `Successfully loaded LoRA weights for module ...` and `No LoRA weights found for module ...decoder_layers.N...`. Identical logprobs with loads *followed by* alias skips is the exact wipe of [discussion 743508](../../resource/discussions/743508.txt); loads only is the upstream #50059 pattern; no loads at all means the adapter never reached the engine. Each case gets a distinct verdict string rather than one undifferentiated "no change".
+- Self-inflicted defect caught by running the cells, not by reading them: the first version's probe cell relied on globals defined in the staging cell (`WORK`, `MODEL_PATH`, `PROBE`) and died with `NameError: name 'WORK' is not defined` under independent execution. The probe cell now re-derives every constant from `probe-config.json`, which the staging cell writes; the second generation was re-verified from scratch.
+- Verification actually executed offline (no GPU, no vLLM, no base weights): the staging cell ran standalone and reproduced both adapter files byte-identically (`adapter_config.json` `6a3cb6d1df48b8fb…`, `adapter_model.safetensors` `b43e139956c95f2a…`); the probe cell exits 1 at an explicit "Base model mount is missing" wall instead of silently doing nothing; `--check` returns `status: ok` and `identity_fields_match: true`, and returns 1 with `status: mismatch` on a one-byte tamper of the weights; generating into an existing `--output` exits 1; an adapter directory without `adapter_model.safetensors` exits 1 and writes nothing. All 32 relative links in the touched documentation resolve.
+- Honest scope limit: **no GPU session has run and no verdict exists.** The probe cannot be exercised past the mount check locally, because vLLM is not installed in this workspace; that wall is verified behaviour, not a working measurement. GPU quota is untouched at 102,698.778 s of 108,000 s (refresh 2026-10-17), checked this round.
+- Changed files: `scripts/prepare_lora_probe_notebook.py` (new), `docs/experiments/2026-10-11-lora-serving-risk.md` (runnable-probe section), `docs/README.md`, `configs/experiments/lora-trajectory-v1/README.md`, `WORKLOG.md`. Generated and gitignored: `artifacts/lora-probe-notebook/{probe.ipynb,kernel-metadata.json,preparation.json}` and `artifacts/quota-2026-10-11.json`. `resource/competition/accelerator-quota-normalized.json` remains unwritable, which is why the quota receipt went under `artifacts/`.
+- Remaining follow-up: the user decides how to run it -- (a) push `artifacts/lora-probe-notebook` as a private Kaggle kernel (`kaggle kernels push`) for one short L4x4 session, or (b) run the same two cells on Trillium H100. Everything else in the LoRA line still waits behind that result: training, the platform/wheel-dataset decision, and the measurement instrument (still 4 control-valid tasks, 78 needed for a 10-point gain at 80% power).
 
 ### 2026-10-11 07:20 (Asia/Shanghai) - Serving-path risk established from upstream evidence, and a no-training probe built to settle it
 

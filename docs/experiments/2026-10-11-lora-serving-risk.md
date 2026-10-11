@@ -67,6 +67,47 @@ This test costs one short serving session on the competition model, with no trai
 quality claims. It should run **before** any SFT budget is spent, and its result should be recorded
 either way, because a negative result retires the whole LoRA line and saves the remaining work.
 
+## The runnable probe (built 2026-10-11, not yet executed)
+
+`scripts/prepare_lora_probe_notebook.py` turns that plan into one private L4x4 notebook. It embeds the
+probe adapter as gzip+base85 (434,760 bytes, so no dataset publication is needed), proves its identity
+by SHA256 before vLLM sees it, then loads the competition base directly with vLLM and compares greedy
+logprobs between the base model name and the adapter name on one fixed prompt:
+
+```python
+LLM(model=MODEL, tensor_parallel_size=4, max_model_len=4096, gpu_memory_utilization=0.90,
+    enable_lora=True, max_loras=1, max_lora_rank=128)
+SamplingParams(temperature=0, max_tokens=40, logprobs=3)
+llm.chat([...])                                    # base
+llm.chat([...], lora_request=LoRARequest('main_lora', 1, ADAPTER))   # adapter
+```
+
+Those constructor arguments mirror the harness defaults in `resource/harness-source/adk_submission/server.py`
+(`max_model_len` 32768 there, shortened here to buy KV cache) rather than inventing a different server.
+
+```powershell
+python scripts/prepare_lora_probe_notebook.py --adapter-dir artifacts/lora-probe `
+    --owner <KAGGLE_USER> --slug gemma4-lora-serving-probe --output artifacts/lora-probe-notebook
+# then push artifacts/lora-probe-notebook as a private kernel and read the cell log
+```
+
+Verdict semantics, all emitted in `probe-result.json` together with the first eight top-logprob
+positions of both arms:
+
+| Observation | Reading |
+| --- | --- |
+| Any compared position differs, or the token ids/text differ | LoRA is applied; training is worth funding |
+| Logprobs identical, log shows loads **followed by** `No LoRA weights found for module ...decoder_layers.N` | The exact YOLO-alias wipe of [discussion 743508](../../resource/discussions/743508.txt) is still present in this wheelhouse |
+| Logprobs identical, loads only | LoRA is dropped downstream of loading (the [#50059](https://github.com/vllm-project/vllm/issues/50059) pattern) |
+| Logprobs identical, no load messages | The adapter never reached the engine |
+
+What was verified offline, and what was not: the staging cell was executed locally and reproduced both
+adapter files byte-identically (`adapter_model.safetensors` SHA256 `b43e139956c95f2a…`), the probe cell
+fails with an explicit "base model mount is missing" message when the model input is absent, `--check`
+reports `status: ok` and returns 1 on a one-byte tamper, and an incomplete adapter directory is
+refused with no output written. **No GPU session has run**, so no verdict exists yet; the notebook also
+cannot be exercised locally beyond that wall because vLLM is not installed here.
+
 ## Open questions that only a run can answer
 
 - Does the competition's patched 0.19.1 apply LoRA to a compressed-tensors W4A16 Gemma 4, and does it

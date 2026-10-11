@@ -69,8 +69,18 @@ reloads with matching weights. It proves wiring, never accuracy.
 
 Before spending a training budget, run the serving-path check in
 [the serving risk note](../../../docs/experiments/2026-10-11-lora-serving-risk.md). LoRA on a
-compressed-tensors W4A16 base has failed silently in this competition before, and
-`scripts/make_lora_probe.py` builds the loud probe adapter that settles it without any training.
+compressed-tensors W4A16 base has failed silently in this competition before,
+`scripts/make_lora_probe.py` builds the loud probe adapter that settles it without any training, and
+`scripts/prepare_lora_probe_notebook.py` embeds that adapter in one private L4x4 notebook that
+compares base-versus-adapter logprobs on the served model:
+
+```powershell
+python scripts/prepare_lora_probe_notebook.py --adapter-dir artifacts/lora-probe `
+    --owner <KAGGLE_USER> --slug gemma4-lora-serving-probe --output artifacts/lora-probe-notebook
+```
+
+A negative result there retires the adapter line and saves the remaining budget, so this check runs
+before `--train`, not after it.
 
 ## Producing the weights
 
