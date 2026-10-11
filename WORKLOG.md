@@ -2,16 +2,32 @@
 
 This file is the persistent handoff record for work performed in this repository. Read it before starting a task and update it before finishing.
 
-## Resume point (written 2026-10-11 ~08:00 Asia/Shanghai, work paused at the user's request)
+## Resume point (updated 2026-10-11 ~15:10 Asia/Shanghai; the 08:00 section below is kept for lineage)
 
 **Read this section first; it is the state a future session needs in one place.**
 
+Current position at a glance:
+
+- The serving probe **is running on Kaggle now** (`junzhejiao/gemma4-lora-serving-probe`, version 3,
+  pushed 13:17 Asia/Shanghai). Versions 1 and 2 failed on environment defects that are now fixed; no
+  verdict exists yet, and `probe-result.json` appears only when the session ends.
+- GPU quota is therefore no longer pristine: at 14:27 it was **94,315.809 s of 108,000 s remaining**
+  (used 13,684.191 s, refresh 2026-10-17). Recheck before any new launch.
+- Two commits are on `feature/lora-serving-probe-run`: `7e4b53f` (the probe generator) and `30e413f`
+  (the Kaggle fixes). The earlier pause point was `0e49957` on `feature/localization-v1-skill`.
+- Image facts measured on the competition `dockerImage` (do not re-derive them): Python 3.12.13;
+  torch 2.10.0+cu128, transformers 5.0.0, peft 0.19.1, datasets 5.0.0, accelerate 1.13.0,
+  safetensors 0.7.0, pandas 2.3.3, pyarrow 24.0.0 present; **trl, bitsandbytes and vLLM absent**; the
+  wheelhouse mount adds transformers 5.13.1, bitsandbytes 0.46.1 and the patched vLLM 0.19.1 only.
+  The CPU image is Python 3.13, so never infer the interpreter from a CPU notebook.
+- Dataset upload from this machine is **blocked with evidence** (two attempts stalled: 40 min via CLI,
+  20 min at 0.9 s CPU via SDK, `dataset_list(mine=True)` empty both times) while read paths answer
+  instantly. Kaggle training needs the wheels to reach Kaggle another way; Trillium needs no dataset.
+
 ### Where the LoRA SFT objective stands
 
-Everything that can be done without a GPU session is done and verified. Nothing has been trained:
-no `adapter_model.safetensors` exists anywhere, and no GPU quota has been spent (102,698.778 s of
-108,000 s remain, refresh 2026-10-17). Seven commits were made on branch
-`feature/localization-v1-skill`; the newest is `0e49957`.
+Nothing has been trained: no trained `adapter_model.safetensors` exists anywhere, and the only GPU
+spend so far is the probe session above. Nine commits exist across the two feature branches.
 
 Ready and validated offline:
 
@@ -22,30 +38,27 @@ Ready and validated offline:
 | Config check | `scripts/check_lora_adapter.py` -> `status: ok` (rank 32 to vLLM bucket 32, `max_loras` 1) |
 | PEFT self-check | `scripts/train_lora_adapter.py --self-check` -> export and reload verified on a tiny model |
 | Training stack | Verified end to end: 3 SFT steps, loss 5.4698 -> 5.4269, export 66,584 bytes, reload matches |
-| Offline wheels | `artifacts/training-wheels/` (10 Linux/CPython-3.12 wheels, 55.4 MB); inventory `resource/manifests/training-wheels-sft-v1.json` |
+| Offline wheels | `artifacts/training-wheels/` (10 Linux/CPython-3.12 wheels, 55.4 MB); inventory `resource/manifests/training-wheels-sft-v1.json`, now carrying `interpreter_abi` |
 | Training notebook | `scripts/prepare_lora_notebook.py` generates it; its setup cell was executed standalone and hash-verified |
 | Adapter mounting | `scripts/prepare_kaggle_runtime.py --adapter-dir/--adapter-mount/--adapter-dataset-source` stages and hash-verifies a mounted adapter |
 | Serving probe | `artifacts/lora-probe/` built by `scripts/make_lora_probe.py` (loud random A and B, rank 8) |
+| Probe runner | `scripts/prepare_lora_probe_notebook.py` -> `artifacts/lora-probe-notebook/` (3 cells: stage, install wheelhouse, measure); `--check` reports `status: ok` |
 | Measurement | `scripts/analyze_paired_power.py`: 4 control-valid tasks, all in `rich` |
 
 ### The three things that are blocked, in priority order
 
-1. **The serving check (highest information value, needs one short GPU session).** LoRA on this
-   competition's compressed-tensors W4A16 base has silently failed before (discussion 743508) and the
-   same symptom is reported upstream for int4 bases. Run the loud probe on the competition model and
-   compare greedy logprobs with and without the adapter. Unchanged logprobs means LoRA is inert and the
-   whole line should be retired before spending training budget. Evidence and sources:
-   `docs/experiments/2026-10-11-lora-serving-risk.md`.
-   **A runnable runner now exists** (added 2026-10-11 13:08): `scripts/prepare_lora_probe_notebook.py`
-   generates `artifacts/lora-probe-notebook/` -- an offline private L4x4 notebook with the probe
-   adapter embedded, no dataset publishing required -- and its two cells plus `--check` were verified
-   locally. It has **not been executed on a GPU**, so no verdict exists. Run it with:
-   `kaggle kernels push -p artifacts/lora-probe-notebook` (or run the same two cells on Trillium),
-   then read `probe-result.json` and the cell log.
+1. **The serving check (running, result pending).** LoRA on this competition's compressed-tensors
+   W4A16 base has silently failed before (discussion 743508) and the same symptom is reported upstream
+   for int4 bases. Kernel version 3 compares greedy vLLM logprobs with and without the loud probe
+   adapter on the competition base. Unchanged logprobs means LoRA is inert and the whole line should be
+   retired before spending training budget. Evidence, the four verdicts, and the execution log:
+   `docs/experiments/2026-10-11-lora-serving-risk.md`. Next step is to read
+   `probe-result.json` (`kaggle kernels output junzhejiao/gemma4-lora-serving-probe -p <dir>`).
 2. **The platform decision, which gates training.** Kaggle needs the wheel set published as a dataset
-   first (the account has 0 datasets today; publishing needs the user's go-ahead, and creating
-   datasets has failed with 403 on this account before). Trillium H100 can take the 62.6 GB
-   unquantized QAT base and needs no dataset publishing.
+   first, and uploading it from this machine currently stalls (see above), so either publish it
+   manually through the Kaggle web UI or train on Trillium H100, which takes the 62.6 GB unquantized
+   QAT base and needs no dataset. The image already provides most of the stack, which shrinks the
+   dataset question to trl, peft and the pinned transformers.
 3. **The measurement instrument, which gates interpretability.** Only 4 control-valid tasks exist, all
    from one repository. A 10-point gain needs 78 tasks at 80% power, so even a successful adapter
    could not be read as better or worse today. Growth is CPU-side work: the control yield is 4 of 8
