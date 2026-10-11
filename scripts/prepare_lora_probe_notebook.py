@@ -277,7 +277,8 @@ STARTED = time.time()
 
 def stage(name, **fields):
     """Phases go to disk because Kaggle publishes a cell's output only when it finishes."""
-    record = json.loads(PROGRESS.read_text(encoding='utf-8')) if PROGRESS.is_file() else {{}}
+    # This cell is not an f-string, so no braces need escaping here.
+    record = json.loads(PROGRESS.read_text(encoding='utf-8')) if PROGRESS.is_file() else {}
     record[name] = dict(fields, at_seconds=round(time.time() - STARTED, 1))
     PROGRESS.write_text(json.dumps(record, indent=2) + '\\n', encoding='utf-8')
     print('[' + name + ']', json.dumps(fields), flush=True)
