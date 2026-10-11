@@ -8,17 +8,21 @@ This file is the persistent handoff record for work performed in this repository
 
 Current position at a glance:
 
-- **The serving check is answered, and the answer is positive.** The competition stack applies LoRA:
-  two base runs differ by 0.0 in logprobs, and mounting the probe adapter moves them by up to 1.187468
-  at 35/35 positions. The aliasing wipe is not present on this wheelhouse. Evidence and scope limits:
-  `docs/experiments/2026-10-11-lora-serving-risk.md`.
-- Still open before spending training budget: the **rank-32 all-layer** configuration we actually plan
-  to train has not been probed (the positive result is rank 8 on two projections of one layer), and the
-  training platform is undecided.
-- GPU quota is no longer pristine: at 16:37 it was **78,734 s of 108,000 s remaining** (used 29,265.7 s,
-  refresh 2026-10-17); recheck before any new launch.
-- Commits are on `feature/lora-serving-probe-run`: `7e4b53f`, `30e413f`, `0a09ba1`, `dd88e95`, `c2dd97e`.
-  The earlier pause point was `0e49957` on `feature/localization-v1-skill`.
+- **The serving check is answered, and the answer is positive for both configurations.** The competition
+  stack applies LoRA: two base runs differ by 0.0 in logprobs, mounting the rank-8 embedded probe moved
+  them by up to 1.187468 at 35/35 positions, and mounting a rank-32 all-layer adapter moved them by up
+  to 10.069917 while changing the greedy tokens. The aliasing wipe is not present on this wheelhouse, and
+  the #50059 wide-adapter degradation did not appear as a dropped adapter. Evidence, scope limits, and the
+  eleven-run execution log: `docs/experiments/2026-10-11-lora-serving-risk.md`.
+- What that still does not license: no **trained** adapter has ever been served, the probe used the model
+  path rather than `adk_submission.VllmServer`, and the runtime adapter's shapes were assumed from the
+  recorded evidence because the base exposes no weight index (`recorded_evidence_match: true`, with a
+  warning).
+- GPU quota is materially reduced: at 18:36 it was **59,248.937 s of 108,000 s remaining** (used
+  48,751.063 s, refresh 2026-10-17). A correct probe run costs about 8 minutes of L4x4 wall time; the rest
+  went to failures, including one session that held four GPUs for 3.5 hours after its notebook had died.
+- Commits are on `feature/lora-serving-probe-run`: `7e4b53f`, `30e413f`, `0a09ba1`, `dd88e95`, `c2dd97e`,
+  `f533707`, `9f8328c`. The earlier pause point was `0e49957` on `feature/localization-v1-skill`.
 - Image facts measured on the competition `dockerImage` (do not re-derive them): Python 3.12.13;
   torch 2.10.0+cu128, transformers 5.0.0, peft 0.19.1, datasets 5.0.0, accelerate 1.13.0,
   safetensors 0.7.0, pandas 2.3.3, pyarrow 24.0.0 present; **trl, bitsandbytes and vLLM absent**; the
@@ -53,18 +57,20 @@ Ready and validated offline:
 
 ### The three things that are blocked, in priority order
 
-1. **The rank-32 coverage question (narrower than before, and cheap).** LoRA is now measured as applied,
-   but only for rank 8 on `q_proj`/`o_proj` of one layer. Our experiment is rank 32 on those two
-   projections of every layer, and upstream issue #50059 warns specifically about wide, higher-rank
-   adapters on compressed-tensors int4 bases. Re-run the same notebook with a runtime-generated rank-32
-   probe (an embedded rank-32 adapter would blow the 1 MB notebook limit) before trusting the plan.
-2. **The platform decision, which gates training.** Kaggle needs the wheel set uploaded as a dataset
-   through the web UI, because CLI/SDK uploads from this machine stall (see above); Trillium H100 needs
-   no dataset and can take the 62.6 GB unquantized QAT base.
-3. **The measurement instrument, which gates interpretability.** Only 4 control-valid tasks exist, all
-   from one repository. A 10-point gain needs 78 tasks at 80% power, so even a successful adapter
-   could not be read as better or worse today. Growth is CPU-side work: the control yield is 4 of 8
-   attempted, and the collection-error (`exit 2`) failures are the most fixable class.
+1. **The training platform and its environment conflict (now the first gate).** The serving question is
+   answered, so training is the next step and two obstacles are measured: Kaggle needs the wheel set
+   uploaded as a dataset through the web UI because CLI/SDK uploads from this machine stall, and on the
+   competition image any notebook that imports `transformers` after installing the wheelhouse fails with
+   `Found an incompatible version of torchao. Found version 0.10.0, but only versions above 0.16.0 are
+   supported` (no torchao wheel exists in the mount). The SFT notebook must either keep the image's
+   transformers or avoid the wheelhouse upgrade. Trillium H100 needs no dataset and takes the 62.6 GB
+   unquantized QAT base.
+2. **The measurement instrument, which gates interpretability.** Only 4 control-valid tasks exist, all
+   from one repository. A 10-point gain needs 78 tasks at 80% power, so even a successful adapter could
+   not be read as better or worse today. Growth is CPU-side work: the control yield is 4 of 8 attempted,
+   and the collection-error (`exit 2`) failures are the most fixable class.
+3. **The paired no-adapter control,** which any resolution claim depends on and which cannot start before
+   a trained adapter exists.
 
 ### Exact next commands
 
