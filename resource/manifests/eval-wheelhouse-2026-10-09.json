@@ -4,6 +4,15 @@
   "dataset_id": 12049435,
   "probe": "junzhejiao/localization-runtime-input-probe/2",
   "method": "CPU notebook SHA256 of every mounted wheel; three changed wheels downloaded and hashes independently matched; static interface inspection only",
+  "observed_drift": {
+    "observed_at": "2026-10-11T09:25:00+00:00",
+    "observed_by": "junzhejiao/gemma4-lora-serving-probe (GPU image, wheelhouse mount)",
+    "namespace": "dataset_version_1_namespace_is_still_1_but_contents_changed",
+    "mounted_wheels": 41,
+    "absent": ["swegemma-0.2.10-py3-none-any.whl"],
+    "sha256_mismatch": ["adk_eval_core-0.1.0-py3-none-any.whl", "adk_submission-0.2.13-py3-none-any.whl"],
+    "note": "Same 41 filenames and the same version-1 namespace as the 2026-10-09 review, but swegemma 0.2.10 is gone and two wheels changed bytes. The install of all mounted wheels succeeded and `import vllm` returned 0.19.1 on this image, so the probe proceeds by hash-recording drift instead of refusing to run."
+  },
   "wheelhouse_files": [
     {
       "path": "adk_eval_core-0.1.0-py3-none-any.whl",

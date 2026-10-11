@@ -324,9 +324,9 @@ root_logger.addHandler(handler)
 # Construction mirrors the harness defaults (adk_submission/server.py) rather than inventing flags.
 # `enforce_eager` skips CUDA-graph capture: the probe measures whether the adapter changes the logits,
 # not throughput, and graph capture on a 31B model is the slowest part of a vLLM start-up.
-stage('engine-start', config={{key: PROBE[key] for key in
+stage('engine-start', config={key: PROBE[key] for key in
                               ('tensor_parallel_size', 'max_model_len', 'gpu_memory_utilization',
-                               'enable_lora', 'max_loras', 'max_lora_rank', 'enforce_eager')}})
+                               'enable_lora', 'max_loras', 'max_lora_rank', 'enforce_eager')})
 llm = LLM(model=str(MODEL_PATH), tensor_parallel_size=PROBE['tensor_parallel_size'],
           max_model_len=PROBE['max_model_len'], gpu_memory_utilization=PROBE['gpu_memory_utilization'],
           enable_lora=PROBE['enable_lora'], max_loras=PROBE['max_loras'],
@@ -351,6 +351,11 @@ def run(lora_request=None):
 
 base = run()
 stage('base-generated', tokens=len(base['token_ids']), text=base['text'][:80])
+# A second base run is the control that makes the comparison readable: if the engine reproduces its
+# own logprobs exactly, any base-versus-adapter difference is attributable to the adapter rather than
+# to run-to-run nondeterminism. Without this, "logprobs differ" is not evidence of anything.
+base_repeat = run()
+stage('base-repeat-generated', tokens=len(base_repeat['token_ids']), text=base_repeat['text'][:80])
 adapter = run(request)
 stage('adapter-generated', tokens=len(adapter['token_ids']), text=adapter['text'][:80])
 root_logger.removeHandler(handler)
@@ -370,11 +375,41 @@ text_changed = base['text'] != adapter['text']
 where = next((position for position in range(shared) if base['token_ids'][position]
               != adapter['token_ids'][position]), None)
 
-if changed_positions or token_ids_changed or text_changed:
-    verdict = ('applied: the serving stack honours the adapter, so a trained adapter is worth funding'
-               if text_changed or token_ids_changed else
-               'applied: the serving stack honours the adapter, and as expected a loud probe mostly '
-               'shifts the distribution rather than rewriting the text')
+
+def top_map(entries):
+    # dict(...) rather than a comprehension so the generated cell carries no set-literal ambiguity.
+    return dict((entry['position'], dict(entry['top'])) for entry in entries)
+
+
+def divergence(left, right):
+    """Per-position logprob deltas between two generations, restricted to shared positions."""
+    left_map, right_map = top_map(left['top_logprobs']), top_map(right['top_logprobs'])
+    deltas = []
+    for position in sorted(set(left_map) & set(right_map)):
+        for token_id, value in left_map[position].items():
+            if token_id in right_map[position]:
+                deltas.append(abs(value - right_map[position][token_id]))
+    return deltas
+
+
+noise = divergence(base, base_repeat)
+signal = divergence(base, adapter)
+noise_max = max(noise) if noise else 0.0
+signal_max = max(signal) if signal else 0.0
+# The adapter is only credited when its effect exceeds what the engine produces on its own.
+reproducible = bool(noise) and noise_max <= 1e-6
+attributable = bool(signal) and signal_max > max(noise_max, 1e-6)
+changed_positions = changed_positions if attributable else []
+
+if attributable:
+    verdict = ('applied: the engine reproduces its own logprobs exactly, and mounting the adapter moves '
+               'them (mostly the distribution, with the same greedy text)'
+               if not (text_changed or token_ids_changed) else
+               'applied: the engine reproduces its own logprobs exactly, and mounting the adapter changes '
+               'the generated tokens')
+elif not reproducible:
+    verdict = ('inconclusive: two base runs already differ in logprobs, so this engine is not '
+               'reproducible and a base-versus-adapter difference cannot be attributed to the adapter')
 elif loaded and skipped:
     verdict = ('inert: the engine loaded the adapter under the layer names and then skipped the YOLO '
                'decoder aliases, which is the exact aliasing wipe of discussion 743508')
@@ -390,8 +425,11 @@ if not base['top_logprobs'] or not adapter['top_logprobs']:
 
 finish(
     'measured',
-    applied=bool(changed_positions or token_ids_changed or text_changed),
+    applied=bool(changed_positions or (attributable and (token_ids_changed or text_changed))),
     verdict=verdict,
+    engine_reproducible=reproducible,
+    base_repeat_noise_max_abs_logprob_delta=round(noise_max, 8),
+    base_vs_adapter_max_abs_logprob_delta=round(signal_max, 8),
     compared_positions=shared,
     changed_logprob_positions=len(changed_positions),
     first_changed_position=where if where is not None else (changed_positions[0] if changed_positions else None),
@@ -400,6 +438,7 @@ finish(
     base_text=base['text'], adapter_text=adapter['text'],
     base_token_ids=base['token_ids'][:16], adapter_token_ids=adapter['token_ids'][:16],
     base_top_logprobs=base['top_logprobs'][:8], adapter_top_logprobs=adapter['top_logprobs'][:8],
+    base_repeat_top_logprobs=base_repeat['top_logprobs'][:8],
     lora_loaded_modules=len(loaded), lora_skipped_modules=len(skipped),
     lora_skip_example=skipped[0] if skipped else None,
     lora_load_example=loaded[0] if loaded else None,
