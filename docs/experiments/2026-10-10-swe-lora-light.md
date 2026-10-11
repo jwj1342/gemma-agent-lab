@@ -1,15 +1,20 @@
 # Bounded SWE LoRA training and evaluation
 
-The current corrective recipe uses 128 actions and one epoch, ending after 32
-updates before autonomous acceptance checks. The preceding 512-action recipe
-stopped at its partial behavioral gate. The initial 1,024-action recipe was
-stopped at update 32 when a real task exposed repeated actions after a successful
-submission. The user requested a small training/evaluation loop before further
-scaling. The earlier four-GPU replacement jobs (`1071755`,
-`1071772`, `1071773`, `1071774`) were cancelled before starting; their elapsed
-compute time is zero. Existing artifacts and provenance are retained.
+The compact loop completed data construction, one training epoch, checkpoint
+recovery, official quantized serving, real tool interaction and a matched local
+evaluation. **The adapter is not a release candidate:** patch resolution was
+3/11 versus the baseline's 2/11, but clean nonempty completion fell from 8/11 to
+4/11. Both resolved and clean was 2/11 for each. The registered three-task
+acceptance gate also failed. No competition upload or reliable score gain is
+claimed. The implementation and evidence are ready for teammate review in
+[PR #8](https://github.com/jwj1342/gemma-agent-lab/pull/8).
 
-## Current measured stage: 128-action training completed
+The recipe uses 128 actions, one epoch and 32 updates. It replaces earlier
+bounded attempts described below; all original failures and artifacts remain
+available. The earlier four-GPU replacement jobs (`1071755`, `1071772`,
+`1071773`, `1071774`) were cancelled before starting and used no compute time.
+
+## Completed training: 128 actions and 32 updates
 
 Run `runs/20261010-swe-lora-protocol-r2/`, frozen at
 `1fcc891bd7a44adce6b7cc2b08f488b3dd933a7e`, completed one epoch and 32 updates.
@@ -17,10 +22,18 @@ Job `1072976` used one H100 for 15m47s (0.263 physical GPU hours), including
 fixture generation, encoding, memory checks, training and checkpoint recovery.
 Repository checks and 76 tests passed in the allocation and in
 [CI run 38093147750](https://github.com/jwj1342/gemma-agent-lab/actions/runs/38093147750).
-Official serving passed and the first real task completed and resolved.
-FastAPI subsequently exceeded its inference time limit, so the three-task
-release gate has not passed. All three probes now have recorded outcomes;
-the fixed fast comparison is in progress. No improvement or release is claimed.
+Official serving passed and the first real task completed and resolved. All
+three registered probes and the fixed fast comparison now have recorded
+outcomes. FastAPI exceeded its inference time limit, so the original three-task
+release gate remains failed. Passing CI and completing evaluation do not change
+that candidate-level decision.
+
+The recipe is standard text-attention/MLP LoRA with rank 16, alpha 32, LR 2e-5,
+4K context, a one-action microbatch and accumulation four. Each action's mean
+target-token loss receives equal weight. Its 64 terminal exercises emphasize
+ending after submission; the 32 SWE actions are a small coverage sample, not a
+large repair-training corpus. The configuration is
+[swe-lora-light-protocol.json](../../configs/training/swe-lora-light-protocol.json).
 
 | Training source | Actions | Snapshot/fixture groups | Input tokens | Target tokens |
 | --- | ---: | ---: | ---: | ---: |
@@ -49,11 +62,25 @@ uninterrupted run was not tested.
 | Termination | 3.520047 | 2.961483 | 1.622376 |
 
 These likelihood changes do not establish convergence or repair gains.
+The fixed short serving probes also separate valid syntax from useful choice:
+
+| Short serving probe | Base | Adapter |
+| --- | ---: | ---: |
+| SWE schema-valid calls | 4/4 | 4/4 |
+| SWE expected tool | 4/4 | 3/4 |
+| Graph schema-valid calls | 3/4 | 3/4 |
+| Graph expected tool | 3/4 | 2/4 |
+| Terminal final answer | 4/4 | 4/4 |
+
+Both models used thinking disabled for these short probes; autonomous evaluation
+retained the baseline thinking configuration. Loading and measurable weight
+effect passed, while the short tool-choice results do not show an improvement.
+
 After the environment corrections below, acceptance recovery job `1073459`
 passed rich but failed FastAPI's completion gate; release job `1073460` was
-cancelled without starting. Diagnostic jobs `1073600` and `1073601` finish the
-third probe and the fixed comparison without promoting the adapter. Neither
-job retrains it. The training evidence,
+cancelled without starting. Diagnostic jobs `1073600` and `1073601` completed the
+third probe and fixed comparison without promoting or retraining the adapter.
+The training evidence,
 sample coverage, source hashes and recovery receipt are under this run's
 `training-evidence.json`, `encoded-data/manifest.json` and `recovery-gate.json`.
 
@@ -74,10 +101,10 @@ failed model prediction. The release dependency was cancelled without running.
 
 The runner now applies the existing setup to single-task and batch execution.
 A regression test exercises both orchestration paths and requires isolation
-before verification. Validation is retried in a separate output directory with
-the exact completed adapter and the same three tasks; all controls are rerun.
+before verification. Validation was retried in a separate output directory with
+the exact completed adapter and the same three tasks; all controls were rerun.
 The trained model and its data/configuration contract stay unchanged. The final
-fast comparison will still reuse the baseline's frozen batch runtime, where
+fast comparison reused the baseline's frozen batch runtime, where
 this setup was already active.
 
 Validation source is `84d191dad10501d4ff89a558070903fc0f7722bf`;
@@ -146,19 +173,110 @@ justify replacing the recorded failure with a pass. The original result remains
 unresolved. Job `1073600` completed independent FastAPI grading and the Requests
 probe in 14m04s on one H100. None of the three traces used a graph tool.
 
-The frozen fast evaluation (`1073601`) has matching runtime, task, model, budget
-and verification hashes, the same valid-control mask as the baseline, and 12
-control-cache hits. Its results are pending.
+### Fixed fast comparison: completed
+
+Job `1073601` completed in 58m41s on one H100. It used matching runtime, task,
+model, budget and verification hashes, the same valid-control mask as
+`runs/20261009-prompt-icl/baseline/fast`, and 12 control-cache hits. All 11 eligible
+tasks were evaluated; `fastapi_15745` remained excluded because its reference
+control failed in both runs. The baseline prompt, 4-minute agent budget,
+40 budgeted calls, 80 LLM turns, seed 42, 32K inference context and concurrency
+one were unchanged.
+
+| Metric | Matched baseline | Compact LoRA |
+| --- | ---: | ---: |
+| Environment coverage | 11/12 | 11/12 |
+| Patch passed official verification | 2/11 | 3/11 |
+| Clean completion with a nonempty patch | 8/11 | 4/11 |
+| Both resolved and clean | 2/11 | 2/11 |
+| Session timeouts | 2 | 5 |
+| Turn-limit failures | 0 | 1 |
+| Graph-tool calls across all 11 traces | 0 | 0 |
+| Inference time, excluding shared model startup | 2,393.67 s | 2,824.89 s |
+
+| Task | Baseline repair | LoRA repair | LoRA execution |
+| --- | --- | --- | --- |
+| `rich_4079` | Failed | Failed | Clean |
+| `rich_3506` | Failed | Failed | Timeout; empty patch |
+| `rich_3468` | Failed | Failed | Timeout |
+| `rich_3278` | Failed | Passed | Clean |
+| `httpx_3672` | Passed | Passed | Clean |
+| `fastapi_14455` | Failed | Failed | Timeout |
+| `fastapi_14266` | Failed | Failed | Empty patch |
+| `fastapi_15800` | Failed | Failed | Clean |
+| `fastapi_14609` | Failed | Failed | Timeout |
+| `fastapi_9753` | Failed | Failed | Timeout |
+| `requests_7502` | Passed | Passed | Turn limit; 39 submission calls |
+
+The paired patch comparison has one new success (`rich_3278`) and no lost repair
+successes. `requests_7502` passed independent grading of the recovered patch even
+though the agent exhausted its turns. Its repair success therefore does not count
+as clean completion. This fixed-cohort result is a separate registered attempt
+from the earlier single-task Requests probe; neither replaces the other.
+
+One additional solved task on an adaptively exposed 11-task development set is
+weak evidence, especially with worse completion reliability and longer inference.
+A separate 40-task baseline run (`runs/20261010-prompt-dev/baseline`) previously
+solved 3/11 on these overlapping eligible tasks. The present matched reference
+remains 2/11; that historical variability further limits interpretation.
+The 70-task protected holdout remains sealed. No graph query occurred in the
+candidate or reference traces, so this run offers no end-to-end evidence of graph
+utility despite the lower graph NLL.
+
+Short terminal checks passed in all four contexts, but the long Requests run
+still repeated submission. The next bounded investigation should check long
+interaction contexts and repeated observations, audit converted SWE actions,
+and evaluate any correction on the same frozen setup. The current training mix
+changes sampling, loss weighting and prompt context together; it cannot identify
+which factor caused the observed differences. Increasing rank, data or epochs
+without those checks is not supported by this result.
 
 ### Review and follow-up ownership
 
-After acceptance and fixed-cohort evaluation, PR #8 will request reviews from
-**KaltistEsperanta** and **liaodid**, with the measured outcomes and evidence
-manifest linked from the PR. KaltistEsperanta owns adapter/runtime review and
+PR #8 hands the completed implementation and measured evidence to
+**KaltistEsperanta** and **liaodid** for review. This is a research-code handoff;
+the adapter has not passed its release gate. KaltistEsperanta owns adapter/runtime review and
 the separate four-L4 training feasibility task (#13); liaodid owns data and
 tool-boundary auditing (#14). Four-L4 training remains unverified. The present
 BF16 training replica peaks above one L4's memory capacity; four GPUs do not
 automatically pool their memory. No full training sweep is part of this handoff.
+
+### Reproduction and artifact access
+
+The compact [evidence manifest](../../resource/manifests/swe-lora-light.json)
+records the training contract, encoded-file and adapter hashes, recovery receipt,
+individual probe results, fixed-cohort comparison and allocated GPU costs. A Git
+clone includes this evidence and the implementation. Full traces, prepared data,
+weights and HOME environments remain local; coordinate access with the maintainer.
+
+The measured run reused prepared SWE data from
+`runs/20261009-swe-lora-v1-full/swe-data` and graph data from
+`runs/20261009-swe-lora-v1-complete/graph-data`. It generated new terminal training
+fixtures while preserving `retained-terminal-validation.jsonl`. These inputs are
+identified by content hashes in `encoded-data/manifest.json`. Starting the launcher
+without those prepared inputs invokes its source-preparation defaults, including
+one SWE-smith shard, and does **not** reproduce this exact corpus automatically.
+Verify source hashes before treating another run as a replication.
+
+For a prepared Trillium workspace, use a new SCRATCH run directory, a frozen code
+checkout, the recorded prepared sources and retained terminal validation file.
+The lightweight launcher now defaults to the 128-action recipe. Passing the
+configuration explicitly also makes the choice visible when using an older
+checkout:
+
+```bash
+sbatch --time=00:30:00 --output="$RUN/train-%j.out" \
+  "$CODE/scripts/slurm_swe_lora_light.sh" "$PROJECT_ROOT" "$RUN" "$CODE" \
+  32 configs/training/swe-lora-light-protocol.json
+```
+
+`RUN`, `CODE` and `PROJECT_ROOT` are operator-provided paths; create `RUN` before
+submission. Load the recorded environments, modules and model version. Keep the
+registered three-task acceptance separate from training and stop release on its
+failure. The historical fixed comparison uses the runtime frozen with
+`runs/20261009-prompt-icl/baseline/fast`; a new evaluator version needs a matching
+baseline. A replay must preserve predictions, controls and failures instead of
+sampling until a task passes.
 
 ## Initial 1,024-action protocol
 
@@ -383,11 +501,28 @@ development task or inventing tool observations.
 
 ## Cost evidence and budget
 
+| Scope | Physical H100 hours |
+| --- | ---: |
+| Current 128-action training, preparation and recovery | 0.263 |
+| Fixed 11-task comparison allocation | 0.978 |
+| Current recipe: all training, validation attempts and diagnostics | 2.192 |
+| All bounded attempts, including preceding stopped recipes | 3.585 |
+
+The first two rows are included in the third, and the third in the fourth;
+do not add the rows. These are allocated GPU hours, including failed checks and
+CPU grading while the GPU remained allocated. Queue time, the historical full
+run and the pre-existing baseline are excluded. The matched evaluation used one
+model startup (204.17 seconds) and cached all 12 environment-control pairs; its
+runner took 3,485.64 seconds. Repeated independent startup and environment
+corrections explain why the whole investigation cost more than the 16-minute
+training run. These H100 times are not four-L4 training measurements.
+
 The earlier final continuation occupied four H100s for 9h50m11s, or 39.35 physical
 GPU hours, excluding earlier preparation/recovery and release validation. Its
-two epochs processed 92,648,546 input tokens, including repeated recent history,
-although only 4,680,468 target tokens contributed to the loss. Masking a prompt's
-loss does not remove its forward computation.
+one-epoch encoded corpus contains 92,648,546 input tokens, including repeated
+recent history, with 4,680,468 supervised target tokens. Two epochs repeat that
+corpus; these token counts are not a two-epoch total. Masking a prompt's loss
+does not remove its forward computation.
 
 That implementation used full BF16 model replicas, gradient checkpointing,
 one-example microbatches and DDP. The recorded rank-zero peak allocation was

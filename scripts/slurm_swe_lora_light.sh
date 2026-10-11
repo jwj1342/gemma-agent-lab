@@ -11,6 +11,7 @@ project_root=${1:?project root}
 run_dir=${2:?frozen run directory}
 code_root=${3:?frozen source}
 stop_after=${4:-}
-configuration=${5:-configs/training/swe-lora-light.json}
+# Reproduce the bounded 128-action pilot by default; larger recipes are explicit.
+configuration=${5:-configs/training/swe-lora-light-protocol.json}
 bash "$code_root/scripts/slurm_swe_lora_v1.sh" "$project_root" "$run_dir" "$code_root" \
   "$stop_after" "$configuration" 1

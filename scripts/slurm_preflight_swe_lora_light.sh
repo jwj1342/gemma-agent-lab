@@ -8,7 +8,7 @@
 #SBATCH --time=00:45:00
 set -eo pipefail
 project_root=${1:?project root}
-train_run=${2:?partial training run}
+train_run=${2:?training run at the registered checkpoint}
 code_root=${3:?frozen source}
 probe_name=${4:-preflight-validation}
 [[ "$probe_name" =~ ^[a-zA-Z0-9_-]+$ ]] || { echo 'probe_name must be a simple directory name' >&2; exit 2; }

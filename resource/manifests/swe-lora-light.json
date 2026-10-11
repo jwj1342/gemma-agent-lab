@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "recorded_at": "2026-10-11T00:44:53.117357+00:00",
+  "recorded_at": "2026-10-11T01:28:50.863307+00:00",
   "run_root": "runs/20261010-swe-lora-protocol-r2",
   "training_revision": "1fcc891bd7a44adce6b7cc2b08f488b3dd933a7e",
   "validation_revision": "afa0397be57554642e6be6a305a901d067dd625c",
@@ -531,6 +531,18 @@
     {
       "path": "runs/20261010-swe-lora-protocol-r2/acceptance-r3/smoke-requests_7502/infer/prediction.json",
       "sha256": "548ef65c1f533f0319b2ad1d2c60a3c24f37632d664061e9ab1da8d2909e068a"
+    },
+    {
+      "path": "runs/20261010-swe-lora-protocol-r2/fast/summary.json",
+      "sha256": "2b84f786efaba27467d46c3bc362817952cc8ffda18a15af0b09ff02f7b5ae0d"
+    },
+    {
+      "path": "runs/20261010-prompt-dev/baseline/summary.json",
+      "sha256": "3ef79f1796a5cd47040ed3a201d93031dcdf19ee52f6c9680282702962acb943"
+    },
+    {
+      "path": "runs/20261009-prompt-icl/baseline/fast/summary.json",
+      "sha256": "98800e8061afc8eedf51c753a5e52a093fb70413bba751639ca44d7fed297c7f"
     }
   ],
   "limitations": [
@@ -595,6 +607,517 @@
           "actions": 4
         }
       }
+    }
+  },
+  "fast": {
+    "cohort": "fast",
+    "benchmark_sha256": "b2d6ed557261dc2d11f6ada0fdbe7ca62f66ccf9ca90273f77fbc56ff1293d37",
+    "public_task_sha256": "ada1c9c5765053b617210654d98ceccbb2457bac1228ceafd7a265f34d90005d",
+    "agent_sha256": "be14d476d75193df0e1a8d534217a31a8ff33649c79c74c6c71a5260e9aad50e",
+    "model_sha256": "53e2e2fbd72d65edf6af3477b6950c3b4d8e456865dcdbd65530e654469d22e2",
+    "verification_identity": "ba7918b91128a2d05405ca7cf8794c96ea65883235a1f96ff8794ce3a335a80b",
+    "protocol": {
+      "tensor_parallel_size": 1,
+      "gpu_memory_utilization": 0.8,
+      "max_model_len": 32768,
+      "vllm_seed": 42,
+      "task_concurrency": 1
+    },
+    "budget_sha256": "138081c7b20242e496fe1686118905d4780d503b599618472afe6078ef256866",
+    "complete": true,
+    "selected": 12,
+    "valid_controls": 11,
+    "evaluated": 11,
+    "resolved": 3,
+    "resolution_rate": 0.2727272727272727,
+    "resolution_rate_denominator": "All fixed tasks with valid pre-inference controls, including agent failures",
+    "selected_task_success_fraction": 0.25,
+    "wilson_95_interval": [
+      0.09746059290024889,
+      0.5656453011761291
+    ],
+    "interval_limit": "Descriptive binomial interval; repository correlation and adaptive development limit inference.",
+    "completion_clean": 4,
+    "by_repository": {
+      "Textualize/rich": {
+        "selected": 4,
+        "valid_controls": 4,
+        "evaluated": 4,
+        "resolved": 1
+      },
+      "encode/httpx": {
+        "selected": 1,
+        "valid_controls": 1,
+        "evaluated": 1,
+        "resolved": 1
+      },
+      "fastapi/fastapi": {
+        "selected": 6,
+        "valid_controls": 5,
+        "evaluated": 5,
+        "resolved": 0
+      },
+      "psf/requests": {
+        "selected": 1,
+        "valid_controls": 1,
+        "evaluated": 1,
+        "resolved": 1
+      }
+    },
+    "cost": {
+      "model_startups": 1,
+      "model_startup_seconds": 204.16801087898784,
+      "inference_seconds": 2824.887709864968,
+      "verification_seconds": 282.947206131008,
+      "runner_seconds": 3485.641609654005,
+      "control_cache_hits": 12,
+      "control_cache_misses": 0,
+      "model_startups_avoided_vs_one_per_task": 10,
+      "queue_time_included": false
+    },
+    "hardware": [
+      {
+        "torch": "2.10.0+cu129",
+        "cuda": "12.9",
+        "tensor_parallel_size": 1,
+        "devices": [
+          {
+            "index": 0,
+            "name": "NVIDIA H100 80GB HBM3",
+            "total_memory_bytes": 85017493504
+          }
+        ]
+      }
+    ],
+    "tasks": [
+      {
+        "task_id": "rich_4079",
+        "repo": "Textualize/rich",
+        "controls_valid": true,
+        "resolved": false,
+        "completion_clean": true,
+        "evaluated": true,
+        "inference_error": null,
+        "verification_error": null,
+        "inference_seconds": 207.707943721005,
+        "agent_seconds": 178.12464663700666,
+        "verification_seconds": 23.54392751600244,
+        "llm_calls": 43,
+        "budgeted_tool_calls": 40,
+        "status": "tests_failed",
+        "graph_calls": 0,
+        "tool_names": {
+          "run_command": 26,
+          "read_file": 12,
+          "write_file": 2,
+          "edit_file": 1,
+          "submit_patch": 1
+        },
+        "tokens": {
+          "total_prompt_tokens": 413466,
+          "total_completion_tokens": 7225,
+          "total_cached_tokens": 0,
+          "total_tokens": 420691,
+          "total_steps": 46
+        }
+      },
+      {
+        "task_id": "rich_3506",
+        "repo": "Textualize/rich",
+        "controls_valid": true,
+        "resolved": false,
+        "completion_clean": false,
+        "evaluated": true,
+        "inference_error": "Agent exceeded session timeout (4 min)",
+        "verification_error": "No generated patch",
+        "inference_seconds": 270.1458969039959,
+        "agent_seconds": 240.02707552202628,
+        "verification_seconds": 0,
+        "llm_calls": 17,
+        "budgeted_tool_calls": 17,
+        "status": "inference_error",
+        "graph_calls": 0,
+        "tool_names": {
+          "read_file": 9,
+          "run_command": 8
+        },
+        "tokens": {
+          "total_prompt_tokens": 158617,
+          "total_completion_tokens": 11082,
+          "total_cached_tokens": 0,
+          "total_tokens": 169699,
+          "total_steps": 19
+        }
+      },
+      {
+        "task_id": "rich_3468",
+        "repo": "Textualize/rich",
+        "controls_valid": true,
+        "resolved": false,
+        "completion_clean": false,
+        "evaluated": true,
+        "inference_error": "Agent exceeded session timeout (4 min)",
+        "verification_error": null,
+        "inference_seconds": 362.47071756300284,
+        "agent_seconds": 240.00634887698106,
+        "verification_seconds": 23.473933500994463,
+        "llm_calls": 31,
+        "budgeted_tool_calls": 31,
+        "status": "inference_error",
+        "graph_calls": 0,
+        "tool_names": {
+          "read_file": 16,
+          "run_command": 13,
+          "edit_file": 1,
+          "write_file": 1
+        },
+        "tokens": {
+          "total_prompt_tokens": 264278,
+          "total_completion_tokens": 7989,
+          "total_cached_tokens": 0,
+          "total_tokens": 272267,
+          "total_steps": 33
+        }
+      },
+      {
+        "task_id": "rich_3278",
+        "repo": "Textualize/rich",
+        "controls_valid": true,
+        "resolved": true,
+        "completion_clean": true,
+        "evaluated": true,
+        "inference_error": null,
+        "verification_error": null,
+        "inference_seconds": 234.02162526198663,
+        "agent_seconds": 206.26163998499396,
+        "verification_seconds": 23.066878042009193,
+        "llm_calls": 28,
+        "budgeted_tool_calls": 24,
+        "status": "resolved",
+        "graph_calls": 0,
+        "tool_names": {
+          "read_file": 3,
+          "run_command": 13,
+          "write_file": 2,
+          "edit_file": 6,
+          "submit_patch": 3
+        },
+        "tokens": {
+          "total_prompt_tokens": 257197,
+          "total_completion_tokens": 10941,
+          "total_cached_tokens": 0,
+          "total_tokens": 268138,
+          "total_steps": 31
+        }
+      },
+      {
+        "task_id": "httpx_3672",
+        "repo": "encode/httpx",
+        "controls_valid": true,
+        "resolved": true,
+        "completion_clean": true,
+        "evaluated": true,
+        "inference_error": null,
+        "verification_error": null,
+        "inference_seconds": 208.0869764490053,
+        "agent_seconds": 185.31550009700004,
+        "verification_seconds": 18.250575794983888,
+        "llm_calls": 26,
+        "budgeted_tool_calls": 24,
+        "status": "resolved",
+        "graph_calls": 0,
+        "tool_names": {
+          "read_file": 14,
+          "edit_file": 6,
+          "run_command": 4,
+          "submit_patch": 1
+        },
+        "tokens": {
+          "total_prompt_tokens": 235393,
+          "total_completion_tokens": 7844,
+          "total_cached_tokens": 0,
+          "total_tokens": 243237,
+          "total_steps": 28
+        }
+      },
+      {
+        "task_id": "fastapi_14455",
+        "repo": "fastapi/fastapi",
+        "controls_valid": true,
+        "resolved": false,
+        "completion_clean": false,
+        "evaluated": true,
+        "inference_error": "Agent exceeded session timeout (4 min)",
+        "verification_error": null,
+        "inference_seconds": 280.46891846100334,
+        "agent_seconds": 240.00065135597833,
+        "verification_seconds": 31.0374485940265,
+        "llm_calls": 38,
+        "budgeted_tool_calls": 38,
+        "status": "inference_error",
+        "graph_calls": 0,
+        "tool_names": {
+          "run_command": 19,
+          "read_file": 15,
+          "write_file": 1,
+          "edit_file": 3
+        },
+        "tokens": {
+          "total_prompt_tokens": 345314,
+          "total_completion_tokens": 11493,
+          "total_cached_tokens": 0,
+          "total_tokens": 356807,
+          "total_steps": 40
+        }
+      },
+      {
+        "task_id": "fastapi_14266",
+        "repo": "fastapi/fastapi",
+        "controls_valid": true,
+        "resolved": false,
+        "completion_clean": false,
+        "evaluated": true,
+        "inference_error": null,
+        "verification_error": "No generated patch",
+        "inference_seconds": 207.20620409099502,
+        "agent_seconds": 168.46418533299584,
+        "verification_seconds": 0,
+        "llm_calls": 42,
+        "budgeted_tool_calls": 40,
+        "status": "empty_patch",
+        "graph_calls": 0,
+        "tool_names": {
+          "run_command": 16,
+          "read_file": 24,
+          "submit_patch": 1
+        },
+        "tokens": {
+          "total_prompt_tokens": 414890,
+          "total_completion_tokens": 5287,
+          "total_cached_tokens": 0,
+          "total_tokens": 420177,
+          "total_steps": 45
+        }
+      },
+      {
+        "task_id": "fastapi_15745",
+        "repo": "fastapi/fastapi",
+        "controls_valid": false,
+        "resolved": null,
+        "completion_clean": false,
+        "evaluated": false,
+        "status": "invalid_controls",
+        "control_errors": {
+          "empty": null,
+          "gold": "Required test node did not pass: test_included_api_route_without_app_scope_returns_405_response"
+        }
+      },
+      {
+        "task_id": "fastapi_15800",
+        "repo": "fastapi/fastapi",
+        "controls_valid": true,
+        "resolved": false,
+        "completion_clean": true,
+        "evaluated": true,
+        "inference_error": null,
+        "verification_error": null,
+        "inference_seconds": 249.37246679898817,
+        "agent_seconds": 207.5236528609821,
+        "verification_seconds": 35.90928296500351,
+        "llm_calls": 43,
+        "budgeted_tool_calls": 40,
+        "status": "tests_failed",
+        "graph_calls": 0,
+        "tool_names": {
+          "run_command": 22,
+          "read_file": 16,
+          "edit_file": 3,
+          "submit_patch": 1
+        },
+        "tokens": {
+          "total_prompt_tokens": 352652,
+          "total_completion_tokens": 9409,
+          "total_cached_tokens": 0,
+          "total_tokens": 362061,
+          "total_steps": 46
+        }
+      },
+      {
+        "task_id": "fastapi_14609",
+        "repo": "fastapi/fastapi",
+        "controls_valid": true,
+        "resolved": false,
+        "completion_clean": false,
+        "evaluated": true,
+        "inference_error": "Agent exceeded session timeout (4 min)",
+        "verification_error": null,
+        "inference_seconds": 279.7368760469835,
+        "agent_seconds": 240.0015664289822,
+        "verification_seconds": 32.498471200000495,
+        "llm_calls": 34,
+        "budgeted_tool_calls": 34,
+        "status": "inference_error",
+        "graph_calls": 0,
+        "tool_names": {
+          "run_command": 7,
+          "read_file": 12,
+          "edit_file": 15
+        },
+        "tokens": {
+          "total_prompt_tokens": 322105,
+          "total_completion_tokens": 10856,
+          "total_cached_tokens": 0,
+          "total_tokens": 332961,
+          "total_steps": 36
+        }
+      },
+      {
+        "task_id": "fastapi_9753",
+        "repo": "fastapi/fastapi",
+        "controls_valid": true,
+        "resolved": false,
+        "completion_clean": false,
+        "evaluated": true,
+        "inference_error": "Agent exceeded session timeout (4 min)",
+        "verification_error": null,
+        "inference_seconds": 280.0315473570081,
+        "agent_seconds": 240.00578359799692,
+        "verification_seconds": 31.622226535982918,
+        "llm_calls": 37,
+        "budgeted_tool_calls": 37,
+        "status": "inference_error",
+        "graph_calls": 0,
+        "tool_names": {
+          "run_command": 20,
+          "read_file": 5,
+          "write_file": 10,
+          "edit_file": 2
+        },
+        "tokens": {
+          "total_prompt_tokens": 332127,
+          "total_completion_tokens": 12248,
+          "total_cached_tokens": 0,
+          "total_tokens": 344375,
+          "total_steps": 39
+        }
+      },
+      {
+        "task_id": "requests_7502",
+        "repo": "psf/requests",
+        "controls_valid": true,
+        "resolved": true,
+        "completion_clean": false,
+        "evaluated": true,
+        "inference_error": "Agent exceeded turns budget (80 turns)",
+        "verification_error": null,
+        "inference_seconds": 245.6385372109944,
+        "agent_seconds": 219.33761319200858,
+        "verification_seconds": 63.54446198200458,
+        "llm_calls": 80,
+        "budgeted_tool_calls": 40,
+        "status": "resolved",
+        "graph_calls": 0,
+        "tool_names": {
+          "run_command": 20,
+          "read_file": 10,
+          "write_file": 7,
+          "edit_file": 4,
+          "submit_patch": 39
+        },
+        "tokens": {
+          "total_prompt_tokens": 855286,
+          "total_completion_tokens": 11218,
+          "total_cached_tokens": 0,
+          "total_tokens": 866504,
+          "total_steps": 82
+        }
+      }
+    ],
+    "scope": "Local public-task resolution under the official verifier. H100 timing is not L4 timing. Scores with invalid controls have reduced coverage and cannot be compared as full-cohort scores.",
+    "comparison": {
+      "baseline_agent_sha256": "02bb939095ded0c970088fc9d19634e203e2d3119a36a5feff20bad55c9343fc",
+      "candidate_agent_sha256": "be14d476d75193df0e1a8d534217a31a8ff33649c79c74c6c71a5260e9aad50e",
+      "matched_tasks": 11,
+      "newly_resolved": [
+        "rich_3278"
+      ],
+      "regressions": [],
+      "both_resolved": [
+        "httpx_3672",
+        "requests_7502"
+      ],
+      "neither_resolved": [
+        "rich_4079",
+        "rich_3506",
+        "rich_3468",
+        "fastapi_14455",
+        "fastapi_14266",
+        "fastapi_15800",
+        "fastapi_14609",
+        "fastapi_9753"
+      ],
+      "resolution_rate_difference": 0.09090909090909091,
+      "scope": "Paired descriptive comparison. One stochastic attempt per task; no claim of statistical significance."
+    }
+  },
+  "comparison": {
+    "baseline": "runs/20261009-prompt-icl/baseline/fast/summary.json",
+    "matching_fields": {
+      "benchmark_sha256": true,
+      "public_task_sha256": true,
+      "model_sha256": true,
+      "verification_identity": true,
+      "protocol": true,
+      "budget_sha256": true,
+      "runtime_sha256": true,
+      "tasks_and_control_mask": true
+    },
+    "baseline_resolved": 2,
+    "baseline_evaluated": 11,
+    "baseline_clean": 8,
+    "candidate_resolved": 3,
+    "candidate_evaluated": 11,
+    "candidate_clean": 4,
+    "baseline_clean_and_resolved": 2,
+    "candidate_clean_and_resolved": 2,
+    "paired": {
+      "baseline_agent_sha256": "02bb939095ded0c970088fc9d19634e203e2d3119a36a5feff20bad55c9343fc",
+      "candidate_agent_sha256": "be14d476d75193df0e1a8d534217a31a8ff33649c79c74c6c71a5260e9aad50e",
+      "matched_tasks": 11,
+      "newly_resolved": [
+        "rich_3278"
+      ],
+      "regressions": [],
+      "both_resolved": [
+        "httpx_3672",
+        "requests_7502"
+      ],
+      "neither_resolved": [
+        "rich_4079",
+        "rich_3506",
+        "rich_3468",
+        "fastapi_14455",
+        "fastapi_14266",
+        "fastapi_15800",
+        "fastapi_14609",
+        "fastapi_9753"
+      ],
+      "resolution_rate_difference": 0.09090909090909091,
+      "scope": "Paired descriptive comparison. One stochastic attempt per task; no claim of statistical significance."
+    },
+    "graph_calls": {
+      "baseline": 0,
+      "candidate": 0,
+      "baseline_trace_coverage": 11,
+      "candidate_trace_coverage": 11
+    },
+    "interpretation": "A small, adaptively exposed development cohort; no leaderboard or generalization claim.",
+    "separate_baseline_overlap": {
+      "source": "runs/20261010-prompt-dev/baseline/summary.json",
+      "tasks": 11,
+      "valid_controls": 11,
+      "resolved": 3,
+      "scope": "Overlapping tasks from a separate 40-task development run; not substituted for the registered paired reference."
     }
   },
   "prior_bounded_cost": {
@@ -781,16 +1304,22 @@
     },
     {
       "job_id": 1073601,
-      "state": "RUNNING",
-      "elapsed_seconds": 994,
+      "state": "COMPLETED",
+      "elapsed_seconds": 3521,
       "exit_code": "0:0",
       "allocated_tres": "billing=1,cpu=24,gres/gpu=1,mem=187.50G,node=1",
-      "physical_h100_hours": 0.2761111111111111
+      "physical_h100_hours": 0.9780555555555556
     }
   ],
+  "cost_totals": {
+    "current_recipe_training_preparation_recovery_h100_hours": 0.26305555555555554,
+    "current_recipe_all_jobs_h100_hours": 2.191666666666667,
+    "all_bounded_attempts_h100_hours": 3.585,
+    "scope": "Physical allocated GPU time. Includes failed validation and diagnostics; excludes queue time and the historical full-corpus run."
+  },
   "release_smoke": null,
   "competition_upload": null,
-  "fixed_evaluation_complete": false,
+  "fixed_evaluation_complete": true,
   "failed_acceptance": {
     "task_id": "fastapi_14455",
     "error": "Agent exceeded session timeout (4 min)",
@@ -799,5 +1328,5 @@
     "prediction_sha256": "ef801d2abecf32ba802ddba5c631cd0128596051cbdd8f5345ad3c20c6f9f973",
     "meaning": "Agent was still locating and revising code; no submit call. The original release gate remains failed."
   },
-  "status": "Training, recovery and serving completed; release acceptance failed; fixed-cohort diagnostic pending"
+  "status": "Training, recovery, serving and fixed-cohort diagnostic completed; release acceptance did not pass"
 }

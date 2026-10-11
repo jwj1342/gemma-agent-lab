@@ -8,7 +8,7 @@
 #SBATCH --time=00:45:00
 set -eo pipefail
 project_root=${1:?project asset root}
-train_run=${2:?partial training run}
+train_run=${2:?training run at the registered checkpoint}
 code_root=${3:?frozen validation source}
 probe_steps=${4:-100}
 probe_name=${5:-preflight-validation}
@@ -22,8 +22,8 @@ unset KAGGLE_API_TOKEN HF_TOKEN HUGGING_FACE_HUB_TOKEN WANDB_API_KEY
 python scripts/check_repository.py
 python -m unittest discover -s tests -v
 
-# This is an explicitly partial training probe. Never manufacture completed.json
-# or modify the resumable training directory to make a release gate pass.
+# Probe the registered checkpoint, which may be partial or a completed short epoch.
+# Never manufacture completed.json or change training state to pass a release gate.
 python - "$train_run" "$code_root" "$probe_steps" "$probe_name" <<'PY'
 from pathlib import Path
 import hashlib
@@ -81,5 +81,5 @@ python "$smoke/inputs/runtime/summarize_eval_smoke.py" --run-dir "$smoke" --cont
 bash "$runner" infer "$smoke" --task-id rich_3454
 bash "$runner" verify "$smoke" --task-id rich_3454 --patch-source agent --results /work/run/agent
 python "$smoke/inputs/runtime/summarize_eval_smoke.py" --run-dir "$smoke"
-# No submission from this partial probe. A full training continuation and its
-# separate release validation remain required even if this smoke succeeds.
+# This checkpoint probe does not submit to the competition. A completed epoch
+# and the separate release validation are required before an upload.

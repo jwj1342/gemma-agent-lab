@@ -16,7 +16,7 @@ cached environment controls, resumable results, and paired reports.
 
 ## 🔬 Research focus
 
-We develop and evaluate agents built on the competition's required Gemma 4 base. The submitted baseline runs without a LoRA adapter. A [first SWE/graph LoRA pilot](docs/first-lora.md) completed training, checkpoint recovery, official quantized serving, and one-task repair verification. Broader repair and graph gains remain open research questions.
+We develop and evaluate agents built on the competition's required Gemma 4 base. The submitted baseline runs without a LoRA adapter. The [compact SWE/graph LoRA loop](docs/experiments/2026-10-10-swe-lora-light.md) now covers data construction, training, recovery, official serving and matched repair evaluation. The current adapter needs better completion reliability before release; broader repair and graph gains remain open research questions.
 
 | Direction | Research question |
 | --- | --- |
@@ -39,7 +39,7 @@ flowchart LR
 
 ## 📊 Verified results
 
-The submitted baseline uses `gemma-4-31b-it-qat-w4a16-ct` with no LoRA. The following are recorded results, last updated on **October 9, 2026**.
+The submitted baseline uses `gemma-4-31b-it-qat-w4a16-ct` with no LoRA. The following are recorded results, last updated on **October 10, 2026**.
 
 | Evaluation | Result | Evidence |
 | --- | --- | --- |
@@ -47,14 +47,19 @@ The submitted baseline uses `gemma-4-31b-it-qat-w4a16-ct` with no LoRA. The foll
 | Kaggle L4×4 smoke test | `rich_3454` resolved; **84 tests passed**, including one added regression test | [L4 run](resource/manifests/kaggle-runtime-smoke.json) |
 | Independent H100 smoke test | The same public task passed compilation, offline generation, and patch verification | [H100 run](resource/manifests/hpc-smoke.json) |
 | First LoRA pilot on H100 | 64 SFT updates across two phases; corrected agent completed `rich_3454` with **84 passed tests** | [Pilot report](docs/first-lora.md) |
-| Fixed local development cohort | Baseline **4/11**, first LoRA **2/11**, with **11/12 control coverage**; cached controls avoid about 18 minutes of repeated checks | [Batch evaluation](docs/experiments/2026-10-09-local-evaluation.md) |
+| Historical local development cohort | Baseline **4/11**, first LoRA **2/11**, with **11/12 control coverage**; this uses the earlier runtime | [Batch evaluation](docs/experiments/2026-10-09-local-evaluation.md) |
+| Compact LoRA training | **128 actions, 32 updates, one epoch**, including save/restart, in **15m47s on one H100** | [Training evidence](resource/manifests/swe-lora-light.json) |
+| Compact LoRA, matched version-29 evaluation | Patch resolution: baseline **2/11**, LoRA **3/11**. Clean nonempty completion: **8/11 → 4/11**; both resolved and clean: **2/11 each**. Release gate failed | [Full comparison](docs/experiments/2026-10-10-swe-lora-light.md) |
 
-Controls reproduced the original failure (**1 failed / 82 passed**) and confirmed the reference patch (**83 passed**). On L4×4, the agent phase took **74.10 seconds**, excluding model startup; the notebook reached smoke completion in about **655 seconds**.
+For the original L4 smoke test, controls reproduced the failure (**1 failed / 82 passed**) and confirmed the reference patch (**83 passed**). On L4×4, the agent phase took **74.10 seconds**, excluding model startup; the notebook reached smoke completion in about **655 seconds**.
 
 These smoke tests cover one public task. They do not establish full-benchmark performance, a LoRA advantage, graph utility, or compliance with the global runtime budget. See the [submission guide](docs/submission.md) and [LoRA report](docs/first-lora.md) for evidence and remaining work.
 
 The local development cohort uses public tasks and H100 resources. Its resolution rate is separate
 from the competition leaderboard; evaluating a new method still requires fresh inference and grading.
+The compact LoRA's extra resolved patch came with more execution failures, including repeated
+submission after a valid repair. It has not been promoted or uploaded. Training on four L4 GPUs
+remains a separate feasibility task; the measured BF16 training replica used 67.38 GiB.
 
 <a id="getting-started"></a>
 
@@ -134,7 +139,8 @@ automatically; `--wheelhouse-mode record` enables a documented exploratory updat
 | [Submission guide](docs/submission.md) | Packaging, validation, official upload, and result tracking |
 | [Training plan](docs/training-plan.md) | Proposed SFT/LoRA work, compatibility checks, and prerequisites |
 | [First LoRA](docs/first-lora.md) | SWE-smith trajectories, grounded graph demonstrations, SFT, recovery, and evaluation gates |
-| [Complete SWE LoRA run](docs/swe-lora-v1.md) | Research-based configuration, corpus construction, full epochs, and submission gates |
+| [Compact SWE LoRA loop](docs/experiments/2026-10-10-swe-lora-light.md) | Current 128-action recipe, recovery, fixed-cohort results, costs and review tasks |
+| [Initial full-run protocol](docs/swe-lora-v1.md) | Research behind the original configuration, corpus construction and submission gates |
 | [Local evaluation](docs/local-evaluation.md) | Frozen public cohorts, batch inference, cached controls, and method comparisons |
 | [Trillium runtime](docs/cluster-runtime.md) | Optional cluster-specific environment and execution instructions |
 
