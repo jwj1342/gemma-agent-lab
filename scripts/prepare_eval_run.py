@@ -8,6 +8,8 @@ import subprocess
 
 from build_submission import build, collect_files, sha256
 from prepare_eval_task import PUBLIC_FIELDS
+from prepare_eval_suite import RUNTIME_FILES
+from eval_suite_lib import read_tasks
 
 
 def main():
@@ -18,7 +20,7 @@ def main():
     parser.add_argument('--tasks', type=Path, default=Path('data/raw/gemma-4-developer-agent/tasks.jsonl'))
     args = parser.parse_args()
     source, files = collect_files(args.agent_dir)
-    rows = [json.loads(line) for line in args.tasks.read_text().splitlines() if line.strip()]
+    rows = read_tasks(args.tasks)
     rows = [row for row in rows if row['instance_id'] == args.task_id]
     if len(rows) != 1:
         raise ValueError('Expected one matching public task')
@@ -35,12 +37,17 @@ def main():
     task_file = inputs / 'tasks.jsonl'
     task_file.write_text(json.dumps(public_task) + '\n')
     bundle = build(agent_dir, inputs / 'submission.zip')
+    runtime = inputs / 'runtime'
+    runtime.mkdir()
+    for name in RUNTIME_FILES:
+        shutil.copy2(Path(__file__).parent / name, runtime / name)
     revision = subprocess.run(['git', 'rev-parse', '--verify', 'HEAD'], capture_output=True, text=True)
     manifest = {'created_at': datetime.now(timezone.utc).isoformat(),
                 'task_id': args.task_id, 'repo': public_task['repo'], 'base_commit': public_task['base_commit'],
                 'git_revision': revision.stdout.strip() if revision.returncode == 0 else None,
                 'agent_source': str(source), 'agent_archive_sha256': bundle['sha256'],
                 'public_task_sha256': sha256(task_file), 'public_fields': sorted(public_task),
+                'runtime_sha256': {name: sha256(runtime / name) for name in RUNTIME_FILES},
                 'model_handle': 'google/gemma-4/Other/gemma-4-31b-it-qat-w4a16-ct/2',
                 'status': 'prepared; no model or tests executed'}
     (args.run_dir / 'run-manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')

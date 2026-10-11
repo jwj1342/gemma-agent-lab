@@ -1,0 +1,21 @@
+{
+  "seed": 42,
+  "max_length": 4096,
+  "history_actions": 6,
+  "excerpt_chars": 12000,
+  "rank": 16,
+  "lora_alpha": 32,
+  "target_suffixes": ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"],
+  "learning_rate": 0.00005,
+  "weight_decay": 0.0,
+  "gradient_accumulation": 2,
+  "epochs": 2,
+  "warmup_fraction": 0.05,
+  "minimum_lr_ratio": 0.1,
+  "checkpoint_every": 100,
+  "validation_actions": 128,
+  "checkpoint_selection": "lowest token-weighted SWE validation NLL among trained checkpoints",
+  "objective": "assistant action tokens, token-normalized within each global batch",
+  "base_loading": "official v2 compressed-tensors dequantized to BF16; frozen base",
+  "scope": "first complete shuffled-epoch SFT; gains require issue-resolution evaluation"
+}

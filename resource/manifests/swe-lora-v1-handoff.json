@@ -1,0 +1,306 @@
+{
+  "schema_version": 1,
+  "experiment": "Selected v1 adapter tool-handoff probability diagnostic",
+  "recorded_at": "2026-10-10T16:57:00-04:00",
+  "status": "Diagnostic completed; corrected training and issue-resolution evaluation remain outstanding",
+  "job": {
+    "id": 1072021,
+    "state": "COMPLETED",
+    "exit_code": "0:0",
+    "elapsed": "00:04:17",
+    "finished_at": "2026-10-10T16:53:50-04:00"
+  },
+  "artifact_root": "runs/20261010-swe-lora-v2-tool-stop/handoff-diagnostic-v2",
+  "report_sha256": "a15da686d56ca5d05299c054dcea2083288e5677d91e21a1c4a711b5f577ef86",
+  "source_sha256": "a0e174114a2c38e9de21330ea50e183fb3947316aaf7b473fec5a4e7193edd07",
+  "launcher_sha256": "d451726572e3cacfda6a297d100f973638a740460e81a9c717c3816a7caa679d",
+  "selection_source_revision": "d21862f12e73558a884e25ee9865f73195b23910",
+  "selection_method": "First validation example for each of four SWE tools and four graph-tool contexts, with distinct repository/commit groups within each family and fewer than 24000 serialized message characters. Same selection as the short serving probe; not a random or representative sample.",
+  "required_base": "google/gemma-4/Other/gemma-4-31b-it-qat-w4a16-ct/2",
+  "adapter": {
+    "selected": {
+      "checkpoint": "checkpoint-02000",
+      "step": 2000,
+      "swe_nll": 0.25554623187694736
+    },
+    "export_sha256": {
+      "adapter_config.json": "f1992b5909508f8a06b0173051d61c769beb835cc1a69ad06c87ef5c837ba608",
+      "adapter_model.safetensors": "2cbd4fab1fb79d4020e16c3efa43bd775da37d22a19b681b485f34ce8d244b8b"
+    }
+  },
+  "protocol": "Teacher-force each complete held-out call including EOS 50; read the conditional prompt log probability of token 50. No tool execution or model updates.",
+  "controls": {
+    "requests": 32,
+    "contexts": 8,
+    "base_equals_zero_equals_repeated_zero_on_all_contexts": true,
+    "maximum_control_logprob_difference": 0.0
+  },
+  "runtime": {
+    "prefix_caching": false,
+    "gpu_memory_utilization": 0.6,
+    "max_num_batched_tokens": 1024,
+    "max_num_seqs": 1
+  },
+  "results": [
+    {
+      "kind": "swe",
+      "index": 0,
+      "group": "Mimino666/langdetect.a1598f1a",
+      "tool": "run_command",
+      "prompt_tokens": 1103,
+      "token_id": 50,
+      "prompt_sha256": "3dbd4f52a6aa622f9c6341fa5065adbb94df27b8b04a325b8c0013e4ddd8ef2d",
+      "conditions": {
+        "base": {
+          "stop_logprob": -0.002558531705290079,
+          "stop_probability": 0.9974447385473438,
+          "stop_rank": 1
+        },
+        "zero": {
+          "stop_logprob": -0.002558531705290079,
+          "stop_probability": 0.9974447385473438,
+          "stop_rank": 1
+        },
+        "zero_repeat": {
+          "stop_logprob": -0.002558531705290079,
+          "stop_probability": 0.9974447385473438,
+          "stop_rank": 1
+        },
+        "trained": {
+          "stop_logprob": -2.1271986961364746,
+          "stop_probability": 0.11917065993465434,
+          "stop_rank": 2
+        }
+      }
+    },
+    {
+      "kind": "swe",
+      "index": 1,
+      "group": "kayak/pypika.1c9646f0",
+      "tool": "read_file",
+      "prompt_tokens": 3156,
+      "token_id": 50,
+      "prompt_sha256": "8f207e413b75607a9bd472e78622928efa4740b200dc8ec8cfdeefce31cb2135",
+      "conditions": {
+        "base": {
+          "stop_logprob": -0.0005479741375893354,
+          "stop_probability": 0.9994521759728183,
+          "stop_rank": 1
+        },
+        "zero": {
+          "stop_logprob": -0.0005479741375893354,
+          "stop_probability": 0.9994521759728183,
+          "stop_rank": 1
+        },
+        "zero_repeat": {
+          "stop_logprob": -0.0005479741375893354,
+          "stop_probability": 0.9994521759728183,
+          "stop_rank": 1
+        },
+        "trained": {
+          "stop_logprob": -4.1960789531003684e-05,
+          "stop_probability": 0.9999580400908106,
+          "stop_rank": 1
+        }
+      }
+    },
+    {
+      "kind": "swe",
+      "index": 2,
+      "group": "pydata/patsy.a5d16484",
+      "tool": "edit_file",
+      "prompt_tokens": 6232,
+      "token_id": 50,
+      "prompt_sha256": "d2d8f08bdf066488868b3eb9d571be2fac62a701a9a8899885d7b8ecda098caf",
+      "conditions": {
+        "base": {
+          "stop_logprob": -0.0011828100541606545,
+          "stop_probability": 0.9988178891899333,
+          "stop_rank": 1
+        },
+        "zero": {
+          "stop_logprob": -0.0011828100541606545,
+          "stop_probability": 0.9988178891899333,
+          "stop_rank": 1
+        },
+        "zero_repeat": {
+          "stop_logprob": -0.0011828100541606545,
+          "stop_probability": 0.9988178891899333,
+          "stop_rank": 1
+        },
+        "trained": {
+          "stop_logprob": -4.458328112377785e-05,
+          "stop_probability": 0.9999554177126959,
+          "stop_rank": 1
+        }
+      }
+    },
+    {
+      "kind": "swe",
+      "index": 3,
+      "group": "iterative/dvc.1d6ea681",
+      "tool": "submit_patch",
+      "prompt_tokens": 4251,
+      "token_id": 50,
+      "prompt_sha256": "76d3cfc19fe74830921f5c9afd05352ccadf4d653d18d7b1f14f968ef771ec7b",
+      "conditions": {
+        "base": {
+          "stop_logprob": -0.0004326361231505871,
+          "stop_probability": 0.999567457450362,
+          "stop_rank": 1
+        },
+        "zero": {
+          "stop_logprob": -0.0004326361231505871,
+          "stop_probability": 0.999567457450362,
+          "stop_rank": 1
+        },
+        "zero_repeat": {
+          "stop_logprob": -0.0004326361231505871,
+          "stop_probability": 0.999567457450362,
+          "stop_rank": 1
+        },
+        "trained": {
+          "stop_logprob": -2.539125671319198e-05,
+          "stop_probability": 0.9999746090656421,
+          "stop_rank": 1
+        }
+      }
+    },
+    {
+      "kind": "graph",
+      "index": 0,
+      "group": "Textualize/rich.7a168a27",
+      "tool": "get_code_neighbors",
+      "prompt_tokens": 687,
+      "token_id": 50,
+      "prompt_sha256": "403426dd017b2b001f761aa6e69e715102022a414f48fa9815e44da44a7326ec",
+      "conditions": {
+        "base": {
+          "stop_logprob": -0.0035295113921165466,
+          "stop_probability": 0.9964767100115596,
+          "stop_rank": 1
+        },
+        "zero": {
+          "stop_logprob": -0.0035295113921165466,
+          "stop_probability": 0.9964767100115596,
+          "stop_rank": 1
+        },
+        "zero_repeat": {
+          "stop_logprob": -0.0035295113921165466,
+          "stop_probability": 0.9964767100115596,
+          "stop_rank": 1
+        },
+        "trained": {
+          "stop_logprob": -2.9299333095550537,
+          "stop_probability": 0.05340059933617719,
+          "stop_rank": 2
+        }
+      }
+    },
+    {
+      "kind": "graph",
+      "index": 1,
+      "group": "fastapi/fastapi.cb83b83d",
+      "tool": "get_code_subgraph",
+      "prompt_tokens": 953,
+      "token_id": 50,
+      "prompt_sha256": "f15656b97f2546bae5f55c2cf41de44339c13f460a3429f3b07b4344f53886da",
+      "conditions": {
+        "base": {
+          "stop_logprob": -0.0005752577562816441,
+          "stop_probability": 0.9994249076727385,
+          "stop_rank": 1
+        },
+        "zero": {
+          "stop_logprob": -0.0005752577562816441,
+          "stop_probability": 0.9994249076727385,
+          "stop_rank": 1
+        },
+        "zero_repeat": {
+          "stop_logprob": -0.0005752577562816441,
+          "stop_probability": 0.9994249076727385,
+          "stop_rank": 1
+        },
+        "trained": {
+          "stop_logprob": -0.005966826807707548,
+          "stop_probability": 0.9940509393499438,
+          "stop_rank": 1
+        }
+      }
+    },
+    {
+      "kind": "graph",
+      "index": 2,
+      "group": "psf/requests.7a13c041",
+      "tool": "search_similar_code",
+      "prompt_tokens": 990,
+      "token_id": 50,
+      "prompt_sha256": "395c3f3296bc7c195cd7d96665f318e338ff094d9a8c32a9dbb06d7d4e6d3d8a",
+      "conditions": {
+        "base": {
+          "stop_logprob": -0.018691007047891617,
+          "stop_probability": 0.9814825865951745,
+          "stop_rank": 1
+        },
+        "zero": {
+          "stop_logprob": -0.018691007047891617,
+          "stop_probability": 0.9814825865951745,
+          "stop_rank": 1
+        },
+        "zero_repeat": {
+          "stop_logprob": -0.018691007047891617,
+          "stop_probability": 0.9814825865951745,
+          "stop_rank": 1
+        },
+        "trained": {
+          "stop_logprob": -0.016133472323417664,
+          "stop_probability": 0.9839959750609943,
+          "stop_rank": 1
+        }
+      }
+    },
+    {
+      "kind": "graph",
+      "index": 3,
+      "group": "Textualize/rich.66074922",
+      "tool": "run_command",
+      "prompt_tokens": 761,
+      "token_id": 50,
+      "prompt_sha256": "275dcb2e5bef81337ec62d63658dad10481451129f480dac54740f6183f82538",
+      "conditions": {
+        "base": {
+          "stop_logprob": -0.003983421251177788,
+          "stop_probability": 0.9960245020471513,
+          "stop_rank": 1
+        },
+        "zero": {
+          "stop_logprob": -0.003983421251177788,
+          "stop_probability": 0.9960245020471513,
+          "stop_rank": 1
+        },
+        "zero_repeat": {
+          "stop_logprob": -0.003983421251177788,
+          "stop_probability": 0.9960245020471513,
+          "stop_rank": 1
+        },
+        "trained": {
+          "stop_logprob": -0.00044610086479224265,
+          "stop_probability": 0.9995539986234041,
+          "stop_rank": 1
+        }
+      }
+    }
+  ],
+  "interpretation": "Two of eight probed contexts have a large conditional stop-probability regression and stop-token rank drops from 1 to 2. The other six keep rank 1; several improve. This supports a context-dependent handoff weakness in the failed v1 adapter, not a universal loss of stopping or a repair-rate estimate. It does not prove that the missing stop label fully explains the autonomous failure.",
+  "limitations": [
+    "Complete target calls are teacher-forced; this does not measure autonomous call generation.",
+    "The 6232- and 4251-token diagnostic contexts exceed the 4K training limit; this is a serving assay, not the fixed training validation panel.",
+    "The corrected adapter has not been evaluated by this diagnostic."
+  ],
+  "prior_attempt": {
+    "job": 1071990,
+    "state": "FAILED",
+    "reason": "Prompt-logprob softmax CUDA OOM at a 6232-token context with 0.80 cache utilization and default batching. Retried the same contexts and weights with less cache and chunked prefill; formal repair runtime unchanged.",
+    "artifact_root": "runs/20261010-swe-lora-v2-tool-stop/handoff-diagnostic"
+  }
+}

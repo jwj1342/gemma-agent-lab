@@ -1,0 +1,16 @@
+{
+  "seed": 42,
+  "max_length": 4096,
+  "rank": 8,
+  "lora_alpha": 16,
+  "target_suffixes": ["q_proj", "v_proj"],
+  "learning_rate": 0.00005,
+  "gradient_accumulation": 4,
+  "steps": 32,
+  "checkpoint_every": 8,
+  "validation_actions": 16,
+  "graph_fraction": 0.25,
+  "objective": "assistant tool-action tokens only",
+  "base_loading": "official v2 compressed-tensors dequantized to BF16",
+  "scope": "bounded pipeline pilot; benchmark improvement requires matched agent evaluation"
+}

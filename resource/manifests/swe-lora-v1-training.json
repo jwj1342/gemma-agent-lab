@@ -1,0 +1,1233 @@
+{
+  "schema_version": 1,
+  "experiment": "SWE LoRA v1 complete shuffled-epoch SFT",
+  "artifact_root": "runs/20261010-swe-lora-v1-ddp",
+  "status": "Full training completed; serving passed; autonomous repair smoke failed; candidate not submitted",
+  "training_job": {
+    "id": 1067810,
+    "state": "COMPLETED",
+    "exit_code": "0:0",
+    "elapsed": "09:50:11",
+    "finished_at": "2026-10-10T16:01:27-04:00",
+    "elapsed_scope": "Final continuation only; preparation, earlier failed attempts and recovery probes are excluded"
+  },
+  "training_source_revision": "7ab3bd42f2cd45105a680cebd08b60851ae486da",
+  "launcher_source_revision": "e1cb5cece391c2c9d851eaf283d22df289ce22fb",
+  "validation_source_revision": "e13025f06294f52c087bb4d00baff6d0528d8644",
+  "training_contract": {
+    "config": {
+      "seed": 42,
+      "max_length": 4096,
+      "history_actions": 6,
+      "excerpt_chars": 12000,
+      "rank": 16,
+      "lora_alpha": 32,
+      "target_suffixes": [
+        "q_proj",
+        "k_proj",
+        "v_proj",
+        "o_proj",
+        "gate_proj",
+        "up_proj",
+        "down_proj"
+      ],
+      "learning_rate": 5e-05,
+      "weight_decay": 0.0,
+      "gradient_accumulation": 2,
+      "epochs": 2,
+      "warmup_fraction": 0.05,
+      "minimum_lr_ratio": 0.1,
+      "checkpoint_every": 100,
+      "validation_actions": 128,
+      "checkpoint_selection": "lowest token-weighted SWE validation NLL among trained checkpoints",
+      "objective": "assistant action tokens, token-normalized within each global batch",
+      "base_loading": "official v2 compressed-tensors dequantized to BF16; frozen base",
+      "scope": "first complete shuffled-epoch SFT; gains require issue-resolution evaluation"
+    },
+    "dependencies": {
+      "torch": "2.14.1+computecanada",
+      "transformers": "5.18.0+computecanada",
+      "peft": "0.19.1+computecanada",
+      "compressed-tensors": "0.17.1+computecanada",
+      "accelerate": "1.14.0+computecanada"
+    },
+    "data_manifest_sha256": "5eb75fd425dc38b16f06bf9c9c91d870fdf4a417f78823216836bceaeedd440f",
+    "world_size": 4,
+    "base_config_sha256": "b100d85e571c25b688e82919d819253063a1defb0e6cee3b9b1c1fbad99bd0c2",
+    "base_weights_sha256": "1b9b1d622a93f02c0d33f98e502f233b5d707443af6ddc464ed0bf5498506c20",
+    "source_sha256": {
+      "scripts/train_swe_lora.py": "805322a7329ae07da0fc6d07014e3d556f2e9767b5fda89e570cebbe1de490f6",
+      "src/sft_schedule.py": "3658c235f102ae5fd65e5b27c4b1274f4ec0981892153d4d7b5536d07d5c13fb"
+    }
+  },
+  "trainable_parameters": 122429440,
+  "validation_panel_actions": {
+    "swe": 128,
+    "graph": 128,
+    "terminal": 19
+  },
+  "report": {
+    "recorded_at": "2026-10-10T20:01:40.666855+00:00",
+    "training_job_id": 1067810,
+    "training_completion_sha256": "de69cb10f7b897c54f9af734e9d54cf6b77bde8345adb59c4fc78803eaae2224",
+    "encoded_manifest_sha256": "5eb75fd425dc38b16f06bf9c9c91d870fdf4a417f78823216836bceaeedd440f",
+    "metrics_jsonl_sha256": "4b225735653d8ab00f72873b6708184937589d67d989f57ead21b9b3f2395c15",
+    "validation_jsonl_sha256": "fe8723e6de4b97b16ed91d5888b4af661fd1fc539b6b2603ec3b28b9891379dd",
+    "completion": {
+      "steps": 4248,
+      "epochs": 2,
+      "samples_seen": 33982,
+      "assistant_tokens_seen": 4680468,
+      "expected_samples": 33982,
+      "selected": {
+        "checkpoint": "checkpoint-02000",
+        "step": 2000,
+        "swe_nll": 0.25554623187694736
+      },
+      "export_sha256": {
+        "adapter_config.json": "f1992b5909508f8a06b0173051d61c769beb835cc1a69ad06c87ef5c837ba608",
+        "adapter_model.safetensors": "2cbd4fab1fb79d4020e16c3efa43bd775da37d22a19b681b485f34ce8d244b8b"
+      },
+      "claim": "Completed SFT; issue-resolution gain remains unproven until evaluated."
+    },
+    "coverage_audit": {
+      "unique_actions": 16991,
+      "presentations_by_kind": {
+        "swe": 30296,
+        "graph": 3468,
+        "terminal": 218
+      },
+      "assistant_tokens_by_kind": {
+        "swe": 4545278,
+        "graph": 131478,
+        "terminal": 3712
+      },
+      "epochs": [
+        {
+          "epoch": 1,
+          "step": 2124,
+          "actions_seen": 16991,
+          "assistant_tokens_seen": 2340234,
+          "each_encoded_action_once_this_epoch": true
+        },
+        {
+          "epoch": 2,
+          "step": 4248,
+          "actions_seen": 33982,
+          "assistant_tokens_seen": 4680468,
+          "each_encoded_action_once_this_epoch": true
+        }
+      ],
+      "padding_microsteps_excluded": 2,
+      "superseded_step_records_excluded": 36,
+      "selection": "Last logged attempt for each optimizer step"
+    },
+    "initial_validation": {
+      "step": 0,
+      "epoch": 0.0,
+      "scores": {
+        "swe": {
+          "assistant_nll": 0.6212299526080678,
+          "tokens": 18574,
+          "actions": 128
+        },
+        "graph": {
+          "assistant_nll": 1.2185807632574859,
+          "tokens": 4840,
+          "actions": 128
+        },
+        "terminal": {
+          "assistant_nll": 3.5200469602567446,
+          "tokens": 329,
+          "actions": 19
+        }
+      }
+    },
+    "selected_validation": {
+      "step": 2000,
+      "epoch": 0.9416195856873822,
+      "scores": {
+        "swe": {
+          "assistant_nll": 0.25554623187694736,
+          "tokens": 18574,
+          "actions": 128
+        },
+        "graph": {
+          "assistant_nll": 0.00028752667505411284,
+          "tokens": 4840,
+          "actions": 128
+        },
+        "terminal": {
+          "assistant_nll": 0.08186583919592179,
+          "tokens": 329,
+          "actions": 19
+        }
+      }
+    },
+    "final_validation": {
+      "step": 4248,
+      "epoch": 2.0,
+      "scores": {
+        "swe": {
+          "assistant_nll": 0.26170609581878584,
+          "tokens": 18574,
+          "actions": 128
+        },
+        "graph": {
+          "assistant_nll": 4.719251917444397e-05,
+          "tokens": 4840,
+          "actions": 128
+        },
+        "terminal": {
+          "assistant_nll": 0.0437293392478695,
+          "tokens": 329,
+          "actions": 19
+        }
+      }
+    },
+    "selected_checkpoint_coverage": {
+      "step": 2000,
+      "epoch": 0.9416195856873822,
+      "samples_seen": 16000,
+      "assistant_tokens_seen": 2211383
+    },
+    "scope": "Metadata coverage audit. Large adapter hashes are checked by the Slurm validation job. Repair gains and competition scoring remain separate measurements."
+  },
+  "validation_curve": [
+    {
+      "step": 0,
+      "epoch": 0.0,
+      "scores": {
+        "swe": {
+          "assistant_nll": 0.6212299526080678,
+          "tokens": 18574,
+          "actions": 128
+        },
+        "graph": {
+          "assistant_nll": 1.2185807632574859,
+          "tokens": 4840,
+          "actions": 128
+        },
+        "terminal": {
+          "assistant_nll": 3.5200469602567446,
+          "tokens": 329,
+          "actions": 19
+        }
+      }
+    },
+    {
+      "step": 8,
+      "epoch": 0.003766478342749529,
+      "scores": {
+        "swe": {
+          "assistant_nll": 0.6210276972868012,
+          "tokens": 18574,
+          "actions": 128
+        },
+        "graph": {
+          "assistant_nll": 1.2215075584913582,
+          "tokens": 4840,
+          "actions": 128
+        },
+        "terminal": {
+          "assistant_nll": 3.525631461100013,
+          "tokens": 329,
+          "actions": 19
+        }
+      }
+    },
+    {
+      "step": 9,
+      "epoch": 0.00423728813559322,
+      "scores": {
+        "swe": {
+          "assistant_nll": 0.6216484659701933,
+          "tokens": 18574,
+          "actions": 128
+        },
+        "graph": {
+          "assistant_nll": 1.2178613879894915,
+          "tokens": 4840,
+          "actions": 128
+        },
+        "terminal": {
+          "assistant_nll": 3.5301087880931727,
+          "tokens": 329,
+          "actions": 19
+        }
+      }
+    },
+    {
+      "step": 100,
+      "epoch": 0.047080979284369114,
+      "scores": {
+        "swe": {
+          "assistant_nll": 0.30435941580144593,
+          "tokens": 18574,
+          "actions": 128
+        },
+        "graph": {
+          "assistant_nll": 0.09950047703185658,
+          "tokens": 4840,
+          "actions": 128
+        },
+        "terminal": {
+          "assistant_nll": 2.248561769995646,
+          "tokens": 329,
+          "actions": 19
+        }
+      }
+    },
+    {
+      "step": 150,
+      "epoch": 0.07062146892655367,
+      "scores": {
+        "swe": {
+          "assistant_nll": 0.28523831098691704,
+          "tokens": 18574,
+          "actions": 128
+        },
+        "graph": {
+          "assistant_nll": 0.024157171122441628,
+          "tokens": 4840,
+          "actions": 128
+        },
+        "terminal": {
+          "assistant_nll": 1.7474686171870826,
+          "tokens": 329,
+          "actions": 19
+        }
+      }
+    },
+    {
+      "step": 200,
+      "epoch": 0.09416195856873823,
+      "scores": {
+        "swe": {
+          "assistant_nll": 0.28125405078018634,
+          "tokens": 18574,
+          "actions": 128
+        },
+        "graph": {
+          "assistant_nll": 0.007802599321734276,
+          "tokens": 4840,
+          "actions": 128
+        },
+        "terminal": {
+          "assistant_nll": 1.6775616305939696,
+          "tokens": 329,
+          "actions": 19
+        }
+      }
+    },
+    {
+      "step": 300,
+      "epoch": 0.14124293785310735,
+      "scores": {
+        "swe": {
+          "assistant_nll": 0.275384418746636,
+          "tokens": 18574,
+          "actions": 128
+        },
+        "graph": {
+          "assistant_nll": 0.011442601728235748,
+          "tokens": 4840,
+          "actions": 128
+        },
+        "terminal": {
+          "assistant_nll": 0.7786032214171981,
+          "tokens": 329,
+          "actions": 19
+        }
+      }
+    },
+    {
+      "step": 400,
+      "epoch": 0.18832391713747645,
+      "scores": {
+        "swe": {
+          "assistant_nll": 0.272843850258962,
+          "tokens": 18574,
+          "actions": 128
+        },
+        "graph": {
+          "assistant_nll": 0.002902802909814131,
+          "tokens": 4840,
+          "actions": 128
+        },
+        "terminal": {
+          "assistant_nll": 0.5508791756303839,
+          "tokens": 329,
+          "actions": 19
+        }
+      }
+    },
+    {
+      "step": 500,
+      "epoch": 0.23540489642184556,
+      "scores": {
+        "swe": {
+          "assistant_nll": 0.2702610523948322,
+          "tokens": 18574,
+          "actions": 128
+        },
+        "graph": {
+          "assistant_nll": 0.0016331434993859628,
+          "tokens": 4840,
+          "actions": 128
+        },
+        "terminal": {
+          "assistant_nll": 0.39676287407933036,
+          "tokens": 329,
+          "actions": 19
+        }
+      }
+    },
+    {
+      "step": 600,
+      "epoch": 0.2824858757062147,
+      "scores": {
+        "swe": {
+          "assistant_nll": 0.26890118060947626,
+          "tokens": 18574,
+          "actions": 128
+        },
+        "graph": {
+          "assistant_nll": 0.0017775476765185593,
+          "tokens": 4840,
+          "actions": 128
+        },
+        "terminal": {
+          "assistant_nll": 0.401493453916083,
+          "tokens": 329,
+          "actions": 19
+        }
+      }
+    },
+    {
+      "step": 700,
+      "epoch": 0.3295668549905838,
+      "scores": {
+        "swe": {
+          "assistant_nll": 0.2659371725166274,
+          "tokens": 18574,
+          "actions": 128
+        },
+        "graph": {
+          "assistant_nll": 0.0017325533951177872,
+          "tokens": 4840,
+          "actions": 128
+        },
+        "terminal": {
+          "assistant_nll": 0.2990492736767853,
+          "tokens": 329,
+          "actions": 19
+        }
+      }
+    },
+    {
+      "step": 800,
+      "epoch": 0.3766478342749529,
+      "scores": {
+        "swe": {
+          "assistant_nll": 0.2621415635016151,
+          "tokens": 18574,
+          "actions": 128
+        },
+        "graph": {
+          "assistant_nll": 0.0003141887796522692,
+          "tokens": 4840,
+          "actions": 128
+        },
+        "terminal": {
+          "assistant_nll": 0.6506259665572535,
+          "tokens": 329,
+          "actions": 19
+        }
+      }
+    },
+    {
+      "step": 900,
+      "epoch": 0.423728813559322,
+      "scores": {
+        "swe": {
+          "assistant_nll": 0.2614312849776625,
+          "tokens": 18574,
+          "actions": 128
+        },
+        "graph": {
+          "assistant_nll": 0.0013584461456023875,
+          "tokens": 4840,
+          "actions": 128
+        },
+        "terminal": {
+          "assistant_nll": 0.2542956254946062,
+          "tokens": 329,
+          "actions": 19
+        }
+      }
+    },
+    {
+      "step": 1000,
+      "epoch": 0.4708097928436911,
+      "scores": {
+        "swe": {
+          "assistant_nll": 0.25938609227695153,
+          "tokens": 18574,
+          "actions": 128
+        },
+        "graph": {
+          "assistant_nll": 0.008968178026676913,
+          "tokens": 4840,
+          "actions": 128
+        },
+        "terminal": {
+          "assistant_nll": 0.18539929059319946,
+          "tokens": 329,
+          "actions": 19
+        }
+      }
+    },
+    {
+      "step": 1100,
+      "epoch": 0.5178907721280602,
+      "scores": {
+        "swe": {
+          "assistant_nll": 0.25985781595295,
+          "tokens": 18574,
+          "actions": 128
+        },
+        "graph": {
+          "assistant_nll": 0.0006177275282064608,
+          "tokens": 4840,
+          "actions": 128
+        },
+        "terminal": {
+          "assistant_nll": 0.17744289275179517,
+          "tokens": 329,
+          "actions": 19
+        }
+      }
+    },
+    {
+      "step": 1200,
+      "epoch": 0.5649717514124294,
+      "scores": {
+        "swe": {
+          "assistant_nll": 0.26035042897286237,
+          "tokens": 18574,
+          "actions": 128
+        },
+        "graph": {
+          "assistant_nll": 0.0004373395857151795,
+          "tokens": 4840,
+          "actions": 128
+        },
+        "terminal": {
+          "assistant_nll": 0.17818069935841402,
+          "tokens": 329,
+          "actions": 19
+        }
+      }
+    },
+    {
+      "step": 1300,
+      "epoch": 0.6120527306967984,
+      "scores": {
+        "swe": {
+          "assistant_nll": 0.25753681612757534,
+          "tokens": 18574,
+          "actions": 128
+        },
+        "graph": {
+          "assistant_nll": 0.0003117716405345276,
+          "tokens": 4840,
+          "actions": 128
+        },
+        "terminal": {
+          "assistant_nll": 0.17275451384145077,
+          "tokens": 329,
+          "actions": 19
+        }
+      }
+    },
+    {
+      "step": 1400,
+      "epoch": 0.6591337099811676,
+      "scores": {
+        "swe": {
+          "assistant_nll": 0.26048819359686326,
+          "tokens": 18574,
+          "actions": 128
+        },
+        "graph": {
+          "assistant_nll": 0.0003379111800527914,
+          "tokens": 4840,
+          "actions": 128
+        },
+        "terminal": {
+          "assistant_nll": 0.1910581926399089,
+          "tokens": 329,
+          "actions": 19
+        }
+      }
+    },
+    {
+      "step": 1500,
+      "epoch": 0.7062146892655368,
+      "scores": {
+        "swe": {
+          "assistant_nll": 0.25782302753696557,
+          "tokens": 18574,
+          "actions": 128
+        },
+        "graph": {
+          "assistant_nll": 0.000613680777232655,
+          "tokens": 4840,
+          "actions": 128
+        },
+        "terminal": {
+          "assistant_nll": 0.13875390855329378,
+          "tokens": 329,
+          "actions": 19
+        }
+      }
+    },
+    {
+      "step": 1600,
+      "epoch": 0.7532956685499058,
+      "scores": {
+        "swe": {
+          "assistant_nll": 0.25829834127568374,
+          "tokens": 18574,
+          "actions": 128
+        },
+        "graph": {
+          "assistant_nll": 0.0004843832208528263,
+          "tokens": 4840,
+          "actions": 128
+        },
+        "terminal": {
+          "assistant_nll": 0.10466603932500249,
+          "tokens": 329,
+          "actions": 19
+        }
+      }
+    },
+    {
+      "step": 1700,
+      "epoch": 0.800376647834275,
+      "scores": {
+        "swe": {
+          "assistant_nll": 0.25832278146870535,
+          "tokens": 18574,
+          "actions": 128
+        },
+        "graph": {
+          "assistant_nll": 0.00019445878313355242,
+          "tokens": 4840,
+          "actions": 128
+        },
+        "terminal": {
+          "assistant_nll": 0.09598416431968336,
+          "tokens": 329,
+          "actions": 19
+        }
+      }
+    },
+    {
+      "step": 1800,
+      "epoch": 0.847457627118644,
+      "scores": {
+        "swe": {
+          "assistant_nll": 0.25691079208968737,
+          "tokens": 18574,
+          "actions": 128
+        },
+        "graph": {
+          "assistant_nll": 0.0011524679836489398,
+          "tokens": 4840,
+          "actions": 128
+        },
+        "terminal": {
+          "assistant_nll": 0.08580851360113788,
+          "tokens": 329,
+          "actions": 19
+        }
+      }
+    },
+    {
+      "step": 1900,
+      "epoch": 0.8945386064030132,
+      "scores": {
+        "swe": {
+          "assistant_nll": 0.2573106078199233,
+          "tokens": 18574,
+          "actions": 128
+        },
+        "graph": {
+          "assistant_nll": 0.0004332992879065665,
+          "tokens": 4840,
+          "actions": 128
+        },
+        "terminal": {
+          "assistant_nll": 0.08045391815411645,
+          "tokens": 329,
+          "actions": 19
+        }
+      }
+    },
+    {
+      "step": 2000,
+      "epoch": 0.9416195856873822,
+      "scores": {
+        "swe": {
+          "assistant_nll": 0.25554623187694736,
+          "tokens": 18574,
+          "actions": 128
+        },
+        "graph": {
+          "assistant_nll": 0.00028752667505411284,
+          "tokens": 4840,
+          "actions": 128
+        },
+        "terminal": {
+          "assistant_nll": 0.08186583919592179,
+          "tokens": 329,
+          "actions": 19
+        }
+      }
+    },
+    {
+      "step": 2100,
+      "epoch": 0.9887005649717514,
+      "scores": {
+        "swe": {
+          "assistant_nll": 0.2575178688181613,
+          "tokens": 18574,
+          "actions": 128
+        },
+        "graph": {
+          "assistant_nll": 0.0002944061829490531,
+          "tokens": 4840,
+          "actions": 128
+        },
+        "terminal": {
+          "assistant_nll": 0.07809792662826352,
+          "tokens": 329,
+          "actions": 19
+        }
+      }
+    },
+    {
+      "step": 2124,
+      "epoch": 1.0,
+      "scores": {
+        "swe": {
+          "assistant_nll": 0.257983271139595,
+          "tokens": 18574,
+          "actions": 128
+        },
+        "graph": {
+          "assistant_nll": 0.0002713949265294405,
+          "tokens": 4840,
+          "actions": 128
+        },
+        "terminal": {
+          "assistant_nll": 0.08380105976004007,
+          "tokens": 329,
+          "actions": 19
+        }
+      }
+    },
+    {
+      "step": 2200,
+      "epoch": 1.0357815442561205,
+      "scores": {
+        "swe": {
+          "assistant_nll": 0.2591065711762132,
+          "tokens": 18574,
+          "actions": 128
+        },
+        "graph": {
+          "assistant_nll": 0.0002933310396709068,
+          "tokens": 4840,
+          "actions": 128
+        },
+        "terminal": {
+          "assistant_nll": 0.07524936048364929,
+          "tokens": 329,
+          "actions": 19
+        }
+      }
+    },
+    {
+      "step": 2300,
+      "epoch": 1.0828625235404896,
+      "scores": {
+        "swe": {
+          "assistant_nll": 0.260326766500478,
+          "tokens": 18574,
+          "actions": 128
+        },
+        "graph": {
+          "assistant_nll": 0.00013064436992372744,
+          "tokens": 4840,
+          "actions": 128
+        },
+        "terminal": {
+          "assistant_nll": 0.07489474820493973,
+          "tokens": 329,
+          "actions": 19
+        }
+      }
+    },
+    {
+      "step": 2400,
+      "epoch": 1.1299435028248588,
+      "scores": {
+        "swe": {
+          "assistant_nll": 0.26177421713776655,
+          "tokens": 18574,
+          "actions": 128
+        },
+        "graph": {
+          "assistant_nll": 0.00010907030341551328,
+          "tokens": 4840,
+          "actions": 128
+        },
+        "terminal": {
+          "assistant_nll": 0.08020376412362132,
+          "tokens": 329,
+          "actions": 19
+        }
+      }
+    },
+    {
+      "step": 2500,
+      "epoch": 1.177024482109228,
+      "scores": {
+        "swe": {
+          "assistant_nll": 0.2640868330290771,
+          "tokens": 18574,
+          "actions": 128
+        },
+        "graph": {
+          "assistant_nll": 4.6932777809583855e-05,
+          "tokens": 4840,
+          "actions": 128
+        },
+        "terminal": {
+          "assistant_nll": 0.061005251029206266,
+          "tokens": 329,
+          "actions": 19
+        }
+      }
+    },
+    {
+      "step": 2600,
+      "epoch": 1.2241054613935969,
+      "scores": {
+        "swe": {
+          "assistant_nll": 0.265134230444389,
+          "tokens": 18574,
+          "actions": 128
+        },
+        "graph": {
+          "assistant_nll": 0.00027296976179513877,
+          "tokens": 4840,
+          "actions": 128
+        },
+        "terminal": {
+          "assistant_nll": 0.050128823016008704,
+          "tokens": 329,
+          "actions": 19
+        }
+      }
+    },
+    {
+      "step": 2700,
+      "epoch": 1.271186440677966,
+      "scores": {
+        "swe": {
+          "assistant_nll": 0.26511020304052174,
+          "tokens": 18574,
+          "actions": 128
+        },
+        "graph": {
+          "assistant_nll": 4.6969693081169784e-05,
+          "tokens": 4840,
+          "actions": 128
+        },
+        "terminal": {
+          "assistant_nll": 0.04833427612247981,
+          "tokens": 329,
+          "actions": 19
+        }
+      }
+    },
+    {
+      "step": 2800,
+      "epoch": 1.3182674199623352,
+      "scores": {
+        "swe": {
+          "assistant_nll": 0.26171431210651735,
+          "tokens": 18574,
+          "actions": 128
+        },
+        "graph": {
+          "assistant_nll": 9.217912044830371e-05,
+          "tokens": 4840,
+          "actions": 128
+        },
+        "terminal": {
+          "assistant_nll": 0.05078083960095981,
+          "tokens": 329,
+          "actions": 19
+        }
+      }
+    },
+    {
+      "step": 2900,
+      "epoch": 1.3653483992467044,
+      "scores": {
+        "swe": {
+          "assistant_nll": 0.2641259621803102,
+          "tokens": 18574,
+          "actions": 128
+        },
+        "graph": {
+          "assistant_nll": 5.6625523437421276e-05,
+          "tokens": 4840,
+          "actions": 128
+        },
+        "terminal": {
+          "assistant_nll": 0.05121864668322914,
+          "tokens": 329,
+          "actions": 19
+        }
+      }
+    },
+    {
+      "step": 3000,
+      "epoch": 1.4124293785310735,
+      "scores": {
+        "swe": {
+          "assistant_nll": 0.2616563907433725,
+          "tokens": 18574,
+          "actions": 128
+        },
+        "graph": {
+          "assistant_nll": 0.00017464917773912187,
+          "tokens": 4840,
+          "actions": 128
+        },
+        "terminal": {
+          "assistant_nll": 0.051391532746537114,
+          "tokens": 329,
+          "actions": 19
+        }
+      }
+    },
+    {
+      "step": 3100,
+      "epoch": 1.4595103578154425,
+      "scores": {
+        "swe": {
+          "assistant_nll": 0.2621060217832171,
+          "tokens": 18574,
+          "actions": 128
+        },
+        "graph": {
+          "assistant_nll": 0.00010051793974591704,
+          "tokens": 4840,
+          "actions": 128
+        },
+        "terminal": {
+          "assistant_nll": 0.05125700446598707,
+          "tokens": 329,
+          "actions": 19
+        }
+      }
+    },
+    {
+      "step": 3200,
+      "epoch": 1.5065913370998116,
+      "scores": {
+        "swe": {
+          "assistant_nll": 0.26388716239770915,
+          "tokens": 18574,
+          "actions": 128
+        },
+        "graph": {
+          "assistant_nll": 0.00012069196743530198,
+          "tokens": 4840,
+          "actions": 128
+        },
+        "terminal": {
+          "assistant_nll": 0.048130441938263664,
+          "tokens": 329,
+          "actions": 19
+        }
+      }
+    },
+    {
+      "step": 3300,
+      "epoch": 1.5536723163841808,
+      "scores": {
+        "swe": {
+          "assistant_nll": 0.26126426212886156,
+          "tokens": 18574,
+          "actions": 128
+        },
+        "graph": {
+          "assistant_nll": 6.293655429415083e-05,
+          "tokens": 4840,
+          "actions": 128
+        },
+        "terminal": {
+          "assistant_nll": 0.046773858532581286,
+          "tokens": 329,
+          "actions": 19
+        }
+      }
+    },
+    {
+      "step": 3400,
+      "epoch": 1.60075329566855,
+      "scores": {
+        "swe": {
+          "assistant_nll": 0.26171553536328845,
+          "tokens": 18574,
+          "actions": 128
+        },
+        "graph": {
+          "assistant_nll": 4.424396697789813e-05,
+          "tokens": 4840,
+          "actions": 128
+        },
+        "terminal": {
+          "assistant_nll": 0.04624366134654244,
+          "tokens": 329,
+          "actions": 19
+        }
+      }
+    },
+    {
+      "step": 3500,
+      "epoch": 1.6478342749529191,
+      "scores": {
+        "swe": {
+          "assistant_nll": 0.26192793629908456,
+          "tokens": 18574,
+          "actions": 128
+        },
+        "graph": {
+          "assistant_nll": 6.157756951491942e-05,
+          "tokens": 4840,
+          "actions": 128
+        },
+        "terminal": {
+          "assistant_nll": 0.04717574046081142,
+          "tokens": 329,
+          "actions": 19
+        }
+      }
+    },
+    {
+      "step": 3600,
+      "epoch": 1.694915254237288,
+      "scores": {
+        "swe": {
+          "assistant_nll": 0.26212583734235284,
+          "tokens": 18574,
+          "actions": 128
+        },
+        "graph": {
+          "assistant_nll": 4.11230224983683e-05,
+          "tokens": 4840,
+          "actions": 128
+        },
+        "terminal": {
+          "assistant_nll": 0.04658433128612563,
+          "tokens": 329,
+          "actions": 19
+        }
+      }
+    },
+    {
+      "step": 3700,
+      "epoch": 1.7419962335216572,
+      "scores": {
+        "swe": {
+          "assistant_nll": 0.26186754598903544,
+          "tokens": 18574,
+          "actions": 128
+        },
+        "graph": {
+          "assistant_nll": 3.9907676529223826e-05,
+          "tokens": 4840,
+          "actions": 128
+        },
+        "terminal": {
+          "assistant_nll": 0.043052788976704455,
+          "tokens": 329,
+          "actions": 19
+        }
+      }
+    },
+    {
+      "step": 3800,
+      "epoch": 1.7890772128060264,
+      "scores": {
+        "swe": {
+          "assistant_nll": 0.2613858143309387,
+          "tokens": 18574,
+          "actions": 128
+        },
+        "graph": {
+          "assistant_nll": 5.677716662205982e-05,
+          "tokens": 4840,
+          "actions": 128
+        },
+        "terminal": {
+          "assistant_nll": 0.04370131096194037,
+          "tokens": 329,
+          "actions": 19
+        }
+      }
+    },
+    {
+      "step": 3900,
+      "epoch": 1.8361581920903955,
+      "scores": {
+        "swe": {
+          "assistant_nll": 0.262476196857368,
+          "tokens": 18574,
+          "actions": 128
+        },
+        "graph": {
+          "assistant_nll": 4.362144622372255e-05,
+          "tokens": 4840,
+          "actions": 128
+        },
+        "terminal": {
+          "assistant_nll": 0.04363430922675459,
+          "tokens": 329,
+          "actions": 19
+        }
+      }
+    },
+    {
+      "step": 4000,
+      "epoch": 1.8832391713747645,
+      "scores": {
+        "swe": {
+          "assistant_nll": 0.2616950380627949,
+          "tokens": 18574,
+          "actions": 128
+        },
+        "graph": {
+          "assistant_nll": 3.526822841595351e-05,
+          "tokens": 4840,
+          "actions": 128
+        },
+        "terminal": {
+          "assistant_nll": 0.04240228962096581,
+          "tokens": 329,
+          "actions": 19
+        }
+      }
+    },
+    {
+      "step": 4100,
+      "epoch": 1.9303201506591336,
+      "scores": {
+        "swe": {
+          "assistant_nll": 0.26091569956747424,
+          "tokens": 18574,
+          "actions": 128
+        },
+        "graph": {
+          "assistant_nll": 3.745189240983428e-05,
+          "tokens": 4840,
+          "actions": 128
+        },
+        "terminal": {
+          "assistant_nll": 0.04370669543312857,
+          "tokens": 329,
+          "actions": 19
+        }
+      }
+    },
+    {
+      "step": 4200,
+      "epoch": 1.9774011299435028,
+      "scores": {
+        "swe": {
+          "assistant_nll": 0.2622377899132932,
+          "tokens": 18574,
+          "actions": 128
+        },
+        "graph": {
+          "assistant_nll": 4.6119263421952224e-05,
+          "tokens": 4840,
+          "actions": 128
+        },
+        "terminal": {
+          "assistant_nll": 0.04333024835468788,
+          "tokens": 329,
+          "actions": 19
+        }
+      }
+    },
+    {
+      "step": 4248,
+      "epoch": 2.0,
+      "scores": {
+        "swe": {
+          "assistant_nll": 0.26170609581878584,
+          "tokens": 18574,
+          "actions": 128
+        },
+        "graph": {
+          "assistant_nll": 4.719251917444397e-05,
+          "tokens": 4840,
+          "actions": 128
+        },
+        "terminal": {
+          "assistant_nll": 0.0437293392478695,
+          "tokens": 329,
+          "actions": 19
+        }
+      }
+    }
+  ],
+  "limits": [
+    "Teacher-forced action NLL is not issue-resolution rate.",
+    "The selected checkpoint is step 2000, not the final two-epoch weights.",
+    "The graph component contribution requires a separate ablation.",
+    "Upstream SWE success labels do not establish successful replay of all converted trajectories."
+  ],
+  "validation_job": {
+    "id": 1067811,
+    "state": "FAILED",
+    "exit_code": "1:0",
+    "elapsed": "00:12:46",
+    "serving_effect_passed": true,
+    "compiler_passed": true,
+    "empty_gold_controls_valid": true,
+    "smoke_inference_error": "Context window exceeded after 230 tool calls in one 8192-token response",
+    "patch_empty": true,
+    "fast_cohort_started": false,
+    "competition_uploaded": false
+  },
+  "encoding_defect": {
+    "description": "The original encoder removed the supervised tool-handoff stop token.",
+    "token": "<|tool_response>",
+    "token_id": 50,
+    "listed_as_model_eos": true,
+    "source": "https://ai.google.dev/gemma/docs/core/prompt-formatting-gemma4",
+    "causal_scope": "Definite protocol-supervision bug. Its contribution to the observed generation failure requires a corrected-run comparison."
+  }
+}
