@@ -287,6 +287,56 @@ $env:HF_HOME     = 'E:\Desktop\CodingAI\artifacts\hf-cache'   # datasets refuses
 
 ## Work history
 
+### 2026-10-13 02:00 (Asia/Shanghai) - The control-valid set grew from 4 tasks to 73; the fastapi class is measured and fixed
+
+- Objective (goal round 1, closing): grow the control-valid task set until a LoRA gain is measurable.
+  It is done: **73 control-valid tasks**, up from 4.
+- Results of the four CPU-only scale-up sweeps, all carrying the embedded reviewed harness wheels:
+  | Sweep | Attempted | Usable |
+  | --- | ---: | ---: |
+  | `frozen38` (the set that returned 0/38 on 2026-10-09) | 38 | **29** (17 fastapi, 12 rich) |
+  | untried `rich` batch | 30 | **24** (80 %) |
+  | untried `fastapi` batch | 30 | 2 (run before the starlette measurement below) |
+  | untried mixed batch | 30 | **17** |
+  | recheck of the original eight | 8 | 4 |
+  Negative controls from the same day: the same 38 tasks **without** the wheel restore returned 0/38, and
+  the same eight returned 0/8. That is a clean A/B for the drift fix.
+- **Union: 73 valid tasks (rich 39, fastapi 34)**, recorded both as a working copy
+  (`runs/2026-10-13-control-valid-set.json`) and as a tracked manifest,
+  `resource/manifests/control-valid-tasks-2026-10-13.json`. Against the paired protocol's power table that
+  reaches a **20-point** gain at 80 % power (40 tasks needed), is **5 short** of the 78 that a 10-point
+  gain needs, and far from the 158 for 5 points.
+- **The fastapi collection class is cracked, by measurement rather than assumption.** The exact error was
+  `TypeError: Router.__init__() got an unexpected keyword argument 'on_startup'` in both arms, while
+  `task-environment-pins.json` recorded `{}` -- those snapshots declare no starlette pin, so the image's
+  wheel (the newest in the task wheelhouse, 1.6.0) was left in place. The generator now probes the
+  wheelhouse's starlette candidates from newest down with a direct `Router(on_startup=[])` import and
+  installs the newest one that accepts it. Measured boundary on the real wheels: **1.6.0 rejects, 1.3.1
+  rejects, 0.52.1 accepts**. With that pin `fastapi_13713` and `fastapi_14786` -- invalid for this
+  project's entire history -- are now usable (empty exit 1, gold exit 0, resolved). My earlier reading
+  that the keyword was removed at 0.47 was wrong; the measurement corrected it.
+- Ready but deliberately **not launched**, because this session was asked to stop: a 30-task fastapi sweep
+  with the measured pin at `runs/2026-10-13-control-fastapi-starlette/`. It should convert a large share of
+  the 28 failures in the fastapi batch, and would likely push the set past the 78-task mark.
+- **GitHub, finished for the handoff**: PR **#16** opened for `experiment/four-l4-lora-feasibility`, and the
+  measured four-L4 result posted to **issue #13** (comment `6128890774`). PR #8's head carries its two
+  review fixes (`bd9b167`) but the PR reports `mergeable_state=dirty`, so it still needs a rebase against
+  `main` before it can merge.
+- **What the training half now faces, stated honestly: compute, not instrument.** 5,306.051
+  quota-seconds remain of 108,000 (refresh 2026-10-17, about 2,653 s of L4x4 wall time), one bounded
+  training session already cost 4,733.33 of them, and a paired evaluation over 40+ tasks runs two arms per
+  task on top of that. The rank ladder therefore waits for the quota refresh or for another platform
+  (Trillium needs credentials this workspace does not have; the local GPU is an 8 GiB laptop part that
+  cannot hold this base at any quantisation). The ladder design to use when compute exists: rank 16 on the
+  compact recipe first, then 32 and 64 only if the paired result moves, re-establishing empty/gold controls
+  in every run as the protocol requires.
+- Verification: seven tests in `tests/test_control_sweep_notebook.py` pass (including the starlette probe),
+  the whole suite passes, and the union is computed from the fetched Kaggle reports by
+  `artifacts/tmp/union_valid_tasks.py` rather than by hand.
+- Changed files: `scripts/prepare_task_control_sweep.py`, `tests/test_control_sweep_notebook.py`,
+  `resource/manifests/control-valid-tasks-2026-10-13.json` (new), `WORKLOG.md`. **No GPU quota was spent
+  in this round**; every sweep is CPU-only.
+
 ### 2026-10-13 01:10 (Asia/Shanghai) - The control instrument was broken by wheelhouse drift; fixed by embedding the reviewed wheels; 128 tasks now sweeping
 
 - Objective (goal round 1): grow the control-valid task set before any LoRA rank work, because a gain

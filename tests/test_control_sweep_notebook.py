@@ -144,6 +144,19 @@ class ControlSweepNotebookTests(unittest.TestCase):
         record = json.loads((output / 'generation-record.json').read_text(encoding='utf-8'))
         self.assertEqual(record['pinned_wheels'], sorted(self.module.PINNED_HARNESS_WHEELS))
 
+    def test_starlette_pin_is_measured_rather_than_assumed(self):
+        """Versions from 0.47 reject `Router(on_startup=...)`, and the FastAPI snapshots declare none.
+
+        Measured on 2026-10-13: both `fastapi_13713` and `fastapi_14786` failed collection in **both**
+        arms with `TypeError: Router.__init__() got an unexpected keyword argument 'on_startup'`, while
+        `task-environment-pins.json` recorded `{}` for them.
+        """
+        _, notebook, _ = self.generate(pin_task_environment=True)
+        joined = '\n'.join(self.sources(notebook))
+        self.assertIn('_measured_starlette', joined)
+        self.assertIn('Router(on_startup=[])', joined)
+        self.assertIn('starlette_probe', joined)
+
     def test_the_reviewed_manifest_lists_every_pinned_wheel(self):
         """A restore step can only be honest if the frozen manifest carries each reviewed digest."""
         reviewed = json.loads(REVIEWED_MANIFEST.read_text(encoding='utf-8'))

@@ -265,6 +265,41 @@ def _metadata_text(task_id):
                                     'requirements-tests.txt'})
 
 
+# Starlette cannot be pinned from the declaration alone. The wheelhouse keeps every version up to 1.6.0,
+# `_choose` only excludes 1.x, and versions from 0.47 onward reject `Router(on_startup=...)` -- which is
+# exactly how the FastAPI snapshots failed collection on 2026-10-13:
+# `TypeError: Router.__init__() got an unexpected keyword argument 'on_startup'` in **both** arms, with
+# `task-environment-pins.json` recording `{}` for those tasks because their snapshots declare no
+# starlette pin at all. So the acceptable version is measured rather than assumed: probe candidates from
+# newest down with a direct `Router(on_startup=[])` import against the extracted wheel, and cache the
+# newest one that accepts it. One probe pass costs about half a minute and then applies to every task.
+_STARLETTE_MEASURED = {}
+
+
+def _measured_starlette():
+    if 'choice' in _STARLETTE_MEASURED:
+        return _STARLETTE_MEASURED['choice']
+    probe = Path('/tmp/starlette-probe')
+    _STARLETTE_MEASURED['probes'] = []
+    choice = None
+    for candidate in reversed(_available('starlette')):
+        shutil.rmtree(probe, ignore_errors=True)
+        probe.mkdir(parents=True, exist_ok=True)
+        subprocess.run([sys.executable, '-m', 'pip', 'install', '--no-index', '--no-deps',
+                        '--target', str(probe), str(candidate[2])], capture_output=True, text=True)
+        check = subprocess.run([sys.executable, '-c',
+                                'import sys; sys.path.insert(0, ' + repr(str(probe)) + '); '
+                                'from starlette.routing import Router; Router(on_startup=[])'],
+                               capture_output=True, text=True)
+        _STARLETTE_MEASURED['probes'].append({'version': candidate[1],
+                                              'accepts_on_startup': check.returncode == 0})
+        if check.returncode == 0:
+            choice = candidate
+            break
+    _STARLETTE_MEASURED['choice'] = choice
+    return choice
+
+
 records = []
 for task_id in PAYLOAD['task_ids']:
     entry = {'task_id': task_id, 'files': [], 'pinned': {}, 'error': None}
@@ -293,6 +328,25 @@ for task_id in PAYLOAD['task_ids']:
                                'installed': chosen[1], 'returncode': completed.returncode}
             if completed.returncode:
                 installed[name]['detail'] = (completed.stdout or '')[-200:]
+        # Install the measured Starlette when the snapshot declared none; leaving the image's newest
+        # wheel in place is what made every FastAPI control fail before any test ran.
+        if 'starlette' not in installed:
+            measured = _measured_starlette()
+            if measured is not None:
+                target = Path('/tmp/pinned-wheels')
+                target.mkdir(exist_ok=True)
+                link = target / measured[2].name
+                if not link.exists():
+                    link.symlink_to(measured[2])
+                completed = subprocess.run([sys.executable, '-m', 'pip', 'install', '--no-index',
+                                            '--no-deps', '--force-reinstall', str(link)],
+                                           capture_output=True, text=True)
+                installed['starlette'] = {
+                    'requested': 'measured: newest wheel whose Router accepts on_startup',
+                    'installed': measured[1], 'returncode': completed.returncode}
+                if completed.returncode:
+                    installed['starlette']['detail'] = (completed.stdout or '')[-200:]
+            entry['starlette_probe'] = _STARLETTE_MEASURED.get('probes')
         entry['pinned'] = installed
     except Exception as error:
         entry['error'] = f'{type(error).__name__}: {error}'
