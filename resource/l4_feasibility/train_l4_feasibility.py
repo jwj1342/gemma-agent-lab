@@ -179,23 +179,39 @@ def normalise_peft_key(key: str) -> str:
 def target_loss(network, input_ids, positions):
     """Cross-entropy over the supervised positions, with logits aligned to the next target token.
 
-    Shared by the four-GPU trainer and the single-GPU packed-format probe so both measure the same
-    objective; ``logits_to_keep=positions - 1`` is what makes the prediction for ``positions`` come
-    from the last prompt token onwards, exactly as the H100 recipe does it.
+    Shared by the four-GPU trainer, the single-GPU packed probe and the device-mapped route so all of them
+    measure the same objective.
+
+    The positions go in as an integer count, not as an index tensor. ``transformers`` turns a non-integer
+    ``logits_to_keep`` into ``hidden_states[:, indices, :]``
+    (``models/gemma4/modeling_gemma4.py``), and on a model dispatched across several GPUs those hidden
+    states live on the last GPU, so an index tensor built on the first GPU raises
+    ``RuntimeError: indices should be either on cpu or on the same device as the indexed tensor (cuda:3)``
+    -- measured on run 9. The supervised positions are the trailing ones by construction
+    (``positions = arange(target_start, seq_len)``), so keeping ``len(positions) + 1`` trailing hidden
+    states and dropping the last row yields exactly the logits ``positions - 1`` used to select: the
+    hidden state before each supervised token.
     """
     import torch
     import torch.nn.functional as F
+
+    count = int(positions.numel())
+    trailing = torch.arange(input_ids.shape[1] - count, input_ids.shape[1], device=input_ids.device)
+    if not torch.equal(positions.to(input_ids.device), trailing):
+        raise ValueError('target_loss expects the supervised positions to be the trailing ones, '
+                         f'got {positions.tolist()[:4]}... against a sequence of '
+                         f'{input_ids.shape[1]} tokens')
 
     # PEFT keeps adapter master weights in FP32. Autocast is also needed for their projections; a
     # BF16 frozen base alone does not enable AMP.
     with torch.autocast(device_type='cuda', dtype=torch.bfloat16):
         output = network(input_ids=input_ids, attention_mask=torch.ones_like(input_ids),
-                         logits_to_keep=positions - 1, use_cache=False)
-    logits = output.logits[0].float()
+                         logits_to_keep=count + 1, use_cache=False)
+    logits = output.logits[0].float()[:count]
     # The targets follow the logits' device: a model dispatched across several GPUs can put the language
     # head on a different device from the embeddings the example was built on, and cross-entropy across
     # two devices raises. On a single-device model this is a no-op.
-    return F.cross_entropy(logits, input_ids[0, positions].to(logits.device)), len(positions)
+    return F.cross_entropy(logits, input_ids[0, positions].to(logits.device)), count
 
 
 def lora_modules(model):
@@ -258,6 +274,7 @@ def save_adapter(network, raw_model, work: Path, strategy: str, config: dict, ra
     complete replica onto rank 0 -- about 58 GiB here -- which is the failure this strategy exists to
     avoid.
     """
+    import torch
     import safetensors.torch
     from torch.distributed.fsdp import FullyShardedDataParallel as FSDP, StateDictType, FullStateDictConfig
 

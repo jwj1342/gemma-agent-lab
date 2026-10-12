@@ -71,6 +71,22 @@ def placement_verdict(hf_device_map: dict, allocated_gib_per_gpu: list) -> dict:
             'problems': problems, 'status': 'ok' if not problems else 'placement_incompatible'}
 
 
+def device_map_attempts(gpu_budget_mib: int, cpu_budget: str) -> list:
+    """The placement ladder, as data so the two attempts can be asserted offline.
+
+    The first attempt balances the split at the full per-GPU budget. The second lowers the budget and
+    allows host-RAM offload, because the measured failure was an allocator that had reserved 3.60 GiB more
+    than it allocated on one GPU: a lower cap leaves room for that, and offloading the tail costs latency
+    rather than the run.
+    """
+    return [
+        {'name': 'balanced', 'device_map': 'balanced', 'gpu_budget_mib': gpu_budget_mib,
+         'cpu_budget': None},
+        {'name': 'auto_with_cpu_offload', 'device_map': 'auto',
+         'gpu_budget_mib': max(16000, gpu_budget_mib - 1500), 'cpu_budget': cpu_budget},
+    ]
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -84,10 +100,18 @@ def main() -> int:
     parser.add_argument('--seq-len', type=int, default=2048)
     parser.add_argument('--wall-budget-seconds', type=float, default=900.0)
     parser.add_argument('--load-budget-seconds', type=float, default=600.0)
-    parser.add_argument('--max-memory-mib', type=int, default=21000,
-                        help='Per-GPU budget handed to accelerate; 21000 MiB stays inside 22563 MiB '
-                             'with room for activations')
+    parser.add_argument('--max-memory-mib', type=int, default=20500,
+                        help='Per-GPU budget handed to accelerate for the first placement attempt; '
+                             '22563 MiB is the card, and the second attempt subtracts 1500 MiB and may '
+                             'offload to host RAM')
+    parser.add_argument('--cpu-budget', default='64GiB',
+                        help='Host-RAM allowance for the second placement attempt, which exists because '
+                             'the first was killed by allocator fragmentation on one GPU')
     args = parser.parse_args()
+
+    # Must be set before the CUDA context exists: the measured failure was 17.88 GiB allocated but
+    # 21.48 GiB reserved on one GPU, which is exactly what expandable segments avoids.
+    os.environ.setdefault('PYTORCH_CUDA_ALLOC_CONF', 'expandable_segments:True')
 
     import torch
     from transformers import AutoModelForImageTextToText, AutoTokenizer, CompressedTensorsConfig
@@ -114,7 +138,8 @@ def main() -> int:
         'gpus': [torch.cuda.get_device_name(index) for index in range(device_count)],
         'gpu_total_mib': [torch.cuda.get_device_properties(index).total_memory // 2 ** 20
                           for index in range(device_count)],
-        'max_memory_mib': args.max_memory_mib, 'base': args.base,
+        'max_memory_mib': args.max_memory_mib, 'cpu_budget': args.cpu_budget, 'base': args.base,
+        'cuda_alloc_conf': os.environ.get('PYTORCH_CUDA_ALLOC_CONF'),
         'compressed-tensors': package_version('compressed-tensors', 'compressed_tensors'),
         'torchao': package_version('torchao'), 'bitsandbytes': package_version('bitsandbytes'),
     }
@@ -149,43 +174,71 @@ def main() -> int:
     input_ids = batch['input_ids'].to('cuda:0')
     positions = torch.arange(batch['target_start'], input_ids.shape[1], device='cuda:0')
 
-    # Load the dequantised base straight onto the four GPUs. The load runs in a thread so a stalled
-    # dispatch is recorded as a timeout instead of letting the notebook's subprocess timeout kill the
-    # process with no measurement at all.
+    # Load the dequantised base straight onto the four GPUs. Two measured failures shape this loop:
+    # `device_map='auto'` filled the GPUs in order until one of them had 17.88 GiB allocated by PyTorch
+    # plus 3.60 GiB reserved-but-unallocated, and the next 442 MiB request raised CUDA OOM -- so the
+    # limits are the allocator's fragmentation as much as the split. The ladder therefore tries the
+    # balanced placement first, then an even lower per-GPU cap that lets accelerate offload the tail to
+    # host RAM (188.69 GiB of it) instead of failing. Each attempt is recorded with its own exception,
+    # and the load runs in a thread so a stalled dispatch is a timeout rather than a silent kill.
     quantization, quantization_record = build_quantization_config(CompressedTensorsConfig, True)
     result['quantization'] = quantization_record
     progress('quantization_config', **quantization_record)
-    max_memory = {index: f'{args.max_memory_mib}MiB' for index in range(device_count)}
-    load_started = time.monotonic()
-    box: dict = {}
+    deadline = time.monotonic() + args.load_budget_seconds
+    attempts = []
+    model = None
+    for settings in device_map_attempts(args.max_memory_mib, args.cpu_budget):
+        max_memory = {index: f"{settings['gpu_budget_mib']}MiB" for index in range(device_count)}
+        if settings['cpu_budget']:
+            max_memory['cpu'] = settings['cpu_budget']
+        record = {'attempt': settings['name'], 'device_map': settings['device_map'],
+                  'max_memory': max_memory}
+        started = time.monotonic()
+        box: dict = {}
 
-    def load_base() -> None:
-        try:
-            box['model'] = AutoModelForImageTextToText.from_pretrained(
-                args.base, local_files_only=True, dtype=torch.bfloat16,
-                quantization_config=quantization, device_map='auto', max_memory=max_memory,
-                low_cpu_mem_usage=True, attn_implementation='sdpa')
-        except BaseException as error:  # re-raised on the main thread below
-            box['error'] = error
+        def load_base(settings=settings, max_memory=max_memory, box=box) -> None:
+            try:
+                box['model'] = AutoModelForImageTextToText.from_pretrained(
+                    args.base, local_files_only=True, dtype=torch.bfloat16,
+                    quantization_config=quantization, device_map=settings['device_map'],
+                    max_memory=max_memory, low_cpu_mem_usage=True, attn_implementation='sdpa')
+            except BaseException as error:  # recorded below
+                box['error'] = error
 
-    loader = threading.Thread(target=load_base, name='device-map-load', daemon=True)
-    loader.start()
-    loader.join(args.load_budget_seconds)
-    if loader.is_alive():
-        progress('load_timeout', budget_seconds=args.load_budget_seconds)
-        return finish('load_timeout',
-                      'the sharded load did not finish within --load-budget-seconds; the checkpoint is '
-                      'not dispatchable across four L4s in the time one session allows')
-    if 'error' in box:
-        error = box['error']
-        result['load'] = {'error': f'{type(error).__name__}: {error}',
-                          'traceback': traceback.format_exc()[-2000:],
-                          'seconds': round(time.monotonic() - load_started, 3)}
-        progress('load_failed', error=result['load']['error'])
+        loader = threading.Thread(target=load_base, name=f"load-{settings['name']}", daemon=True)
+        loader.start()
+        loader.join(max(1.0, deadline - time.monotonic()))
+        if loader.is_alive():
+            record.update({'outcome': 'timeout', 'seconds': round(time.monotonic() - started, 3)})
+            progress('load_attempt_timeout', **{k: v for k, v in record.items() if k != 'max_memory'})
+            attempts.append(record)
+            break
+        if 'error' in box:
+            error = box['error']
+            record.update({'outcome': 'failed', 'seconds': round(time.monotonic() - started, 3),
+                           'error': f'{type(error).__name__}: {error}'})
+            progress('load_attempt_failed', attempt=record['attempt'],
+                     seconds=record['seconds'], error=record['error'][:400])
+            attempts.append(record)
+            torch.cuda.empty_cache()
+            continue
+        model = box['model']
+        record.update({'outcome': 'loaded', 'seconds': round(time.monotonic() - started, 3)})
+        progress('load_attempt_loaded', **{k: v for k, v in record.items() if k != 'max_memory'})
+        attempts.append(record)
+        break
+    result['load_attempts'] = attempts
+    if model is None:
+        last = attempts[-1] if attempts else {'outcome': 'not_attempted'}
+        result['load'] = {'attempts': attempts}
+        if last['outcome'] == 'timeout':
+            return finish('load_timeout',
+                          'the sharded load did not finish within --load-budget-seconds; the checkpoint '
+                          'is not dispatchable across four L4s in the time one session allows')
         return finish('load_incompatible',
-                      'the dequantised base could not be dispatched across the four L4s; the exact '
-                      'exception is recorded')
-    model = box['model']
+                      'the dequantised base could not be dispatched across the four L4s; every attempt '
+                      'and its exact exception are recorded')
+    load_started = time.monotonic() - (attempts[-1]['seconds'] if attempts else 0.0)
     hf_device_map = getattr(model, 'hf_device_map', None) or {}
     allocated_gib_per_gpu = [round(torch.cuda.memory_allocated(index) / 2 ** 30, 3)
                              for index in range(device_count)]

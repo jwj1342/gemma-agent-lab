@@ -2,18 +2,24 @@
 
 This file is the persistent handoff record for work performed in this repository. Read it before starting a task and update it before finishing.
 
-## Resume point (L4 training feasibility, 2026-10-12 18:20 Asia/Shanghai)
+## Resume point (L4 training feasibility, 2026-10-12 20:35 Asia/Shanghai)
 
-**Read this first if you are resuming the four-L4 training work (issue #13).** The serving question is
-answered, the hardware problem is solved, and the measured version conflict that stopped run 4 is fixed
-and carried by run 5, which is on Kaggle now. Read the run-5 entry at the top of `Work history` for that
-outcome; this section is the state that does not depend on it.
+**Read this first if you are resuming the four-L4 training work (issue #13). The acceptance criterion is
+met and measured.** Run 11 took the required `gemma-4-31b-it-qat-w4a16-ct` base through the bounded
+train/save/verify/reload loop on four L4 GPUs in one 1,421 s session: BF16 dequantised and dispatched
+across the cards, eight updates, an 820-tensor adapter exported and validated, and the official vLLM
+runtime honouring it (control 0.0, effect 0.596932). Section 9 of
+`docs/experiments/2026-10-12-l4-training-feasibility.md` holds the table of measured values, and the
+run-11 entry at the top of `Work history` holds the narrative. What is left is reporting and deciding
+whether anything further is worth the remaining quota, not feasibility work.
 
 What is settled, with evidence:
 
-- **The quota drain is over.** 15,990.809 s of 108,000 s remain (refresh 2026-10-17), flat across
-  readings, so any leak is closed. L4x4 uses quota at 2x wall time, which three sessions this round
-  confirmed independently (ratios 2.08, 2.08, ~2.5 depending on the wall-time window).
+- **Quota is nearly spent, and queue time is billed.** **5,306.051 s of 108,000 s remain** (refresh
+  2026-10-17), about 2,653 s of L4x4 wall time. Run 11 was charged 4,733.33 quota-seconds against a
+  2,842.6 estimate because the allocation is billed while it is held, including the ~780 s it spent
+  queued. Fold queue time into any further session plan; the earlier drain is closed and the account was
+  flat across the readings taken before this session.
 - **Four L4 GPUs are obtainable, and the reason they were not before is now known.** L4x4 is gated on
   competition attachment. Setting `competition_sources: ['gemma-4-developer-agent']` in the kernel
   metadata changed the allocation from 2x T4 to 4x L4 (23,034 MiB each, 188.69 GiB host RAM, 48 CPUs)
@@ -40,10 +46,11 @@ performs a blob upload must run through `scripts/bounded_connect.py`, which boun
 so a blocked route fails quickly instead of looking like a hang.
 
 Done since that note: the second dataset source is attached, the stage cell installs the wheelhouse model
-stack plus the torchao wheel and proves the import chain before any GPU work, and section 5 of
+stack plus the torchao wheel and proves the import chain before any GPU work, section 5 of
 `docs/experiments/2026-10-12-l4-training-feasibility.md` no longer carries the disproved "keep the image's
-transformers to dodge torchao" rationale. Still open: the training measurement from run 5, and the two
-standalone results for issue #13.
+transformers to dodge torchao" rationale, and **the loop itself now runs**: see the run-11 entry and
+section 9. Still open for a human: posting the result to issue #13, and deciding whether a graded 4K
+example or the paired repair control justifies the remaining ~2,653 s of L4x4 wall time.
 
 Offline gates for this work: `tests/test_l4_feasibility.py` runs **38 tests, all passing**, and
 `scripts/prepare_l4_feasibility_notebook.py --check` reports `status: ok`. Two new helpers exist for
@@ -187,22 +194,30 @@ $env:HF_HOME     = 'E:\Desktop\CodingAI\artifacts\hf-cache'   # datasets refuses
 
 ## Current project state
 
-- October 12 18:20 issue #13 (four-L4 training feasibility): runs 1-4 are complete and **run 5 is on
-  Kaggle**. What runs 1-4 established: L4x4 is gated on competition attachment; the native handoff
-  contract is verified on four L4 GPUs; and run 4 stopped at the base load on a measured version conflict
-  (the image's `transformers 5.0.0` has no `gemma4` in `CONFIG_MAPPING`, and `peft 0.19.1` raises on the
-  image's `torchao 0.10.0`). Run 5 fixes both before any GPU work:
-  `resource/l4_feasibility/prepare_model_stack.py` installs the mounted `transformers 5.13.1` (with its
-  `tokenizers`/`safetensors`, `compressed_tensors` and `loguru`) plus a PyPI-hash-checked `torchao 0.16.0`
-  wheel from the attached public dataset `kajarnaklokossou/torchao-0-16-0`, then proves the import chain
-  and the checkpoint's config in a fresh interpreter. No dataset upload is needed, and none is possible:
-  the kaggle client's blob uploads go to `www.googleapis.com`, which is unreachable from this machine, so
-  kaggle commands run through `scripts/bounded_connect.py`. Quota **15,990.809 s of 108,000 s** remain
-  (refresh 2026-10-17), flat since 02:05. Offline gates: 38 L4 tests and the 94-test suite pass, and the
+- October 12 20:35 issue #13 (four-L4 training feasibility): **the acceptance criterion is met.** Run 11
+  (kernel `junzhejiao/gemma-4-four-l4-lora-training-feasibility-v5` version 7) trained a replicated LoRA
+  adapter on the required `gemma-4-31b-it-qat-w4a16-ct` base for eight updates with the BF16 base
+  dispatched across four L4s by one process, exported an 820-tensor adapter (244,982,352 bytes, SHA256
+  `c4d2bff9bf765bb6b16a01dc7545757358cbc1cc6d3054de3b41cfa601b76852`), validated it 820/820 against the
+  served naming scheme, and reloaded it in the official vLLM runtime (`status: applied`; control
+  base-versus-base 0.0, adapter effect 0.596932). Measured cost: 1,421.3 s of session wall and 4,733.33
+  quota-seconds, against a 2,842.6 estimate, because the allocation is billed while held and this session
+  spent ~780 s queued. **5,306.051 s of 108,000 s remain** (refresh 2026-10-17), about 2,653 s of L4x4
+  wall time. The two routes the review proposed are measured infeasible here: four sharded ranks need
+  about 286 GiB of host RAM (the host has 188.69 GiB and the phase was SIGKILLed), and PEFT cannot wrap the
+  packed checkpoint's compressed `Linear` modules (`AttributeError: 'Linear' object has no attribute
+  'weight'`). The surviving route is the single-process `device_map` dispatch, implemented as
+  `resource/l4_feasibility/train_l4_device_map.py`. Earlier in this workstream: L4x4 is gated on
+  competition attachment, and the environment conflict that stopped run 4 (the image's `transformers
+  5.0.0` has no `gemma4` in `CONFIG_MAPPING`; `peft 0.19.1` refuses the image's `torchao 0.10.0`) is fixed
+  by `resource/l4_feasibility/prepare_model_stack.py`, which installs the mounted `transformers 5.13.1`
+  plus a PyPI-hash-checked `torchao 0.16.0` wheel from the attached public dataset
+  `kajarnaklokossou/torchao-0-16-0`. No dataset upload is needed, and none is possible: the kaggle client's
+  blob uploads go to `www.googleapis.com`, which is unreachable from this machine, so kaggle commands run
+  through `scripts/bounded_connect.py`. Offline gates: 53 L4 tests and the 109-test suite pass, and the
   generator's `--check` reports `status: ok`. `docs/experiments/2026-10-12-l4-training-feasibility.md`
-  holds the quota arithmetic, the memory argument, the candidate paths and the corrected section 5. The
-  repository is still unreachable from this workspace, so review comments and the planned-setup post must
-  be posted by a human.
+  section 9 holds the measurement table. The repository is still unreachable from this workspace, so
+  posting the result to issue #13 and pushing the branch remain human actions.
 
 - October 11 19:55 readiness audit: random rank-8/rank-32 serving effects are recorded, but no trained adapter exists. Real training is blocked by an executed generated-config type error and unvalidated loader/environment integration. Holdout filtering, trajectory provenance, and explicit paired-run identities need fixes before efficacy claims. The 116 training records overlap three historical evaluation tasks. See `docs/experiments/2026-10-11-lora-readiness-audit.md`; implementation remains unchanged after this advisory task.
 
@@ -253,6 +268,189 @@ $env:HF_HOME     = 'E:\Desktop\CodingAI\artifacts\hf-cache'   # datasets refuses
 - Programming v1 is implemented as a prompt-only planning-gate experiment with localization and all runtime settings fixed. Its paired smoke test found no resolution gain, only 1/2 complete plan compliance, higher latency and edit churn, and fewer failed tool calls; keep it as an ablation and retain retrieval v1 as the control.
 
 ## Work history
+
+### 2026-10-12 20:35 (Asia/Shanghai) - Run 11 meets the acceptance criterion: train, save, verify and reload on four L4s
+
+- Objective: close the loop after the export fix.
+- **Run 11 (kernel version 7) COMPLETE and it is the acceptance measurement.** One session,
+  2026-10-12 19:41-20:06 Asia/Shanghai, session wall **1,421.3 s**:
+  - the required `gemma-4-31b-it-qat-w4a16-ct` base was dequantised to BF16 (`keyword: run_compressed`,
+    `effective_dequantize: true`) and dispatched across the four L4s by one process in **217.5 s**
+    (`device_map='balanced'`, 20,500 MiB per GPU, 66 modules placed `{0: 7, 1: 19, 2: 19, 3: 21}`,
+    `cpu_share: 0.0`);
+  - a replicated LoRA adapter of **122,429,440 parameters** trained **8 of 8 updates**
+    (`completed_updates`), loss `2.0530 -> 0.3739`, **seconds per update min 1.388 / mean 1.767 /
+    max 4.116**, per-GPU peaks **7.615 / 18.535 / 18.642 / 17.593 GiB** against 22.03 GiB per card;
+  - the adapter exported: **820 tensors, 244,982,352 bytes**, SHA256
+    `c4d2bff9bf765bb6b16a01dc7545757358cbc1cc6d3054de3b41cfa601b76852`, spanning layers 0-59 and all seven
+    projections;
+  - `adapter-check.json` -> `status: ok`, **820/820** keys on the naming scheme the serving stack was
+    measured to accept, `0` unmatched, rank 16;
+  - the official vLLM runtime reloaded it: **`status: applied`** in 155.4 s (engine ready at 119.4 s),
+    with the repeat-base control at `max_abs_logprob_delta: 0.0` over 40 shared positions and the adapter
+    effect at **`0.596932`** over the same positions. Greedy tokens and text did not change on this probe
+    prompt, which is recorded rather than glossed: the runtime honours the adapter (its distribution
+    moves) without flipping the greedy continuation here.
+- Two defects were found and fixed on the way, both in the reporting layer rather than the measurement:
+  `save_adapter` used `torch` without importing it (run 10 completed eight updates and then failed at the
+  save with `NameError`), and the summary cell's rollup did not read the device-mapped route at all, so
+  run 11's own `result-summary.json` still reports `updates_completed: 0` and `adapter: null` while
+  `device-map-result.json` holds the real values. The rollup now includes that route and a regression test
+  asserts it; the numbers above come from the route's own file.
+- **A quota lesson worth carrying**: the measured charge for run 11 was **4,733.33 quota-seconds**
+  (10,039.379 -> 5,306.051) against a 2,842.6 estimate at the 2x rate. The allocation is billed for the
+  time it is held, and this session spent about **780 s queued** before the notebook started. Only
+  **5,306.051 s of 108,000 s** remain (refresh 2026-10-17), so further sessions must fold queue time into
+  their plan. This session stopped spending GPU quota at that point on purpose.
+- Verification this round: `tests/test_l4_feasibility.py` -> **53 tests pass**; the whole suite ->
+  **109 tests pass**; `--check` -> `status: ok`.
+- Changed files this round: `resource/l4_feasibility/train_l4_feasibility.py`,
+  `scripts/prepare_l4_feasibility_notebook.py`, `tests/test_l4_feasibility.py`,
+  `docs/experiments/2026-10-12-l4-training-feasibility.md` (new section 9 holds the measurement and the
+  status header now says the criterion is met), `WORKLOG.md`.
+- Remaining follow-up: report to issue #13 (a human action, since the repository is unreachable here);
+  decide whether a graded 4K example or the paired repair control is worth the remaining 5,306
+  quota-seconds -- the loop's feasibility is established and the eight-update adapter is not a promotion
+  candidate.
+
+### 2026-10-12 20:15 (Asia/Shanghai) - Run 10 trains on four L4s: eight updates complete on the required QAT base; the export hit a latent NameError
+
+- Objective: run the objective fix and see the loop finish.
+- **Run 10 (kernel version 6) COMPLETE**: 904.7 s of session wall. It is the first session that trained.
+  - The load again succeeded on the ladder's first step (`balanced`, 217 s), with the same placement as
+    run 9, and PEFT wrapped 122,429,440 trainable parameters across the four GPUs.
+  - **Eight optimizer updates completed** on the required `gemma-4-31b-it-qat-w4a16-ct` base, dequantised
+    to BF16 and dispatched across four L4s, with the loss falling `2.0530 -> 2.0303 -> 1.8816 -> 1.5570 ->
+    1.1500 -> 0.8744 -> 0.6202 -> 0.3739` and gradient norms `7.16, 7.23, 7.56, 8.56, 8.26, 6.57, 5.80,
+    4.25`. Seconds per update: **min 1.385, mean 1.681, max 3.455** (the first includes warm-up).
+    `stopped_reason: completed_updates`. The loss falling to 0.37 is the expected overfit of eight updates
+    on one synthetic example; this probe measures feasibility, not generalisation.
+  - Per-GPU peaks during training: **7.615 / 18.535 / 18.642 / 17.593 GiB** against 22.03 GiB per card,
+    so the route has about 3.4 GiB of headroom on its busiest GPU.
+  - Then `adapter_save_failed`: **`NameError: name 'torch' is not defined`**, from `save_adapter`.
+- **That NameError was latent in the shared export helper and no route had ever reached it.** `save_adapter`
+  converts the LoRA tensors with `torch.bfloat16` but imported only `safetensors.torch` and the FSDP
+  symbols; the four-GPU route died at its load and the packed route at its PEFT wrap, so the save had
+  never executed. Fixed by importing `torch` inside the helper, and now covered by a real test: it exports
+  from a fake device-mapped model and asserts the two tensors, the served key scheme
+  (`...q_proj.lora_A.weight`) and that the frozen `base_layer` weight is not exported.
+- Verification: `tests/test_l4_feasibility.py` -> **53 tests pass**; the whole suite -> **109 tests pass**.
+- **Run 11 pushed as kernel version 7** carrying the export fix, and observed RUNNING. This session should
+  be the one that closes the loop: dispatch, eight updates, export, adapter verification, and the
+  official-runtime reload.
+- Changed files this round: `resource/l4_feasibility/train_l4_feasibility.py`,
+  `tests/test_l4_feasibility.py`, `WORKLOG.md`.
+
+### 2026-10-12 19:45 (Asia/Shanghai) - Run 9: Path D loads the base across four L4s and wraps the adapter; the objective's index tensor was the last barrier
+
+- Objective: run the placement ladder and find out whether the single-process sharded route can reach a
+  training step.
+- **Run 9 (kernel version 5) COMPLETE**: about 852 s of session wall, **1,698.10 quota-seconds**
+  (11,737.479 -> 10,039.379). Three phases of the new route carry results, and the first two are the
+  breakthrough this workstream needed:
+  - the **load succeeded on the ladder's first attempt** (`balanced`, 20,500 MiB per GPU, with
+    `expandable_segments:True`) after 196 s: 66 modules placed as `{0: 7, 1: 19, 2: 19, 3: 21}`,
+    `cpu_share: 0.0`, and per-GPU peaks of 8.63 / 18.61 / 18.71 / 17.70 GiB. So the required QAT base
+    **is** dispatchable across four L4s as BF16, and the second ladder step was not needed. Run 8's
+    failure was indeed allocator fragmentation rather than an impossible split.
+  - **PEFT wrapped the dispatched model**: `trainable_parameters: 122429440` -- exactly the figure the
+    manifest records for this adapter -- in 820 tensors spread over all four GPUs
+    (`{cuda:0: 56, cuda:1: 260, cuda:2: 258, cuda:3: 246}`).
+  - the first forward then failed with
+    `RuntimeError: indices should be either on cpu or on the same device as the indexed tensor (cuda:3)`.
+- **Root cause, read from the wheel rather than guessed**: `models/gemma4/modeling_gemma4.py` computes
+  `slice_indices = slice(-logits_to_keep, None) if isinstance(logits_to_keep, int) else logits_to_keep`
+  and then `self.lm_head(hidden_states[:, slice_indices, :])`. The shared objective passed
+  `logits_to_keep=positions - 1`, a **tensor** on `cuda:0`, which that line uses as a gather index into
+  hidden states living on the last GPU -- the error verbatim. This was a latent defect that had never
+  executed: the four-GPU route died at its load before any forward pass.
+- Fix: `target_loss` now passes an integer (`len(positions) + 1`) and drops the extra trailing row, which
+  reproduces the old selection exactly -- the hidden state before each supervised token -- without an
+  index tensor, and it validates that the supervised positions really are the trailing range. The
+  objective's targets also follow the logits' device now, so cross-entropy cannot straddle two GPUs. Both
+  changes are device-independent, so the four-GPU route measures the same objective.
+- Second measured correction: the resident BF16 size. Summing run 9's per-GPU peaks gives about 63.6 GiB,
+  against the ~58 GiB this note estimated and the ~71.5 GiB that the packed-to-BF16 ratio suggested. The
+  measured figure is the one to keep, and section 3 of the experiment note now carries it.
+- Verification: `tests/test_l4_feasibility.py` -> **52 tests pass** (new: the objective asks for an integer
+  count, the extra trailing row does not affect the loss, and non-trailing positions are rejected); the
+  whole suite -> **108 tests pass**.
+- **Run 10 pushed as kernel version 6** carrying the objective fix, and observed RUNNING. Quota at that
+  point: **10,039.379 s remaining**, about 5,019 s of L4x4 wall time. This is the first session that can
+  plausibly reach a completed training step, an exported adapter and the official-runtime reload.
+- Changed files this round: `resource/l4_feasibility/train_l4_feasibility.py`,
+  `tests/test_l4_feasibility.py`, `docs/experiments/2026-10-12-l4-training-feasibility.md`, `WORKLOG.md`.
+
+### 2026-10-12 19:20 (Asia/Shanghai) - Run 8: Path D reaches the load and dies on allocator fragmentation; a placement ladder instead of one guess
+
+- Objective: run the newly implemented single-process sharded route (Path D) and see whether it can reach
+  a training step where the four-rank route could not.
+- **Run 8 (kernel version 4) COMPLETE**: about 1,020 s of session wall, **2,040.54 quota-seconds**
+  (13,778.017 -> 11,737.479). It executed its new phase:
+  `device-map-result.json` records `status: load_incompatible` after a **213 s load attempt** with
+  `OutOfMemoryError: CUDA out of memory. Tried to allocate 442.00 MiB. GPU 2 has a total capacity of
+  22.03 GiB of which 351.12 MiB is free. This process has 21.68 GiB memory in use. Of the allocated memory
+  17.88 GiB is allocated by PyTorch, and 3.60 GiB is reserved by PyTorch but unallocated.`
+- **What that number says, and it is not simply "too big".** The per-GPU cap handed to accelerate was
+  21,000 MiB and the process reached 21.68 GiB, so the split respected the cap to within half a gigabyte;
+  what killed it was **3.60 GiB reserved by the allocator but never allocated**. The dispatch is therefore
+  limited by allocator fragmentation as much as by the placement, which is a different failure from the
+  four-rank route's host-RAM kill and needs a different fix. Second reading from the same line: GPU 2
+  alone held 17.88 GiB, above the 14.5 GiB a plain four-way split of the ~58 GiB BF16 base implies, so the
+  resident size is larger than the estimate in section 3 of the experiment note. The honest statement is
+  that one GPU's share is measured at 17.88 GiB; the other three were not reported.
+- The environment and keyword results held again: `model-stack.json` `verdict: ok`, and the new phase's
+  own `quantization_config` record was `{requested_dequantize: true, keyword: run_compressed,
+  effective_dequantize: true}`. The packed phase repeated `peft_incompatible` for a third time.
+- Fix implemented, in the worker rather than in another guess at a budget:
+  `device_map_attempts()` returns a two-step placement ladder -- `balanced` at the full per-GPU budget
+  first, then `auto` with a 1,500 MiB lower cap **and** a host-RAM allowance so the tail can be offloaded
+  instead of failing -- and each attempt is recorded with its own exception. The worker also sets
+  `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True` before the CUDA context exists, which is the direct
+  remedy for reserved-but-unallocated memory. The shared load budget now bounds the *sum* of the attempts,
+  so two attempts cannot overrun one phase.
+- **Run 9 pushed as kernel version 5** carrying the ladder, and observed RUNNING. Quota at that point:
+  **11,737.479 s remaining** of 108,000 (refresh 2026-10-17), about 5,868 s of L4x4 wall time.
+- Changed files this round: `resource/l4_feasibility/train_l4_device_map.py`,
+  `tests/test_l4_feasibility.py` (the ladder and the allocation-config ordering are asserted),
+  `docs/experiments/2026-10-12-l4-training-feasibility.md` (section 3 now carries the measured SIGKILL),
+  `WORKLOG.md`.
+
+### 2026-10-12 18:55 (Asia/Shanghai) - Run 7: the loading mode is now genuinely BF16, and four-rank FSDP dies on host RAM with SIGKILL
+
+- Objective: re-run with the version-keyword fix and read what the four-GPU route really does.
+- **Run 7 (kernel version 3) COMPLETE**: 670.0 s of session wall, **1,394.49 quota-seconds**
+  (15,172.507 -> 13,778.017). Three of its phases carry results:
+  - `model-stack.json` -> `verdict: ok` again, so the environment fix is reproducible.
+  - `packed-probe-result.json` -> `peft_incompatible` again after 193 s (the checkpoint digest included),
+    so the packed route's rejection is reproducible too, not a one-off.
+  - the four-GPU phase recorded `quantization_config` as
+    `{requested_dequantize: true, keyword: run_compressed, effective_dequantize: true}`. That is the fix
+    working, and it is also the first evidence that the BF16 dense base is genuinely requested on this
+    wheelhouse version: the keyword is `run_compressed`, because 5.13.1 has no `dequantize`.
+- **Path A is measured infeasible on this host, and it dies in a way that cannot report itself.** After
+  `quantization_config` the worker wrote nothing further: no `base_loaded`, no `base_load_failed`, no
+  `train-result.json`. The kernel log carries `traceback : Signal 9 (SIGKILL) received by PID 496` three
+  times, which is the host OOM killer, not an exception. The arithmetic in section 3 of the experiment
+  note predicted exactly this: each of the four ranks materialises a complete BF16 replica of the frozen
+  base (about 58 GiB) before FSDP shards anything, so the load needs about 232 GiB against the measured
+  188.69 GiB of host RAM. A SIGKILL also means the worker's own `--load-budget-seconds` never fires, so
+  the run cannot even record the reason; only the kernel log shows it. That is the strongest argument for
+  Path D, which never holds a complete replica anywhere.
+- Quota discipline: run 7 cost 1,394 quota-seconds for 670 s of wall time, again the 2x rate. Three runs
+  this session (5, 6, 7) cost 68 + 750 + 1,394 = 2,212 quota-seconds in total.
+- **Run 8 pushed as kernel version 4**, carrying Path D as a fifth phase, and observed RUNNING. This is the
+  first session in which the notebook can reach a training step: Path A is ruled out by measurement rather
+  than by prediction.
+- Also this round: the whole L4 workstream was committed for the first time --
+  `650f306 Add the four-L4 training instrument, its model-stack step, and Path D` on branch
+  `fix/lora-rank8-controlled` (the same commit the WORKLOG calls the active branch; it and
+  `feature/lora-serving-probe-run` both point at `6d2ad38`). Twelve files: the notebook generator, seven
+  workers, the IPv4 connect helper, the L4 test module, the experiment note and this log. The repository
+  is unreachable from this workspace, so pushing the branch and opening a PR remain human actions. Two
+  earlier experiment notes from this workstream are still untracked and were left alone rather than
+  bundled into this commit.
+- Changed files: `WORKLOG.md` (this entry); the code is in `650f306`.
 
 ### 2026-10-12 18:45 (Asia/Shanghai) - Run 6 fixed the environment and rejected the packed route; the version-keyword trap and Path D
 

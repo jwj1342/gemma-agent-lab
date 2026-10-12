@@ -54,6 +54,13 @@ def environment_allows_scratch_directories() -> bool:
 SCRATCH_ALLOWED = environment_allows_scratch_directories()
 SCRATCH_SKIP = 'this sandbox denies a confined process nested directory creation'
 
+try:  # only the objective's own arithmetic needs real tensors; every other test stubs them
+    import torch  # noqa: F401
+    TORCH_AVAILABLE = True
+except ImportError:  # pragma: no cover - depends on the environment, not the code
+    TORCH_AVAILABLE = False
+TORCH_SKIP = 'torch is not installed in this test environment'
+
 
 def load_module(path: Path, name: str):
     spec = importlib.util.spec_from_file_location(name, path)
@@ -137,9 +144,83 @@ class NativeBatchTests(unittest.TestCase):
         self.assertEqual(batch['checks']['sequence_tokens'], 4)
 
 
+@unittest.skipUnless(TORCH_AVAILABLE, TORCH_SKIP)
+class SupervisedObjectiveTests(unittest.TestCase):
+    """The objective asks the model for truncated logits instead of indexing with a tensor.
+
+    Run 9 measured why: `transformers` turns a non-integer `logits_to_keep` into
+    `hidden_states[:, indices, :]`, and on a model dispatched across four GPUs those hidden states live on
+    the last GPU, so an index tensor built on the first GPU raised
+    `indices should be either on cpu or on the same device as the indexed tensor (cuda:3)`.
+    """
+
+    class Network:
+        """Records the kwargs it receives and returns crafted logits."""
+
+        def __init__(self, logits):
+            self.logits = logits
+            self.seen = {}
+
+        def __call__(self, **kwargs):
+            self.seen.update(kwargs)
+            return types.SimpleNamespace(logits=self.logits)
+
+    def setUp(self):
+        self.module = load_module(WORKERS / 'train_l4_feasibility.py', 'l4_objective')
+        self.torch = __import__('torch')
+
+    def test_asks_for_an_integer_count_and_drops_the_extra_trailing_row(self):
+        torch = self.torch
+        input_ids = torch.tensor([[5, 6, 7, 8]], dtype=torch.long)
+        positions = torch.arange(2, 4)
+        logits = torch.zeros(1, 4, 9)
+        logits[0, 2, 1] = 4.0
+        logits[0, 3, 2] = 4.0
+        network = self.Network(logits.clone())
+        loss, count = self.module.target_loss(network, input_ids, positions)
+        self.assertEqual(count, 2)
+        self.assertEqual(network.seen['logits_to_keep'], 3)
+        self.assertIsInstance(network.seen['logits_to_keep'], int)
+        # The third returned row is the extra trailing hidden state, so changing it must not move the loss.
+        changed = logits.clone()
+        changed[0, 3, :] = torch.full((9,), 3.0)
+        other, _ = self.module.target_loss(self.Network(changed), input_ids, positions)
+        self.assertAlmostEqual(float(loss), float(other), places=6)
+
+    def test_rejects_positions_that_are_not_the_trailing_range(self):
+        torch = self.torch
+        input_ids = torch.tensor([[5, 6, 7, 8]], dtype=torch.long)
+        with self.assertRaises(ValueError):
+            self.module.target_loss(self.Network(torch.zeros(1, 2, 9)), input_ids, torch.arange(0, 2))
+
+    def test_exports_an_adapter_from_a_device_mapped_model(self):
+        """`save_adapter` used `torch` without importing it, and no route had ever reached the save.
+
+        Run 10 completed eight updates and then failed here with `NameError: name 'torch' is not defined`,
+        so the export path is exercised with a real tensors file from a fake model.
+        """
+        torch = self.torch
+        stem = 'base_model.model.model.language_model.layers.0.self_attn.q_proj'
+        pairs = [(f'{stem}.lora_A.default.weight', torch.zeros(16, 8)),
+                 (f'{stem}.lora_B.default.weight', torch.zeros(4, 16)),
+                 ('base_layer.weight', torch.zeros(4, 8))]
+
+        class FakeModel:
+            def named_parameters(self):
+                return iter(pairs)
+
+        with tempfile.TemporaryDirectory() as folder:
+            result = self.module.save_adapter(
+                None, FakeModel(), Path(folder), 'device-map',
+                {'rank': 16, 'lora_alpha': 32, 'base_handle': 'google/gemma-4'}, 0, None)
+            self.assertTrue(result['saved'], result)
+            self.assertEqual(result['tensors'], 2)
+            self.assertEqual(result['example_key'], f'{stem}.lora_A.weight')
+            self.assertNotIn('base_layer', result['example_key'])
+
+
 class AdapterVerifierRuleTests(unittest.TestCase):
     """The accept/reject decision, exercised without touching the filesystem."""
-
     def setUp(self):
         self.module = load_module(WORKERS / 'verify_l4_adapter.py', 'l4_verify')
 
@@ -491,8 +572,9 @@ class NotebookGeneratorTests(unittest.TestCase):
         for field in ('peak_allocated_gib', 'peak_reserved_gib', 'stopped_reason'):
             self.assertIn(field, summary, field)
         # The old single-peak name must not survive on either side, or the summary would report None.
+        # (`device_map_peak_gib_per_gpu` is a different, per-GPU field and is expected.)
         self.assertNotIn("'peak_gib'", worker)
-        self.assertNotIn('peak_gib', summary)
+        self.assertNotIn("'peak_gib'", summary)
 
     def test_stage_cell_runs_the_model_stack_worker_and_attaches_its_dataset(self):
         """The base is unloadable without this step: transformers 5.0.0 has no 'gemma4' config."""
@@ -521,6 +603,11 @@ class NotebookGeneratorTests(unittest.TestCase):
             self.assertIn(f"load('{name}')", summary, name)
         self.assertIn('model_stack_step', summary)
         self.assertIn('single_process_device_map', summary)
+        # The rollup has to read the route that actually trains; leaving it out reported
+        # `updates_completed: 0` and `adapter: null` for a session that exported a working adapter.
+        self.assertIn("(device_map or {}).get('adapter')", summary)
+        self.assertIn("(device_map or {}).get('updates')", summary)
+        self.assertIn('device_map_peak_gib_per_gpu', summary)
 
 
 class QuantizationKeywordTests(unittest.TestCase):
@@ -721,6 +808,20 @@ class DeviceMapRouteTests(unittest.TestCase):
         self.assertIn('build_quantization_config', source)
         self.assertIn("device_map='auto'", source)
         self.assertIn('save_adapter', source)
+
+    def test_the_placement_ladder_lowers_the_budget_and_allows_offload(self):
+        """Run 8 died on 17.88 GiB allocated but 21.48 GiB reserved on one GPU: fragmentation, not split."""
+        ladder = self.module.device_map_attempts(20500, '64GiB')
+        self.assertEqual([step['name'] for step in ladder], ['balanced', 'auto_with_cpu_offload'])
+        self.assertEqual(ladder[0]['device_map'], 'balanced')
+        self.assertIsNone(ladder[0]['cpu_budget'])
+        self.assertLess(ladder[1]['gpu_budget_mib'], ladder[0]['gpu_budget_mib'])
+        self.assertEqual(ladder[1]['cpu_budget'], '64GiB')
+        self.assertGreaterEqual(ladder[1]['gpu_budget_mib'], 16000)
+        source = (WORKERS / 'train_l4_device_map.py').read_text(encoding='utf-8')
+        self.assertIn('expandable_segments:True', source)
+        # The allocation config has to be set before the CUDA context exists.
+        self.assertLess(source.index('PYTORCH_CUDA_ALLOC_CONF'), source.index('    import torch'))
 
 
 if __name__ == '__main__':

@@ -4,15 +4,16 @@ Task ownership: this is the model/adapter-compatibility and small-LoRA-reproduci
 (issue #13), the four-L4 training-feasibility part of the review handoff in
 [PR #8](https://github.com/jwj1342/gemma-agent-lab/pull/8).
 
-**Status: four sessions have run, the fourth stopped at the base load on a measured version conflict, and
-the fix for it is now in place.** Runs 1-4 established that the L4x4 allocation is gated on competition
-attachment, verified the native handoff contract on four L4 GPUs, and then ended at
-`ValueError: ... model type 'gemma4' but Transformers does not recognize this architecture` because the
-image's `transformers 5.0.0` predates Gemma 4. Run 5 prepares the mounted model stack (transformers
-5.13.1 plus torchao 0.16.0 and the rest, section 5) before it loads anything, so the measurement this
-workstream exists for -- which strategy builds, the per-GPU peak and the seconds per update -- is the
-next thing that happens. Preparation directories are `artifacts/l4-feasibility-notebook-v*/`; each run's
-published outputs are fetched with `api.kernels_output` into `artifacts/l4-feasibility-v*-output/`.
+**Status: the acceptance criterion is met and measured.** Run 11 completed the bounded loop on four L4
+GPUs with the required `gemma-4-31b-it-qat-w4a16-ct` base: the checkpoint was dequantised to BF16 and
+dispatched across the four cards by one process, the replicated LoRA adapter trained eight updates, the
+820-tensor adapter was exported and validated against the served naming scheme, and the official vLLM
+runtime loaded it and moved the model's logprobs. All of that in one 1,421 s session; section 9 has the
+numbers. Runs 1-4 established the L4x4 allocation gate, verified the native handoff contract on four L4
+GPUs, and stopped at `KeyError: 'gemma4'` because the image's `transformers 5.0.0` predates Gemma 4;
+runs 5-10 fixed that conflict and then measured both sharded routes until the surviving one trained
+(sections 3-5). Preparation directories are `artifacts/l4-feasibility-notebook-run*/`, and each run's
+published outputs are fetched with `api.kernels_output` into `artifacts/l4-feasibility-v5-run*-output/`.
 
 ## 1. The requirement
 
@@ -128,11 +129,28 @@ Recorded evidence, not inference:
 | Trainable LoRA parameters | 122,429,440 | manifest |
 | Base loading in the H100 trainer | `CompressedTensorsConfig(dequantize=True)` to BF16 | `scripts/train_swe_lora.py` on `experiment/swe-lora-v1` |
 
-A BF16 replica of the base is roughly 58 GiB of the 67 GiB peak, so one L4 cannot hold a replica at
-any dataset size. Four L4s do not pool memory by themselves: they need an explicit distribution.
-How much of the 67 GiB is weights rather than activation is not recorded, and the transient terms
-(the vocabulary projection and cross-entropy over the supervised positions) are the ones most likely
-to decide the outcome at 22.5 GiB per GPU.
+A BF16 replica of the base is what decides every route here, and its size is now measured rather than
+estimated. The checkpoint's `model.safetensors` is **23,265,352,448 bytes (21.67 GiB)** as published
+(W4A16, so about 4.85 bits per parameter with its scales), and the dequantised BF16 form therefore holds
+roughly **71.5 GiB** — three measurements agree on that: the ratio between the two formats (16 / 4.85 =
+3.30, and 3.30 × 21.67 = 71.5), the `17.88 GiB` resident on one L4 in run 8's balanced four-way split
+(4 × 17.88 = 71.5), and the recorded full-replica peak of 71.65 GiB in
+`docs/experiments/2026-10-10-swe-lora-light.md`. The earlier "roughly 58 GiB" figure in this section was
+low, and every route below is easier to judge with the measured number: four L4s offer 88.1 GiB, so a
+four-way split leaves about 4.1 GiB per GPU for allocator overhead, activations and optimizer state.
+
+So one L4 cannot hold a replica at any dataset size, and four L4s do not pool memory by themselves: they
+need an explicit distribution. The transient terms (the vocabulary projection and cross-entropy over the
+supervised positions) are the ones most likely to decide the outcome at 22.03 GiB per GPU.
+
+**Measured on run 7, and it is stronger than the per-GPU arithmetic suggests.** Each `torchrun` rank
+materialises a *complete* BF16 replica in host RAM before FSDP shards anything, so four ranks need about
+**286 GiB**. The session host reports **188.69 GiB**, and the four-GPU phase was killed there:
+`traceback : Signal 9 (SIGKILL) received by PID 496` appears three times in the kernel log, with no
+`base_loaded` and no `base_load_failed` phase and no `train-result.json`. A SIGKILL is the host OOM
+killer, so the worker's own `--load-budget-seconds` never fires and the run cannot record the reason
+itself; only the kernel log shows it. The four-rank FSDP route is therefore infeasible on this host for a
+reason that has nothing to do with the 22.03 GiB each L4 offers.
 
 Note also that `scripts/train_swe_lora.py` refuses to start without `SLURM_JOB_ID` and selects
 targets and a device map the way a single-node Trillium allocation expects. The trainer on PR #8 is
@@ -357,20 +375,63 @@ Not verified, and not claimed: anything that needs the model weights, a GPU or v
 launch, the FSDP strategies, the memory arithmetic in section 3 and the vLLM reload have been
 reasoned about and instrumented, not executed.
 
-## 9. Open items
+## 9. The acceptance measurement (run 11)
 
-1. **Run 5 and reconcile it.** The environment conflict that stopped run 4 is fixed by the model-stack
-   step; the session must now produce the training measurement (which strategy builds, per-GPU peak,
-   seconds per update) or the next exact incompatibility. Reconcile the measured quota charge against
-   the 2x L4x4 rule with a fresh `scripts/check_kaggle_quota.py` reading.
-2. If `fsdp-ignored` builds, measure whether one graded 4K example fits; the synthetic example runs at
-   2,048 tokens by default because the acceptance needs one backward step, not the full context.
-3. If both FSDP strategies fail, implement Path D and re-measure.
-4. Report two results to issue #13 that stand on their own: the native handoff contract verified on four
-   L4 GPUs, and the measured `transformers 5.0.0` / `torchao 0.10.0` / `peft 0.19.1` version conflict
-   together with its fix.
-5. The attached torchao dataset is public and third-party. The session hashes the wheel against the PyPI
+Kernel `junzhejiao/gemma-4-four-l4-lora-training-feasibility-v5` version 7, 2026-10-12 19:41-20:06
+Asia/Shanghai. Session wall 1,421.3 s, estimated charge 2,842.6 quota-seconds at the 2x rate; the measured
+charge was **4,733.33** quota-seconds (10,039.379 -> 5,306.051), because the allocation is billed for the
+time it is held **including its queue period** (~780 s here), which the estimate does not cover.
+
+| Quantity | Measured value |
+| --- | --- |
+| GPUs, host, image | 4 x NVIDIA L4 22,563 MiB, 188.69 GiB RAM, 48 CPUs, Python 3.12.13 |
+| Model stack | transformers 5.13.1, peft 0.19.1, accelerate 1.13.0, safetensors 0.8.0, compressed_tensors 0.15.0.1, loguru 0.7.3, torchao 0.16.0 |
+| Loading mode | `keyword: run_compressed`, `effective_dequantize: true` (5.13.1 has no `dequantize`) |
+| Route that trained | single-process `device_map='balanced'`, 20,500 MiB per GPU, `expandable_segments:True` |
+| Load | 217.5 s, 66 modules placed `{0: 7, 1: 19, 2: 19, 3: 21}`, `cpu_share: 0.0` |
+| Trainable adapter | 122,429,440 parameters in 820 tensors, across all four GPUs |
+| Updates | 8 of 8, `stopped_reason: completed_updates` |
+| Loss | 2.0530 -> 0.3739 (one synthetic example; this is feasibility, not generalisation) |
+| Seconds per update | min 1.388, mean 1.767, max 4.116 |
+| Per-GPU peak allocated | 7.615 / 18.535 / 18.642 / 17.593 GiB (busiest card 18.64 of 22.03 GiB) |
+| Adapter | 820 tensors, 244,982,352 bytes, SHA256 `c4d2bff9bf765bb6b16a01dc7545757358cbc1cc6d3054de3b41cfa601b76852` |
+| Adapter validation | `status: ok`, 820/820 keys on the served scheme, 0 unmatched, layers 0-59, rank 16 |
+| Official-runtime reload | `status: applied` in 155.4 s (engine ready at 119.4 s) |
+| Reproducibility control | base versus base: `max_abs_logprob_delta: 0.0` over 40 shared positions |
+| Adapter effect | base versus adapter: `max_abs_logprob_delta: 0.596932` over 40 positions; greedy tokens and text unchanged |
+| Native handoff contract | handoff token 50, 179 prompt + 19 target = 198 tokens, boundary intact |
+
+What this does and does not establish. It establishes that a teammate without H100 access can run the
+tiny train/save/reload loop on the four L4s the competition provides, with the required QAT base and no
+substitution, and that the serving runtime honours the resulting adapter. It does **not** establish agent
+repair performance, and the adapter it produces is a feasibility artifact bounded to eight updates on one
+synthetic example -- not a candidate to promote. The route that survives is Path D; the two routes the
+review originally proposed are measured infeasible here for reasons recorded in section 4 (PEFT cannot
+wrap the packed checkpoint's modules) and section 3 (four sharded ranks need about 286 GiB of host RAM
+against 188.69 GiB available).
+
+## 10. Open items
+
+1. **Report the result to issue #13.** The acceptance criterion is met (section 9), and four standalone
+   findings are worth posting with it: the native handoff contract verified on four L4 GPUs; the measured
+   `transformers 5.0.0` / `torchao 0.10.0` / `peft 0.19.1` conflict and its fix, including the silently
+   dropped `dequantize=` keyword; the packed checkpoint's rejection by PEFT
+   (`AttributeError: 'Linear' object has no attribute 'weight'`); and the four-rank host-RAM limit
+   (`Signal 9`, about 286 GiB needed against 188.69 GiB). The repository is unreachable from this
+   workspace, so the comment itself is a human action.
+2. **Budget for queue time when spending quota.** Run 11's charge was 4,733.33 quota-seconds against a
+   2,842.6 estimate: the allocation is billed for the time it is held, including the ~780 s it spent
+   queued before the notebook started. Only 5,306.051 s of the 108,000 s remain (refresh 2026-10-17), so
+   any further session needs this correction folded into its plan.
+3. **The measurement is one synthetic example.** A graded 4K example and the adapter's effect on agent
+   repair are separate questions; the loop being feasible does not make the eight-update adapter worth
+   promoting, and the paired control this project already requires still applies.
+4. The attached torchao dataset is public and third-party. The session hashes the wheel against the PyPI
    digest before installing it, which is what makes that acceptable; if a first-party copy is ever
    published, switch the source and keep the same check.
+5. The packed probe spends about 200 s per session hashing the checkpoint's ~20 GB `model.safetensors` to
+   record `base_format_unchanged`. That is evidence worth having, but on a route that is now measured
+   infeasible twice it is the largest remaining cost in a session, and a header digest would buy nearly
+   the same evidence for seconds.
 6. The agent-side acceptance gates are unchanged by this work: this notebook measures training
    feasibility, not repair performance.

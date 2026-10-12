@@ -412,14 +412,22 @@ summary = {
     'four_gpu_fsdp': {k: v for k, v in train.items() if k != 'updates'} if train else None,
     'single_process_device_map': ({k: v for k, v in device_map.items() if k != 'updates'}
                                   if device_map else None),
-    'native_handoff_contract': train.get('contract') or (packed or {}).get('contract'),
-    'stopped_reason': train.get('stopped_reason') or (packed or {}).get('stopped_reason'),
+    'native_handoff_contract': (train.get('contract') or (packed or {}).get('contract')
+                               or (device_map or {}).get('contract')),
+    'stopped_reason': (train.get('stopped_reason') or (packed or {}).get('stopped_reason')
+                       or (device_map or {}).get('stopped_reason')),
     'attempts': [{k: v for k, v in attempt.items() if k != 'traceback'}
                  for attempt in train.get('attempts', [])],
-    'updates_completed': len(train.get('updates') or []) or len((packed or {}).get('updates') or []),
+    # The device-mapped route is where a bounded session can actually finish, so its updates and its
+    # per-GPU peak belong in the rollup: leaving them out reported `updates_completed: 0` and
+    # `adapter: null` for the session that trained, exported and reloaded successfully.
+    'updates_completed': (len(train.get('updates') or []) or len((packed or {}).get('updates') or [])
+                          or len((device_map or {}).get('updates') or [])),
     'peak_allocated_gib': peak_allocated,
     'peak_reserved_gib': peak_reserved,
-    'adapter': train.get('adapter') or (packed or {}).get('adapter'),
+    'device_map_peak_gib_per_gpu': (device_map or {}).get('peak_gib_per_gpu'),
+    'adapter': (train.get('adapter') or (packed or {}).get('adapter')
+                or (device_map or {}).get('adapter')),
     'adapter_check': adapter_check,
     'official_runtime_reload': serving,
     'session_wall_seconds': wall_seconds,
@@ -447,9 +455,10 @@ What this notebook does, in order:
    safetensors, compressed_tensors and loguru, plus the torchao 0.16.0 wheel peft requires, hash-checked
    against PyPI -- and proves the import chain and the checkpoint's config in a fresh interpreter before
    any GPU work starts;
-3. tries the packed single-GPU route first, then `torchrun` over the GPUs actually measured for **one
-   backward step and at most 8 updates**, then saves the adapter, with a hard wall-clock cap on both
-   the worker and the subprocess;
+3. tries the packed single-GPU route first, then `torchrun` over the GPUs actually measured, then -- only
+   if neither saved an adapter and the session cap can still cover it -- one process that dispatches the
+   dequantised base across the four L4s, for **one backward step and at most 8 updates** and an adapter
+   export, with a hard wall-clock cap on both each worker and each subprocess;
 4. validates the exported adapter against the key scheme the serving stack was measured to accept;
 5. installs the rest of the wheelhouse and reloads the adapter in the official vLLM runtime, comparing
    top-logprobs with a repeat-base reproducibility control.
