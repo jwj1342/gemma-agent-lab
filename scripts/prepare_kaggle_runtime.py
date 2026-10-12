@@ -10,7 +10,6 @@ import tempfile
 from build_submission import build, collect_files
 from prepare_eval_task import PUBLIC_FIELDS
 from verify_eval_run import verify_inputs
-from wheelhouse_runtime import load_registry
 
 
 def cell(kind, source):
@@ -30,18 +29,8 @@ def main():
     parser.add_argument('--slug', default='gemma4-official-runtime-smoke')
     parser.add_argument('--title', default='Gemma4 Official Runtime Smoke')
     parser.add_argument('--output', type=Path, required=True)
-    parser.add_argument('--wheelhouse-mode', choices=['verified', 'record'], default='verified',
-                        help='Match a registered snapshot, or record unreviewed inputs for exploration')
-    parser.add_argument('--wheelhouse-snapshot', default='auto',
-                        help='Registered snapshot ID; auto accepts any registered matching snapshot')
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
-    snapshots = load_registry(root / 'resource/manifests/kaggle-wheelhouse-snapshots.json')
-    if args.wheelhouse_snapshot != 'auto':
-        if args.wheelhouse_mode == 'record':
-            parser.error('--wheelhouse-snapshot requires --wheelhouse-mode verified')
-        if args.wheelhouse_snapshot not in {s['id'] for s in snapshots}:
-            parser.error('Unknown wheelhouse snapshot: ' + args.wheelhouse_snapshot)
     if args.agent_dir and not args.task_id:
         parser.error('--agent-dir requires --task-id')
     if args.run_dir and args.task_id:
@@ -77,6 +66,7 @@ def main():
     if hashlib.sha256(bundle).hexdigest() != run['agent_archive_sha256']:
         raise ValueError('Run bundle hash changed')
     official = json.loads((root / 'resource/notebooks/official/kernel-metadata.json').read_text())
+    assets = json.loads((root / 'resource/manifests/eval-assets-verification.json').read_text())
     payload = {'bundle': base64.b64encode(bundle).decode(), 'bundle_sha256': run['agent_archive_sha256'],
                'archive_manifest': archive_manifest,
                'public_task': public_task, 'public_fields': sorted(PUBLIC_FIELDS), 'task_id': run['task_id'],
@@ -84,10 +74,8 @@ def main():
                'source_run_git_revision': run.get('git_revision') if args.run_dir else None,
                'scripts': {name: (root / 'scripts' / name).read_text() for name in
                            ['validate_agent.py', 'evaluate_agent.py', 'summarize_eval_smoke.py',
-                            'verify_eval_run.py', 'build_submission.py', 'prepare_eval_task.py',
-                            'wheelhouse_runtime.py']},
-               'wheelhouse_snapshots': snapshots, 'wheelhouse_mode': args.wheelhouse_mode,
-               'wheelhouse_snapshot': args.wheelhouse_snapshot}
+                            'verify_eval_run.py', 'build_submission.py', 'prepare_eval_task.py']},
+               'wheels': {item['path']: item['sha256'] for item in assets['wheelhouse_files']}}
     payload['script_sha256'] = {name: hashlib.sha256(source.encode()).hexdigest()
                                 for name, source in payload['scripts'].items()}
     encoded = base64.b64encode(json.dumps(payload).encode()).decode()
@@ -109,11 +97,6 @@ if PAYLOAD['public_task'] is not None:
 task_text = json.dumps(public_task) + '\\n'
 del matches
 assert not WORK.exists(), 'Runtime output already exists. Export it and start a fresh session before rerunning.'
-wheelhouse_module = {}
-exec(compile(PAYLOAD['scripts']['wheelhouse_runtime.py'], '<wheelhouse-runtime>', 'exec'), wheelhouse_module)
-wheelhouse_record = wheelhouse_module['capture'](
-    WHEELS, PAYLOAD['wheelhouse_snapshots'], PAYLOAD['wheelhouse_mode'], PAYLOAD['wheelhouse_snapshot'])
-ACTIVE_WHEELS = dict(wheelhouse_record['wheels'])
 WORK.mkdir(parents=True)
 (WORK/'scripts').mkdir(exist_ok=True)
 (WORK/'inputs').mkdir(exist_ok=True)
@@ -138,17 +121,20 @@ archive_manifest = dict(PAYLOAD['archive_manifest'], archive=str(WORK/'inputs/su
     'public_fields': sorted(public_task),
     'model_handle': 'google/gemma-4/Other/gemma-4-31b-it-qat-w4a16-ct/2',
     'tensor_parallel_size': 4, 'gpu_memory_utilization': 0.90,
-    'wheelhouse': wheelhouse_record,
     'status': 'inputs prepared; see smoke-summary.json for executed results'
 }, indent=2) + '\\n')
 for name, source in PAYLOAD['scripts'].items():
     (WORK/'scripts'/name).write_text(source)
-(WORK/'inputs/wheelhouse.json').write_text(json.dumps(wheelhouse_record, indent=2) + '\\n')
 def verify_wheels():
-    wheelhouse_module['recheck'](WHEELS, ACTIVE_WHEELS)
-print('Wheelhouse:', wheelhouse_record['status'], wheelhouse_record['matched_snapshot'])
-print('Versions:', wheelhouse_record['versions'])
-print('Input hashes captured. Installation will recheck the same bytes.')
+    actual = {path.name for path in WHEELS.glob('*.whl')}
+    assert actual == set(PAYLOAD['wheels']), 'Official wheelhouse inventory changed.'
+    for name, expected in PAYLOAD['wheels'].items():
+        h=hashlib.sha256()
+        with (WHEELS/name).open('rb') as stream:
+            for chunk in iter(lambda: stream.read(8*1024**2), b''):h.update(chunk)
+        assert h.hexdigest() == expected, 'Official wheelhouse changed: '+name
+verify_wheels()
+print('Exact local bundle and official wheel inventory/hashes match.')
 '''
     install = '''# Same installation scope as the reviewed official starter, in this disposable notebook.
 import glob
@@ -160,7 +146,7 @@ for pattern in ('/usr/local/lib/python*/dist-packages/*cutlass*.pth',
 normalized = Path('/tmp/gemma4-official-wheels')
 normalized.mkdir(exist_ok=True)
 packages=[]
-for name in sorted(ACTIVE_WHEELS):
+for name in sorted(PAYLOAD['wheels']):
     source = WHEELS/name
     if 'cutlass' in source.name.lower():continue
     with zipfile.ZipFile(source) as z:
@@ -220,7 +206,7 @@ print('One-task smoke complete; this notebook has NOT submitted a competition en
 '''
     nb = {'nbformat': 4, 'nbformat_minor': 4,
           'metadata': {'kernelspec': {'display_name': 'Python 3', 'language': 'python', 'name': 'python3'}},
-          'cells': [cell('markdown', '# Official L4 × 4 runtime smoke\nPrivate, offline, one public task. Not a competition submission or benchmark.\nThe official subprocess backend is used; Kaggle inputs remain mounted by the platform.\n\nWheelhouse mode: **'+args.wheelhouse_mode+'**; snapshot: **'+args.wheelhouse_snapshot+'**. Record mode permits unreviewed versions and fingerprints this run; it does not establish compatibility.'),
+          'cells': [cell('markdown', '# Official L4 × 4 runtime smoke\nPrivate, offline, one public task. Not a competition submission or benchmark.\nThe official subprocess backend is used; Kaggle inputs remain mounted by the platform.'),
                     cell('code', 'PAYLOAD_B64 = '+repr(encoded)+'\n'+setup),
                     cell('code', install), cell('code', evaluate)]}
     args.output.mkdir(parents=True)
@@ -238,7 +224,6 @@ print('One-task smoke complete; this notebook has NOT submitted a competition en
         'task_id': run['task_id'], 'agent_archive_sha256': run['agent_archive_sha256'],
         'git_revision': git_revision, 'source_run_git_revision': payload['source_run_git_revision'],
         'script_sha256': payload['script_sha256'], 'kernel': metadata['id'],
-        'wheelhouse_mode': args.wheelhouse_mode, 'wheelhouse_snapshot': args.wheelhouse_snapshot,
         'task_source': 'frozen run checked against Kaggle inputs' if args.run_dir else 'Kaggle inputs at runtime',
         'status': 'notebook generated locally; no GPU execution or upload'
     }, indent=2) + '\n')

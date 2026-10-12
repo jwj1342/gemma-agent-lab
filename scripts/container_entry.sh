@@ -1,6 +1,6 @@
 #!/bin/bash
 set -eo pipefail
-source /home/jwj/venvs/gemma4-eval-v29/bin/activate
+source /home/jwj/venvs/gemma4-eval/bin/activate
 export HOME=/work/run/home
 export TMPDIR=/tmp
 export XDG_CACHE_HOME=/work/run/cache/xdg
@@ -9,7 +9,6 @@ export TORCH_HOME=/work/run/cache/torch
 export TORCH_EXTENSIONS_DIR=/work/run/cache/torch-extensions
 export TRITON_CACHE_DIR=/work/run/cache/triton
 export VLLM_CACHE_ROOT=/work/run/cache/vllm
-export FLASHINFER_WORKSPACE_BASE=/work/run/cache/flashinfer
 export HF_HUB_OFFLINE=1 HF_DATASETS_OFFLINE=1
 export PIP_NO_INDEX=1 PIP_DISABLE_PIP_VERSION_CHECK=1
 export LITELLM_LOCAL_MODEL_COST_MAP=True OTEL_SDK_DISABLED=true
@@ -22,7 +21,7 @@ python - <<'PY'
 import json, os, shutil, subprocess, tempfile
 from pathlib import Path
 readonly={p:bool(os.statvfs(p).f_flag & os.ST_RDONLY)
-          for p in ['/agent','/app','/home/jwj/venvs/gemma4-eval-v29']}
+          for p in ['/agent','/app','/home/jwj/venvs/gemma4-eval']}
 checks={'required_mounts_readonly':all(readonly.values()),
         'kaggle_credentials_not_mounted':not Path('/home/jwj/.kaggle').exists(),
         'full_project_not_mounted':not Path('/scratch/jwj/kaggle_gemma4_agent').exists(),

@@ -70,10 +70,7 @@ class NotebookPreparationTests(unittest.TestCase):
             (mounts / name).mkdir(parents=True, exist_ok=True)
         (mounts / 'data/tasks.jsonl').write_text(json.dumps(task or self.task) + '\n')
         (mounts / 'wheels/fixture.whl').write_bytes(b'tiny fixture')
-        payload = dict(payload, wheelhouse_snapshots=[{
-            'id': 'test-snapshot', 'dataset': 'metric/gemma-4-developer-agent-wheelhouse',
-            'wheels': {'fixture.whl': hashlib.sha256(b'tiny fixture').hexdigest()},
-            'versions': {}, 'compatibility': 'synthetic test fixture'}])
+        payload = dict(payload, wheels={'fixture.whl': hashlib.sha256(b'tiny fixture').hexdigest()})
         encoded = base64.b64encode(json.dumps(payload).encode()).decode()
         source = notebook['cells'][1]['source'].split('\n', 1)[1]
         substitutions = {
@@ -95,7 +92,7 @@ class NotebookPreparationTests(unittest.TestCase):
         # environments, tokens, or downloaded wheels from the maintainer's tree.
         paths = [*Path(ROOT / 'scripts').glob('*.py'), *Path(ROOT / 'configs/baseline').rglob('*'),
                  ROOT / 'resource/notebooks/official/kernel-metadata.json',
-                 ROOT / 'resource/manifests/kaggle-wheelhouse-snapshots.json']
+                 ROOT / 'resource/manifests/eval-assets-verification.json']
         for path in paths:
             if path.is_file():
                 target = checkout / path.relative_to(ROOT)
@@ -109,9 +106,7 @@ class NotebookPreparationTests(unittest.TestCase):
         self.assertEqual(hashlib.sha256(base64.b64decode(payload['bundle'])).hexdigest(), BASELINE_SHA)
         for name, source in payload['scripts'].items():
             self.assertEqual(source, (ROOT / 'scripts' / name).read_text())
-        self.assertEqual(payload['wheelhouse_mode'], 'verified')
-        self.assertEqual(payload['wheelhouse_snapshot'], 'auto')
-        self.assertTrue(all(len(s['wheels']) == 41 for s in payload['wheelhouse_snapshots']))
+        self.assertEqual(len(payload['wheels']), 41)
         for cell in notebook['cells']:
             if cell['cell_type'] == 'code':
                 ast.parse(cell['source'])
@@ -136,9 +131,6 @@ class NotebookPreparationTests(unittest.TestCase):
         manifest = json.loads((runtime / 'run-manifest.json').read_text())
         self.assertEqual(manifest['public_task_sha256'], hashlib.sha256(public.encode()).hexdigest())
         self.assertEqual(manifest['agent_archive_sha256'], BASELINE_SHA)
-        receipt = json.loads((runtime / 'inputs/wheelhouse.json').read_text())
-        self.assertEqual(receipt, manifest['wheelhouse'])
-        self.assertEqual(receipt['matched_snapshot'], 'test-snapshot')
         self.assertTrue((runtime / 'inputs/agent/agent.yaml').is_file())
         with self.assertRaisesRegex(AssertionError, 'Runtime output already exists'):
             self.setup_cell(notebook, payload)
@@ -156,15 +148,15 @@ class NotebookPreparationTests(unittest.TestCase):
         wheels.mkdir(parents=True)
         extra = wheels / 'unchecked_extra.whl'
         extra.write_bytes(b'Not in the reviewed inventory')
-        with self.assertRaisesRegex(ValueError, 'wheelhouse inventory or SHA256 changed'):
+        with self.assertRaisesRegex(AssertionError, 'wheelhouse inventory changed'):
             self.setup_cell(notebook, payload)
-        self.assertFalse((self.work / 'runtime').exists())
+        shutil.rmtree(self.work / 'runtime')
         extra.unlink()
         self.setup_cell(notebook, payload)
         # Catch input changes between setup and installation, before pip or any deletion.
         extra.write_bytes(b'Added after setup')
         with patch('subprocess.run') as pip:
-            with self.assertRaisesRegex(ValueError, 'Wheelhouse changed after setup'):
+            with self.assertRaisesRegex(AssertionError, 'wheelhouse inventory changed'):
                 exec(notebook['cells'][2]['source'], self.setup_namespace)
             pip.assert_not_called()
 
@@ -251,25 +243,6 @@ class NotebookPreparationTests(unittest.TestCase):
         manifest_path.write_text(json.dumps(manifest))
         failed = self.generate('--run-dir', run, succeeds=False)
         self.assertIn('without validation labels', failed.stderr)
-        self.assertFalse(self.output.exists())
-
-    def test_explicit_record_mode_is_embedded_without_changing_bundle(self):
-        self.generate('--agent-dir', ROOT / 'configs/baseline', '--task-id', 'fixture_task',
-                      '--wheelhouse-mode', 'record')
-        notebook, payload = self.notebook()
-        self.assertEqual(payload['wheelhouse_mode'], 'record')
-        self.assertEqual(payload['bundle_sha256'], BASELINE_SHA)
-        self.assertIn('Record mode permits unreviewed versions', notebook['cells'][0]['source'])
-
-    def test_unknown_or_conflicting_snapshot_options_fail_before_output(self):
-        failed = self.generate('--agent-dir', ROOT / 'configs/baseline', '--task-id', 'fixture_task',
-                               '--wheelhouse-snapshot', 'unknown', succeeds=False)
-        self.assertIn('Unknown wheelhouse snapshot', failed.stderr)
-        self.assertFalse(self.output.exists())
-        failed = self.generate('--agent-dir', ROOT / 'configs/baseline', '--task-id', 'fixture_task',
-                               '--wheelhouse-snapshot', 'official-2026-10-05',
-                               '--wheelhouse-mode', 'record', succeeds=False)
-        self.assertIn('requires --wheelhouse-mode verified', failed.stderr)
         self.assertFalse(self.output.exists())
 
     def test_existing_notebook_is_not_overwritten(self):

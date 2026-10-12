@@ -19,13 +19,3 @@ Model weights and competition dataset archives are excluded from Git. Each team
 member obtains authorized access through Kaggle and follows the applicable model,
 dataset, and competition terms. Before publishing code or redistributing an
 upstream artifact, check that specific artifact's license and preserve attribution.
-
-## SWE training trajectories
-
-The local SFT pilot uses the public
-[SWE-bench/SWE-smith-trajectories dataset](https://huggingface.co/datasets/SWE-bench/SWE-smith-trajectories),
-revision `08e109b4a59eaeebf80e4675cd125d42e7ac99a4`, whose metadata declares MIT. Raw and
-converted trajectories remain excluded from Git. Team conversion code is an original implementation;
-original tool observations and teacher identifiers are retained in local provenance. Repository code
-inside trajectories can carry its own upstream notices. Consult the pinned dataset and source
-repository licenses before redistributing those materials.

@@ -38,15 +38,6 @@ An existing frozen H100 run can also be prepared for Kaggle using `--run-dir run
 `--agent-dir` and `--task-id`. Its bundle/task hashes are checked, and the notebook compares the frozen
 public task with the mounted competition data. This is useful for matched-input comparisons.
 
-### Official wheelhouse updates
-
-The default now accepts either registered official snapshot by exact fingerprints.
-For a newer unregistered official update, add `--wheelhouse-mode record` to capture
-its actual hashes and continue an explicitly exploratory run. To require one
-snapshot, use `--wheelhouse-snapshot official-v29-2026-10-08` in default verified
-mode. See [wheelhouse updates](wheelhouse-updates.md) for the distinction between
-recording bytes and validating runtime compatibility.
-
 ## 2. Check your access and quota
 
 Use your own Kaggle CLI installation and credentials on your laptop. Follow the
@@ -94,9 +85,8 @@ The metadata attaches these inputs:
 
 Their standard mounted paths appear near the top of the generated notebook. It checks their presence,
 selects the requested task, removes validation labels from the inference task, and verifies official
-wheel inventory and hashes before installation. Verified mode accepts an exact registered snapshot;
-record mode explicitly captures an unregistered update and its package versions. Installation uses
-only the captured entries and rechecks their names and hashes before pip runs. No GitHub or Kaggle token
+wheel inventory and hashes before installation. Missing, additional, or changed wheels stop preparation;
+installation uses only recorded entries and rechecks them before pip runs. No GitHub or Kaggle token
 is embedded in the notebook. `git_revision` identifies the preparation checkout; `source_run_git_revision`
 identifies the original frozen run, when supplied. Embedded script hashes record the exact helper code,
 including any uncommitted edits present during generation.
@@ -114,7 +104,6 @@ kaggle kernels output YOUR_KAGGLE_USERNAME/gemma4-first-smoke \
 | --- | --- |
 | `runtime-smoke/run-manifest.json` | Exact task, public-task hash, bundle hash, and intended resource settings |
 | `runtime-smoke/inputs/` | Sanitized task, agent files, exact submission ZIP, and member-hash manifest for submission checks |
-| `runtime-smoke/inputs/wheelhouse.json` | Selected policy, matched snapshot, actual wheel hashes, and package versions |
 | `runtime-smoke/hardware.csv` | Actual allocated GPU names, memory, and driver |
 | `runtime-smoke/installation.log` | Dependency preparation problems |
 | `runtime-smoke/compile/validation.json` | Official agent compiler result |
