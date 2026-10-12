@@ -194,6 +194,16 @@ $env:HF_HOME     = 'E:\Desktop\CodingAI\artifacts\hf-cache'   # datasets refuses
 
 ## Current project state
 
+- October 12 21:04 completion audit: issue #13's technical acceptance is met by local commits
+  `650f306` and `7356a80`, but the collaboration handoff is not complete. `git ls-remote` confirms
+  PR #8 and `origin/experiment/swe-lora-v1` still point to `ccfcff0`; the two review follow-ups in
+  `docs/experiments/2026-10-12-pr8-review.md` (strict handling for silently dropped terminal answers
+  and deterministic support for sharded base-weight hashes) are therefore not upstream. The L4 branch
+  is also not pushed, issue #13 has not been updated from this checkout, and no independent teammate
+  approval is recorded here. The private GitHub pages return 404 without browser authentication, so
+  the merge/review state remains externally unverified. Local re-verification passed all 53 L4 tests
+  with the documented dependency path and the notebook generator reports `status: ok`.
+
 - October 12 20:35 issue #13 (four-L4 training feasibility): **the acceptance criterion is met.** Run 11
   (kernel `junzhejiao/gemma-4-four-l4-lora-training-feasibility-v5` version 7) trained a replicated LoRA
   adapter on the required `gemma-4-31b-it-qat-w4a16-ct` base for eight updates with the BF16 base
@@ -216,14 +226,17 @@ $env:HF_HOME     = 'E:\Desktop\CodingAI\artifacts\hf-cache'   # datasets refuses
   blob uploads go to `www.googleapis.com`, which is unreachable from this machine, so kaggle commands run
   through `scripts/bounded_connect.py`. Offline gates: 53 L4 tests and the 109-test suite pass, and the
   generator's `--check` reports `status: ok`. `docs/experiments/2026-10-12-l4-training-feasibility.md`
-  section 9 holds the measurement table. The repository is still unreachable from this workspace, so
-  posting the result to issue #13 and pushing the branch remain human actions.
+  section 9 holds the measurement table. Git refs are readable from this workspace, but authenticated
+  GitHub issue/PR pages are not; posting the result to issue #13, pushing the branch, and obtaining an
+  independent review remain human actions.
 
 - October 11 19:55 readiness audit: random rank-8/rank-32 serving effects are recorded, but no trained adapter exists. Real training is blocked by an executed generated-config type error and unvalidated loader/environment integration. Holdout filtering, trajectory provenance, and explicit paired-run identities need fixes before efficacy claims. The 116 training records overlap three historical evaluation tasks. See `docs/experiments/2026-10-11-lora-readiness-audit.md`; implementation remains unchanged after this advisory task.
 
 - The canonical remote is `origin` at `https://github.com/jwj1342/gemma-agent-lab.git`; future references to the project remote mean this repository unless the user says otherwise. `origin/main` is `3054da842f794c854f438a5478ea9437b119e9bc`.
 - Local `main` is based directly on `origin/main` and is one compatibility commit ahead: `88823c0f556874608cd993cd37ba32d94df7bbd8` renames one leaderboard CSV whose colon-containing timestamp cannot be checked out on Windows. The blob content is unchanged and nothing has been pushed.
-- Active work is on `feature/lora-serving-probe-run` (inspected HEAD `6d2ad38`), with the earlier Localization v1 migration preserved and unrelated localization edits still in the working tree. The local baseline matches cached `origin/main`; this audit did not fetch or change the remote.
+- Active work is on `fix/lora-rank8-controlled` at `7356a80`, with the earlier Localization v1 migration
+  preserved and unrelated localization edits still in the working tree. The branch is local-only; the
+  remote PR #8 head remains `ccfcff0`.
 - October 10 paired L4x4 attempt (budget exhausted at 10 kernel pushes, one further push rejected by the platform): exactly one task pair completed, `rich_3675`, with valid controls in both arms; both arms left it unresolved with the **byte-identical patch**, and the portable arm's trace shows the `localization-v1` skill was **never invoked**, at +44% agent time. Predeclared acceptance is unmet (0.0 points, p = 1.0, n = 1); no promotion. The organisers **republished the official wheelhouse dataset in place on 2026-10-09T14:43Z** (`swegemma` 0.2.10 → 0.2.11, which deleted `swegemma.models.registry`, plus changed `adk_eval_core`/`adk_submission` bytes), so the frozen runner cannot import on the served wheelhouse; the reviewed wheels were restored from the private publisher kernel `junzhejiao/gemma4-pinned-wheels` v1, hash-verified against the frozen manifest. Evidence and the full ledger are in `runs/2026-10-10-localization-ab/{REPORT.md,ab-summary.json}`. `rich_3676` and `rich_3930` remain unmeasured because the pinned-wheel kernel-source mount was missing for both `rich_3676` baseline pushes.
 - October 9 continuation: the user authorized private Kaggle trials and iterative v1 changes until a meaningful improvement is demonstrated. All 46 CPU tests passed after correcting Windows-specific expectations; 114 frozen cases and 18 notebooks passed integrity verification. The first private BM25 pilot uploaded successfully after compressing its notebook payload, but version 1 failed its input mount-path check before inference. A CPU-only input-layout probe is underway. No repair improvement has been measured or candidate promoted. Local checkpoint `ef5e199` contains the prior preserved module; continuation changes are in the working tree.
 - The October 8 preservation handoff is in `docs/localization-handoff.md`, linked from the root README. It explains baseline localization, the implemented optional module, offline gains, rollback, local artifacts, and pending manual remote confirmation; no background GPU work was started.
@@ -268,6 +281,36 @@ $env:HF_HOME     = 'E:\Desktop\CodingAI\artifacts\hf-cache'   # datasets refuses
 - Programming v1 is implemented as a prompt-only planning-gate experiment with localization and all runtime settings fixed. Its paired smoke test found no resolution gain, only 1/2 complete plan compliance, higher latency and edit churn, and fewer failed tool calls; keep it as an ablation and retain retrieval v1 as the control.
 
 ## Work history
+
+### 2026-10-12 21:04 (Asia/Shanghai) - Audit DeepSeek's issue #13 handoff and re-verify the L4 entry point
+
+- Objective: translate the requested issue #13 scope, determine which items were actually completed,
+  and safely close any remaining reproducibility gaps without consuming shared compute.
+- Completion finding: the technical L4 acceptance criterion is met. Commits `650f306` and `7356a80`
+  implement and measure the required-base four-L4 train/save/verify/reload loop; run 11 completed eight
+  updates and the official runtime measured a non-zero adapter effect. The compact H100 artifact review
+  is recorded in `docs/experiments/2026-10-12-pr8-review.md`.
+- Remaining collaboration work: the L4 branch has not been pushed, issue #13 has not been updated from
+  this checkout, and independent teammate approval is not recorded. PR #8 still points to `ccfcff0`.
+  Its review found two small unmerged fixes: reject/count a final terminal answer that would otherwise
+  be silently dropped, and hash all files in a sharded base checkpoint (or fail with a layout-specific
+  diagnostic) instead of assuming `model.safetensors`.
+- Remote evidence: `git ls-remote` returned `ccfcff0` for both the experiment branch and PR #8 head and
+  `f486342` for the PR merge ref. The private GitHub issue/PR URLs return 404 without authenticated web
+  access, so merge and approval state were not inferred from the existence of the merge ref.
+- Verification: `tests.test_l4_feasibility` ran 53 tests successfully after using the documented
+  `artifacts/combo-test;.pylibs` dependency path; the first bare-environment run failed only because
+  `numpy` and `safetensors` were absent. `scripts/prepare_l4_feasibility_notebook.py --check` reports
+  `status: ok` with all seven embedded worker hashes. No Kaggle job, upload, or quota-consuming action
+  was started.
+- Attempted follow-up: a separate PR #8 fix worktree, a path-limited archive, and a temporary Git index
+  were each blocked by the historical leaderboard filename containing `:` on Windows. After repeated
+  confirmation of the same platform incompatibility, the code backport was stopped instead of risking
+  the dirty primary worktree. The scratch branch was deleted; an empty
+  `E:\Desktop\CodingAI-pr8-patch` directory remains because the execution policy denied its removal.
+- Files changed: `WORKLOG.md` and the existing untracked review document
+  `docs/experiments/2026-10-12-pr8-review.md`, which now records the remote-head check. No unrelated
+  working-tree changes were modified.
 
 ### 2026-10-12 20:35 (Asia/Shanghai) - Run 11 meets the acceptance criterion: train, save, verify and reload on four L4s
 
