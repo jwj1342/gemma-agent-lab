@@ -13,6 +13,8 @@ Choose the platform at the execution entry point; the agent configuration is sha
 | Where do I edit the agent? | [Configuration map](../configs/README.md) |
 | How do I run it with no local GPU? | [Kaggle runtime](kaggle-runtime.md) |
 | How do I use our existing H100 setup? | [Trillium runtime](cluster-runtime.md) |
+| How is the first SWE/graph adapter trained? | [First LoRA](first-lora.md) |
+| How do I compare a new method quickly? | [Local evaluation](local-evaluation.md) |
 | What does a particular script do? | [Script catalog](../scripts/README.md) |
 | Where are the results behind a claim? | [Evidence catalog](../resource/manifests/README.md) |
 | Where are public notebooks and discussions? | [Research resource index](../resource/README.md) |
@@ -38,7 +40,7 @@ Choose the platform at the execution entry point; the agent configuration is sha
 | Directory | What belongs here | Who changes it? |
 | --- | --- | --- |
 | `configs/` | Agent YAML/prompts and named environment snapshots | Experiment authors; preserve the measured baseline |
-| `src/` | New team implementations such as retrieval or training utilities | Implementation authors; currently a reserved extension point |
+| `src/` | Team implementations, including trajectory conversion and SFT loss masks | Implementation authors |
 | `scripts/` | Existing build, evaluation, preparation, and collection entry points | Maintainers and experiment authors |
 | `tests/` | Lightweight checks of our preparation tools | Contributors changing those tools |
 | `docs/` | Human-readable guides and compact experiment reports | Everyone |
@@ -59,7 +61,8 @@ The current Trillium installation keeps them under `data/`, `model/`, and `resou
    Keep notes in `docs/experiments/`; a Markdown note inside the agent directory would enter its ZIP.
 2. For Kaggle, generate a notebook with `prepare_kaggle_runtime.py --agent-dir … --task-id …`.
    It packages the chosen configuration locally and reads the public task from Kaggle Inputs at runtime.
-3. For H100, use `prepare_eval_run.py` to freeze the agent and public task, then use the existing Slurm entry point.
+3. For a one-task H100 smoke, use `prepare_eval_run.py`. For repeated comparisons, use
+   `prepare_eval_suite.py` and `slurm_eval_suite.sh`; see [local evaluation](local-evaluation.md).
 4. Both routes call `validate_agent.py`, `evaluate_agent.py`, and `summarize_eval_smoke.py`.
    They check original failure, reference-patch success, and the agent's generated patch separately.
 5. Save an experiment report and artifact locations. Coordinate any official upload through the

@@ -1,6 +1,9 @@
 # Training and evaluation preparation
 
-This is an implementation plan, not a claim that training has been completed.
+The original plan below is now accompanied by the [first SWE/graph LoRA pilot](first-lora.md).
+Use its measured report to distinguish completed training checks from planned benchmark comparisons.
+Use the [local evaluation workflow](local-evaluation.md) for frozen development/holdout cohorts and
+matched repair comparisons. Future SWE and graph preparation excludes those snapshots by default.
 `/home/jwj/venvs/kaggle-cli` is the maintainer's data-access environment. Trillium PyTorch,
 SFT, and RL operating guidance is maintained in `/home/jwj/.codex/cluster-guides/trillium.md`.
 All environment versions and resource figures below are dated October 5, 2026 unless stated otherwise.
@@ -87,9 +90,10 @@ Keep credentials outside team caches. Recheck GPU states and account access; thi
 - The container passed official compilation, empty/gold controls, and independent generated-patch tests.
   Missing Git was fixed. Job 1033882 completed with 84 passing agent-patch tests. Formal submission
   56844353 scored 0.12 publicly, and a Kaggle L4×4 single-task check also passed.
-- A separate training environment is still needed. Preliminary compiler environments cannot stand in for it.
-- Training, checkpoint save/resume, and multi-GPU training have not been validated.
-- The team still needs to select the experimental baseline, grouped validation split, adapter design, and training budget.
+- The October 7 pilot prepared a separate HOME training environment, trained rank-8 LoRA on one H100,
+  and validated full-state save/resume and export. See [the measured first LoRA report](first-lora.md).
+- Multi-GPU training and broad held-out repair gains remain unvalidated. Pilot NLL gains do not establish them.
+- Larger-corpus training, target-harness trajectory replay, and matched graph ablations remain the next research decisions.
 
 Build grouped validation first, then decide SFT/RL scale. The measured L4 agent phase was 74.10 seconds,
 excluding startup; this timing does not validate training.

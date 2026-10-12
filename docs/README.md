@@ -13,6 +13,7 @@ Start with a question, then follow the matching guide. All team guides are in En
 | Join the team and understand access or quotas | [Participation](participation.md) |
 | Build, validate, upload, or inspect a competition entry | [Submission guide](submission.md) |
 | Plan training and adapter validation | [Training plan](training-plan.md) |
+| Explore zero-update agent improvements | [Prompt and context adaptation](prompt-route.md) |
 | Record a new experiment | [Experiment reports](experiments/README.md) |
 | Open a branch or pull request | [Contribution guide](../CONTRIBUTING.md) |
 | Understand CI, review, and main-branch protection | [CI and review](ci-and-review.md) |

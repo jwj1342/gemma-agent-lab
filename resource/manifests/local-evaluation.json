@@ -1,0 +1,1493 @@
+{
+  "recorded_at": "2026-10-09T07:45:50.235204+00:00",
+  "runtime_source_revision": "78d2ac80624434c06f83b5495d1e6e4447a025a2",
+  "baseline": {
+    "run_dir": "runs/20261008-eval-fast-baseline-r6",
+    "summary": {
+      "cohort": "fast",
+      "benchmark_sha256": "b2d6ed557261dc2d11f6ada0fdbe7ca62f66ccf9ca90273f77fbc56ff1293d37",
+      "public_task_sha256": "ada1c9c5765053b617210654d98ceccbb2457bac1228ceafd7a265f34d90005d",
+      "agent_sha256": "02bb939095ded0c970088fc9d19634e203e2d3119a36a5feff20bad55c9343fc",
+      "model_sha256": "53e2e2fbd72d65edf6af3477b6950c3b4d8e456865dcdbd65530e654469d22e2",
+      "verification_identity": "d1111bb087f933c8750dfdc7754872caca90664b7f6aab77c19818e4f2a296ab",
+      "protocol": {
+        "tensor_parallel_size": 1,
+        "gpu_memory_utilization": 0.8,
+        "max_model_len": 32768,
+        "vllm_seed": 42,
+        "task_concurrency": 1
+      },
+      "budget_sha256": "138081c7b20242e496fe1686118905d4780d503b599618472afe6078ef256866",
+      "complete": true,
+      "selected": 12,
+      "valid_controls": 11,
+      "evaluated": 11,
+      "resolved": 4,
+      "resolution_rate": 0.36363636363636365,
+      "resolution_rate_denominator": "All fixed tasks with valid pre-inference controls, including agent failures",
+      "selected_task_success_fraction": 0.3333333333333333,
+      "wilson_95_interval": [
+        0.15166471095367573,
+        0.6461988254921511
+      ],
+      "interval_limit": "Descriptive binomial interval; repository correlation and adaptive development limit inference.",
+      "completion_clean": 8,
+      "by_repository": {
+        "Textualize/rich": {
+          "selected": 4,
+          "valid_controls": 4,
+          "evaluated": 4,
+          "resolved": 1
+        },
+        "encode/httpx": {
+          "selected": 1,
+          "valid_controls": 1,
+          "evaluated": 1,
+          "resolved": 1
+        },
+        "fastapi/fastapi": {
+          "selected": 6,
+          "valid_controls": 5,
+          "evaluated": 5,
+          "resolved": 1
+        },
+        "psf/requests": {
+          "selected": 1,
+          "valid_controls": 1,
+          "evaluated": 1,
+          "resolved": 1
+        }
+      },
+      "cost": {
+        "model_startups": 1,
+        "model_startup_seconds": 187.1525720689997,
+        "inference_seconds": 2349.934445878999,
+        "verification_seconds": 333.56768004900005,
+        "runner_seconds": 4194.597688119006,
+        "control_cache_hits": 12,
+        "control_cache_misses": 12,
+        "model_startups_avoided_vs_one_per_task": 10,
+        "queue_time_included": false
+      },
+      "hardware": [
+        {
+          "torch": "2.10.0+cu129",
+          "cuda": "12.9",
+          "tensor_parallel_size": 1,
+          "devices": [
+            {
+              "index": 0,
+              "name": "NVIDIA H100 80GB HBM3",
+              "total_memory_bytes": 85017493504
+            }
+          ]
+        }
+      ],
+      "tasks": [
+        {
+          "task_id": "rich_4079",
+          "repo": "Textualize/rich",
+          "controls_valid": true,
+          "resolved": false,
+          "completion_clean": false,
+          "evaluated": true,
+          "inference_error": "Agent exceeded session timeout (4 min)",
+          "verification_error": null,
+          "inference_seconds": 265.57228503900023,
+          "agent_seconds": 239.99436559700007,
+          "verification_seconds": 22.69138963899968,
+          "llm_calls": 46,
+          "budgeted_tool_calls": 28,
+          "status": "inference_error",
+          "graph_calls": 0,
+          "tool_names": {
+            "run_command": 11,
+            "read_file": 14,
+            "write_file": 19,
+            "edit_file": 2
+          },
+          "tokens": {
+            "total_prompt_tokens": 423367,
+            "total_completion_tokens": 13154,
+            "total_cached_tokens": 0,
+            "total_tokens": 436521,
+            "total_steps": 48
+          }
+        },
+        {
+          "task_id": "rich_3506",
+          "repo": "Textualize/rich",
+          "controls_valid": true,
+          "resolved": false,
+          "completion_clean": false,
+          "evaluated": true,
+          "inference_error": "Agent exceeded session timeout (4 min)",
+          "verification_error": null,
+          "inference_seconds": 266.26589959599914,
+          "agent_seconds": 240.00117135999972,
+          "verification_seconds": 22.685353742999723,
+          "llm_calls": 22,
+          "budgeted_tool_calls": 21,
+          "status": "inference_error",
+          "graph_calls": 0,
+          "tool_names": {
+            "run_command": 12,
+            "read_file": 8,
+            "write_file": 1
+          },
+          "tokens": {
+            "total_prompt_tokens": 185691,
+            "total_completion_tokens": 16928,
+            "total_cached_tokens": 0,
+            "total_tokens": 202619,
+            "total_steps": 25
+          }
+        },
+        {
+          "task_id": "rich_3468",
+          "repo": "Textualize/rich",
+          "controls_valid": true,
+          "resolved": false,
+          "completion_clean": true,
+          "evaluated": true,
+          "inference_error": null,
+          "verification_error": null,
+          "inference_seconds": 176.9494400399999,
+          "agent_seconds": 151.75562100099978,
+          "verification_seconds": 23.876308847000473,
+          "llm_calls": 43,
+          "budgeted_tool_calls": 40,
+          "status": "tests_failed",
+          "graph_calls": 0,
+          "tool_names": {
+            "run_command": 14,
+            "read_file": 22,
+            "edit_file": 4,
+            "write_file": 1,
+            "submit_patch": 1
+          },
+          "tokens": {
+            "total_prompt_tokens": 347653,
+            "total_completion_tokens": 9177,
+            "total_cached_tokens": 0,
+            "total_tokens": 356830,
+            "total_steps": 46
+          }
+        },
+        {
+          "task_id": "rich_3278",
+          "repo": "Textualize/rich",
+          "controls_valid": true,
+          "resolved": true,
+          "completion_clean": true,
+          "evaluated": true,
+          "inference_error": null,
+          "verification_error": null,
+          "inference_seconds": 164.54169524899953,
+          "agent_seconds": 138.71478881700023,
+          "verification_seconds": 22.68480167800044,
+          "llm_calls": 24,
+          "budgeted_tool_calls": 22,
+          "status": "resolved",
+          "graph_calls": 0,
+          "tool_names": {
+            "run_command": 13,
+            "read_file": 5,
+            "write_file": 2,
+            "edit_file": 2,
+            "submit_patch": 1
+          },
+          "tokens": {
+            "total_prompt_tokens": 200353,
+            "total_completion_tokens": 9319,
+            "total_cached_tokens": 0,
+            "total_tokens": 209672,
+            "total_steps": 27
+          }
+        },
+        {
+          "task_id": "httpx_3672",
+          "repo": "encode/httpx",
+          "controls_valid": true,
+          "resolved": true,
+          "completion_clean": true,
+          "evaluated": true,
+          "inference_error": null,
+          "verification_error": null,
+          "inference_seconds": 235.69732315200054,
+          "agent_seconds": 213.92657116400005,
+          "verification_seconds": 19.230458735000866,
+          "llm_calls": 38,
+          "budgeted_tool_calls": 36,
+          "status": "resolved",
+          "graph_calls": 0,
+          "tool_names": {
+            "read_file": 23,
+            "run_command": 3,
+            "edit_file": 10,
+            "submit_patch": 1
+          },
+          "tokens": {
+            "total_prompt_tokens": 385982,
+            "total_completion_tokens": 12092,
+            "total_cached_tokens": 0,
+            "total_tokens": 398074,
+            "total_steps": 41
+          }
+        },
+        {
+          "task_id": "fastapi_14455",
+          "repo": "fastapi/fastapi",
+          "controls_valid": true,
+          "resolved": false,
+          "completion_clean": true,
+          "evaluated": true,
+          "inference_error": null,
+          "verification_error": null,
+          "inference_seconds": 261.3083234780006,
+          "agent_seconds": 225.76975201499954,
+          "verification_seconds": 31.076066747000368,
+          "llm_calls": 42,
+          "budgeted_tool_calls": 40,
+          "status": "tests_failed",
+          "graph_calls": 0,
+          "tool_names": {
+            "run_command": 20,
+            "read_file": 17,
+            "write_file": 1,
+            "edit_file": 2,
+            "submit_patch": 1
+          },
+          "tokens": {
+            "total_prompt_tokens": 392262,
+            "total_completion_tokens": 13221,
+            "total_cached_tokens": 0,
+            "total_tokens": 405483,
+            "total_steps": 45
+          }
+        },
+        {
+          "task_id": "fastapi_14266",
+          "repo": "fastapi/fastapi",
+          "controls_valid": true,
+          "resolved": false,
+          "completion_clean": true,
+          "evaluated": true,
+          "inference_error": null,
+          "verification_error": null,
+          "inference_seconds": 220.14575121500093,
+          "agent_seconds": 184.3681852560003,
+          "verification_seconds": 34.185755028998756,
+          "llm_calls": 43,
+          "budgeted_tool_calls": 40,
+          "status": "tests_failed",
+          "graph_calls": 0,
+          "tool_names": {
+            "run_command": 19,
+            "read_file": 19,
+            "write_file": 3,
+            "submit_patch": 1
+          },
+          "tokens": {
+            "total_prompt_tokens": 393815,
+            "total_completion_tokens": 10499,
+            "total_cached_tokens": 0,
+            "total_tokens": 404314,
+            "total_steps": 46
+          }
+        },
+        {
+          "task_id": "fastapi_15745",
+          "repo": "fastapi/fastapi",
+          "controls_valid": false,
+          "resolved": null,
+          "completion_clean": false,
+          "evaluated": false,
+          "status": "invalid_controls",
+          "control_errors": {
+            "empty": null,
+            "gold": "Required test node did not pass: test_included_api_route_without_app_scope_returns_405_response"
+          }
+        },
+        {
+          "task_id": "fastapi_15800",
+          "repo": "fastapi/fastapi",
+          "controls_valid": true,
+          "resolved": false,
+          "completion_clean": true,
+          "evaluated": true,
+          "inference_error": null,
+          "verification_error": null,
+          "inference_seconds": 207.2911707610001,
+          "agent_seconds": 168.69336289400053,
+          "verification_seconds": 34.79217123499984,
+          "llm_calls": 57,
+          "budgeted_tool_calls": 40,
+          "status": "tests_failed",
+          "graph_calls": 2,
+          "tool_names": {
+            "run_command": 19,
+            "read_file": 15,
+            "get_code_neighbors": 2,
+            "edit_file": 19,
+            "submit_patch": 1
+          },
+          "tokens": {
+            "total_prompt_tokens": 509310,
+            "total_completion_tokens": 10274,
+            "total_cached_tokens": 0,
+            "total_tokens": 519584,
+            "total_steps": 60
+          }
+        },
+        {
+          "task_id": "fastapi_14609",
+          "repo": "fastapi/fastapi",
+          "controls_valid": true,
+          "resolved": false,
+          "completion_clean": false,
+          "evaluated": true,
+          "inference_error": "Agent exceeded session timeout (4 min)",
+          "verification_error": null,
+          "inference_seconds": 277.7892364829986,
+          "agent_seconds": 240.00328254899978,
+          "verification_seconds": 29.617046265999306,
+          "llm_calls": 26,
+          "budgeted_tool_calls": 25,
+          "status": "inference_error",
+          "graph_calls": 0,
+          "tool_names": {
+            "run_command": 11,
+            "read_file": 13,
+            "edit_file": 1
+          },
+          "tokens": {
+            "total_prompt_tokens": 284760,
+            "total_completion_tokens": 13591,
+            "total_cached_tokens": 0,
+            "total_tokens": 298351,
+            "total_steps": 30
+          }
+        },
+        {
+          "task_id": "fastapi_9753",
+          "repo": "fastapi/fastapi",
+          "controls_valid": true,
+          "resolved": true,
+          "completion_clean": true,
+          "evaluated": true,
+          "inference_error": null,
+          "verification_error": null,
+          "inference_seconds": 142.95110272800048,
+          "agent_seconds": 104.99664678199952,
+          "verification_seconds": 29.882894393000242,
+          "llm_calls": 19,
+          "budgeted_tool_calls": 16,
+          "status": "resolved",
+          "graph_calls": 0,
+          "tool_names": {
+            "run_command": 10,
+            "read_file": 3,
+            "write_file": 2,
+            "edit_file": 1,
+            "submit_patch": 2
+          },
+          "tokens": {
+            "total_prompt_tokens": 144161,
+            "total_completion_tokens": 6349,
+            "total_cached_tokens": 0,
+            "total_tokens": 150510,
+            "total_steps": 22
+          }
+        },
+        {
+          "task_id": "requests_7502",
+          "repo": "psf/requests",
+          "controls_valid": true,
+          "resolved": true,
+          "completion_clean": true,
+          "evaluated": true,
+          "inference_error": null,
+          "verification_error": null,
+          "inference_seconds": 131.42221813799915,
+          "agent_seconds": 103.88389084399932,
+          "verification_seconds": 62.84543373700035,
+          "llm_calls": 35,
+          "budgeted_tool_calls": 22,
+          "status": "resolved",
+          "graph_calls": 0,
+          "tool_names": {
+            "run_command": 9,
+            "read_file": 6,
+            "write_file": 2,
+            "edit_file": 16,
+            "submit_patch": 1
+          },
+          "tokens": {
+            "total_prompt_tokens": 284072,
+            "total_completion_tokens": 6389,
+            "total_cached_tokens": 0,
+            "total_tokens": 290461,
+            "total_steps": 38
+          }
+        }
+      ],
+      "scope": "Local public-task resolution under the official verifier. H100 timing is not L4 timing. Scores with invalid controls have reduced coverage and cannot be compared as full-cohort scores."
+    },
+    "prepared_inputs": {
+      "suite_version": 1,
+      "created_at": "2026-10-08T20:12:36.750022+00:00",
+      "task_ids": [
+        "rich_4079",
+        "rich_3506",
+        "rich_3468",
+        "rich_3278",
+        "httpx_3672",
+        "fastapi_14455",
+        "fastapi_14266",
+        "fastapi_15745",
+        "fastapi_15800",
+        "fastapi_14609",
+        "fastapi_9753",
+        "requests_7502"
+      ],
+      "cohort": "fast",
+      "benchmark_sha256": "b2d6ed557261dc2d11f6ada0fdbe7ca62f66ccf9ca90273f77fbc56ff1293d37",
+      "git_revision": "ec07a49655693ef3c559112acbafcba8b4b9dcd2",
+      "working_tree_dirty": true,
+      "agent_source": "/scratch/jwj/kaggle_gemma4_agent/configs/baseline",
+      "agent_archive_sha256": "02bb939095ded0c970088fc9d19634e203e2d3119a36a5feff20bad55c9343fc",
+      "public_task_sha256": "ada1c9c5765053b617210654d98ceccbb2457bac1228ceafd7a265f34d90005d",
+      "runtime_sha256": {
+        "build_submission.py": "2527cb82e509c5b5b90e10af25c762a100410063879356386f2cb78a4161df26",
+        "prepare_eval_task.py": "91e6a2dba1177480cd79e10668d848ab2bd974fa11ce3668e49e5ec2c0da5871",
+        "verify_eval_run.py": "244e38f5143eaaeb64be074c3efe73f75d0247910fc650791af5d5e67e9c32ee",
+        "eval_suite_lib.py": "1a4826a3633a5ca488c974f839908d3435742f657047f9309043b2d0409ac819",
+        "evaluate_agent.py": "49419d854cd39d37438192ba877dd68e5445268b2ca99ed5e421519c046f98aa",
+        "validate_agent.py": "f1b822d5e5fe6c90a93ed5be9cf0354e65999c8ca00a7bf11c4615ee119bc3a0",
+        "summarize_eval_smoke.py": "8f33f7679198e7c9dcc7ae2313ce987983f06a9de0cc7cbc57c4bba5ca26283e",
+        "run_eval_container.sh": "0be1f9ad6174d0355ba1b061146c66e9283f04855bc94616c3546c1d03023514",
+        "container_entry.sh": "6e14e54eba919e34a2ca60b46317029bcf95fb309dd49e4288d407e801db80d8",
+        "run_eval_suite.py": "fa6f7d830aac619bbd26586a8d382a7755fddea6a2eb8e15a146cd06e75ef00e",
+        "summarize_eval_suite.py": "f30f92e3d0b035f8ef0de2ceb67444f3f2ed60f126893417fef97ad7801a6d08",
+        "local_eval_setup.py": "00ba3c68ba68c93d5cb4783cceb9360435a1be7fb8ea5a12f4352214b835e0f0"
+      },
+      "model_handle": "google/gemma-4/Other/gemma-4-31b-it-qat-w4a16-ct/2",
+      "protocol": {
+        "tensor_parallel_size": 1,
+        "gpu_memory_utilization": 0.8,
+        "max_model_len": 32768,
+        "vllm_seed": 42,
+        "task_concurrency": 1
+      },
+      "status": "Frozen preparation only; no inference or verification executed"
+    },
+    "runtime_inputs": {
+      "verification_identity": "d1111bb087f933c8750dfdc7754872caca90664b7f6aab77c19818e4f2a296ab",
+      "image_sha256": "96f2f2df1d7e816b5cfb5f5b6192735e4f9cb9486bdc1dd3884d61581ed88b4d",
+      "environment_sha256": "8ffddcb05529768f6d1ae6abf700e2c1af7f261f4db65a23a2191f2a63c85374",
+      "wheels_sha256": "51c0f9fe7ad526224b71039ec021e2dcafde264b6a87fc9c42664456b0e9e9b8",
+      "test_wheels_sha256": "69728867e13a42db312023b343c7d8f410f975e5136d860122b9d93a6e04edb8",
+      "model_sha256": "53e2e2fbd72d65edf6af3477b6950c3b4d8e456865dcdbd65530e654469d22e2",
+      "budget_sha256": "138081c7b20242e496fe1686118905d4780d503b599618472afe6078ef256866",
+      "tasks": {
+        "rich_4079": {
+          "snapshot": "37df2d8012d21135955db0e1fa1e27c2b718a4dcd359153e56e4cb69a344fb35",
+          "graph": "ddb68fddb9aed616d133fbeedf5a7cd94d54ede88206f75904a7920d38ba27e9",
+          "embeddings": "8872d4a2798547684b7caff631ef813bc717a15e165fe40a6365a27f4733bc0b",
+          "task": "c5985658ae504fdd7b2b18bc7efb1938768a15a299d04ff8bd260ebfd95ced69",
+          "control_key": "2031fc59611eddd76f98d3f874afda05ddc23d2c83874609425761c4d6207a5f"
+        },
+        "rich_3506": {
+          "snapshot": "ec550f0173f5672b857b4a65206212152b613d2fb4224ac907c10333cd30e474",
+          "graph": "641ea77cc76c583630b93e33e0dc829280406191f94d5ae912b9befe53d33cc7",
+          "embeddings": "cda7c211b382fc01e38eb9bd73ed8b3b694d2952d78b572140cd00a245cf5b6b",
+          "task": "2756b6aa999bd2d099e2e57db3f8b63535ae835feca627e1c4769feb0bcec6ed",
+          "control_key": "b4d0ee5e55480d0530cffc939183a0b6f9903f2dc700c031f713b850b6d141fc"
+        },
+        "rich_3468": {
+          "snapshot": "d3463cbf7de5e600c583b7ae4c4e9b69f6a53427e7657b1786503ab329804cd1",
+          "graph": "60ac56f348c17a312b3ecf96419a9350220df99588cea59500c4292cf86126cc",
+          "embeddings": "79de2f548c057b00607f8be84edda76dbc2501265a5ea6229ac1ace49ef9dced",
+          "task": "523d844ab48344cace31af99adaa919e0c7de031499ad9c2b918ee0bed7515fe",
+          "control_key": "b6df9ae4302d2dc1df74848c2f03331fcf189d58d1b4a3bf18622c39d5bbcda2"
+        },
+        "rich_3278": {
+          "snapshot": "bda96e09e9e02fa372b2cf6c5f3f2760f97d292fb531cc631564632940d6a453",
+          "graph": "6b970bf7e348f37accab82ff77e859a70ea78d342997a1e052396f269c73e415",
+          "embeddings": "f3cb68ee5f956b5ff4b0a913328ac9a0973a4b430f99a585aeca0edd3f5b8e9c",
+          "task": "3f9f7eb1d6e0fb68580e8682a3b6057840277f9b8100e11aa97842dc5b9a2d0b",
+          "control_key": "35167b9683b9894b2ccf4f64dc3d31b2ebcf9a3113f9089d3623e2101faaa156"
+        },
+        "httpx_3672": {
+          "snapshot": "d1afdad9b9d433ebc345968ed90c4c401ed82f5fdfd27ab82eeaf92a49d9e2ed",
+          "graph": "85e7d53e72ea73db45bef4db2941e57a798219a68b4d2015be669c8863612c5c",
+          "embeddings": "374b4543ae7eebd322c3ab78facab817bc21de098a3594d69d78e9de630dc5d3",
+          "task": "0291e05d9d6af9a51a9b3c592e8fac85850e4f0d0671a84256cadd7dffe1b97f",
+          "control_key": "6de47dbb28edb718bd3693bf489c3dd255f362a38fd9ea6e77bdc48d49fc6502"
+        },
+        "fastapi_14455": {
+          "snapshot": "63a127bb606974ce7dfb2029195233bfeeb029beb90fd35dddc006e47429e867",
+          "graph": "fb1b33a645e4d6cb1ba05b41713cb67bd2e562cf9c284bc35c9b00b24fea237d",
+          "embeddings": "a610e44545d18cf89d5d0f927ddc4253eb15a4483afa5b4328133d58dab69314",
+          "task": "860671961ada627d7ab7828dba4c70420f67f142caa35c967e9c42c3a8e9fd07",
+          "control_key": "80fe51cc16da10a33ef6525f00de50153ac104c0175c34f1dbfc274d710def1f"
+        },
+        "fastapi_14266": {
+          "snapshot": "ad0ea388809562bb74d3b9bff453ce9d4cf4459b771f5fcecc8031f31b65d935",
+          "graph": "4ced725ca06d6c7c7662fd4f7153e8860fd75faccee253b734396a0d15f98a20",
+          "embeddings": "bde845fdfe09c4333b7b231f7cb2eac3804a2595105e06b7dffdd7a1c60909c1",
+          "task": "f2e28b4a860538a3317628adc818adcd9aad6681f9f9078b0e8f2aef0329d4bd",
+          "control_key": "240acd5baab3d72817558c54b5759aeb86ec0a25f5d5d02fbb110e451b931f50"
+        },
+        "fastapi_15745": {
+          "snapshot": "736e233a91f69e293e744af2bd0535bdd57fced9e82a00810d6d80becfea91f1",
+          "graph": "11e70be61b6b0815f307c414659526be08849e35f686d3ca3df845fc857f01ba",
+          "embeddings": "e935dd6c8845f80a390dd0c0e28dc81fbd3220d66967ef0abbaa2cef1ff0f788",
+          "task": "d338e3b669cf320793a71347ee9533d45046f813f9e06b3786fac5aa619efd9a",
+          "control_key": "05bb9b9221d73f48d6ac11e007611b4c7f39b9dacb9b8abea7877728f111c2ae"
+        },
+        "fastapi_15800": {
+          "snapshot": "39db9ef995f8066b5f3cc70a7d8c54325e7bdc4faa9599e76099b533a4e034c0",
+          "graph": "21d2f5b0eb4f8c7e6cbc9ef6642b0787361fbeec8190f0624018da3a502e019a",
+          "embeddings": "e8141d203c5299f2aa73205d094ae232e083d26784576e4418768dc121585ce6",
+          "task": "ff5428afd588e32a311b4341194ccdd5d15b00bbeb73dcb762e6fe724c630996",
+          "control_key": "79eb28ec5dbf218bfd185e766dec43c020ff6d417000150bd2599500721b8bd3"
+        },
+        "fastapi_14609": {
+          "snapshot": "fbd74e5018f12d923162e332b2e57332b9fe8b58a74a779400ed58c847a431be",
+          "graph": "340793aa4e5b64ca43727129b1d8cace75674caa4662dc1a0d600476920d7ed7",
+          "embeddings": "f1d1db48120e6a889dfc3fc077c770aae71589fddd4c81dca06bdbca81673e25",
+          "task": "7974907978b01d5173220af583885146f8b55df03caa3080b027b6cf07d3b053",
+          "control_key": "e6b1523024ff5d214c1d46dafabbba9b9b942ead299efc64be2d86990b404674"
+        },
+        "fastapi_9753": {
+          "snapshot": "528a9458de0cb03acfd0c8f552354a2960e33ca62063406db2e02eb32110c3ee",
+          "graph": "fc71851d439aae0516733bd84e16c511516451a81de57688c43f408609bfe688",
+          "embeddings": "fa03911e457faac7bc3e77d3e4518bd7ce6a7812551069790a2b6bfd8d002b1b",
+          "task": "66be1d3fd69133f12d35fd9aecb20ece88ee187ca6f9e3b66a953d33e16bd90d",
+          "control_key": "309cf4aa30ae8486e58f4fe9de0b9ea8146d16e176545605da56bc1a88be4eee"
+        },
+        "requests_7502": {
+          "snapshot": "a7da726a17f54ea4d43d1a21e3e9f3e95bfa2787a845a18e2d30a88fcc1f53fb",
+          "graph": "5e0de156b8933a1c72d11185c5fccbb0fd3d0bda4365529ddf8d50c33133cba5",
+          "embeddings": "8ed4734ec0c9ee8b1c0a26b8d5883b5b286cb1d83d3b853c123ec73578752065",
+          "task": "1f04ce03d718cb8dae8cca85be7242002a012f831a7960699cae267d7359e2c0",
+          "control_key": "56e5f0df200fb1dd9d6799cb864039bfbd96bd26c5756be6dcc97ee33b39f416"
+        }
+      },
+      "protocol": {
+        "tensor_parallel_size": 1,
+        "gpu_memory_utilization": 0.8,
+        "max_model_len": 32768,
+        "vllm_seed": 42,
+        "task_concurrency": 1
+      },
+      "asset_check_seconds": 61.36600717999954,
+      "hash_policy": "SHA-256 of content; reuse indexed hashes only when device/inode/size/mtime/ctime match. Use --rehash-assets for a full reread."
+    },
+    "attempts": [
+      {
+        "started_at": "2026-10-08T20:12:45.220930+00:00",
+        "job_id": "1060056",
+        "steps": [
+          {
+            "mode": "compile",
+            "arguments": [],
+            "seconds": 10.931688138999561,
+            "exit_code": 0
+          },
+          {
+            "mode": "verify",
+            "arguments": [
+              "--task-ids",
+              "rich_4079",
+              "rich_3506",
+              "rich_3468",
+              "rich_3278",
+              "httpx_3672",
+              "fastapi_14455",
+              "fastapi_14266",
+              "fastapi_15745",
+              "fastapi_15800",
+              "fastapi_14609",
+              "fastapi_9753",
+              "requests_7502",
+              "--patch-source",
+              "empty",
+              "--results",
+              "/work/run/empty"
+            ],
+            "seconds": 538.8023800090004,
+            "exit_code": 0
+          },
+          {
+            "mode": "verify",
+            "arguments": [
+              "--task-ids",
+              "rich_4079",
+              "rich_3506",
+              "rich_3468",
+              "rich_3278",
+              "httpx_3672",
+              "fastapi_14455",
+              "fastapi_14266",
+              "fastapi_15745",
+              "fastapi_15800",
+              "fastapi_14609",
+              "fastapi_9753",
+              "requests_7502",
+              "--patch-source",
+              "gold",
+              "--results",
+              "/work/run/gold"
+            ],
+            "seconds": 540.8118645879995,
+            "exit_code": 0
+          },
+          {
+            "mode": "infer",
+            "arguments": [
+              "--task-ids",
+              "rich_4079",
+              "rich_3506",
+              "rich_3468",
+              "rich_3278",
+              "httpx_3672",
+              "fastapi_14455",
+              "fastapi_14266",
+              "fastapi_15800",
+              "fastapi_14609",
+              "fastapi_9753",
+              "requests_7502"
+            ],
+            "seconds": 2551.0184007279995,
+            "exit_code": 0
+          },
+          {
+            "mode": "verify",
+            "arguments": [
+              "--task-ids",
+              "rich_4079",
+              "rich_3506",
+              "rich_3468",
+              "rich_3278",
+              "httpx_3672",
+              "fastapi_14455",
+              "fastapi_14266",
+              "fastapi_15800",
+              "fastapi_14609",
+              "fastapi_9753",
+              "requests_7502",
+              "--patch-source",
+              "agent",
+              "--results",
+              "/work/run/agent"
+            ],
+            "seconds": 432.2813191740006,
+            "exit_code": 0
+          }
+        ],
+        "control_hits": 0,
+        "control_misses": 12,
+        "asset_check_seconds": 61.36600717999954,
+        "completed": true,
+        "total_seconds": 4135.7883075380005
+      },
+      {
+        "started_at": "2026-10-09T07:12:38.636904+00:00",
+        "job_id": "1061885",
+        "steps": [],
+        "control_hits": 12,
+        "control_misses": 0,
+        "asset_check_seconds": 58.3631865760035,
+        "completed": true,
+        "total_seconds": 58.809380581005826
+      }
+    ],
+    "artifact_sha256": {
+      "summary.json": "a6c80a7986e1d14c959b6751a568efbdf29e22d6e2edb37d7b7fbe5056a7e897",
+      "run-manifest.json": "e0247ceabe3de4dda2994ece2fb9e0b3ef7b399d4b19a0274419b4af92f4151f",
+      "runtime-inputs.json": "8f92c01f5921f057b06fb599c3a4fbbb838d4a0e88e871b11ee2e6c82c266098",
+      "controls.json": "6e148628af3bacf6af0228f0c20efe57ba9c06342a15d8351dcb536897e9d0dc",
+      "infer/fastapi_14266/prediction.json": "995622d78307bac0350b40dbd07eb6f733e28136e85f85b9f4449aba02de68cd",
+      "infer/fastapi_14455/prediction.json": "4050a74ac9de5c28651c328b24d49707e16796f48001305464bc2d2fa921bd53",
+      "infer/fastapi_14609/prediction.json": "8e26afbb10293f3a73ebd83941d5983c7e10992873e8e526d67579503223e765",
+      "infer/fastapi_15800/prediction.json": "0d973846c23379cb378993909ffb5d358edaf757a8e5c3a9fb99870dec481240",
+      "infer/fastapi_9753/prediction.json": "87f715514af91abb269a46ab591232f3ad0494081525605381b99cd10d508f1f",
+      "infer/httpx_3672/prediction.json": "c29a1ab1f6c1f3fbfefe2f66e00de3e7f1ccb84772b48349561588ee80364b68",
+      "infer/requests_7502/prediction.json": "436f93c3de26d5f072a20a0f06da3dec9f8b7570ceb8fc5ea30de634c5b4614d",
+      "infer/rich_3278/prediction.json": "b7118bd21e73adbc77096a4d404196a8614079f8b2a949442012b543bc607e6f",
+      "infer/rich_3468/prediction.json": "d85bd006c02fb0b6dc4d367ac4b6b87bf6af355c4aefbc2d1ff43988b3d04721",
+      "infer/rich_3506/prediction.json": "137b2c27af52425c9466bfb039a415c8bbac194a73d2a583b6a55c5e3d0d7716",
+      "infer/rich_4079/prediction.json": "98b63b0572533a4a5b8c78afd66eec4cd5c430a31f1f58391ae1199a6d6a431d",
+      "verify/agent/fastapi_14266/result.json": "62cd15afabcab22b0d6bd93937a39aef940f8514363d2e67120404d497dc28e2",
+      "verify/agent/fastapi_14455/result.json": "689c9f972101e30d1959321799fa20361461d99ef7d1db96d92ce51e0e0fac44",
+      "verify/agent/fastapi_14609/result.json": "3e634455c6bc9c77353caf409f92ba5cc92bd8acf7382df46802944743247bcb",
+      "verify/agent/fastapi_15800/result.json": "79d79dbca7766e9d8d701a5ec23ab0f793c8a4cfe6070eeae0e672a9aa0d7f2a",
+      "verify/agent/fastapi_9753/result.json": "def4fd664541b794b33cc200088f3b7a6b8dc1129ed04c60e2144721a95abed2",
+      "verify/agent/httpx_3672/result.json": "47b83de41eb7cbf4c81bf26be1a094a077d16ee67a2e5c85d1f932380ecdb8dd",
+      "verify/agent/requests_7502/result.json": "dd35e6fc97f7d880c98c5c80462e87d80b541c9bb84eb2ac4b5eb66526bfc37e",
+      "verify/agent/rich_3278/result.json": "ad90d242b20548f63ec22d9466c5300ca0a77220763aab17d6d23948bc54f33d",
+      "verify/agent/rich_3468/result.json": "b48299dd483f7dc225e2063f587787d980f7645bab9a793395c779aa5cf0deea",
+      "verify/agent/rich_3506/result.json": "5d21e9d942d4a988955d094a0077534a47489a8fc84c28050f6182298e4e96de",
+      "verify/agent/rich_4079/result.json": "c994d25fd2ce7d8ab79a4c0b0c643148cd686d806ac111ff85ac2645da023939"
+    },
+    "behavior": {
+      "graph_tool_calls": 2,
+      "submit_patch_calls": 9,
+      "turn_limit_failures": 0,
+      "session_timeouts": 3,
+      "context_limit_failures": 0,
+      "empty_patch_after_normal_return": 0,
+      "clean_completions": 8
+    }
+  },
+  "candidate": {
+    "run_dir": "runs/20261008-eval-fast-lora-r6",
+    "summary": {
+      "cohort": "fast",
+      "benchmark_sha256": "b2d6ed557261dc2d11f6ada0fdbe7ca62f66ccf9ca90273f77fbc56ff1293d37",
+      "public_task_sha256": "ada1c9c5765053b617210654d98ceccbb2457bac1228ceafd7a265f34d90005d",
+      "agent_sha256": "c32b143c6fbce2b5b9c614f183afdd47060bcc2cfe9550ae4b857e7cdac7012f",
+      "model_sha256": "53e2e2fbd72d65edf6af3477b6950c3b4d8e456865dcdbd65530e654469d22e2",
+      "verification_identity": "d1111bb087f933c8750dfdc7754872caca90664b7f6aab77c19818e4f2a296ab",
+      "protocol": {
+        "tensor_parallel_size": 1,
+        "gpu_memory_utilization": 0.8,
+        "max_model_len": 32768,
+        "vllm_seed": 42,
+        "task_concurrency": 1
+      },
+      "budget_sha256": "138081c7b20242e496fe1686118905d4780d503b599618472afe6078ef256866",
+      "complete": true,
+      "selected": 12,
+      "valid_controls": 11,
+      "evaluated": 11,
+      "resolved": 2,
+      "resolution_rate": 0.18181818181818182,
+      "resolution_rate_denominator": "All fixed tasks with valid pre-inference controls, including agent failures",
+      "selected_task_success_fraction": 0.16666666666666666,
+      "wilson_95_interval": [
+        0.05136768974608513,
+        0.4769805619608442
+      ],
+      "interval_limit": "Descriptive binomial interval; repository correlation and adaptive development limit inference.",
+      "completion_clean": 3,
+      "by_repository": {
+        "Textualize/rich": {
+          "selected": 4,
+          "valid_controls": 4,
+          "evaluated": 4,
+          "resolved": 0
+        },
+        "encode/httpx": {
+          "selected": 1,
+          "valid_controls": 1,
+          "evaluated": 1,
+          "resolved": 1
+        },
+        "fastapi/fastapi": {
+          "selected": 6,
+          "valid_controls": 5,
+          "evaluated": 5,
+          "resolved": 0
+        },
+        "psf/requests": {
+          "selected": 1,
+          "valid_controls": 1,
+          "evaluated": 1,
+          "resolved": 1
+        }
+      },
+      "cost": {
+        "model_startups": 1,
+        "model_startup_seconds": 225.18039386700184,
+        "inference_seconds": 1578.820741657004,
+        "verification_seconds": 114.50500442500197,
+        "runner_seconds": 2034.0768584279976,
+        "control_cache_hits": 12,
+        "control_cache_misses": 0,
+        "model_startups_avoided_vs_one_per_task": 10,
+        "queue_time_included": false
+      },
+      "hardware": [
+        {
+          "torch": "2.10.0+cu129",
+          "cuda": "12.9",
+          "tensor_parallel_size": 1,
+          "devices": [
+            {
+              "index": 0,
+              "name": "NVIDIA H100 80GB HBM3",
+              "total_memory_bytes": 85017493504
+            }
+          ]
+        }
+      ],
+      "tasks": [
+        {
+          "task_id": "rich_4079",
+          "repo": "Textualize/rich",
+          "controls_valid": true,
+          "resolved": false,
+          "completion_clean": false,
+          "evaluated": true,
+          "inference_error": "Agent exceeded turns budget (80 turns)",
+          "verification_error": "No generated patch",
+          "inference_seconds": 138.50744136900175,
+          "agent_seconds": 112.87890618899837,
+          "verification_seconds": 0,
+          "llm_calls": 80,
+          "budgeted_tool_calls": 30,
+          "status": "inference_error",
+          "graph_calls": 0,
+          "tool_names": {
+            "run_command": 1,
+            "read_file": 29,
+            "submit_patch": 49,
+            "get_status": 1
+          },
+          "tokens": {
+            "total_prompt_tokens": 953197,
+            "total_completion_tokens": 1708,
+            "total_cached_tokens": 0,
+            "total_tokens": 954905,
+            "total_steps": 82
+          }
+        },
+        {
+          "task_id": "rich_3506",
+          "repo": "Textualize/rich",
+          "controls_valid": true,
+          "resolved": false,
+          "completion_clean": false,
+          "evaluated": true,
+          "inference_error": "Agent exceeded turns budget (80 turns)",
+          "verification_error": "No generated patch",
+          "inference_seconds": 80.97898668299968,
+          "agent_seconds": 55.39131468100095,
+          "verification_seconds": 0,
+          "llm_calls": 80,
+          "budgeted_tool_calls": 39,
+          "status": "inference_error",
+          "graph_calls": 0,
+          "tool_names": {
+            "run_command": 33,
+            "read_file": 6,
+            "submit_patch": 41
+          },
+          "tokens": {
+            "total_prompt_tokens": 664524,
+            "total_completion_tokens": 1974,
+            "total_cached_tokens": 0,
+            "total_tokens": 666498,
+            "total_steps": 82
+          }
+        },
+        {
+          "task_id": "rich_3468",
+          "repo": "Textualize/rich",
+          "controls_valid": true,
+          "resolved": false,
+          "completion_clean": false,
+          "evaluated": true,
+          "inference_error": "Agent exceeded turns budget (80 turns)",
+          "verification_error": "No generated patch",
+          "inference_seconds": 72.38874361200214,
+          "agent_seconds": 45.61756290999983,
+          "verification_seconds": 0,
+          "llm_calls": 80,
+          "budgeted_tool_calls": 33,
+          "status": "inference_error",
+          "graph_calls": 1,
+          "tool_names": {
+            "run_command": 11,
+            "search_similar_code": 1,
+            "read_file": 21,
+            "submit_patch": 46,
+            "get_status": 1
+          },
+          "tokens": {
+            "total_prompt_tokens": 530693,
+            "total_completion_tokens": 1651,
+            "total_cached_tokens": 0,
+            "total_tokens": 532344,
+            "total_steps": 82
+          }
+        },
+        {
+          "task_id": "rich_3278",
+          "repo": "Textualize/rich",
+          "controls_valid": true,
+          "resolved": false,
+          "completion_clean": false,
+          "evaluated": true,
+          "inference_error": "Sandbox execution error: litellm.ContextWindowExceededError: litellm.BadRequestError: ContextWindowExceededError: OpenAIException - This model's maximum context length is 32768 tokens. However, you requested 8192 output tokens and your prompt contains at least 24577 input tokens, for a total of at least 32769 tokens. Please reduce the length of the input prompt or the number of requested output tokens. (parameter=input_tokens, value=24577)",
+          "verification_error": "No generated patch",
+          "inference_seconds": 175.1172217380008,
+          "agent_seconds": 146.69897201500135,
+          "verification_seconds": 0,
+          "llm_calls": 1,
+          "budgeted_tool_calls": 40,
+          "status": "inference_error",
+          "graph_calls": 0,
+          "tool_names": {
+            "run_command": 401
+          },
+          "tokens": {
+            "total_prompt_tokens": 4122,
+            "total_completion_tokens": 8192,
+            "total_cached_tokens": 0,
+            "total_tokens": 12314,
+            "total_steps": 403
+          }
+        },
+        {
+          "task_id": "httpx_3672",
+          "repo": "encode/httpx",
+          "controls_valid": true,
+          "resolved": true,
+          "completion_clean": true,
+          "evaluated": true,
+          "inference_error": null,
+          "verification_error": null,
+          "inference_seconds": 248.97577081100098,
+          "agent_seconds": 94.64369234299738,
+          "verification_seconds": 18.878202331001376,
+          "llm_calls": 34,
+          "budgeted_tool_calls": 35,
+          "status": "resolved",
+          "graph_calls": 0,
+          "tool_names": {
+            "read_file": 26,
+            "edit_file": 9,
+            "submit_patch": 1
+          },
+          "tokens": {
+            "total_prompt_tokens": 309820,
+            "total_completion_tokens": 2928,
+            "total_cached_tokens": 0,
+            "total_tokens": 312748,
+            "total_steps": 39
+          }
+        },
+        {
+          "task_id": "fastapi_14455",
+          "repo": "fastapi/fastapi",
+          "controls_valid": true,
+          "resolved": false,
+          "completion_clean": false,
+          "evaluated": true,
+          "inference_error": null,
+          "verification_error": "No generated patch",
+          "inference_seconds": 231.65704615800132,
+          "agent_seconds": 187.74972187800086,
+          "verification_seconds": 0,
+          "llm_calls": 41,
+          "budgeted_tool_calls": 39,
+          "status": "empty_patch",
+          "graph_calls": 0,
+          "tool_names": {
+            "run_command": 2,
+            "read_file": 37,
+            "submit_patch": 1
+          },
+          "tokens": {
+            "total_prompt_tokens": 396862,
+            "total_completion_tokens": 9742,
+            "total_cached_tokens": 0,
+            "total_tokens": 406604,
+            "total_steps": 43
+          }
+        },
+        {
+          "task_id": "fastapi_14266",
+          "repo": "fastapi/fastapi",
+          "controls_valid": true,
+          "resolved": false,
+          "completion_clean": false,
+          "evaluated": true,
+          "inference_error": "Agent exceeded turns budget (80 turns)",
+          "verification_error": "No generated patch",
+          "inference_seconds": 111.51699360899875,
+          "agent_seconds": 73.54895650899925,
+          "verification_seconds": 0,
+          "llm_calls": 80,
+          "budgeted_tool_calls": 39,
+          "status": "inference_error",
+          "graph_calls": 2,
+          "tool_names": {
+            "run_command": 3,
+            "read_file": 34,
+            "search_similar_code": 1,
+            "get_code_neighbors": 1,
+            "submit_patch": 41
+          },
+          "tokens": {
+            "total_prompt_tokens": 721770,
+            "total_completion_tokens": 1760,
+            "total_cached_tokens": 0,
+            "total_tokens": 723530,
+            "total_steps": 82
+          }
+        },
+        {
+          "task_id": "fastapi_15745",
+          "repo": "fastapi/fastapi",
+          "controls_valid": false,
+          "resolved": null,
+          "completion_clean": false,
+          "evaluated": false,
+          "status": "invalid_controls",
+          "control_errors": {
+            "empty": null,
+            "gold": "Required test node did not pass: test_included_api_route_without_app_scope_returns_405_response"
+          }
+        },
+        {
+          "task_id": "fastapi_15800",
+          "repo": "fastapi/fastapi",
+          "controls_valid": true,
+          "resolved": false,
+          "completion_clean": false,
+          "evaluated": true,
+          "inference_error": "Agent exceeded turns budget (80 turns)",
+          "verification_error": "No generated patch",
+          "inference_seconds": 102.11675284800003,
+          "agent_seconds": 61.438728082001035,
+          "verification_seconds": 0,
+          "llm_calls": 80,
+          "budgeted_tool_calls": 39,
+          "status": "inference_error",
+          "graph_calls": 7,
+          "tool_names": {
+            "run_command": 29,
+            "read_file": 3,
+            "search_similar_code": 5,
+            "get_code_neighbors": 2,
+            "submit_patch": 43
+          },
+          "tokens": {
+            "total_prompt_tokens": 592974,
+            "total_completion_tokens": 1354,
+            "total_cached_tokens": 0,
+            "total_tokens": 594328,
+            "total_steps": 84
+          }
+        },
+        {
+          "task_id": "fastapi_14609",
+          "repo": "fastapi/fastapi",
+          "controls_valid": true,
+          "resolved": false,
+          "completion_clean": true,
+          "evaluated": true,
+          "inference_error": null,
+          "verification_error": null,
+          "inference_seconds": 213.97811521499898,
+          "agent_seconds": 176.65708090300177,
+          "verification_seconds": 30.97556323000026,
+          "llm_calls": 41,
+          "budgeted_tool_calls": 39,
+          "status": "tests_failed",
+          "graph_calls": 0,
+          "tool_names": {
+            "run_command": 3,
+            "read_file": 12,
+            "edit_file": 24,
+            "submit_patch": 1
+          },
+          "tokens": {
+            "total_prompt_tokens": 368004,
+            "total_completion_tokens": 9040,
+            "total_cached_tokens": 0,
+            "total_tokens": 377044,
+            "total_steps": 43
+          }
+        },
+        {
+          "task_id": "fastapi_9753",
+          "repo": "fastapi/fastapi",
+          "controls_valid": true,
+          "resolved": false,
+          "completion_clean": false,
+          "evaluated": true,
+          "inference_error": "Agent exceeded turns budget (80 turns)",
+          "verification_error": "No generated patch",
+          "inference_seconds": 121.54000121900026,
+          "agent_seconds": 84.06955430100061,
+          "verification_seconds": 0,
+          "llm_calls": 80,
+          "budgeted_tool_calls": 30,
+          "status": "inference_error",
+          "graph_calls": 1,
+          "tool_names": {
+            "search_similar_code": 1,
+            "run_command": 1,
+            "read_file": 28,
+            "submit_patch": 49,
+            "get_status": 1
+          },
+          "tokens": {
+            "total_prompt_tokens": 627968,
+            "total_completion_tokens": 1642,
+            "total_cached_tokens": 0,
+            "total_tokens": 629610,
+            "total_steps": 82
+          }
+        },
+        {
+          "task_id": "requests_7502",
+          "repo": "psf/requests",
+          "controls_valid": true,
+          "resolved": true,
+          "completion_clean": true,
+          "evaluated": true,
+          "inference_error": null,
+          "verification_error": null,
+          "inference_seconds": 82.04366839499926,
+          "agent_seconds": 55.7802223180006,
+          "verification_seconds": 64.65123886400033,
+          "llm_calls": 33,
+          "budgeted_tool_calls": 30,
+          "status": "resolved",
+          "graph_calls": 0,
+          "tool_names": {
+            "run_command": 15,
+            "read_file": 10,
+            "write_file": 2,
+            "edit_file": 3,
+            "submit_patch": 1,
+            "get_status": 1
+          },
+          "tokens": {
+            "total_prompt_tokens": 348281,
+            "total_completion_tokens": 2827,
+            "total_cached_tokens": 0,
+            "total_tokens": 351108,
+            "total_steps": 35
+          }
+        }
+      ],
+      "scope": "Local public-task resolution under the official verifier. H100 timing is not L4 timing. Scores with invalid controls have reduced coverage and cannot be compared as full-cohort scores.",
+      "comparison": {
+        "baseline_agent_sha256": "02bb939095ded0c970088fc9d19634e203e2d3119a36a5feff20bad55c9343fc",
+        "candidate_agent_sha256": "c32b143c6fbce2b5b9c614f183afdd47060bcc2cfe9550ae4b857e7cdac7012f",
+        "matched_tasks": 11,
+        "newly_resolved": [],
+        "regressions": [
+          "rich_3278",
+          "fastapi_9753"
+        ],
+        "both_resolved": [
+          "httpx_3672",
+          "requests_7502"
+        ],
+        "neither_resolved": [
+          "rich_4079",
+          "rich_3506",
+          "rich_3468",
+          "fastapi_14455",
+          "fastapi_14266",
+          "fastapi_15800",
+          "fastapi_14609"
+        ],
+        "resolution_rate_difference": -0.18181818181818182,
+        "scope": "Paired descriptive comparison. One stochastic attempt per task; no claim of statistical significance."
+      }
+    },
+    "prepared_inputs": {
+      "suite_version": 1,
+      "created_at": "2026-10-08T20:12:38.899951+00:00",
+      "task_ids": [
+        "rich_4079",
+        "rich_3506",
+        "rich_3468",
+        "rich_3278",
+        "httpx_3672",
+        "fastapi_14455",
+        "fastapi_14266",
+        "fastapi_15745",
+        "fastapi_15800",
+        "fastapi_14609",
+        "fastapi_9753",
+        "requests_7502"
+      ],
+      "cohort": "fast",
+      "benchmark_sha256": "b2d6ed557261dc2d11f6ada0fdbe7ca62f66ccf9ca90273f77fbc56ff1293d37",
+      "git_revision": "ec07a49655693ef3c559112acbafcba8b4b9dcd2",
+      "working_tree_dirty": true,
+      "agent_source": "/scratch/jwj/kaggle_gemma4_agent/runs/20261007-first-lora-corrected-rich3454/inputs/agent",
+      "agent_archive_sha256": "c32b143c6fbce2b5b9c614f183afdd47060bcc2cfe9550ae4b857e7cdac7012f",
+      "public_task_sha256": "ada1c9c5765053b617210654d98ceccbb2457bac1228ceafd7a265f34d90005d",
+      "runtime_sha256": {
+        "build_submission.py": "2527cb82e509c5b5b90e10af25c762a100410063879356386f2cb78a4161df26",
+        "prepare_eval_task.py": "91e6a2dba1177480cd79e10668d848ab2bd974fa11ce3668e49e5ec2c0da5871",
+        "verify_eval_run.py": "244e38f5143eaaeb64be074c3efe73f75d0247910fc650791af5d5e67e9c32ee",
+        "eval_suite_lib.py": "1a4826a3633a5ca488c974f839908d3435742f657047f9309043b2d0409ac819",
+        "evaluate_agent.py": "49419d854cd39d37438192ba877dd68e5445268b2ca99ed5e421519c046f98aa",
+        "validate_agent.py": "f1b822d5e5fe6c90a93ed5be9cf0354e65999c8ca00a7bf11c4615ee119bc3a0",
+        "summarize_eval_smoke.py": "8f33f7679198e7c9dcc7ae2313ce987983f06a9de0cc7cbc57c4bba5ca26283e",
+        "run_eval_container.sh": "0be1f9ad6174d0355ba1b061146c66e9283f04855bc94616c3546c1d03023514",
+        "container_entry.sh": "6e14e54eba919e34a2ca60b46317029bcf95fb309dd49e4288d407e801db80d8",
+        "run_eval_suite.py": "fa6f7d830aac619bbd26586a8d382a7755fddea6a2eb8e15a146cd06e75ef00e",
+        "summarize_eval_suite.py": "f30f92e3d0b035f8ef0de2ceb67444f3f2ed60f126893417fef97ad7801a6d08",
+        "local_eval_setup.py": "00ba3c68ba68c93d5cb4783cceb9360435a1be7fb8ea5a12f4352214b835e0f0"
+      },
+      "model_handle": "google/gemma-4/Other/gemma-4-31b-it-qat-w4a16-ct/2",
+      "protocol": {
+        "tensor_parallel_size": 1,
+        "gpu_memory_utilization": 0.8,
+        "max_model_len": 32768,
+        "vllm_seed": 42,
+        "task_concurrency": 1
+      },
+      "status": "Frozen preparation only; no inference or verification executed"
+    },
+    "runtime_inputs": {
+      "verification_identity": "d1111bb087f933c8750dfdc7754872caca90664b7f6aab77c19818e4f2a296ab",
+      "image_sha256": "96f2f2df1d7e816b5cfb5f5b6192735e4f9cb9486bdc1dd3884d61581ed88b4d",
+      "environment_sha256": "8ffddcb05529768f6d1ae6abf700e2c1af7f261f4db65a23a2191f2a63c85374",
+      "wheels_sha256": "51c0f9fe7ad526224b71039ec021e2dcafde264b6a87fc9c42664456b0e9e9b8",
+      "test_wheels_sha256": "69728867e13a42db312023b343c7d8f410f975e5136d860122b9d93a6e04edb8",
+      "model_sha256": "53e2e2fbd72d65edf6af3477b6950c3b4d8e456865dcdbd65530e654469d22e2",
+      "budget_sha256": "138081c7b20242e496fe1686118905d4780d503b599618472afe6078ef256866",
+      "tasks": {
+        "rich_4079": {
+          "snapshot": "37df2d8012d21135955db0e1fa1e27c2b718a4dcd359153e56e4cb69a344fb35",
+          "graph": "ddb68fddb9aed616d133fbeedf5a7cd94d54ede88206f75904a7920d38ba27e9",
+          "embeddings": "8872d4a2798547684b7caff631ef813bc717a15e165fe40a6365a27f4733bc0b",
+          "task": "c5985658ae504fdd7b2b18bc7efb1938768a15a299d04ff8bd260ebfd95ced69",
+          "control_key": "2031fc59611eddd76f98d3f874afda05ddc23d2c83874609425761c4d6207a5f"
+        },
+        "rich_3506": {
+          "snapshot": "ec550f0173f5672b857b4a65206212152b613d2fb4224ac907c10333cd30e474",
+          "graph": "641ea77cc76c583630b93e33e0dc829280406191f94d5ae912b9befe53d33cc7",
+          "embeddings": "cda7c211b382fc01e38eb9bd73ed8b3b694d2952d78b572140cd00a245cf5b6b",
+          "task": "2756b6aa999bd2d099e2e57db3f8b63535ae835feca627e1c4769feb0bcec6ed",
+          "control_key": "b4d0ee5e55480d0530cffc939183a0b6f9903f2dc700c031f713b850b6d141fc"
+        },
+        "rich_3468": {
+          "snapshot": "d3463cbf7de5e600c583b7ae4c4e9b69f6a53427e7657b1786503ab329804cd1",
+          "graph": "60ac56f348c17a312b3ecf96419a9350220df99588cea59500c4292cf86126cc",
+          "embeddings": "79de2f548c057b00607f8be84edda76dbc2501265a5ea6229ac1ace49ef9dced",
+          "task": "523d844ab48344cace31af99adaa919e0c7de031499ad9c2b918ee0bed7515fe",
+          "control_key": "b6df9ae4302d2dc1df74848c2f03331fcf189d58d1b4a3bf18622c39d5bbcda2"
+        },
+        "rich_3278": {
+          "snapshot": "bda96e09e9e02fa372b2cf6c5f3f2760f97d292fb531cc631564632940d6a453",
+          "graph": "6b970bf7e348f37accab82ff77e859a70ea78d342997a1e052396f269c73e415",
+          "embeddings": "f3cb68ee5f956b5ff4b0a913328ac9a0973a4b430f99a585aeca0edd3f5b8e9c",
+          "task": "3f9f7eb1d6e0fb68580e8682a3b6057840277f9b8100e11aa97842dc5b9a2d0b",
+          "control_key": "35167b9683b9894b2ccf4f64dc3d31b2ebcf9a3113f9089d3623e2101faaa156"
+        },
+        "httpx_3672": {
+          "snapshot": "d1afdad9b9d433ebc345968ed90c4c401ed82f5fdfd27ab82eeaf92a49d9e2ed",
+          "graph": "85e7d53e72ea73db45bef4db2941e57a798219a68b4d2015be669c8863612c5c",
+          "embeddings": "374b4543ae7eebd322c3ab78facab817bc21de098a3594d69d78e9de630dc5d3",
+          "task": "0291e05d9d6af9a51a9b3c592e8fac85850e4f0d0671a84256cadd7dffe1b97f",
+          "control_key": "6de47dbb28edb718bd3693bf489c3dd255f362a38fd9ea6e77bdc48d49fc6502"
+        },
+        "fastapi_14455": {
+          "snapshot": "63a127bb606974ce7dfb2029195233bfeeb029beb90fd35dddc006e47429e867",
+          "graph": "fb1b33a645e4d6cb1ba05b41713cb67bd2e562cf9c284bc35c9b00b24fea237d",
+          "embeddings": "a610e44545d18cf89d5d0f927ddc4253eb15a4483afa5b4328133d58dab69314",
+          "task": "860671961ada627d7ab7828dba4c70420f67f142caa35c967e9c42c3a8e9fd07",
+          "control_key": "80fe51cc16da10a33ef6525f00de50153ac104c0175c34f1dbfc274d710def1f"
+        },
+        "fastapi_14266": {
+          "snapshot": "ad0ea388809562bb74d3b9bff453ce9d4cf4459b771f5fcecc8031f31b65d935",
+          "graph": "4ced725ca06d6c7c7662fd4f7153e8860fd75faccee253b734396a0d15f98a20",
+          "embeddings": "bde845fdfe09c4333b7b231f7cb2eac3804a2595105e06b7dffdd7a1c60909c1",
+          "task": "f2e28b4a860538a3317628adc818adcd9aad6681f9f9078b0e8f2aef0329d4bd",
+          "control_key": "240acd5baab3d72817558c54b5759aeb86ec0a25f5d5d02fbb110e451b931f50"
+        },
+        "fastapi_15745": {
+          "snapshot": "736e233a91f69e293e744af2bd0535bdd57fced9e82a00810d6d80becfea91f1",
+          "graph": "11e70be61b6b0815f307c414659526be08849e35f686d3ca3df845fc857f01ba",
+          "embeddings": "e935dd6c8845f80a390dd0c0e28dc81fbd3220d66967ef0abbaa2cef1ff0f788",
+          "task": "d338e3b669cf320793a71347ee9533d45046f813f9e06b3786fac5aa619efd9a",
+          "control_key": "05bb9b9221d73f48d6ac11e007611b4c7f39b9dacb9b8abea7877728f111c2ae"
+        },
+        "fastapi_15800": {
+          "snapshot": "39db9ef995f8066b5f3cc70a7d8c54325e7bdc4faa9599e76099b533a4e034c0",
+          "graph": "21d2f5b0eb4f8c7e6cbc9ef6642b0787361fbeec8190f0624018da3a502e019a",
+          "embeddings": "e8141d203c5299f2aa73205d094ae232e083d26784576e4418768dc121585ce6",
+          "task": "ff5428afd588e32a311b4341194ccdd5d15b00bbeb73dcb762e6fe724c630996",
+          "control_key": "79eb28ec5dbf218bfd185e766dec43c020ff6d417000150bd2599500721b8bd3"
+        },
+        "fastapi_14609": {
+          "snapshot": "fbd74e5018f12d923162e332b2e57332b9fe8b58a74a779400ed58c847a431be",
+          "graph": "340793aa4e5b64ca43727129b1d8cace75674caa4662dc1a0d600476920d7ed7",
+          "embeddings": "f1d1db48120e6a889dfc3fc077c770aae71589fddd4c81dca06bdbca81673e25",
+          "task": "7974907978b01d5173220af583885146f8b55df03caa3080b027b6cf07d3b053",
+          "control_key": "e6b1523024ff5d214c1d46dafabbba9b9b942ead299efc64be2d86990b404674"
+        },
+        "fastapi_9753": {
+          "snapshot": "528a9458de0cb03acfd0c8f552354a2960e33ca62063406db2e02eb32110c3ee",
+          "graph": "fc71851d439aae0516733bd84e16c511516451a81de57688c43f408609bfe688",
+          "embeddings": "fa03911e457faac7bc3e77d3e4518bd7ce6a7812551069790a2b6bfd8d002b1b",
+          "task": "66be1d3fd69133f12d35fd9aecb20ece88ee187ca6f9e3b66a953d33e16bd90d",
+          "control_key": "309cf4aa30ae8486e58f4fe9de0b9ea8146d16e176545605da56bc1a88be4eee"
+        },
+        "requests_7502": {
+          "snapshot": "a7da726a17f54ea4d43d1a21e3e9f3e95bfa2787a845a18e2d30a88fcc1f53fb",
+          "graph": "5e0de156b8933a1c72d11185c5fccbb0fd3d0bda4365529ddf8d50c33133cba5",
+          "embeddings": "8ed4734ec0c9ee8b1c0a26b8d5883b5b286cb1d83d3b853c123ec73578752065",
+          "task": "1f04ce03d718cb8dae8cca85be7242002a012f831a7960699cae267d7359e2c0",
+          "control_key": "56e5f0df200fb1dd9d6799cb864039bfbd96bd26c5756be6dcc97ee33b39f416"
+        }
+      },
+      "protocol": {
+        "tensor_parallel_size": 1,
+        "gpu_memory_utilization": 0.8,
+        "max_model_len": 32768,
+        "vllm_seed": 42,
+        "task_concurrency": 1
+      },
+      "asset_check_seconds": 59.172820470997976,
+      "hash_policy": "SHA-256 of content; reuse indexed hashes only when device/inode/size/mtime/ctime match. Use --rehash-assets for a full reread."
+    },
+    "attempts": [
+      {
+        "started_at": "2026-10-09T07:11:15.020244+00:00",
+        "job_id": "1061884",
+        "steps": [
+          {
+            "mode": "compile",
+            "arguments": [],
+            "seconds": 11.384266596000089,
+            "exit_code": 0
+          },
+          {
+            "mode": "infer",
+            "arguments": [
+              "--task-ids",
+              "rich_4079",
+              "rich_3506",
+              "rich_3468",
+              "rich_3278",
+              "httpx_3672",
+              "fastapi_14455",
+              "fastapi_14266",
+              "fastapi_15800",
+              "fastapi_14609",
+              "fastapi_9753",
+              "requests_7502"
+            ],
+            "seconds": 1817.3695089059984,
+            "exit_code": 0
+          },
+          {
+            "mode": "verify",
+            "arguments": [
+              "--task-ids",
+              "httpx_3672",
+              "fastapi_14609",
+              "requests_7502",
+              "--patch-source",
+              "agent",
+              "--results",
+              "/work/run/agent"
+            ],
+            "seconds": 145.22091706100036,
+            "exit_code": 0
+          }
+        ],
+        "control_hits": 12,
+        "control_misses": 0,
+        "asset_check_seconds": 59.172820470997976,
+        "completed": true,
+        "total_seconds": 2034.0768584279976
+      }
+    ],
+    "artifact_sha256": {
+      "summary.json": "514a9e3ee310f95180902dbac23e5ccd7154189740020df5e102f9532d16291f",
+      "run-manifest.json": "d0cb1fcb3c28cba406cdc61e9fd01ee1f8d640d478f74b5d4af4d5a09758e250",
+      "runtime-inputs.json": "83e9d610c64aa84fe844473448934802d7c5dc5b710a44a007cdd1ab98338ba5",
+      "controls.json": "6e148628af3bacf6af0228f0c20efe57ba9c06342a15d8351dcb536897e9d0dc",
+      "infer/fastapi_14266/prediction.json": "074409a26f6c5aaea726074669d425d3964121d59da021aacefdbaa04db8bcc0",
+      "infer/fastapi_14455/prediction.json": "f39d8b0a7e63e74fa0fdb35009e32fb23a36e53e467d0933e6e2369ccd92675f",
+      "infer/fastapi_14609/prediction.json": "144f2415b0e8e3d09cab483e10aa3b58a52210f9a2346a39d66df9effe287e5a",
+      "infer/fastapi_15800/prediction.json": "c839650ac126d34f922cb407523c7b8cc54229778a3b74230e82539049444066",
+      "infer/fastapi_9753/prediction.json": "f3e9f4eab65cd59e1deebc731d2ae9dd5f3a58370180d8da441e8828580630e9",
+      "infer/httpx_3672/prediction.json": "3f9a12a2f9953f5afefa9bd79f8e75f304b4e9cd0a255df21d34ceeb0bff3573",
+      "infer/requests_7502/prediction.json": "8e2a1ec0e0922d2c78523fb02028562a69c9570e0340f6d61cb5e16793440b27",
+      "infer/rich_3278/prediction.json": "f122603ee7c45b8bce08ee8229213948f9b73f4a1e65ee8b36dbcaa53c5ecf60",
+      "infer/rich_3468/prediction.json": "9cbd2c8e51542b02dc1ce14a831bf126a3414c90486ff36522aabf226b80e68e",
+      "infer/rich_3506/prediction.json": "f2d38bf70fca184b737af4501c22fcce5bd54126a253948937b7811c2f7f91ab",
+      "infer/rich_4079/prediction.json": "075125a36714514228eca03dd61e9f35bafb15679b7eb483a70f46a259f64ec3",
+      "verify/agent/fastapi_14266/result.json": "9a1d1db634d02da863715795a1290f1a517a0db94b1af2ffa9109f25a9df9a62",
+      "verify/agent/fastapi_14455/result.json": "ee06679905c12b70aea0d070af2e3271bfc38ae9b825f4334da765e85d50acfa",
+      "verify/agent/fastapi_14609/result.json": "a119d8a1d2f4aa1173df5ad4d599930cb668d17a2961361be988cac564f1f6df",
+      "verify/agent/fastapi_15800/result.json": "1fc73bd87c2bd152c0e008c8c08b3d6ab7c9c711445871236ad2921e17efee29",
+      "verify/agent/fastapi_9753/result.json": "bce9db0179a8daee27ea719a9bd39d03878ae5726bd026017a5bbdfb41b12141",
+      "verify/agent/httpx_3672/result.json": "711eb8d4386926f131bfc1b838b78173106d6e872239f20ea12474fff27e7899",
+      "verify/agent/requests_7502/result.json": "9c9dbb33b04c17a65ed2023e8f3436979a4d22b9df98c21f101dbd500186dd00",
+      "verify/agent/rich_3278/result.json": "5c6cdc4d1d100072f3117c911573a8f4c17498f3d9d819203e3e069772ba92f3",
+      "verify/agent/rich_3468/result.json": "cf7746b1b11b47c66bc378595156d3b26c302c691703e84a8e530a02064e2810",
+      "verify/agent/rich_3506/result.json": "c5fcab31d4ff94d7082d198c13b04c3723237ead3594f181467da03fbcf4ab87",
+      "verify/agent/rich_4079/result.json": "cc944501359a8393570da822581f3892e2bd6569402984bb0a2135d291d35e2b"
+    },
+    "behavior": {
+      "graph_tool_calls": 11,
+      "submit_patch_calls": 273,
+      "turn_limit_failures": 6,
+      "session_timeouts": 0,
+      "context_limit_failures": 1,
+      "empty_patch_after_normal_return": 1,
+      "clean_completions": 3
+    }
+  },
+  "resume_validation": {
+    "job_id": "1061885",
+    "seconds": 58.809380581005826,
+    "new_execution_phases": 0,
+    "unchanged_artifacts": 22,
+    "pre_resume_sha256": {
+      "infer/fastapi_14266/prediction.json": "995622d78307bac0350b40dbd07eb6f733e28136e85f85b9f4449aba02de68cd",
+      "infer/fastapi_14455/prediction.json": "4050a74ac9de5c28651c328b24d49707e16796f48001305464bc2d2fa921bd53",
+      "infer/fastapi_14609/prediction.json": "8e26afbb10293f3a73ebd83941d5983c7e10992873e8e526d67579503223e765",
+      "infer/fastapi_15800/prediction.json": "0d973846c23379cb378993909ffb5d358edaf757a8e5c3a9fb99870dec481240",
+      "infer/fastapi_9753/prediction.json": "87f715514af91abb269a46ab591232f3ad0494081525605381b99cd10d508f1f",
+      "infer/httpx_3672/prediction.json": "c29a1ab1f6c1f3fbfefe2f66e00de3e7f1ccb84772b48349561588ee80364b68",
+      "infer/requests_7502/prediction.json": "436f93c3de26d5f072a20a0f06da3dec9f8b7570ceb8fc5ea30de634c5b4614d",
+      "infer/rich_3278/prediction.json": "b7118bd21e73adbc77096a4d404196a8614079f8b2a949442012b543bc607e6f",
+      "infer/rich_3468/prediction.json": "d85bd006c02fb0b6dc4d367ac4b6b87bf6af355c4aefbc2d1ff43988b3d04721",
+      "infer/rich_3506/prediction.json": "137b2c27af52425c9466bfb039a415c8bbac194a73d2a583b6a55c5e3d0d7716",
+      "infer/rich_4079/prediction.json": "98b63b0572533a4a5b8c78afd66eec4cd5c430a31f1f58391ae1199a6d6a431d",
+      "verify/agent/fastapi_14266/result.json": "62cd15afabcab22b0d6bd93937a39aef940f8514363d2e67120404d497dc28e2",
+      "verify/agent/fastapi_14455/result.json": "689c9f972101e30d1959321799fa20361461d99ef7d1db96d92ce51e0e0fac44",
+      "verify/agent/fastapi_14609/result.json": "3e634455c6bc9c77353caf409f92ba5cc92bd8acf7382df46802944743247bcb",
+      "verify/agent/fastapi_15800/result.json": "79d79dbca7766e9d8d701a5ec23ab0f793c8a4cfe6070eeae0e672a9aa0d7f2a",
+      "verify/agent/fastapi_9753/result.json": "def4fd664541b794b33cc200088f3b7a6b8dc1129ed04c60e2144721a95abed2",
+      "verify/agent/httpx_3672/result.json": "47b83de41eb7cbf4c81bf26be1a094a077d16ee67a2e5c85d1f932380ecdb8dd",
+      "verify/agent/requests_7502/result.json": "dd35e6fc97f7d880c98c5c80462e87d80b541c9bb84eb2ac4b5eb66526bfc37e",
+      "verify/agent/rich_3278/result.json": "ad90d242b20548f63ec22d9466c5300ca0a77220763aab17d6d23948bc54f33d",
+      "verify/agent/rich_3468/result.json": "b48299dd483f7dc225e2063f587787d980f7645bab9a793395c779aa5cf0deea",
+      "verify/agent/rich_3506/result.json": "5d21e9d942d4a988955d094a0077534a47489a8fc84c28050f6182298e4e96de",
+      "verify/agent/rich_4079/result.json": "c994d25fd2ce7d8ab79a4c0b0c643148cd686d806ac111ff85ac2645da023939"
+    }
+  },
+  "measured_control_phases_seconds": 1079.614244597,
+  "startup_estimate": {
+    "avoided_startups": 10,
+    "seconds_per_startup": 187.1525720689997,
+    "estimated_avoided_seconds": 1871.525720689997,
+    "scope": "Estimate from one observed startup; old multi-process workflow not timed."
+  },
+  "coverage_limitation": {
+    "task_id": "fastapi_15745",
+    "reference_pytest": "33 passed, 3 skipped",
+    "reason": "Pinned official verifier disables AnyIO; a required marked async test is skipped.",
+    "verifier_modified": false
+  },
+  "checks": {
+    "tests": 45,
+    "runtime_checks_job": "1060058",
+    "documentation_checks_job": "1061893",
+    "final_checks_job": "1061917"
+  },
+  "scope": "One attempt per method/task on H100 public tasks. No competition submission, no hidden-task access, no retraining. Timings exclude queue time."
+}
