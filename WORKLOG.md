@@ -11,7 +11,9 @@ across the cards, eight updates, an 820-tensor adapter exported and validated, a
 runtime honouring it (control 0.0, effect 0.596932). Section 9 of
 `docs/experiments/2026-10-12-l4-training-feasibility.md` holds the table of measured values, and the
 run-11 entry at the top of `Work history` holds the narrative. What is left is reporting and deciding
-whether anything further is worth the remaining quota, not feasibility work.
+whether anything further is worth the remaining quota, not feasibility work. The curated branch
+`experiment/four-l4-lora-feasibility` (`c0648f7`) is already published on `origin`; opening its pull
+request is the remaining human step, since this workspace has no GitHub CLI or token.
 
 What is settled, with evidence:
 
@@ -234,9 +236,12 @@ $env:HF_HOME     = 'E:\Desktop\CodingAI\artifacts\hf-cache'   # datasets refuses
 
 - The canonical remote is `origin` at `https://github.com/jwj1342/gemma-agent-lab.git`; future references to the project remote mean this repository unless the user says otherwise. `origin/main` is `3054da842f794c854f438a5478ea9437b119e9bc`.
 - Local `main` is based directly on `origin/main` and is one compatibility commit ahead: `88823c0f556874608cd993cd37ba32d94df7bbd8` renames one leaderboard CSV whose colon-containing timestamp cannot be checked out on Windows. The blob content is unchanged and nothing has been pushed.
-- Active work is on `fix/lora-rank8-controlled` at `7356a80`, with the earlier Localization v1 migration
-  preserved and unrelated localization edits still in the working tree. The branch is local-only; the
-  remote PR #8 head remains `ccfcff0`.
+- Active work is on `fix/lora-rank8-controlled` at `71027b4`, with the earlier Localization v1 migration
+  preserved and unrelated localization edits still in the working tree. The branch is local-only and holds
+  the *uncurated* copies of the L4 documents. The curated task branch
+  `experiment/four-l4-lora-feasibility` (`c0648f7`) **is published on `origin`**, and
+  `fix/pr8-contracts-v2` (`bd9b167`) is published too; opening the pull request is the remaining human
+  step. The remote PR #8 head remains `ccfcff0`.
 - October 10 paired L4x4 attempt (budget exhausted at 10 kernel pushes, one further push rejected by the platform): exactly one task pair completed, `rich_3675`, with valid controls in both arms; both arms left it unresolved with the **byte-identical patch**, and the portable arm's trace shows the `localization-v1` skill was **never invoked**, at +44% agent time. Predeclared acceptance is unmet (0.0 points, p = 1.0, n = 1); no promotion. The organisers **republished the official wheelhouse dataset in place on 2026-10-09T14:43Z** (`swegemma` 0.2.10 → 0.2.11, which deleted `swegemma.models.registry`, plus changed `adk_eval_core`/`adk_submission` bytes), so the frozen runner cannot import on the served wheelhouse; the reviewed wheels were restored from the private publisher kernel `junzhejiao/gemma4-pinned-wheels` v1, hash-verified against the frozen manifest. Evidence and the full ledger are in `runs/2026-10-10-localization-ab/{REPORT.md,ab-summary.json}`. `rich_3676` and `rich_3930` remain unmeasured because the pinned-wheel kernel-source mount was missing for both `rich_3676` baseline pushes.
 - October 9 continuation: the user authorized private Kaggle trials and iterative v1 changes until a meaningful improvement is demonstrated. All 46 CPU tests passed after correcting Windows-specific expectations; 114 frozen cases and 18 notebooks passed integrity verification. The first private BM25 pilot uploaded successfully after compressing its notebook payload, but version 1 failed its input mount-path check before inference. A CPU-only input-layout probe is underway. No repair improvement has been measured or candidate promoted. Local checkpoint `ef5e199` contains the prior preserved module; continuation changes are in the working tree.
 - The October 8 preservation handoff is in `docs/localization-handoff.md`, linked from the root README. It explains baseline localization, the implemented optional module, offline gains, rollback, local artifacts, and pending manual remote confirmation; no background GPU work was started.
@@ -281,6 +286,143 @@ $env:HF_HOME     = 'E:\Desktop\CodingAI\artifacts\hf-cache'   # datasets refuses
 - Programming v1 is implemented as a prompt-only planning-gate experiment with localization and all runtime settings fixed. Its paired smoke test found no resolution gain, only 1/2 complete plan compliance, higher latency and edit churn, and fewer failed tool calls; keep it as an ablation and retain retrieval v1 as the control.
 
 ## Work history
+
+### 2026-10-13 01:10 (Asia/Shanghai) - The control instrument was broken by wheelhouse drift; fixed by embedding the reviewed wheels; 128 tasks now sweeping
+
+- Objective (goal round 1): grow the control-valid task set before any LoRA rank work, because a gain
+  cannot be measured against four tasks.
+- **Re-running the eight earlier tasks returned 0 of 8 usable, including the four that passed on
+  2026-10-09.** The kernel log states the reason in one line:
+  `harness wheelhouse version drift: [('swegemma-0.2.10-py3-none-any.whl', ['swegemma-0.2.11-py3-none-any.whl'])]`
+  plus `harness wheelhouse changed bytes: ['adk_eval_core-0.1.0-py3-none-any.whl',
+  'adk_submission-0.2.13-py3-none-any.whl']`. Every arm then produced no test result at all. This also
+  narrows the earlier pydantic finding: that fix was necessary -- it explains the 0/38 sweep of
+  2026-10-09 14:31 -- but it stopped being sufficient once the organisers replaced those wheels in place
+  at 14:43 the same day.
+- **The kernel-source mount route failed and cannot be trusted for an instrument.** With
+  `--kernel-source junzhejiao/gemma4-pinned-wheels` and the documented session path, the restore cell
+  reported `pinned wheel mount is incomplete: [all three wheels]`. The publisher kernel's ref is
+  `gemma4-pinned-wheels` while its title is "gemma4 pinned wheels", and this project has already seen the
+  same metadata work for one kernel and fail for another (`rich_3675` versus `rich_3676`).
+- **Fix: the reviewed wheels now travel inside the notebook.** `--pinned-wheels-dir` and
+  `build_pinned_blob()` pack the three reviewed wheels (279,363 bytes in total) as a hash-checked base85
+  payload; the restore cell extracts them, verifies every digest against
+  `resource/manifests/eval-wheelhouse-2026-10-09.json`, and force-reinstalls them over the mounted
+  versions. The notebook is 815,610 bytes, inside the 1 MB API limit. Re-run verdict:
+  `pinned-wheels.json` reports all three installed with `missing: []`, and the sweep returned **4 usable of
+  8** -- the four `rich` tasks are valid again (empty exit 1 or 2, gold exit 0, resolved), reproducing the
+  2026-10-09 result exactly.
+- The other four still fail for the protocol's known classes: `fastapi_13713` and `fastapi_14786` fail
+  collection in **both** arms (exit 2), `requests_7433` times out in both arms (exit 124), and `rich_3296`
+  has tests that already pass at base. The missing module behind the `fastapi` pair is not exposed
+  anywhere in the run outputs (`error_message: null`, per-task directories empty), so unlocking that class
+  needs a diagnostic rather than a guess.
+- **Scale-up pushed, 128 tasks in four CPU-only sweeps**, all carrying the embedded fix: the 38 that gave
+  0/38 on 2026-10-09 plus the 90 never attempted, in repository-homogeneous batches (30 `fastapi`, 30
+  `rich`, 30 mixed) so a failure class can be attributed to a repository. Ceiling arithmetic: at the
+  observed yield the set can reach roughly 55-65 valid tasks, against the **40** that make a 20-point
+  paired gain detectable at 80 % power.
+- **GitHub side, now that the token reaches the repository.** The earlier fine-grained token was scoped to
+  an unrelated repo; the replacement classic PAT reads `jwj1342/gemma-agent-lab`. State read from the API:
+  PR #8 `open`, `merged=false`, **`mergeable_state=dirty`** (needs a rebase against `main`), head
+  `experiment/swe-lora-v1@bd9b167` -- so the two review fixes are on the PR -- with 0 review comments;
+  issue #13 open with **0 comments**; and no pull request existed for the L4 branch. Actions taken:
+  **opened PR #16** for `experiment/four-l4-lora-feasibility` (head `c0648f7`) and **posted the measured
+  result to issue #13** (comment `6128890774`). Those were the two remaining human handoff steps; PR #8's
+  rebase is still outstanding.
+- Verification: six new tests in `tests/test_control_sweep_notebook.py` pass -- the restore step is opt-in,
+  a wheel that differs from the reviewed manifest is rejected before a notebook is written, the embedded
+  payload installs after hash verification (using the real reviewed wheels), and the reviewed manifest is
+  asserted to list every pinned wheel and not to list the drifted one.
+- Changed files: `scripts/prepare_task_control_sweep.py`, `tests/test_control_sweep_notebook.py`,
+  `WORKLOG.md`. Generated notebooks and downloaded evidence remain under `runs/` and `artifacts/`
+  (gitignored). **No GPU quota was spent this round**: every sweep here is CPU-only.
+
+### 2026-10-13 00:50 (Asia/Shanghai) - Measurement-set growth: the 0/38 control sweep's root cause, and a CPU recheck in flight
+
+- Objective (goal round 1): grow the control-valid task set before any LoRA rank work, since a gain cannot
+  be measured against four tasks.
+- **GitHub side finished first.** The two PR #8 review fixes are now on the PR itself, not on a side
+  branch: `git push origin fix/pr8-contracts-v2:experiment/swe-lora-v1` fast-forwarded
+  `ccfcff0..bd9b167`, and `git ls-remote` confirms the remote head is `bd9b1675…`.
+- **The provided GitHub token authenticates but is scoped to the wrong repository.** `E:\GitHub_token.txt`
+  holds a fine-grained token that reaches exactly one repo, `jwj1342/Kaggriculture`; `gemma-agent-lab`
+  answers 404, which is what GitHub returns for a private repo the token cannot see. It needs that repo
+  added under Repository access with Contents: Read, Pull requests: Read and write, Issues: Read and
+  write. Editing access does not change the token string, so the same file stays usable.
+- **Root cause of the 0/38 control sweep, found by diffing the two notebooks rather than guessing.** The
+  failing `sweep-frozen38-v17` re-pinned **pydantic** alongside starlette; the working
+  `sweep-valid4-v14` pins **only starlette** and carries the reason in a comment: repinning pydantic
+  installs a version whose pydantic-core binding is absent from the task wheelhouse, which breaks litellm
+  for every task, so no test ever runs. That matches the observed signature exactly -- every one of the 38
+  gold arms recorded `status=NO_RESULT_FILE, returncode=1` with no test exit code at all. The current
+  generator already carries the fix, so that task set had simply never been re-run with it.
+- Two environment facts established on the way. The working 4/4 sweep ran at 2026-10-09T14:19:36Z, *before*
+  the organisers republished the wheelhouse at 14:43Z (`swegemma 0.2.10 -> 0.2.11`, which deleted
+  `models.registry`), so a new sweep must also survive that drift. And the mounted wheelhouse holds
+  **42** files today: a first reading that showed 20 was a pagination artefact of
+  `dataset_list_files`, not a shrunk dataset, which is worth remembering before concluding drift.
+- **Pool arithmetic, recorded so the training decision is judged honestly.** The public set is 129 tasks
+  (fastapi 67, rich 48, requests 13, httpx 1); 39 have been attempted and **90 never tried**. At the pilot
+  yield of 4 of 8, the ceiling is roughly 55-65 valid tasks, against the 78 that the power model wants for
+  a 10-point gain at 80 % power -- and that model itself assumes zero regressions.
+- Action: pushed **`junzhejiao/gemma4-control-recheck8`** (CPU-only, `enable_gpu: false`, wheelhouse
+  attached, reviewed test dependencies embedded) over the same eight tasks the power analysis uses -- four
+  known-good plus four previously invalid -- to test both the fixed configuration and the drift at once.
+  Status was RUNNING at 16:43:32Z when last queried; the network to `api.kaggle.com` is flaky tonight
+  (repeated `SSLEOFError`, recovering on retry), so polls need retries rather than a single call.
+  A 38-task notebook with the fixed configuration is prepared locally at
+  `runs/2026-10-13-control-frozen38-fixed/` and is ready to push next, followed by batches over the 90
+  untried tasks.
+- Changed files: `WORKLOG.md` only. Everything else this round is under `runs/` (gitignored generated
+  notebooks and records); no production code changed.
+
+### 2026-10-12 21:35 (Asia/Shanghai) - The task branch is already on the remote; verified it, and classified the delivery-tree failures
+
+- Objective: push the task-related branch that codex curated
+  (`experiment/four-l4-lora-feasibility`, "Publish measured four-L4 LoRA feasibility loop").
+- **Finding: it is already on the remote and byte-identical to the local branch, so no push was needed.**
+  `git ls-remote --heads origin experiment/four-l4-lora-feasibility` returns
+  `c0648f70430c83d82508e8fb6bb8febd5738086e`, exactly the local tip, and
+  `git push origin experiment/four-l4-lora-feasibility` answers `Everything up-to-date`. The companion
+  branch `fix/pr8-contracts-v2` is on the remote too (`bd9b1675d5c7056ee146957428f7fefabf8f6580`,
+  identical to local). **The 21:04 entry below predates her own push**: it was written at 21:04, while the
+  delivery commit is dated 21:16:43 +0800, so its line "the L4 branch has not been pushed" is stale and
+  should be read as history, not as current state.
+- The delivery commit is authored by `Kaltist <junzhejiao32@gmail.com>`, 2026-10-12 21:16:43 +0800,
+  13 files, **all additions**, parented on the current `origin/main` (`625a597`). Her curation is visible
+  in the diff against the working branch: the published tree adds a "Reproduce the bounded loop" section,
+  corrects the stale "github.com is unreachable" wording in the PR8 review, and adds the four-L4 row to
+  the README. Nothing of the measured work is dropped, and
+  `git show <branch>:docs/experiments/2026-10-12-l4-training-feasibility.md` carries run 11's numbers
+  (adapter 244,982,352 bytes, effect `0.596932`, the queue-time quota lesson).
+- **Verified rather than assumed**: running inside the delivered tree, the notebook generator's `--check`
+  reports `status: ok` and `tests/test_l4_feasibility.py` runs **53 tests OK**.
+- **The delivery worktree is a sparse checkout, which is what explains its full-suite result** (15
+  failures + 2 errors) and clears the delivered commit of them: `core.sparseCheckout=true` with the cone
+  `scripts/ tests/ docs/ configs/ resource/l4_feasibility/ resource/notebooks/official/ README.md
+  AGENTS.md .gitignore`, while the index still tracks 972 entries with none deleted. Every failure is an
+  environment artifact -- the missing files sit outside the cone (`src/`, `resource/manifests/README.md`,
+  `tests/README.md`, `THIRD_PARTY_NOTICES.md`), `tests/test_eval_suite.py` imports the Unix-only `fcntl`,
+  and the repository checker shells out to a `bash` this Windows host lacks. The delivered commit modifies
+  no existing file and none of the failing tests exercise the files it adds, so the repository-level CPU
+  gate belongs on Linux CI and cannot be reproduced in full here.
+- **A full checkout of that tree is impossible on Windows, and it is inherited from upstream.**
+  `git worktree add` against `origin/main` fails with
+  `error: invalid path 'resource/leaderboard/gemma-4-developer-agent-publicleaderboard-2026-10-05T03:50:43.csv'`
+  -- a colon in a filename -- which is exactly why local `main` carries the unpushed compatibility commit
+  `88823c0`. This matches the platform incompatibility codex recorded when she stopped her PR #8 backport,
+  and it is the same reason the sparse worktree exists.
+- Repository changes: `WORKLOG.md` only (this entry). The verification commands were read-only and the
+  only write was the no-op push; **no new push was made because none was needed**.
+- Remaining human actions: open the pull request for the published branch
+  (https://github.com/jwj1342/gemma-agent-lab/compare/main...experiment/four-l4-lora-feasibility) -- this
+  workspace has no `gh` CLI, no `GH_TOKEN`/`GITHUB_TOKEN` and no stored CLI host config, so it cannot; run
+  the repository CPU gate on Linux CI; and decide whether any local-only branch should be published.
+  `fix/lora-rank8-controlled` (`71027b4`) holds the acceptance commits `650f306` and `7356a80` plus codex's
+  audit commit and carries the *uncurated* variants of the README and both experiment docs;
+  `feature/lora-serving-*`, `feature/localization-v1-skill`, `integration/local-work` and
+  `archive/local-before-remote-2026-10-07` are also local-only.
 
 ### 2026-10-12 21:04 (Asia/Shanghai) - Audit DeepSeek's issue #13 handoff and re-verify the L4 entry point
 
