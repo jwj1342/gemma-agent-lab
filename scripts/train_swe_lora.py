@@ -25,6 +25,34 @@ def digest(path):
         return hashlib.file_digest(stream, 'sha256').hexdigest()
 
 
+def base_weights_digest(base):
+    """Pin the exact single-file checkpoint or every indexed safetensors shard."""
+    single = base / 'model.safetensors'
+    index = base / 'model.safetensors.index.json'
+    if single.is_file():
+        if index.exists():
+            raise ValueError('Ambiguous base weights: both model.safetensors and its shard index exist')
+        return digest(single)
+    if not index.is_file():
+        raise ValueError('Base weights need model.safetensors or model.safetensors.index.json')
+    weight_map = json.loads(index.read_text(encoding='utf-8')).get('weight_map')
+    if not isinstance(weight_map, dict) or not weight_map:
+        raise ValueError('Base weight shard index has no weight_map')
+    names = weight_map.values()
+    if any(not isinstance(name, str) or not name.endswith('.safetensors')
+           or '/' in name or '\\' in name or Path(name).name != name for name in names):
+        raise ValueError('Base weight shard index contains an invalid filename')
+    shards = set(weight_map.values())
+    files = {index.name: digest(index)}
+    for name in sorted(shards):
+        path = base / name
+        if not path.is_file():
+            raise FileNotFoundError(f'Base weight shard is missing: {path}')
+        files[name] = digest(path)
+    payload = json.dumps(files, sort_keys=True, separators=(',', ':')).encode('utf-8')
+    return hashlib.sha256(payload).hexdigest()
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--base', type=Path, required=True)
@@ -76,7 +104,7 @@ def main():
     contract = {'config': config, 'dependencies': dependencies,
                 'data_manifest_sha256': digest(args.data / 'manifest.json'),
                 'world_size': world, 'base_config_sha256': digest(args.base / 'config.json'),
-                'base_weights_sha256': digest(args.base / 'model.safetensors'),
+                'base_weights_sha256': base_weights_digest(args.base),
                 'source_sha256': {str(x): digest(x) for x in
                                  (Path('scripts/train_swe_lora.py'), Path('src/sft_schedule.py'))}}
     if args.resume:

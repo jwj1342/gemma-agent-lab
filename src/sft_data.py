@@ -130,10 +130,11 @@ def convert_trajectory(row, reject_setup_actions=False):
                 raise UnsupportedAction("Explicit upstream dependency/network setup action")
             if not converted:
                 # A real final answer after an observed submission is part of the protocol.
-                if (source_index == len(originals) - 1 and messages[-1]["role"] == "tool"
-                        and messages[-1].get("name") == "submit_patch"
-                        and text_content(original.get("content")).strip()):
-                    messages.append({"role": "assistant", "content": text_content(original["content"])})
+                final_answer = text_content(original.get("content"))
+                if source_index == len(originals) - 1 and final_answer.strip():
+                    if messages[-1]["role"] != "tool" or messages[-1].get("name") != "submit_patch":
+                        raise UnsupportedAction("Final answer lacks an observed submit_patch call")
+                    messages.append({"role": "assistant", "content": final_answer})
                     break
                 continue
             calls.update({c["id"]: c["function"]["name"] for c in converted})

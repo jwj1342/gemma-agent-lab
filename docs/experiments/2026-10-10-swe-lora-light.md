@@ -75,6 +75,8 @@ The fixed short serving probes also separate valid syntax from useful choice:
 Both models used thinking disabled for these short probes; autonomous evaluation
 retained the baseline thinking configuration. Loading and measurable weight
 effect passed, while the short tool-choice results do not show an improvement.
+Training encoded every target with `enable_thinking=True`, including tool calls,
+so these short probes do not match the training-time thinking configuration.
 
 After the environment corrections below, acceptance recovery job `1073459`
 passed rich but failed FastAPI's completion gate; release job `1073460` was

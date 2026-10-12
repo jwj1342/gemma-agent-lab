@@ -87,6 +87,14 @@ class SFTDataTests(unittest.TestCase):
         self.assertEqual(converted[-1]["tool_calls"][0]["function"]["name"], "run_command")
         self.assertEqual([x["metadata"]["target_kind"] for x in action_examples(converted, {})], ["tool", "tool"])
 
+    def test_final_answer_without_observed_submission_is_rejected(self):
+        messages = [{"role": "user", "content": "Repair an issue"},
+            {"role": "assistant", "tool_calls": [upstream_call("bash", {"command": "git diff"})]},
+            {"role": "tool", "tool_call_id": "c1", "content": "A patch exists"},
+            {"role": "assistant", "content": "Done."}]
+        with self.assertRaisesRegex(UnsupportedAction, "lacks an observed submit_patch"):
+            convert_trajectory({"resolved": True, "messages": json.dumps(messages)})
+
     def test_unobserved_submission_does_not_invent_final_message(self):
         messages = [{"role": "user", "content": "Repair an issue"},
                     {"role": "assistant", "tool_calls": [upstream_call("submit", {})]}]
