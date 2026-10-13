@@ -237,7 +237,7 @@
         "vllm": "0.19.1",
         "xgrammar": "0.2.5.post1"
       },
-      "compatibility": "pending",
+      "compatibility": "Local H100 fast cohort passed October 13: compilation, empty/gold controls on 10/12 tasks, inference and independent verification for baseline, protocol and recover; see docs/experiments/2026-10-13-prompt-v31.md. Kaggle L4 x 4 rich_3454 smoke passed October 13 (recover candidate, with the #21 API migration). Requires the swegemma 0.2.11 API migration in scripts/validate_agent.py and scripts/evaluate_agent.py.",
       "wheels": {
         "adk_eval_core-0.1.0-py3-none-any.whl": "e614e1b2fe8d886a634871e4c57f9887e1cc66e8c27300f8503a43c6e3ca82f3",
         "adk_submission-0.2.13-py3-none-any.whl": "f156f0bd84580ccb9334726d114d7a5481f16d3a6e2887cc4d276ced0ef8d99d",
