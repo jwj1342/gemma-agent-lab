@@ -1,6 +1,6 @@
 #!/bin/bash
 set -eo pipefail
-source /home/jwj/venvs/gemma4-eval-v29/bin/activate
+source /home/jwj/venvs/gemma4-eval-v31/bin/activate
 export HOME=/work/run/home
 export TMPDIR=/tmp
 export XDG_CACHE_HOME=/work/run/cache/xdg
@@ -22,7 +22,7 @@ python - <<'PY'
 import json, os, shutil, subprocess, tempfile
 from pathlib import Path
 readonly={p:bool(os.statvfs(p).f_flag & os.ST_RDONLY)
-          for p in ['/agent','/app','/home/jwj/venvs/gemma4-eval-v29']}
+          for p in ['/agent','/app','/home/jwj/venvs/gemma4-eval-v31']}
 checks={'required_mounts_readonly':all(readonly.values()),
         'kaggle_credentials_not_mounted':not Path('/home/jwj/.kaggle').exists(),
         'full_project_not_mounted':not Path('/scratch/jwj/kaggle_gemma4_agent').exists(),

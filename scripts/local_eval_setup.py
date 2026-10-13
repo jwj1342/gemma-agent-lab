@@ -76,12 +76,13 @@ def install_local_dependencies(manager, sandbox_id, repo='', **kwargs):
 
 def configure(evaluator):
     global _hook_installed
-    if version('swegemma') != '0.2.10':
+    if version('swegemma') not in {'0.2.10', '0.2.11'}:
         raise RuntimeError('Review the local dependency hook before changing the official harness version')
     evaluator.sandbox.system_site_packages = False
     if not _hook_installed:
-        # These are the two explicit preparation call sites in pinned swegemma
-        # 0.2.10. The vendor files and verification/test-selection code are untouched.
+        # These are the two explicit preparation call sites in swegemma 0.2.10
+        # and 0.2.11 (container_setup.py is identical in both). The vendor files
+        # and verification/test-selection code are untouched.
         import swegemma.harness.agent_runner as agent_runner
         import swegemma.harness.verification as verification
         agent_runner.install_test_dependencies = install_local_dependencies

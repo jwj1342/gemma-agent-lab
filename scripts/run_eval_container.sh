@@ -11,7 +11,7 @@ module load apptainer/1.4.5
 unset APPTAINER_BIND APPTAINER_BINDPATH APPTAINER_MOUNT
 unset SINGULARITY_BIND SINGULARITY_BINDPATH SINGULARITY_MOUNT
 image="$project_root/resource/downloads/images/vllm-0.19.1.sif"
-eval_venv=/home/jwj/venvs/gemma4-eval-v29
+eval_venv=/home/jwj/venvs/gemma4-eval-v31
 data_dir="$project_root/data/raw/gemma-4-developer-agent"
 model_dir="$project_root/model/base/gemma-4-31b-it-qat-w4a16-ct-v2"
 agent_dir="$run_dir/inputs/agent"
