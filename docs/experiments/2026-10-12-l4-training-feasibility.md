@@ -190,6 +190,34 @@ Source-verified against a local `transformers 5.19.0` and `peft 0.21.2` checkout
 image ships `transformers 5.0.0` (and the H100 recipe ran `5.18.0`), so every statement below is a
 **prediction to measure**, not a result.
 
+### Technique survey and recommendation
+
+This matrix completes the method survey requested by issue #13. "Compatible" means compatible with
+the required QAT base and the competition's adapter-serving contract, not merely available in a
+current upstream library. Current documentation is supporting evidence only; the pinned competition
+wheel remains the acceptance gate.
+
+| Candidate | Expected benefit | Cost on this project | Official-serving compatibility | Evidence quality and decision |
+| --- | --- | --- | --- | --- |
+| Standard LoRA on the dequantised required base | Directly trains the policy while preserving the required base family; rank and target modules provide a simple capacity/cost ladder | The BF16 base must be distributed across four L4s; adapter memory and export size rise with rank and module coverage | **Measured compatible:** run 11 trained and the official runtime applied the rank-16, all-projection export | Independent project measurement. **Use now:** start with rank 16 and change one capacity variable at a time |
+| Gradient checkpointing | Reduces activation memory by recomputing activations during backward | Slower updates; it cannot reduce the base-load or per-rank host-replica peaks that made FSDP fail | No adapter-format change | [Transformers documentation](https://huggingface.co/docs/transformers/main/en/grad_checkpointing) plus static analysis. Keep off for the measured 2K/batch-1 route, whose busiest L4 peaked at 18.64 GiB; enable only if a longer sequence or larger batch exceeds the measured margin |
+| Sequence packing | Improves token utilisation when many short actions would otherwise be padded | Requires masks that prevent loss or attention leakage across packed examples and makes per-action accounting harder | No adapter-format change | [TRL SFT documentation](https://huggingface.co/docs/trl/sft_trainer) states that packing is supported; not reproduced on this Gemma template. Try only after the unpacked trajectory objective passes, with an unpacked equivalence control |
+| Completion-only / assistant-only trajectory SFT | Trains tool calls, observations-to-actions, and termination rather than only issue-to-diff text | Needs verified complete trajectories and exact template boundaries; malformed or failed runs must be filtered before training | Ordinary LoRA output; no serving change | [TRL SFT documentation](https://huggingface.co/docs/trl/sft_trainer) supports both masks. The handoff boundary and token 50 are independently measured here. **Use now:** this is the first capability experiment once non-overlapping verified trajectories exist |
+| Replay-verified or rejection-sampled trajectories | Removes demonstrations whose patch, control, or tool protocol failed and targets the observed long-loop failure mode | More rollouts and verification; lower data yield | Ordinary LoRA output | Project evaluation contract and static design, not a published gain or completed training result. Use as the trajectory admission rule, not as a separate optimizer |
+| rsLoRA | Changes scaling to `alpha/sqrt(rank)`, intended to make higher ranks useful without extra adapter tensors | Same parameter count at a fixed rank; still pays the higher-rank training, artifact, and serving-cache costs | Current vLLM source parses `use_rslora`, but the pinned patched 0.19.1 wheel has not been tested with it | [rsLoRA paper](https://arxiv.org/abs/2312.03732), [PEFT LoRA API](https://huggingface.co/docs/peft/en/package_reference/lora), and current [vLLM loader](https://github.com/vllm-project/vllm/blob/main/vllm/lora/peft_helper.py); no project reproduction. Consider only after standard-LoRA rank 16/32 evidence, with a direct official-runtime probe |
+| DoRA | Adds a learned magnitude component and may improve low-rank quality | More training and inference overhead and an extra parameter form | **Do not use:** current vLLM explicitly rejects DoRA, so paper quality cannot overcome the serving incompatibility | [DoRA paper](https://arxiv.org/abs/2402.09353), [PEFT DoRA documentation](https://huggingface.co/docs/peft/package_reference/lora_variant_dora), and current [vLLM loader](https://github.com/vllm-project/vllm/blob/main/vllm/lora/peft_helper.py). Paper/upstream evidence only |
+| NF4 QLoRA | Large memory reduction by backpropagating through a frozen 4-bit base | Requires a different quantisation path and new compatibility work | **Not an equivalent route:** NF4 changes the required QAT base; the shipped packed W4A16 modules are measured unwrappable by PEFT | [QLoRA paper](https://arxiv.org/abs/2305.14314) plus this project's packed-base measurement. Reject as the primary experiment; it would be a separately labelled base-format study |
+| Offline preference learning (DPO-style) | Can prefer clean termination and passing repairs over looping or invalid alternatives | Requires trustworthy chosen/rejected pairs and reference log-probability work; the current validated pair set is too small | Can still export ordinary LoRA, but must repeat the serving check | [TRL DPO documentation](https://huggingface.co/docs/trl/dpo_trainer) shows PEFT support; benefit here is unmeasured. Defer until trajectory SFT produces enough fixed-task paired outcomes |
+| Online RL / GRPO-style refinement | Can optimise execution rewards not present in demonstrations | Highest cost: multiple sandbox rollouts, grading, and reward-hardening per prompt; training/runtime dependency sets are not yet validated together | Final LoRA may be serveable, but the training and rollout stack is unverified | [TRL GRPO documentation](https://huggingface.co/docs/trl/grpo_trainer) establishes library support only. Defer until SFT, reward validity, and the paired evaluation instrument all work |
+
+The two recommended next experiments are therefore: (1) standard rank-16 LoRA with completion-only,
+replay-verified multi-turn trajectories on the measured single-process four-L4 route; then (2) a
+single-variable rank or target-module comparison, using rsLoRA only as a separately probed variant if
+standard LoRA shows a positive paired signal. Gradient checkpointing and packing are throughput tools,
+not hypotheses about agent quality; activate them only when measured memory or padding justifies them.
+DoRA, NF4 substitution, DPO and online RL stay outside the first comparison for the compatibility and
+evidence reasons above.
+
 ### Path A — BF16 base with FSDP sharding across four L4s (preserves the recipe's base loading)
 
 The base is loaded as the H100 recipe loads it (dequantised to BF16, frozen) and FSDP shards it. Gate:

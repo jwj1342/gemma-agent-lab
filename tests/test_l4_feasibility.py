@@ -277,13 +277,24 @@ class AdapterVerifierCliTests(unittest.TestCase):
     """The CLI over a real adapter directory."""
 
     def write_adapter(self, directory: Path, rank: int, config_rank=None) -> None:
-        import numpy
-        from safetensors.numpy import save_file
-
         keys, shapes = adapter_keys(rank=rank)
         directory.mkdir(parents=True, exist_ok=True)
-        save_file({key: numpy.zeros(shapes[key], dtype=numpy.float32) for key in keys},
-                  str(directory / 'adapter_model.safetensors'))
+        header = {}
+        offset = 0
+        for key in keys:
+            elements = 1
+            for size in shapes[key]:
+                elements *= size
+            byte_count = elements * 4
+            header[key] = {'dtype': 'F32', 'shape': shapes[key],
+                           'data_offsets': [offset, offset + byte_count]}
+            offset += byte_count
+        header_bytes = json.dumps(header, separators=(',', ':')).encode('utf-8')
+        header_bytes += b' ' * (-len(header_bytes) % 8)
+        with (directory / 'adapter_model.safetensors').open('wb') as handle:
+            handle.write(len(header_bytes).to_bytes(8, 'little'))
+            handle.write(header_bytes)
+            handle.write(b'\0' * offset)
         (directory / 'adapter_config.json').write_text(json.dumps({
             'peft_type': 'LORA', 'task_type': 'CAUSAL_LM', 'r': config_rank or rank,
             'lora_alpha': (config_rank or rank) * 2, 'lora_dropout': 0.0, 'bias': 'none',

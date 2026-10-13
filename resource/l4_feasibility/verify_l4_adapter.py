@@ -16,11 +16,43 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import struct
 from collections import Counter
 from pathlib import Path
 
 KEY = re.compile(r'^base_model\.model\.model\.language_model\.layers\.(\d+)\.'
                  r'(?:self_attn|mlp)\.(?P<projection>[a-z_]+)\.lora_(?P<side>[AB])\.weight$')
+
+
+def read_safetensors_shapes(path: Path) -> dict[str, list[int]]:
+    """Read tensor shapes from a safetensors header without importing a tensor framework."""
+    file_size = path.stat().st_size
+    with path.open('rb') as handle:
+        length_bytes = handle.read(8)
+        if len(length_bytes) != 8:
+            raise ValueError('safetensors file is shorter than its 8-byte header length')
+        header_length = struct.unpack('<Q', length_bytes)[0]
+        if header_length > file_size - 8:
+            raise ValueError('safetensors header extends beyond the end of the file')
+        header = json.loads(handle.read(header_length).decode('utf-8'))
+
+    data_size = file_size - 8 - header_length
+    shapes = {}
+    for key, entry in header.items():
+        if key == '__metadata__':
+            continue
+        if not isinstance(entry, dict) or not isinstance(entry.get('shape'), list):
+            raise ValueError(f'safetensors tensor {key!r} has no valid shape')
+        shape = entry['shape']
+        if not all(isinstance(size, int) and size >= 0 for size in shape):
+            raise ValueError(f'safetensors tensor {key!r} has an invalid shape')
+        offsets = entry.get('data_offsets')
+        if (not isinstance(offsets, list) or len(offsets) != 2
+                or not all(isinstance(offset, int) for offset in offsets)
+                or not 0 <= offsets[0] <= offsets[1] <= data_size):
+            raise ValueError(f'safetensors tensor {key!r} has invalid data offsets')
+        shapes[key] = shape
+    return shapes
 
 
 def analyse(keys, shapes, config, expected_rank: int) -> dict:
@@ -79,8 +111,6 @@ def main() -> int:
     parser.add_argument('--expected-rank', type=int, default=16)
     args = parser.parse_args()
 
-    from safetensors import safe_open
-
     weights = args.adapter / 'adapter_model.safetensors'
     config_path = args.adapter / 'adapter_config.json'
     result = {'adapter': str(args.adapter), 'weights_present': weights.is_file(),
@@ -92,9 +122,8 @@ def main() -> int:
     config = json.loads(config_path.read_text(encoding='utf-8-sig'))
     result['config'] = config
 
-    with safe_open(str(weights), framework='pt') as handle:
-        keys = sorted(handle.keys())
-        shapes = {key: list(handle.get_slice(key).get_shape()) for key in keys}
+    shapes = read_safetensors_shapes(weights)
+    keys = sorted(shapes)
     result.update(analyse(keys, shapes, config, args.expected_rank))
     result['bytes'] = weights.stat().st_size
     if args.out:
