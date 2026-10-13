@@ -13,21 +13,39 @@ os.environ.setdefault('OTEL_SDK_DISABLED', 'true')
 
 def validate(agent_dir):
     import litellm
-    from adk_submission import compile_submission, discover_adapters
+    from adk_submission import (ModelRegistry, compile_submission, discover_adapters,
+                                discover_declared_models)
+    from google.adk.models.lite_llm import LiteLlm
     from swegemma.config import ALLOWED_ADAPTER_EXTENSIONS, build_submission_limits
     from swegemma.context import SwegemmaContext
-    from swegemma.models.discovery import validate_single_declared_model
-    from swegemma.models.registry import setup_gemma_model_registry, resolve_swegemma_adapter
+    from swegemma.harness.agent_runner import resolve_swegemma_adapter
 
     litellm.drop_params = True
     target = 'gemma-4-31b-it-qat-w4a16-ct'
-    declared = validate_single_declared_model(agent_dir)
+    # The 2026-10-12 official update removed swegemma.models.discovery/registry;
+    # adk_submission now provides model discovery and the registry.
+    declared_models = discover_declared_models(agent_dir)
+    if len(declared_models) != 1:
+        raise ValueError(f'Expected exactly one declared competition model; got {sorted(declared_models)}')
+    declared = next(iter(declared_models)).strip()
+    for prefix in ('openai/', 'hosted_vllm/', 'custom/'):
+        if declared.startswith(prefix):
+            declared = declared[len(prefix):]
     if declared != target:
         raise ValueError(f'Competition model must be {target}; got {declared}')
     adapters = discover_adapters(str(agent_dir), adapter_extensions=ALLOWED_ADAPTER_EXTENSIONS)
     limits, generation = build_submission_limits()
-    models = setup_gemma_model_registry(api_base='http://127.0.0.1:8000/v1', api_key='EMPTY',
-                                       served_model=target, adapter_manifest=adapters)
+    models = ModelRegistry()
+    models.register(target, LiteLlm(model='openai/' + target,
+                                   api_base='http://127.0.0.1:8000/v1', api_key='EMPTY', num_retries=5))
+    if getattr(adapters, 'adapters', None):
+        def make_adapter_model(info):
+            name = getattr(info, 'name', str(info))
+            return LiteLlm(model='openai/' + name,
+                           api_base='http://127.0.0.1:8000/v1', api_key='EMPTY', num_retries=5)
+        adapters.register_all(models, make_adapter_model)
+        for name, info in adapters.adapters.items():
+            models.register(name, make_adapter_model(info))
     tools = SwegemmaContext().create_tools()
     root = compile_submission(agent_dir, tool_registry=tools, model_registry=models,
                               limits=limits, generation_constraints=generation,
