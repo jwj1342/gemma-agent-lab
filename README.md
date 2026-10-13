@@ -47,6 +47,7 @@ The submitted baseline uses `gemma-4-31b-it-qat-w4a16-ct` with no LoRA. The foll
 | Kaggle L4×4 smoke test | `rich_3454` resolved; **84 tests passed**, including one added regression test | [L4 run](resource/manifests/kaggle-runtime-smoke.json) |
 | Independent H100 smoke test | The same public task passed compilation, offline generation, and patch verification | [H100 run](resource/manifests/hpc-smoke.json) |
 | First LoRA pilot on H100 | 64 SFT updates across two phases; corrected agent completed `rich_3454` with **84 passed tests** | [Pilot report](docs/first-lora.md) |
+| Four-L4 LoRA feasibility | Required QAT base completed eight bounded updates, adapter export, validation, and official-runtime reload; this measures training feasibility, not repair gain | [L4 training report](docs/experiments/2026-10-12-l4-training-feasibility.md) |
 | Fixed local development cohort | Baseline **4/11**, first LoRA **2/11**, with **11/12 control coverage**; cached controls avoid about 18 minutes of repeated checks | [Batch evaluation](docs/experiments/2026-10-09-local-evaluation.md) |
 
 Controls reproduced the original failure (**1 failed / 82 passed**) and confirmed the reference patch (**83 passed**). On L4×4, the agent phase took **74.10 seconds**, excluding model startup; the notebook reached smoke completion in about **655 seconds**.
