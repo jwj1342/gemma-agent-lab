@@ -107,7 +107,8 @@ entitlement returned HTTP 403 for the protection API.
 
 Before protection was enabled, review was team policy only. The initial CI installation (#1) and audit
 fixes (#2) were owner-authorized without independent approval. PR #10 was merged on October 12 without
-a submitted review; it is reverted by PR #17, and its branch remains available for a reviewed resubmission.
+a submitted review. A teammate reviewed the merged tree afterwards in #11 and found no defects, so it
+was kept rather than reverted (#17 closed).
 
 Official references: [protected branch availability](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches),
 [workflow configuration](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax),
