@@ -74,25 +74,22 @@ To debug a failed PR, open its **Checks** tab, read the first failed step, repro
 locally, and push the fix to the same branch. A successful CPU run does not replace an L4/H100
 experiment when changing inference, dependencies, adapters, or evaluation behavior.
 
-## Intended protection for main
+## Protection for main
 
-The repository owner should enable these settings once the account's private-repository entitlement permits them:
+`main` is protected by GitHub, so the workflow above is enforced rather than voluntary:
 
-- Require a pull request with **one approving review**.
-- Dismiss stale approvals when new commits change the reviewed code.
-- Require **Repository checks** to pass and the branch to be up to date.
-- Require review conversations to be resolved.
-- Apply the requirements to administrators as well.
-- Block force pushes and deletion of `main`.
+- A pull request with **one approving review** is required. The author's own approval does not count.
+- New commits dismiss stale approvals, and the most recent push must be approved by someone other than its pusher.
+- **Repository checks** from the GitHub Actions app (`15368`) must pass, and the branch must be up to date with `main`.
+- Review conversations must be resolved.
+- The requirements apply to administrators as well; nobody can merge around them.
+- Force pushes to `main` and deletion of `main` are blocked.
 
-The workflow check must have run successfully before selecting it as required. Repository settings
-should allow squash merging and automatically delete merged feature branches. There is no automatic
-merge, release deployment, or competition upload in this workflow.
+Repository settings allow only squash merging and automatically delete merged feature branches.
+There is no automatic merge, release deployment, or competition upload in this workflow.
 
-The intended REST configuration is versioned in
-[.github/main-protection.json](../.github/main-protection.json). It binds the required check to
-the GitHub Actions app (`15368`), rather than accepting an identically named check from any app.
-Once entitlement is available and the workflow has passed, the owner can apply and verify it:
+The applied REST configuration is versioned in [.github/main-protection.json](../.github/main-protection.json).
+The file does not apply itself: after changing it, the owner must apply it and verify the live rule:
 
 ```bash
 gh api --method PUT repos/jwj1342/gemma-agent-lab/branches/main/protection \
@@ -100,20 +97,18 @@ gh api --method PUT repos/jwj1342/gemma-agent-lab/branches/main/protection \
 gh api repos/jwj1342/gemma-agent-lab/branches/main/protection
 ```
 
-The configuration file describes the requested rule; its presence alone does not enable protection.
-
 ## Enforcement status
 
-Last checked: October 6, 2026. The first [hosted PR run](https://github.com/jwj1342/gemma-agent-lab/actions/runs/37518341796)
-passed all repository checks and 13 tests. The workflow is configured for PRs, `main`, and manual runs.
-Squash merging and automatic deletion of merged feature branches are enabled; other merge methods
-and automatic merging are disabled. The initial installation is owner-authorized and has no independent
-reviewer approval; subsequent routine changes follow the one-review policy above.
+Last checked: October 12, 2026. The configuration above is live on `main`. The first
+[hosted PR run](https://github.com/jwj1342/gemma-agent-lab/actions/runs/37518341796) on October 6 passed
+all repository checks, so the required check name is established. The repository became public
+on October 12, 2026, which made GitHub branch protection available; earlier, the private repository's
+entitlement returned HTTP 403 for the protection API.
 
-GitHub's protection/ruleset API returned HTTP 403 with an instruction to upgrade to GitHub Pro or
-make the repository public. This repository stays private. Until an entitlement upgrade allows the
-protection rule, PRs, passing CI, and one-person review are **team policy**, not a GitHub-enforced
-merge barrier. A collaborator with write access can technically bypass the convention.
+Before protection was enabled, review was team policy only. The initial CI installation (#1) and audit
+fixes (#2) were owner-authorized without independent approval. PR #10 was merged on October 12 without
+a submitted review. A teammate reviewed the merged tree afterwards in #11 and found no defects, so it
+was kept rather than reverted (#17 closed).
 
 Official references: [protected branch availability](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches),
 [workflow configuration](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax),
