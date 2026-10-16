@@ -54,7 +54,11 @@ only if smoke compilation, controls, trace capture, and graph reporting are comp
 
 - Agent ZIP hashes: registered; recheck before execution.
 - Platform and actual allocation: not measured.
-- Remaining quota and reservations: not measured.
+- Kaggle quota: checked at `2026-10-16T15:11:22+08:00` with Kaggle CLI
+  2.2.4. The CLI reported GPU `0.00h` used, `30.00h` remaining, and `30.00h`
+  total, refreshing at `2026-10-17T00:00:00`. This was a read-only check; no
+  notebook version or GPU session was started. The displayed table did not expose
+  a separate reservation field.
 - Smoke controls, compilation, graph invocation, and repair: not measured.
 - Fast eligible coverage and paired outcomes: not measured.
 - Extra model tokens and agent time versus baseline: not measured.

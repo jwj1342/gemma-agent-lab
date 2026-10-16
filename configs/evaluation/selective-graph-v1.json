@@ -64,6 +64,16 @@
     "quota_gate": "Check remaining quota and reservations before push",
     "submission_gate": "Coordinate inputs and any competition submission with @jwj1342"
   },
+  "quota_observation": {
+    "checked_at": "2026-10-16T15:11:22+08:00",
+    "command": "kaggle quota",
+    "kaggle_cli_version": "2.2.4",
+    "gpu_used_hours": 0.0,
+    "gpu_remaining_hours": 30.0,
+    "gpu_total_hours": 30.0,
+    "refresh_at": "2026-10-17T00:00:00",
+    "scope": "Read-only CLI observation; no notebook version or GPU session was started"
+  },
   "smoke_gate": {
     "required": [
       "official agent compilation passes",
