@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "registered_at": "2026-10-16T15:07:38+08:00",
+  "status": "Registered before inference; official compilation, controls, quota, and GPU execution pending",
+  "issue": 12,
+  "source_revision": "3a7ef3703c08ce93222911f5378a5f609ba27935",
+  "benchmark": {
+    "path": "configs/evaluation/public-v1.json",
+    "sha256": "b2d6ed557261dc2d11f6ada0fdbe7ca62f66ccf9ca90273f77fbc56ff1293d37",
+    "smoke_task_ids": [
+      "rich_3454"
+    ],
+    "fast_task_ids": [
+      "rich_4079",
+      "rich_3506",
+      "rich_3468",
+      "rich_3278",
+      "httpx_3672",
+      "fastapi_14455",
+      "fastapi_14266",
+      "fastapi_15745",
+      "fastapi_15800",
+      "fastapi_14609",
+      "fastapi_9753",
+      "requests_7502"
+    ],
+    "holdout_policy": "Sealed; do not prepare or execute for this experiment"
+  },
+  "agents": {
+    "baseline": {
+      "path": "configs/baseline",
+      "archive_sha256": "02bb939095ded0c970088fc9d19634e203e2d3119a36a5feff20bad55c9343fc",
+      "system_prompt_sha256": "60d82b7ac53f642e182de0f3a2056b64ef0c1ff03c48ca4aef6ee0ec5f591234"
+    },
+    "candidate": {
+      "path": "configs/prompt-selective-graph",
+      "archive_sha256": "0469467c7be74f61713b609f320a94c36644a36d56e5a236c14ba95dc61ee3ee",
+      "system_prompt_sha256": "c60b5b62b4d04af61388e36535300f391cd91f596e0f56a82fcb2bb3f26824b1",
+      "intervention": "After locating an exact source symbol, perform one bounded neighbor lookup, inspect at most two relevant returned source locations, and fall back immediately after an empty or failing result"
+    },
+    "fixed_configuration": {
+      "agent_yaml_sha256": "de80dff58c1ab3e758a814b915c21113a16ddf632ac4d5fee238b8d6a1b6b5a8",
+      "sampling_yaml_sha256": "d8da116963e7bdc6245261ba73674b932e4cb26bd2d27f729404c50a0a1fa1c2",
+      "eval_config_sha256": "138081c7b20242e496fe1686118905d4780d503b599618472afe6078ef256866",
+      "model": "gemma-4-31b-it-qat-w4a16-ct",
+      "lora": false,
+      "seed": 42,
+      "max_time_minutes": 4,
+      "max_tool_calls": 40,
+      "max_turns": 80
+    }
+  },
+  "execution": {
+    "order": [
+      "matched controlled smoke",
+      "unchanged matched fast cohort only after a clean smoke"
+    ],
+    "target_platform": "Kaggle private notebook",
+    "accelerator": "NvidiaL4",
+    "gpu_count": 4,
+    "tensor_parallel_size": 4,
+    "max_model_len": 32768,
+    "gpu_memory_utilization": 0.9,
+    "quota_gate": "Check remaining quota and reservations before push",
+    "submission_gate": "Coordinate inputs and any competition submission with @jwj1342"
+  },
+  "smoke_gate": {
+    "required": [
+      "official agent compilation passes",
+      "empty and reference controls are valid",
+      "actual hardware is recorded",
+      "trace and token accounting are complete",
+      "candidate makes a graph call only after identifying an exact source symbol",
+      "empty or failing graph output has an observable repository-search fallback",
+      "independent patch verification completes"
+    ]
+  },
+  "reporting": [
+    "graph call names and arguments",
+    "empty, failing, and successful graph queries",
+    "source locations inspected because of graph output",
+    "repository-search fallback use",
+    "model input and output tokens",
+    "agent and total inference time",
+    "clean completion, timeout, and turn-budget status",
+    "eligible control coverage",
+    "paired repaired and regressed tasks",
+    "trace, source, agent, task, and run provenance hashes"
+  ],
+  "limitations": [
+    "One stochastic attempt per task",
+    "Smoke validates integration, not effectiveness",
+    "Public-task results do not establish hidden leaderboard performance",
+    "Task solutions and held-out traces must not become reusable prompt examples",
+    "Local native validation was unavailable because litellm is not installed; official compilation remains a required execution gate"
+  ]
+}

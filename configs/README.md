@@ -21,6 +21,11 @@ Copy `baseline/` to `experiments/<name>/` for a variant. Keep reports outside th
 the packaging script includes every allowed file underneath it. Existing smoke evidence applies
 to the unchanged baseline ZIP, not automatically to a new variant.
 
+`prompt-selective-graph/` is the preregistered issue #12 graph-only prompt
+ablation. It preserves the baseline configuration and changes only the main system
+prompt; see `evaluation/selective-graph-v1.json` before running its smoke or fast
+cohort.
+
 ## Environment records
 
 | File | Scope |
