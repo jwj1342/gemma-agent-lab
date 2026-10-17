@@ -99,7 +99,8 @@ migration from [#21](https://github.com/jwj1342/gemma-agent-lab/pull/21) before 
 The local H100 runtime now uses `/home/jwj/venvs/gemma4-eval-v31`, built with
 `scripts/prepare_eval_environment.sh` and `scripts/install_eval_git.sh`. The version-29 environment
 is kept for reproducing older runs. The dependency hook accepts 0.2.11 because
-`swegemma/harness/container_setup.py` is identical in both versions and its two call sites are unchanged.
+`swegemma/harness/container_setup.py` is identical in both versions, and the hook rebinds
+`install_test_dependencies` in the two modules that import it (`agent_runner` and `verification`).
 The [H100 report](experiments/2026-10-13-prompt-v31.md) records the first matched runs in this environment.
 
 ## Add another snapshot
