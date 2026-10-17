@@ -21,7 +21,10 @@
 - Treat resources as dated snapshots. Prioritize current rules and explicit organizer
   clarification, then official package behavior, then public examples. Distinguish author
   claims, static source analysis, and independently executed results.
-- Official evaluation currently requires `gemma-4-31b-it-qat-w4a16-ct`. Other Models-page entries do not imply approval.
+- Official evaluation accepts one of four QAT W4A16 bases per submission: `gemma-4-31b-it-qat-w4a16-ct`,
+  `gemma-4-12b-it-qat-w4a16-ct`, `gemma-4-e4b-it-qat-w4a16-ct` or `gemma-4-e2b-it-qat-w4a16-ct`
+  ([host announcement, 2026-10-11](https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/748287)). The team submits 31B; see `docs/competition-research.md`.
+  Other Models-page entries do not imply approval.
 - Keep evaluation and training environments separate. Do not directly execute installation
   or deletion cells from third-party notebooks on the host.
 - Keep Kaggle credentials in HOME, outside the workspace. Training jobs should not carry them.
