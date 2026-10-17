@@ -105,8 +105,6 @@ async def run(args):
             models = server.create_model_registry(aliases=['gemma-4-31b-it-qat-w4a16-ct'],
                                                    model_prefix='openai/', api_key='EMPTY')
         else:
-            # swegemma.models.registry was removed by the 2026-10-12 official update;
-            # build the minimal registry the new harness expects.
             models = ModelRegistry()
             models.register('gemma-4-31b-it-qat-w4a16-ct',
                             LiteLlm(model='openai/gemma-4-31b-it-qat-w4a16-ct',
