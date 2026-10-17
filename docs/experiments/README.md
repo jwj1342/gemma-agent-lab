@@ -13,3 +13,4 @@ Existing baseline results predate this convention. Their authoritative receipts 
 | 2026-10-09 | [Fast local evaluation: baseline and pilot adapter](2026-10-09-local-evaluation.md) |
 | 2026-10-09 | [Official wheelhouse migration](2026-10-09-wheelhouse-update.md) |
 | 2026-10-09 | [Prompt and context adaptation](2026-10-09-prompt-context.md) |
+| 2026-10-13 | [Wheelhouse version 31 on H100: baseline, protocol and recover](2026-10-13-prompt-v31.md) |

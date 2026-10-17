@@ -88,6 +88,21 @@ separately in the registry and the
 [migration validation report](experiments/2026-10-09-wheelhouse-update.md). The existing H100
 environment and its version-specific dependency hook remain unchanged.
 
+## October 13 inventory: version 31
+
+The official files were re-published on October 12 at 19:51 UTC as dataset version **31**.
+All 41 wheels were downloaded and hashed on a datamover. `swegemma` moved from 0.2.10 to 0.2.11, and
+`adk_eval_core`, `adk_submission` and `vllm` kept their versions but changed SHA256. `swegemma` 0.2.11
+removed `swegemma.models.discovery` and `swegemma.models.registry`; the harness scripts need the API
+migration from [#21](https://github.com/jwj1342/gemma-agent-lab/pull/21) before they run on it.
+
+The local H100 runtime now uses `/home/jwj/venvs/gemma4-eval-v31`, built with
+`scripts/prepare_eval_environment.sh` and `scripts/install_eval_git.sh`. The version-29 environment
+is kept for reproducing older runs. The dependency hook accepts 0.2.11 because
+`swegemma/harness/container_setup.py` is identical in both versions, and the hook rebinds
+`install_test_dependencies` in the two modules that import it (`agent_runner` and `verification`).
+The [H100 report](experiments/2026-10-13-prompt-v31.md) records the first matched runs in this environment.
+
 ## Add another snapshot
 
 1. Obtain the official dataset version and all wheel fingerprints in a disposable
