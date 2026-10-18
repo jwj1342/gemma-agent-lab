@@ -103,6 +103,14 @@ is kept for reproducing older runs. The dependency hook accepts 0.2.11 because
 `install_test_dependencies` in the two modules that import it (`agent_runner` and `verification`).
 The [H100 report](experiments/2026-10-13-prompt-v31.md) records the first matched runs in this environment.
 
+`configs/eval-container.requirements.txt` is the lock written when this environment was built. Compared with the
+previous committed lock (from the October 5 environment), it also moves seven packages that are not in the official
+wheelhouse: `cryptography` 48.0.1 → 46.0.7, `pyarrow` 25.0.1 → 26.0.0, `typer` 0.27.2 → 0.27.3, `SQLAlchemy`
+2.1.3 → 2.1.4, `google-cloud-bigtable` 2.49.0 → 2.50.0, `iniconfig` 2.3.0 → 2.3.1 and `truststore` 0.10.4 → 0.10.5.
+Pip resolves these from the pinned container and the local dependency wheels at build time. Between the installed
+version-29 and version-31 environments only `truststore` differs (0.10.4 → 0.10.5). The other five venv packages
+already had the new versions in version 29, and `cryptography` comes from the shared base image, outside both venvs.
+
 ## Add another snapshot
 
 1. Obtain the official dataset version and all wheel fingerprints in a disposable
