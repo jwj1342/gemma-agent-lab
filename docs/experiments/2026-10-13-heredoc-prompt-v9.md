@@ -170,15 +170,14 @@ reported.
 
 ## Artifacts and next step
 
-- **Artifact access:** Raw run outputs remain on the author's laptop under the
-  ignored Kaggle run-output directories and are not included in a repository
-  clone. Teammates can identify the private Kaggle runs by the kernel names in
-  the table and request the corresponding archive from the author. The
-  candidate and its review-only whitespace cleanup are identified by the
-  configuration commit and ZIP hash history above.
-- **Summary and hashes:** This report is the team-visible compact summary. Raw
-  timelines and scratch notes remain local rather than being committed as
-  project documentation.
+- **Artifact access:** The five raw inference traces behind the smoke results
+  are archived in the private team data repository
+  [`jwj1342/gemma-agent-lab-data`](https://github.com/jwj1342/gemma-agent-lab-data)
+  under `experiments/heredoc-fix-v9-v29/`. Its README lists each trace's
+  kernel, task, status, runtime, outcome and SHA256. The exploratory pre-v9
+  traces behind the transport counts and the scratch notes remain local.
+- **Summary and hashes:** This report is the team-visible compact summary; the
+  raw v9 traces are in the data repository rather than in this repository.
 - **Training:** Not applicable; no weights, optimizer state, or adapter were
   changed.
 - **Conclusion:** v9 demonstrated a viable end-to-end repair path on three
