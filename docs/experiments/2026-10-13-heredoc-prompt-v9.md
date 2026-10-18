@@ -51,8 +51,17 @@
 
   Reproduction now requires explicitly attaching the historical version-29
   wheelhouse dataset; the current live wheelhouse is a different environment.
-- **Agent ZIP SHA256:**
-  `6b0a37e83112aa9105a19bbc35051b68c54084266c1e03123ab30e219eda9c96`.
+- **Agent ZIP SHA256:** At reviewed commit `6b99f13`, the documented
+  `build_submission.py` command produced
+  `5c9b4dd6560b9a655c119700150f334bf35075af07200b824248d435a02f14ef`
+  (3,716 bytes). The archive submitted to the competition was packaged
+  differently and has SHA256
+  `6b0a37e83112aa9105a19bbc35051b68c54084266c1e03123ab30e219eda9c96`
+  (3,714 bytes); its member files were identical to that reviewed commit. This
+  review update removes the trailing space from `prompts/system.md`, after
+  which the documented command reproducibly produces
+  `ba5fa676d8653d834b61f4e12835cfb7ee4a65f711cfbd5c03620ff210819eb3`
+  (3,734 bytes). The cleanup does not change prompt behavior.
 - **Model and adapter:**
   `google/gemma-4/Other/gemma-4-31b-it-qat-w4a16-ct/2`; no adapter.
 - **Environment and seed:** Official Kaggle notebook; `swegemma` 0.2.10,
@@ -80,6 +89,19 @@ runs. The same frozen v9 configuration was used for all five attempts.
 The candidate resolved three of five attempts: one of three on the
 escape-dense `rich_3278` task and both attempts on the other two tasks.
 
+### Competition submission
+
+The v9 archive was submitted to the competition and is the candidate's only
+full-test-set evidence.
+
+| Submission | Submitted (UTC) | Description | Status | Public score |
+| --- | --- | --- | --- | ---: |
+| `57067045` | 2026-10-11 07:48 | `Verified repair v2; ... ZIP 6b0a37e83112` | COMPLETE | 0.10 |
+
+For comparison, baseline v1 (`02bb939095de`) and verified repair v1
+(`c52a04379d88`) each scored 0.12. The v9 smoke resolved three of five
+attempts, but its scored submission was below both comparisons.
+
 ### Transport observation
 
 The author summarized the following call-level counts from exploratory v29
@@ -90,9 +112,29 @@ traces. They are diagnostic observations, not a randomized paired experiment.
 | Multi-argument `edit_file` | 18 | 0 |
 | Single-argument heredoc `run_command` | 26 | 26 |
 
-These observations motivated removing `edit_file` from this candidate. They do
-not establish the behavior of wheelhouse v31, whose rebuilt harness must be
-evaluated separately.
+These observations motivated removing `edit_file` from this candidate. They
+describe v29 and do not by themselves establish the behavior of wheelhouse
+v31.
+
+### Matched wheelhouse-v31 comparison
+
+The team later ran the frozen v9 candidate on the same ten-task fast cohort and
+identical H100 runtime as the three-way comparison in
+[#23](https://github.com/jwj1342/gemma-agent-lab/pull/23) (job 1104757).
+
+| Variant | Resolved | Tool errors | Missing-argument events | Longest error streak |
+| --- | ---: | ---: | ---: | ---: |
+| baseline | 1/10 | 43 | 0 | 3 |
+| protocol | 2/10 | 50 | 22 | 5 |
+| recover | 3/10 | 68 | 15 | 3 |
+| heredoc v9 | 2/10 | 33 | 0 | 2 |
+
+V9 had the fewest tool errors, no missing-argument events, and the shortest
+error streak. It resolved `rich_3278` and `fastapi_9753`. Four tasks ended in
+`inference_error` after reaching the time limit, compared with two for
+`recover`; the fixed repair-script sequence appears to spend too much time on
+tasks that require more exploration. In v31, the remaining weakness is budget
+use rather than malformed tool-call transport.
 
 ### Historical comparison
 
@@ -124,15 +166,16 @@ effect.
 
 Model-startup time, complete notebook elapsed time, and per-run quota deltas
 were not retained consistently in the compact records and are therefore not
-reported. No competition submission was made.
+reported.
 
 ## Artifacts and next step
 
 - **Artifact access:** Raw run outputs remain on the author's laptop under the
   ignored Kaggle run-output directories and are not included in a repository
   clone. Teammates can identify the private Kaggle runs by the kernel names in
-  the table and request the corresponding archive from the author. The frozen
-  candidate is identified by its configuration commit and ZIP SHA256 above.
+  the table and request the corresponding archive from the author. The
+  candidate and its review-only whitespace cleanup are identified by the
+  configuration commit and ZIP hash history above.
 - **Summary and hashes:** This report is the team-visible compact summary. Raw
   timelines and scratch notes remain local rather than being committed as
   project documentation.
@@ -140,8 +183,11 @@ reported. No competition submission was made.
   changed.
 - **Conclusion:** v9 demonstrated a viable end-to-end repair path on three
   public tasks under official wheelhouse v29 and resolved three of five smoke
-  attempts. The evidence supports preserving the candidate and the v29
-  transport observation; it does not establish causal superiority over the
-  baseline or predict behavior on v31. Any expansion should use a frozen,
-  environment-matched comparison. Keep the 70-task holdout sealed and do not
-  submit to the competition without team coordination.
+  attempts. Its full competition submission scored 0.10, below the 0.12
+  baseline, and its matched v31 run resolved 2/10 tasks while four tasks reached
+  the inference time limit. The evidence supports preserving v9 as a recorded
+  transport experiment, but not adopting it as the team's submission policy.
+  Any follow-up should retain the heredoc recovery mechanism while testing a
+  less rigid sequence or a larger task budget in a frozen, environment-matched
+  comparison. Keep the 70-task holdout sealed and coordinate any competition
+  submission with the team.
