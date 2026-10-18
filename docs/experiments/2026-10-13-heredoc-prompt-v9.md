@@ -51,17 +51,50 @@
 
   Reproduction now requires explicitly attaching the historical version-29
   wheelhouse dataset; the current live wheelhouse is a different environment.
-- **Agent ZIP SHA256:** At reviewed commit `6b99f13`, the documented
-  `build_submission.py` command produced
-  `5c9b4dd6560b9a655c119700150f334bf35075af07200b824248d435a02f14ef`
-  (3,716 bytes). The archive submitted to the competition was packaged
-  differently and has SHA256
-  `6b0a37e83112aa9105a19bbc35051b68c54084266c1e03123ab30e219eda9c96`
-  (3,714 bytes); its member files were identical to that reviewed commit. This
-  review update removes the trailing space from `prompts/system.md`, after
-  which the documented command reproducibly produces
-  `ba5fa676d8653d834b61f4e12835cfb7ee4a65f711cfbd5c03620ff210819eb3`
-  (3,734 bytes). The cleanup does not change prompt behavior.
+- **Agent ZIP SHA256:** Archive hashes vary with the zlib build and with
+  member line endings, so they are not platform-independent identifiers. The
+  archives observed so far are:
+
+  | Archive SHA256 | Bytes | Produced by | Environment | Member source |
+  | --- | ---: | --- | --- | --- |
+  | `6b0a37e8…` | 3,714 | author | Windows laptop, CPython 3.14.7, zlib-ng 1.3.1 | 2026-10-11 working-tree copy (four members CRLF); submitted archive `57067045` |
+  | `5c9b4dd6…` | 3,716 | reviewer | reviewer environment; Python/zlib not recorded | commit `6b99f13` (LF) |
+  | `ba5fa676…` | 3,734 | author | Windows laptop, CPython 3.14.7, zlib-ng 1.3.1 | Windows checkout of `d9fbd71` (all six members CRLF) |
+  | `8d61429e…` | 3,715 | reviewer | reviewer environment; Python/zlib not recorded | commit `d9fbd71` (LF) |
+
+  Even with identical member bytes, archive hashes can vary with the zlib
+  build; the member hashes below identify the exact content. Using the
+  author-reported environment today, repackaging the retained submitted ZIP
+  members reproduces `6b0a37e8…` byte for byte. The historical manifest does
+  not record Python or zlib versions. The same environment produces
+  `38b010b7…` (3,735 bytes) from an all-CRLF checkout of `6b99f13`; the
+  reviewer's build from LF files was `5c9b4dd6…`.
+
+  Member hashes of the committed configuration at `d9fbd71` (LF):
+
+  | File | SHA256 |
+  | --- | --- |
+  | `agent.yaml` | `8726c996a4a0f72897397bab343009c46212326e08d5d4443344e1dd0ca296e4` |
+  | `configs/sampling.yaml` | `5a91da5bc0e294677eef716c98d16ad022c119a97b8683f8ec7d0ae38e47abf7` |
+  | `eval_config.yaml` | `138081c7b20242e496fe1686118905d4780d503b599618472afe6078ef256866` |
+  | `prompts/analyzer.md` | `eee10850cc99c41568a4fc62badc978fc2f20ed6002cf0316a642b08a3d99628` |
+  | `prompts/system.md` | `e2ed44668750833f473c8c2121df385948c79ff1c981022a7b4ebff461b19104` |
+  | `sub_agents/code_analyzer.yaml` | `ec5ef9b09d16ab5b7484a192f2785904ff7a9ac518574639603a892a08e9b6fd` |
+
+  The submitted archive was built from the pre-commit working-tree copy on
+  2026-10-11, before Git normalized line endings. Four members therefore carry
+  CRLF endings and differ from the committed LF files; its member hashes, which
+  identify the scored archive, are:
+
+  | File | SHA256 |
+  | --- | --- |
+  | `agent.yaml` | `8726c996a4a0f72897397bab343009c46212326e08d5d4443344e1dd0ca296e4` |
+  | `configs/sampling.yaml` | `05e1562c0e3c8e8c4bf25352f4962f1119c9e8d2d9580887e87133e029995eea` |
+  | `eval_config.yaml` | `d449341c1d8e5540d687fef0f9c7a41c764868b9f9cb15af4cd62035b9a7b0de` |
+  | `prompts/analyzer.md` | `58fdfd29387c4888edda01558ee6822198b6eb20ff0759656e8669b97a5579e7` |
+  | `prompts/system.md` | `8fe7cfd3c14ef5052cde70468d432259f15bb479f228826739c164e3472c62bc` |
+  | `sub_agents/code_analyzer.yaml` | `22f06429a8f7744efb127be109625f72a656f932405e5948e77cf8df42e32869` |
+
 - **Model and adapter:**
   `google/gemma-4/Other/gemma-4-31b-it-qat-w4a16-ct/2`; no adapter.
 - **Environment and seed:** Official Kaggle notebook; `swegemma` 0.2.10,
