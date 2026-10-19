@@ -2,8 +2,8 @@
   "torch": "2.10.0+cu129",
   "vllm": "0.19.1",
   "transformers": "5.13.1",
-  "swegemma": "0.2.7",
-  "adk-submission": "0.2.12",
+  "swegemma": "0.2.11",
+  "adk-submission": "0.2.13",
   "google-adk": "1.36.1",
   "pytest": "8.3.4",
   "pytest-timeout": "2.1.0"
