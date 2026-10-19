@@ -184,6 +184,18 @@ None of these third-party candidates was added to the formal baseline or execute
 
 Metadata, instance descriptions, and available cards were retained. Only the required Gemma weights were
 downloaded later. Family-card 128K/256K capabilities do not override the **32,768-token** competition limit.
+
+**Update, 2026-10-11.** A [host announcement](https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/748287) added `gemma-4-12b-it-qat-w4a16-ct`,
+`gemma-4-e4b-it-qat-w4a16-ct` and `gemma-4-e2b-it-qat-w4a16-ct` as allowed bases. Every agent and sub-agent in one
+submission must use the same variant, scoring conditions are unchanged, and adapters for the smaller variants
+should be trained on the unquantized checkpoints. The 12B also needs the host's `--hf-overrides` serving flag.
+As of 2026-10-16 the Model Selection page still listed only 31B (the host agreed to update it), and two teams
+reported that otherwise identical 12B submissions ended in "Notebook Threw Exception" while 31B scored
+([discussion 749259](https://www.kaggle.com/competitions/gemma-4-developer-agent/discussion/749259)). The team
+therefore keeps 31B for submissions. A local H100 smoke of the 12B with the baseline prompt resolved 1/10
+fast-cohort tasks and mostly exhausted its tool budget early; the run directory, settings and per-task results are
+recorded in [#24](https://github.com/jwj1342/gemma-agent-lab/issues/24#issuecomment-6253615023). It is a single
+smoke attempt, not a capability estimate.
 Models-page `bestPublicScore` describes its associations, not the entire leaderboard maximum.
 Sources: [Models](https://www.kaggle.com/competitions/gemma-4-developer-agent/models) and
 [page inventory](../resource/models/competition-tab.json).
