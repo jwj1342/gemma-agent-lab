@@ -16,13 +16,20 @@ class PromptCandidateTests(unittest.TestCase):
         source = Path(__file__).resolve().parents[1] / 'configs/prompt-icl'
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            for variant in ('workflow', 'protocol', 'icl', 'reflect'):
+            for variant in ('workflow', 'protocol', 'recover', 'icl', 'reflect'):
                 output = root / variant
                 receipt = build_candidate(source, output, variant)
                 text = (output / 'prompts/system.md').read_text()
                 self.assertEqual(receipt['weight_updates'], 0)
                 self.assertEqual('Small examples' in text, variant in ('icl', 'reflect'))
-                self.assertEqual('Tool arguments and recovery' in text, variant == 'protocol')
+                self.assertEqual('Tool arguments and recovery' in text,
+                                 variant in ('protocol', 'recover'))
+                self.assertEqual('inline Python heredoc' in text, variant == 'recover')
+                self.assertEqual('PYTHONDONTWRITEBYTECODE=1' in text, variant == 'recover')
+                for step in ('1. Validate the replacement', '2. Write the source',
+                             '3. Verify the actual implementation'):
+                    self.assertEqual(step in text, variant == 'recover')
+                self.assertNotIn('rm fix.py', text)
                 self.assertEqual('Learn from execution' in text, variant == 'reflect')
                 self.assertEqual((output / 'skills').exists(), variant == 'reflect')
                 if variant == 'reflect':
