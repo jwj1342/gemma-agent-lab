@@ -64,11 +64,12 @@ class NotebookPreparationTests(unittest.TestCase):
                      '--task-id', 'fixture_task', '--tasks', tasks, '--run-dir', run)
         return run
 
-    def setup_cell(self, notebook, payload, task=None):
+    def setup_cell(self, notebook, payload, task=None, tasks=None):
         mounts = self.work / 'mounts'
         for name in ('data', 'wheels', 'model'):
             (mounts / name).mkdir(parents=True, exist_ok=True)
-        (mounts / 'data/tasks.jsonl').write_text(json.dumps(task or self.task) + '\n')
+        rows = tasks or [task or self.task]
+        (mounts / 'data/tasks.jsonl').write_text(''.join(json.dumps(row) + '\n' for row in rows))
         (mounts / 'wheels/fixture.whl').write_bytes(b'tiny fixture')
         payload = dict(payload, wheelhouse_snapshots=[{
             'id': 'test-snapshot', 'dataset': 'metric/gemma-4-developer-agent-wheelhouse',
@@ -124,6 +125,29 @@ class NotebookPreparationTests(unittest.TestCase):
         official = json.loads((ROOT / 'resource/notebooks/official/kernel-metadata.json').read_text())
         self.assertEqual(metadata['docker_image'], official['dockerImage'])
         self.assertEqual(metadata['model_sources'], ['google/gemma-4/Other/gemma-4-31b-it-qat-w4a16-ct/2'])
+
+    def test_frozen_suite_generates_one_batch_notebook(self):
+        second = dict(self.task, instance_id='fixture_two', problem_statement='Fix the second issue.')
+        tasks = self.work / 'tasks.jsonl'
+        tasks.write_text(json.dumps(self.task) + '\n' + json.dumps(second) + '\n')
+        benchmark = self.work / 'benchmark.json'
+        benchmark.write_text(json.dumps({'source_tasks_sha256': hashlib.sha256(tasks.read_bytes()).hexdigest(),
+                                         'cohorts': {'fast': ['fixture_task', 'fixture_two']}}))
+        suite = self.work / 'suite'
+        self.command('prepare_eval_suite.py', '--run-dir', suite, '--agent-dir', ROOT / 'configs/baseline',
+                     '--tasks', tasks, '--benchmark', benchmark, '--cohort', 'fast')
+        self.generate('--run-dir', suite)
+        notebook, payload = self.notebook()
+        self.assertEqual(payload['task_ids'], ['fixture_task', 'fixture_two'])
+        self.assertIn("'--task-ids',*IDS", notebook['cells'][3]['source'])
+        runtime = self.setup_cell(notebook, payload, tasks=[second, self.task])
+        public = (runtime / 'inputs/tasks.jsonl').read_text()
+        self.assertEqual([json.loads(line)['instance_id'] for line in public.splitlines()],
+                         ['fixture_task', 'fixture_two'])
+        self.assertNotIn('PRIVATE_', public)
+        manifest = json.loads((runtime / 'run-manifest.json').read_text())
+        self.assertEqual(manifest['task_ids'], ['fixture_task', 'fixture_two'])
+        self.assertEqual(manifest['public_task_sha256'], hashlib.sha256(public.encode()).hexdigest())
 
     def test_mounted_task_is_sanitized_and_runtime_outputs_are_preserved(self):
         notebook, payload = self.fresh()

@@ -147,6 +147,23 @@ This complete output layout applies to notebooks generated after the October 6 r
 The archived October 5 L4 run lacks some input manifests; preserve it as historical evidence and
 generate a new experiment when the checked submission route is needed. Do not invent missing receipts.
 
+## Compare agents on a task cohort
+
+To compare agents on the scorer's hardware, freeze a cohort with `prepare_eval_suite.py` and pass the suite
+directory as `--run-dir`. The notebook then runs empty/reference controls, one batch inference with a single
+model start, and independent verification for every task. It writes `runtime-smoke/cohort-summary.json` with each
+task's controls, outcome, tool calls and agent seconds.
+
+```bash
+python3 scripts/prepare_eval_suite.py --run-dir runs/<date>-<name>/<variant> --agent-dir <agent> --cohort fast
+python3 scripts/prepare_kaggle_runtime.py --owner YOUR_KAGGLE_USERNAME --slug gemma4-<variant>-fast \
+  --run-dir runs/<date>-<name>/<variant> --output runs/<date>-<name>/<variant>-notebook
+```
+
+Freezing the suite needs the local task file (`data/raw/.../tasks.jsonl`). A four-L4 session is charged at twice
+its wall time, so a 12-task cohort at 8 minutes per task can use about 3–4 hours of quota. Compare variants on
+the same frozen tasks and record the quota each run used.
+
 ## Resource choices and tuning
 
 These are the existing single-task evaluation settings, not a training recipe or a promise that
