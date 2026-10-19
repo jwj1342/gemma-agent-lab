@@ -77,7 +77,7 @@ the final patch contains the intended implementation changes.
 | --- | --- | --- |
 | `workflow` | A concise locate–edit–verify–submit policy with source-grounded graph navigation | 0 |
 | `protocol` | The workflow plus explicit editor arguments and recovery after repeated invocation errors | 0 |
-| `recover` | The protocol argument guidance plus a first-error heredoc fallback with a copyable call form | 0 |
+| `recover` | The protocol argument guidance plus a first-error inline Python heredoc fallback with a copyable call form | 0 |
 | `icl` | The workflow plus three short team-authored decision examples | 0 |
 | `reflect` | ICL plus failure-driven revision, task-local evidence summaries and an optional short playbook | 0 |
 
