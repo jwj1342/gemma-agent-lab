@@ -1,4 +1,4 @@
-"""Generate a private, offline L4x4 notebook for one real official-harness smoke task."""
+"""Generate a private, offline L4x4 notebook for an official-harness smoke task or a frozen task suite."""
 import argparse
 import base64
 import hashlib
@@ -74,12 +74,13 @@ def main():
         public_task = None
     if len(bundle) > 5 * 1024**2:
         raise ValueError('Inline runtime notebook only supports small baseline bundles')
+    task_ids = run.get('task_ids') or [run['task_id']]
     if hashlib.sha256(bundle).hexdigest() != run['agent_archive_sha256']:
         raise ValueError('Run bundle hash changed')
     official = json.loads((root / 'resource/notebooks/official/kernel-metadata.json').read_text())
     payload = {'bundle': base64.b64encode(bundle).decode(), 'bundle_sha256': run['agent_archive_sha256'],
                'archive_manifest': archive_manifest,
-               'public_task': public_task, 'public_fields': sorted(PUBLIC_FIELDS), 'task_id': run['task_id'],
+               'public_task': public_task, 'public_fields': sorted(PUBLIC_FIELDS), 'task_ids': task_ids,
                'git_revision': git_revision,
                'source_run_git_revision': run.get('git_revision') if args.run_dir else None,
                'scripts': {name: (root / 'scripts' / name).read_text() for name in
@@ -99,15 +100,17 @@ DATA = Path('/kaggle/input/competitions/gemma-4-developer-agent')
 WHEELS = Path('/kaggle/input/datasets/metric/gemma-4-developer-agent-wheelhouse')
 MODEL = Path('/kaggle/input/models/google/gemma-4/other/gemma-4-31b-it-qat-w4a16-ct/2')
 assert DATA.is_dir() and WHEELS.is_dir() and MODEL.is_dir(), 'Attach the competition, official wheelhouse, and model v2 inputs.'
+IDS = PAYLOAD['task_ids']
 with (DATA/'tasks.jsonl').open() as stream:
-    matches = [task for line in stream if line.strip()
-               for task in [json.loads(line)] if task['instance_id'] == PAYLOAD['task_id']]
-assert len(matches) == 1, 'Expected exactly one matching public task in Kaggle inputs.'
-public_task = {key: value for key, value in matches[0].items() if key in PAYLOAD['public_fields']}
+    mounted = {task['instance_id']: task for line in stream if line.strip() for task in [json.loads(line)]}
+assert all(task_id in mounted for task_id in IDS), 'Expected exactly one matching public task for each selected ID in Kaggle inputs.'
+public_tasks = [{key: value for key, value in mounted[task_id].items() if key in PAYLOAD['public_fields']}
+                for task_id in IDS]
 if PAYLOAD['public_task'] is not None:
-    assert json.loads(PAYLOAD['public_task']) == public_task, 'Frozen task differs from mounted competition data.'
-task_text = json.dumps(public_task) + '\\n'
-del matches
+    frozen = [json.loads(line) for line in PAYLOAD['public_task'].splitlines() if line.strip()]
+    assert frozen == public_tasks, 'Frozen task differs from mounted competition data.'
+task_text = ''.join(json.dumps(task) + '\\n' for task in public_tasks)
+del mounted
 assert not WORK.exists(), 'Runtime output already exists. Export it and start a fresh session before rerunning.'
 wheelhouse_module = {}
 exec(compile(PAYLOAD['scripts']['wheelhouse_runtime.py'], '<wheelhouse-runtime>', 'exec'), wheelhouse_module)
@@ -130,12 +133,12 @@ archive_manifest = dict(PAYLOAD['archive_manifest'], archive=str(WORK/'inputs/su
 (WORK/'inputs/submission.manifest.json').write_text(json.dumps(archive_manifest, indent=2) + '\\n')
 (WORK/'inputs/tasks.jsonl').write_text(task_text)
 (WORK/'run-manifest.json').write_text(json.dumps({
-    'task_id': PAYLOAD['task_id'], 'git_revision': PAYLOAD['git_revision'],
+    **({'task_id': IDS[0]} if len(IDS) == 1 else {'task_ids': IDS}), 'git_revision': PAYLOAD['git_revision'],
     'source_run_git_revision': PAYLOAD['source_run_git_revision'],
     'script_sha256': PAYLOAD['script_sha256'],
     'agent_archive_sha256': PAYLOAD['bundle_sha256'],
     'public_task_sha256': hashlib.sha256(task_text.encode()).hexdigest(),
-    'public_fields': sorted(public_task),
+    'public_fields': sorted(set().union(*public_tasks)),
     'model_handle': 'google/gemma-4/Other/gemma-4-31b-it-qat-w4a16-ct/2',
     'tensor_parallel_size': 4, 'gpu_memory_utilization': 0.90,
     'wheelhouse': wheelhouse_record,
@@ -201,26 +204,55 @@ print('Official patched wheels installed; helper scripts use fresh Python proces
 
 hardware=subprocess.check_output(['nvidia-smi','--query-gpu=name,memory.total,driver_version','--format=csv'],text=True)
 (WORK/'hardware.csv').write_text(hardware);print(hardware)
-run_script('verify_eval_run.py',['--run-dir',WORK],'checks','inputs.log')
+if len(IDS) == 1:
+    run_script('verify_eval_run.py',['--run-dir',WORK],'checks','inputs.log')
 run_script('validate_agent.py',['--agent-dir',AGENT,'--output',WORK/'compile/validation.json'],'compile','compile.log')
-common=['--task-id',PAYLOAD['task_id'],'--data-dir',DATA,'--agent-dir',AGENT]
-for source in ['empty','gold']:
-    run_script('evaluate_agent.py',['verify',*common,'--tasks',DATA/'tasks.jsonl','--patch-source',source,
-                                   '--results',WORK/'verify'/source],'verify',source+'.log')
-run_script('summarize_eval_smoke.py',['--run-dir',WORK,'--controls-only'],'checks','controls.log')
-run_script('evaluate_agent.py',['infer',*common,'--tasks',WORK/'inputs/tasks.jsonl',
-                               '--model',MODEL,'--tensor-parallel-size','4','--gpu-memory-utilization','0.90',
-                               '--results',WORK/'infer/results'],'infer','inference.log')
-run_script('evaluate_agent.py',['verify',*common,'--tasks',DATA/'tasks.jsonl','--patch-source','agent',
-                               '--prediction',WORK/'infer/prediction.json','--results',WORK/'verify/agent'],
-                               'verify','agent.log')
-run_script('summarize_eval_smoke.py',['--run-dir',WORK],'checks','summary.log')
+if len(IDS) == 1:
+    common=['--task-id',IDS[0],'--data-dir',DATA,'--agent-dir',AGENT]
+    for source in ['empty','gold']:
+        run_script('evaluate_agent.py',['verify',*common,'--tasks',DATA/'tasks.jsonl','--patch-source',source,
+                                       '--results',WORK/'verify'/source],'verify',source+'.log')
+    run_script('summarize_eval_smoke.py',['--run-dir',WORK,'--controls-only'],'checks','controls.log')
+    run_script('evaluate_agent.py',['infer',*common,'--tasks',WORK/'inputs/tasks.jsonl',
+                                   '--model',MODEL,'--tensor-parallel-size','4','--gpu-memory-utilization','0.90',
+                                   '--results',WORK/'infer/results'],'infer','inference.log')
+    run_script('evaluate_agent.py',['verify',*common,'--tasks',DATA/'tasks.jsonl','--patch-source','agent',
+                                   '--prediction',WORK/'infer/prediction.json','--results',WORK/'verify/agent'],
+                                   'verify','agent.log')
+    run_script('summarize_eval_smoke.py',['--run-dir',WORK],'checks','summary.log')
+else:
+    # The setup cell already checked the bundle hash and every frozen task against the mounted inputs.
+    selection=['--task-ids',*IDS,'--data-dir',DATA,'--agent-dir',AGENT]
+    for source in ['empty','gold']:
+        run_script('evaluate_agent.py',['verify',*selection,'--tasks',DATA/'tasks.jsonl','--patch-source',source,
+                                       '--results',WORK/'verify'/source],'verify',source+'.log')
+    run_script('evaluate_agent.py',['infer',*selection,'--tasks',WORK/'inputs/tasks.jsonl',
+                                   '--model',MODEL,'--tensor-parallel-size','4','--gpu-memory-utilization','0.90',
+                                   '--results',WORK/'infer/results'],'infer','inference.log')
+    run_script('evaluate_agent.py',['verify',*selection,'--tasks',DATA/'tasks.jsonl','--patch-source','agent',
+                                   '--prediction',WORK/'infer/prediction.json','--results',WORK/'verify/agent'],
+                                   'verify','agent.log')
+    def read(path):
+        return json.loads(path.read_text()) if path.exists() else {}
+    rows=[]
+    for task_id in IDS:
+        empty,gold,agent=(read(WORK/'verify'/phase/task_id/'result.json') for phase in ('empty','gold','agent'))
+        inference=read(WORK/'infer'/task_id/'results/result.json')
+        valid=empty.get('resolved') is False and gold.get('resolved') is True
+        rows.append({'task_id':task_id,'controls_valid':valid,'resolved':bool(agent.get('resolved')) if valid else None,
+                     'agent_seconds':inference.get('agent_seconds'),'tool_calls':inference.get('tool_calls'),
+                     'error':inference.get('error')})
+    valid=[row for row in rows if row['controls_valid']]
+    summary={'task_count':len(IDS),'valid_controls':len(valid),'resolved':sum(row['resolved'] for row in valid),
+             'tasks':rows,'scope':'Private L4x4 run of public tasks; not a competition score'}
+    (WORK/'cohort-summary.json').write_text(json.dumps(summary,indent=2)+'\\n')
+    print(json.dumps({key:summary[key] for key in ('task_count','valid_controls','resolved')}))
 Path('/kaggle/working/submission.zip').write_bytes(base64.b64decode(PAYLOAD['bundle']))
-print('One-task smoke complete; this notebook has NOT submitted a competition entry.')
+print('Run complete; this notebook has NOT submitted a competition entry.')
 '''
     nb = {'nbformat': 4, 'nbformat_minor': 4,
           'metadata': {'kernelspec': {'display_name': 'Python 3', 'language': 'python', 'name': 'python3'}},
-          'cells': [cell('markdown', '# Official L4 × 4 runtime smoke\nPrivate, offline, one public task. Not a competition submission or benchmark.\nThe official subprocess backend is used; Kaggle inputs remain mounted by the platform.\n\nWheelhouse mode: **'+args.wheelhouse_mode+'**; snapshot: **'+args.wheelhouse_snapshot+'**. Record mode permits unreviewed versions and fingerprints this run; it does not establish compatibility.'),
+          'cells': [cell('markdown', '# Official L4 × 4 runtime run\nPrivate, offline, '+(str(len(task_ids))+' public tasks' if len(task_ids) > 1 else 'one public task')+'. Not a competition submission or benchmark.\nThe official subprocess backend is used; Kaggle inputs remain mounted by the platform.\n\nWheelhouse mode: **'+args.wheelhouse_mode+'**; snapshot: **'+args.wheelhouse_snapshot+'**. Record mode permits unreviewed versions and fingerprints this run; it does not establish compatibility.'),
                     cell('code', 'PAYLOAD_B64 = '+repr(encoded)+'\n'+setup),
                     cell('code', install), cell('code', evaluate)]}
     args.output.mkdir(parents=True)
@@ -235,7 +267,7 @@ print('One-task smoke complete; this notebook has NOT submitted a competition en
                 'model_sources': ['google/gemma-4/Other/gemma-4-31b-it-qat-w4a16-ct/2']}
     (args.output / 'kernel-metadata.json').write_text(json.dumps(metadata, indent=2)+'\n')
     (args.output / 'preparation.json').write_text(json.dumps({
-        'task_id': run['task_id'], 'agent_archive_sha256': run['agent_archive_sha256'],
+        'task_ids': task_ids, 'agent_archive_sha256': run['agent_archive_sha256'],
         'git_revision': git_revision, 'source_run_git_revision': payload['source_run_git_revision'],
         'script_sha256': payload['script_sha256'], 'kernel': metadata['id'],
         'wheelhouse_mode': args.wheelhouse_mode, 'wheelhouse_snapshot': args.wheelhouse_snapshot,
@@ -244,7 +276,7 @@ print('One-task smoke complete; this notebook has NOT submitted a competition en
     }, indent=2) + '\n')
     for c in nb['cells']:
         if c['cell_type'] == 'code':compile(c['source'], '<notebook-cell>', 'exec')
-    print('Prepared', metadata['id'], 'task', run['task_id'], 'bundle', run['agent_archive_sha256'])
+    print('Prepared', metadata['id'], 'tasks', ','.join(task_ids), 'bundle', run['agent_archive_sha256'])
 
 
 if __name__ == '__main__':
