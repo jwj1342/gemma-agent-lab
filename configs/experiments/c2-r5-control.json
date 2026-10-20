@@ -1,0 +1,10 @@
+{
+  "source": "kaggle-l4-r5/c2/agent",
+  "release": "https://github.com/jwj1342/gemma-agent-lab-data/releases/tag/kaggle-l4-r5",
+  "files": {
+    "agent.yaml": "680799291cc7d156d06fb7bfb5577f683ccc0d555b00e8ddb662d577f9bfa5e4",
+    "configs/sampling.yaml": "571a934e89911734927533f1d36cbcc7b8d493592febe63b217e911cf7ed4926",
+    "eval_config.yaml": "916cf6cb34a6cc3de39837fa72cac681599b9ac2a3ee0b893adadfd36474c531",
+    "prompts/system.md": "454defe0a629786f524cee48a3d76fbdeefd6e1701f94a4ed958567216e3ea72"
+  }
+}
