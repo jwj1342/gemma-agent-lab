@@ -42,14 +42,14 @@ def save(path, value, receipt=False):
 async def run(args):
     import litellm
     import yaml
-    from adk_submission import VllmConfig, VllmServer, discover_adapters
+    from adk_submission import ModelRegistry, VllmConfig, VllmServer, discover_adapters
+    from google.adk.models.lite_llm import LiteLlm
     from swegemma.config import EvalConfig, ALLOWED_ADAPTER_EXTENSIONS
     from swegemma.context import SwegemmaContext
     from swegemma.evaluate import Evaluator
     from swegemma.harness.agent_runner import run_agent_sandbox
     from swegemma.harness.verification import verify_task, save_trace_artifact
     from swegemma.models import load_tasks
-    from swegemma.models.registry import setup_gemma_model_registry
     from google.adk.agents.context_cache_config import ContextCacheConfig
     from google.adk.apps._configs import EventsCompactionConfig
 
@@ -105,7 +105,10 @@ async def run(args):
             models = server.create_model_registry(aliases=['gemma-4-31b-it-qat-w4a16-ct'],
                                                    model_prefix='openai/', api_key='EMPTY')
         else:
-            models = setup_gemma_model_registry(api_base='http://127.0.0.1:8000/v1', api_key='EMPTY')
+            models = ModelRegistry()
+            models.register('gemma-4-31b-it-qat-w4a16-ct',
+                            LiteLlm(model='openai/gemma-4-31b-it-qat-w4a16-ct',
+                                    api_base='http://127.0.0.1:8000/v1', api_key='EMPTY', num_retries=5))
         for task in tasks:
             results = ((args.results.parent / task.instance_id / 'results') if args.mode == 'infer'
                        else args.results / task.instance_id) if batch else args.results
