@@ -24,6 +24,7 @@ to the unchanged baseline ZIP, not automatically to a new variant.
 | Experiment | Change | Evidence |
 | --- | --- | --- |
 | [Localization v1](experiments/localization-v1/agent.yaml) | Read-only full-tree skill with a BM25 fallback and a portable learned ranker/confidence gate; positive offline results, remote A/B pending | [Portable nested study](../docs/experiments/2026-10-08-localization-v1-portable.md), [full-tree benchmark](../docs/experiments/2026-10-08-localization-v1.md), and [legacy gate study](../docs/experiments/2026-10-08-localization-v1-large-learning.md) |
+| [Repair checkpoint v1](experiments/repair-checkpoint-v1/agent.yaml) | Read-only pre-submission skill for empty patches, protected edits, Python syntax, conflict markers, and debugger residue; CPU validation only, remote A/B pending | [Design and validation](../docs/experiments/2026-10-23-repair-checkpoint-skill.md) |
 | [LoRA trajectory v1](experiments/lora-trajectory-v1/agent.yaml) | `adapter: main_lora` on the coder and analyzer. PEFT config and offline rank check exist; **no trained weights**, so this experiment is not runnable or submittable yet | [PEFT/SFT/RL adjudication](../docs/experiments/2026-10-10-lora-sft-rl-adjudication.md) |
 
 ## Environment records
