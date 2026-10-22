@@ -4,7 +4,6 @@ Use inside an allocation. Model inference never mounts labels or the control cac
 """
 import argparse
 from datetime import datetime, timezone
-import fcntl
 import json
 import os
 from pathlib import Path
@@ -57,6 +56,8 @@ def tree_hash(root, index, force=False):
 
 
 def identify_assets(project, run, manifest, cache, force=False):
+    import fcntl
+
     data = project / 'data/raw/gemma-4-developer-agent'
     benchmark = read_json(run / 'inputs/benchmark.json')
     if sha256(data / 'tasks.jsonl') != benchmark['source_tasks_sha256']:
@@ -101,6 +102,8 @@ def identify_assets(project, run, manifest, cache, force=False):
 
 
 def main():
+    import fcntl
+
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--project-root', type=Path, required=True)
     parser.add_argument('--run-dir', type=Path, required=True)

@@ -2,6 +2,267 @@
 
 This file is the persistent handoff record for work performed in this repository. Read it before starting a task and update it before finishing.
 
+## Resume point (main and complete v31 are integrated on an isolated branch, 2026-10-23 01:58 Asia/Shanghai)
+
+**Read this first.** The remote integration selected on October 22 is complete on the isolated
+`integration/oct22-main-v31` worktree; the original dirty `fix/oct20-handoff-audit` worktree remains untouched.
+
+- Merge `8ef3c82` integrates `origin/main` while preserving the local adapter mount, deterministic and
+  size-bounded notebook packaging, flat Kaggle mounts, batch freezing, and the remote wheelhouse registry.
+- Merge `46bad80` integrates the complete `origin/chore/wheelhouse-v31` history. Fourteen of its fifteen staged
+  paths matched the branch exactly; `docs/experiments/README.md` is the additive index resolution.
+- The post-merge repair tracks the two previously untracked test-dependency helpers required by the committed
+  control-sweep generator, defers the POSIX-only `fcntl` import until the Trillium execution paths use it, and
+  repairs one root-relative work-log link. CPU verification passes: repository checks cover 76 Python files,
+  14 shell files, 32 configurations, 83 maintained Markdown files and five agent packages; 154 unit tests pass
+  with one expected skip because the gitignored reviewed-wheel payload is not present in this worktree.
+- No branch was pushed, no PR was opened, and no Kaggle kernel or competition submission was created. The
+  custom-tool workstream was recorded only by name in the October 22 handoff; its concrete deliverable was not
+  preserved and must be confirmed before implementation.
+
+## Resume point (the 2026-10-24 round is built: guarded lr probe + fixed 60-task confirmation, 2026-10-20 12:25 Asia/Shanghai)
+
+**Read this first.** Quota is still exhausted (**114,317.5 s of 108,000**, refresh 2026-10-24T00:00Z = 08:00
+Asia/Shanghai), so nothing ran on GPU today. The round that the refresh buys is prepared, tested on CPU, and
+push-ready; two of the three pieces are new instruments rather than new results.
+
+- **A guard now decides an arm before it spends the task budget.** `resource/l4_feasibility/collapse_guard.py`
+  reads the training loss trajectory and returns `collapsed` (minimum loss < 1.0; V9 measured 0.7323),
+  `flat` (movement < 0.5 % of the first loss; V1 measured 1.1e-3) or `proceed`. The generated kernel calls it
+  after training and before evaluation and, on a stop, writes `collapse-guard.json` plus a `summary.json` with
+  `"skipped": "<verdict>"` and `"measured_tasks": 0`, so a stop can never be read as a measured 0/24. A stopped
+  arm costs the measured training-plus-mount time (**≈1,380 s wall ≈ 2,800 quota-seconds**), against 22,000 for
+  the flat arm and 29,935 for the collapsed one. `tests/test_lora_eval_notebook.py` (13 tests) pins the rule on
+  the two measured trajectories and parses every generated code cell.
+- **V10 is built and verified field by field against V9**: `artifacts/tmp/lora-v10-tail3-r16-lr5e5/` (104,573
+  bytes, SHA-256 `49762f3bd123c6b7caf75f6571f05bb984b4dadcf1f6004316ef80453ed0fc3f`, kernel id
+  `junzhejiao/lora-v10-tail3-r16-lr5e5`, **not pushed**). Identical to V9 in tasks (the 24-task screening
+  sample), 41-wheel v31 digest map, agent bundle file hashes, evaluator and hook sources, dataset
+  (`e968a448…`), rank/alpha/seq/adapter; the intended differences are **lr 5e-5**, **`--max-updates 8` made
+  explicit** (the trainer already capped at one pass), and the guard. The v31 snapshot used has SHA-256
+  `e3a1a22e…`; the integration branch now contains it through `origin/chore/wheelhouse-v31`.
+- **The confirmation set is drawn and tracked**: `resource/manifests/confirmation-tasks-2026-10-24.json`
+  (SHA-256 `2da2b2b7…`), **60 tasks = 41 fastapi + 19 rich**, seed `lora-confirmation-2026-10-24`, ranked by
+  `SHA-256("<seed>:<task_id>")` with proportional quotas. Exclusions are enforced by
+  `scripts/select_confirmation_tasks.py`, not remembered: the 24 screening tasks **and the four tasks the
+  training targets came from** (`rich_3676`, `rich_3882`, `rich_3894`, `rich_4077`; derived with
+  `--trained-from`). **The first draw contained all four**, i.e. the earlier design would have confirmed on
+  memorisation; that is the substantive finding of this session. Measured-rate cost of the pair: **≈92,300
+  quota-seconds** (baseline 42,500 + adapter 49,800, both with the measured 1,827 s setup term), leaving
+  ≈15,700 for the learning-rate ladder. 19 tests in `tests/test_confirmation_tasks.py`.
+- **Local environment facts, measured** (they cost most of the session's wall time): the only working
+  interpreter is `C:\Users\32747\miniconda3\python.exe` (the two `python.exe` entries on PATH are 0-byte Store
+  stubs); `kaggle 2.2.4` loads with `PYTHONPATH=.pylibs`; a spawned process **cannot write** into `resource/`,
+  `runs/`, `scripts/` or `.git`, and **cannot write inside a `tempfile.mkdtemp` directory** (0o700 ACL), so
+  `scripts/check_repository.py` and most of `tests/` are blocked as documented — `artifacts/tmp/run_checks_lenient.py`
+  substitutes the temp allocator and runs both checks unchanged.
+- **Pre-existing, not caused by this session**: 18 `tests/test_l4_feasibility.py` errors because its `Args`
+  fixture has no `max_memory_mib` while `scripts/prepare_l4_feasibility_notebook.py` reads it (script modified
+  2026-10-18, test 2026-10-13); and `check_repository.py` fails on
+  `configs/experiments/localization-v1/skills/localization-v1/resources/gate.json`, which the working tree has
+  deleted. Both belong to the uncommitted backlog below.
+- **Next, on 2026-10-24**: `kaggle kernels push` the V10 directory, read `collapse-guard.json` first — `proceed`
+  earns the 24-task measurement, `flat` moves the next probe to lr 1e-4, `collapsed` to ≈3e-5. Only a
+  `proceed` arm with a real measurement unlocks the 60-task pair (baseline + adapter, `--task-ids` from the
+  manifest). Nothing is submitted; the adapter slot in `docs/experiments/2026-10-18-merge-plan.md` stays empty.
+- **Record**: `docs/experiments/2026-10-18-lora-improvement-program.md` §15 (new), `scripts/README.md`,
+  `resource/manifests/confirmation-tasks-2026-10-24.json`, `resource/l4_feasibility/collapse_guard.py`,
+  `scripts/select_confirmation_tasks.py`, `tests/test_lora_eval_notebook.py`,
+  `tests/test_confirmation_tasks.py`. Git: still uncommitted on `fix/lora-rank8-controlled` (4 behind /
+  26+ ahead of `origin/main`); committing the backlog remains an open follow-up.
+
+## Resume point (screening closed: no adapter beat the baseline, lr is the live axis, 2026-10-19 22:30 Asia/Shanghai)
+
+**Read this first.** Four arms are measured on the same fixed 24 tasks and the same frozen agent. No adapter
+beat no adapter, and the reason is now known for both ends of the learning-rate axis.
+
+- **Arms**: V0 baseline `9/24` (9,595.9 s), V0b byte-identical baseline repeat `10/24` (9,761.5 s), V1 adapter
+  (tail-3, r16/α32, 8 updates, lr 2e-5) `10/24` (10,976.8 s), **V9 adapter (same, lr 2e-4) `0/24`** (14,946.1 s).
+- **Noise floor, measured**: V0 vs V0b = 3 gains / 2 regressions (net +1, p = 1.0). V0b vs V1 = **0 discordant**:
+  the adapter's resolved set *is* the repeat's, so the "+1 for the adapter" was the baseline's own variance.
+- **V1 is numerically flat**: RMS(`ΔW`) = 4.6e-6 (base scale 1e-2), loss 2.0966 → 2.0989, 6 of 7 shared tasks
+  produced byte-identical patches. The serving path honours it (208 LoRA kernel files in the adapter arm's
+  evaluation Triton cache, 0 of 946 in the baseline), so the flatness is the weights, not the plumbing.
+- **V9 is destructive**: loss 2.10 → 0.73, then **0 tool calls on all 24 tasks**, every task timing out at
+  ~523 s. The 24 traces show a decode loop of the final-answer sentence (2,666× in the worst case, 13 of 24
+  hitting the 8,192-token cap) under `model_name: main_lora`. So the useful window is **between 2e-5 and 2e-4**.
+- **Config correction**: the trainer plans one pass over the dataset and only truncates with `--max-updates`, so
+  every arm ran **8 updates**; "32-update" variants were never possible with 8 records.
+- **Quota**: **114,317.5 s used of 108,000 s**, i.e. **6,317.5 s over**, refresh 2026-10-24T00:00Z. V9 cost
+  29,935.3 s because a collapsed agent maximises runtime. Nothing further can run this month.
+- **Record**: `runs/2026-10-19-lora-screening/` (`REPORT.md`, `all-arms.json`, `noise-floor.json`, per-arm
+  summaries/stdout, diagnostics, adapter weight norms, five notebooks) and
+  `docs/experiments/2026-10-18-lora-improvement-program.md` §12-§14 plus §13 for the confirmation design.
+- **Next, after 2026-10-24**: one arm at **lr 5e-5** (check its loss lands between 2.10 and 0.73), then a
+  60-task paired confirmation (Option A in §13, ≈85,000 quota-seconds) only if that arm shows something.
+  The adapter slot in `docs/experiments/2026-10-18-merge-plan.md` stays empty until then.
+
+## Resume point (noise floor measured: the adapter did not beat a re-run of itself, 2026-10-19 18:15 Asia/Shanghai)
+
+**Read this first.** The screening round has three measured arms and a verdict. A byte-identical re-run of the
+no-adapter baseline flips as many tasks as the adapter was credited with, and the adapter arm's resolved set
+is identical to that re-run.
+
+- **Arms** (identical agent bundle, task ids, wheelhouse v31, seed 201, budget 8 min / 28 calls): V0 baseline
+  `9/24` (9,595.9 s wall), V0b baseline repeat `10/24` (9,761.5 s), V1 adapter (tail-3, r16/α32, 8 updates,
+  lr 2e-5) `10/24` (10,976.8 s).
+- **Paired**: V0 vs V1 = 3 gains / 2 regressions (net +1); **V0 vs V0b = 3 gains / 2 regressions (net +1,
+  p = 1.0)**, i.e. the adapter's whole credit is baseline variance; **V0b vs V1 = 0 discordant**, both 10/24.
+  Record: `runs/2026-10-19-lora-screening/{REPORT.md,noise-floor.json,report.json,paired-table.md}` and
+  `docs/experiments/2026-10-18-lora-improvement-program.md` §12.
+- **Why the adapter could not have mattered**: measured on the exported file, RMS(`B`) = 8.2e-5 and
+  RMS(`ΔW`) = 4.6e-6 against base weight scales of 1e-2; loss flat at 2.0966 → 2.0989 over 8 AdamW steps at
+  lr 2e-5; six of seven shared tasks produced byte-identical patches. The serving path is proven to honour
+  the adapter (208 LoRA kernel files in the adapter arm's evaluation Triton cache, 0 of 946 in the baseline).
+- **Two differences do replicate**: the adapter arm is 10-13 % slower per task (KV-cache cost) and it writes
+  a patch on 21/24 tasks versus 19/24 in both baselines — the second resolves nothing extra.
+- **In flight (as of this entry; measured later in the 22:30 entry)**: `junzhejiao/lora-v9-tail3-r16-lr2e4`
+  (pushed 18:06 local) — same arm at lr 2e-4, launched with `--max-updates 16`, but the trainer caps every run
+  at 8 updates, so the real change was 10× the learning rate. A 32-update variant was generated but not
+  funded.
+- **Quota**: 84,382.2 s of 108,000 s used, **23,617.8 s remaining**, refresh 2026-10-24T00:00Z. V9 is
+  expected to spend ≈22,200 s of it, leaving ≈1,400 s of margin.
+- **Next**: read V9. Whatever it shows, the 24-task screening set can only rank: ±2 is measured noise, so a
+  confirmation needs ~50-60 tasks per arm (≈38,000-45,000 quota-seconds for the pair) after the 2026-10-24
+  refresh, or the Trillium H100 runtime, which spends no Kaggle quota. A 99-task paired confirmation
+  (≈126,000 quota-seconds) cannot fit one monthly allowance.
+
+## Resume point (LoRA programme started: M1 carrier proven, M2 screening running, 2026-10-18 21:20 Asia/Shanghai)
+
+**Read this first.** The three-part LoRA request is in progress: part 1 (submission theory) is written, part 2
+(the experiment programme) has a working carrier and a screening run in flight, part 3 (merge plan) is written
+with the adapter slot left conditional.
+
+- **Carrier**: `scripts/prepare_lora_eval_notebook.py` → one private L4 kernel that verifies the v31
+  wheelhouse, installs the stack, unpacks the budget-fit agent, runs the batch evaluator (one vLLM server,
+  one sandbox per task) and grades every patch with the official verifier. No adapter transport is needed;
+  `--train-dataset` makes the same kernel train before evaluating.
+- **M1 measured**: 2/3 resolved on three rich tasks with the 4-minute configuration; two timeouts exposed the
+  prompt-versus-config budget mismatch, so screening uses the submission budget (8 minutes, 28 calls).
+- **M2 running**: `junzhejiao/lora-m2-budgetfit-screening`, no-adapter baseline on the fixed 24-task sample.
+- **Quota**: 8,947.6 s of 108,000 s used, 99,052.4 s remaining; refresh 2026-10-24.
+- **Next**: read M2, then M3 (V1 tail-3 adapter trained and evaluated in one kernel), then the variant sweep;
+  report the best adapter with its data so the user can decide on a submission.
+
+## Resume point (task board executed, budget-fit adapter produced, 2026-10-18 19:35 Asia/Shanghai)
+
+**Read this first.** The October 18 task board is executed except the one item that needs a carrier this
+workspace does not have: the task-level paired evaluation of a LoRA adapter.
+
+- **GitHub state after this round.** PR #16 carries `Closes #13` (verified in the live body) and the five
+  issue #13 deliverables remain complete; its only gate is the requested independent review from `liaodid`.
+  PR #18 is approved by `KaltistEsperanta` at `c75571a`. PR #23 is approved by this account at `b9c9c4d`
+  (with two recorded follow-ups: branch is behind `main`, and the v31 lock moves seven non-wheelhouse
+  packages) and already had `shizongniji`'s approval. PR #25 got a COMMENT review: one requested change, the
+  new "12B smoke resolved 1/10" sentence has no run record in the repository. PR #8 is unchanged since
+  2026-10-12 (`mergeable_state: dirty`, base `3054da8`, no reviews, no CI on its head), so there was nothing
+  to re-review; it needs its author to rebase.
+- **Data.** `trajectories-r3` is downloaded and audited: 31/31 index rows, 31/31 trace hashes, 31/31
+  verifier-resolved patches, 874 steps, 704 tool calls, 0 empty messages/observations. The audit comment is
+  on issue #4. The budget-fit subset (18 trajectories) has **no `rich_3777`** trajectory and no graph-tool
+  calls at all; `run_command` is 60.8% of its calls.
+- **No rank-32 model exists and no LoRA has ever been submitted.** Kernel
+  `junzhejiao/gemma-4-rank32-bounded-retry-october-18` (2026-10-18 09:40Z) completed with
+  `updates_completed: 0`, `adapter: null`, because it was launched with `--session-limit 1500` while the
+  device-map phase advertises a 1500 s need. The newest competition submission (2026-10-18 00:00Z) is
+  `max_tool_calls 28 -> 50`, **no LoRA**, and was still PENDING when checked; the score move this week is
+  0.18 -> 0.17, i.e. not an improvement.
+- **Training produced a budget-fit trajectory adapter, and it is a starting point only.**
+  `junzhejiao/budgetfit-task-tail-rank16-v5` completed 8/8 updates at `--seq-len 2048` and exported 820
+  tensors / 244,982,352 bytes / SHA256 `f9db770d…`, every key matching the served naming scheme
+  (`artifacts/tmp/budgetfit-v5-out/l4-feasibility/adapter/`). Three larger-sequence runs OOM'd, and the
+  measurements fix the envelope: ~20.0 GiB peak per card, AdamW state allocated on the first step, and the
+  fixed harness prompt alone (2,631-3,654 tokens) cannot share a card with a completion. Consequences:
+  (a) the successful adapter trained on the task statement only, not the full system+task prompt;
+  (b) its completion is a text rendering of the loop tail, not native tool calls;
+  (c) the fix for the full prompt is a training-OOM retry with `device_map: auto` plus host-RAM offload,
+  because `balanced` ignores a lowered `--max-memory-mib` and the CPU fallback only fires on load failure.
+  Encoding was proven without a model load first: at the default 2048 every record is rejected, at 8192 all
+  10 encode (mean prompt 3,213.6, mean target 1,683.5 tokens).
+- **The blocker to read before promising a paired result.** The adapter is 244,982,352 bytes; a compact
+  evaluation notebook is limited to 1 MB; the dataset upload path posts to `www.googleapis.com` which is
+  unreachable here. So the adapter can reach Kaggle inside a *competition submission ZIP* (that path works)
+  but not inside an evaluation kernel. The task-level paired 2x2 needs the official runtime on Trillium,
+  which this workspace has no credentials for.
+- **Two environment traps measured today.** `build_metadata()` emits `machine_shape: NvidiaL4` even with
+  `--cpu-only`, so a "free CPU preflight" is scheduled on accelerators. Seven kernels (2 preflight, 5
+  training) took quota from 0 to **5,069.478 s of 108,000 s**; the four failed attempts cost about four times
+  the one success because every attempt pays a 250-500 s weight load before failing. And the sandbox denies
+  writes to `runs/`, `scripts/` and `.git` for spawned processes; the agent file tools still write, so
+  generated reports go through them while subprocess output goes to `artifacts/tmp/`.
+
+## Resume point (rank ladder at rung 1, quota exhausted, 2026-10-13 24:45 Asia/Shanghai)
+
+**Read this first.** The rank ladder has started and is paused by quota, not by capability. **Rank 16 is
+trained, validated and downloaded; rank 32 failed at the base load; rank 64 was never attempted.**
+
+- **What exists now.** `junzhejiao/gemma4-lora-rank16-sft-v3` trained 32 updates of a rank-16 /
+  alpha-32 LoRA on the required `gemma-4-31b-it-qat-w4a16-ct` base, dequantised to BF16 and dispatched
+  across four L4s by one process, over 32 real SFT records. The adapter is 820 tensors,
+  244,982,352 bytes, SHA256 `bec7346f3e820873105545bf473909780c52940bf71bcbd21adec9afb8aa9e65`,
+  validated 820/820 against the served naming scheme, layers 0-59, all seven projections, and is
+  downloaded at `runs/2026-10-13-lora-rank16-v3/output/l4-feasibility/adapter/`. Session wall 468.4 s,
+  charged 1,743.06 quota-seconds.
+- **Quota is exhausted for this workstream: 787.753 s of 108,000 s remain** (about 394 s of L4x4 wall
+  time) and the refresh is **2026-10-17T00:00Z**. One rung costs about 1,750 quota-seconds and the
+  failed rank-32 load alone cost 2,570.542 s, so nothing further can be trained before the refresh
+  without a different platform (Trillium still needs credentials this workspace does not have).
+- **The first thing to fix in the next attempt**, because it is the only measured cause of the rank-32
+  failure: raise `--load-budget` above 600 s. The identical placement loaded in 196-217 s on five
+  earlier runs and then exceeded 600 s once, so the cap is too close to the measured worst case; the
+  worker's own cap was the binding limit while its subprocess timeout was 1,500 s.
+- **How to run a rung without repeating this session's mistakes.**
+  `scripts/prepare_l4_feasibility_notebook.py --dataset artifacts/sft-public-v1.jsonl --rank N
+  --alpha 2N --max-updates 32 --skip-probe-routes --skip-serving --output runs/<date>-lora-rank<N>-v1`,
+  then push the directory with the kaggle CLI. Add `--dataset-check --cpu-only --dataset-check
+  /kaggle/working/l4-feasibility/dataset-check.json` for a **free CPU preflight** of the encoding on the
+  real tokenizer before spending a GPU second; that preflight is what caught the second encoding defect.
+  Generated cells render placeholders with `python_literal` (Python, not JSON) and use the
+  `@@@NAME@@@` sentinel -- do not reintroduce `@@NAME@@` or `json.dumps` for booleans.
+- **Costs and pitfalls measured this session**: `kernels_output` downloads through
+  `www.kaggleusercontent.com`, which intermittently fails to resolve here while `api.kaggle.com` answers
+  -- use `scripts/fetch_kernel_log.py` when the notebook prints its summary. The kaggle CLI lives only in
+  `C:\Users\32747\miniconda3\envs\kaggle\python.exe`, `bounded_connect.py -m scripts.X` needs
+  `PYTHONPATH=E:\Desktop\CodingAI`, and pytest must be installed from the reviewed wheels into
+  `artifacts/tmp/pylibs`.
+- **What is still missing for a verdict**: no paired evaluation has been run for any rung, and the
+  control-valid set is 99 tasks (see `resource/manifests/control-valid-tasks-2026-10-13-final.json`), so
+  once quota returns the ladder can be evaluated against a task set that already clears the 10-point
+  power bar.
+
+## Resume point (instrument cleared, 2026-10-13 21:30 Asia/Shanghai)
+
+**Read this first.** The task-set constraint that has blocked every LoRA efficacy claim is gone:
+the control-valid set is now **99 tasks (fastapi 60, rich 39)**, past the **78** that a 10-point
+paired gain needs at 80 % power. The measurement is the `junzhejiao/gemma4-control-fastapi-starlette`
+sweep: **28 of 30 usable** where the same 28 fastapi tasks had all failed hours earlier. The
+recovery is the starlette pin the notebook measures for itself (1.6.0 rejects, 1.3.1 rejects,
+0.52.1 accepts), so the FastAPI collection class is closed by measurement rather than assumption.
+
+What changed since the previous resume point:
+
+- The union lives in `runs/2026-10-13-control-valid-set.json` (working copy) and
+  `resource/manifests/control-valid-tasks-2026-10-13-final.json` (tracked, 99 tasks, supersedes the
+  73-task manifest). `artifacts/tmp/union_valid_tasks.py` now discovers every executed sweep by
+  globbing `runs/**/control-sweep-report.json`, so a new sweep needs no source-list edit.
+- The prepared sweep notebook was regenerated with the committed generator and reproduces
+  byte-for-byte (`notebook_sha256 de25354d…`); the earlier file, which differed only in the
+  declarative `test_deps.manifest_path` string, is kept as `notebook-previous.ipynb`. Two
+  environment facts cost time here: the kaggle CLI lives in the `kaggle` conda env
+  (`C:\Users\32747\miniconda3\envs\kaggle\python.exe`), and `bounded_connect -m scripts.X` needs
+  `PYTHONPATH=E:\Desktop\CodingAI`. Local pytest is not installed anywhere; install it from the
+  reviewed wheels into `artifacts/tmp/pylibs` (`--no-index --no-deps --target`) and add
+  `artifacts/tmp/pylibs;.pylibs` to `PYTHONPATH`.
+- **Compute is now the binding constraint, not the instrument.** GPU quota is unchanged at
+  **5,306.051 s of 108,000 s**, refreshing **2026-10-17T00:00Z** (verified this session), i.e. about
+  **2,653 s of L4x4 wall time**. At the recorded agent cost (~119 s baseline, ~171 s portable for
+  `rich_3675` on four L4s) a 99-task paired run needs roughly 8-10 GPU hours, and even 40 tasks
+  need far more than 2,653 s. A full paired evaluation therefore waits for the refresh or another
+  platform; the CPU sweeps in this session spent no quota.
+- Still human-only: the 53 tasks that remain invalid (11 fastapi exit-1-both-arms after the pin,
+  9 rich, 13 requests, 1 httpx) would need a per-class measurement like the starlette one before
+  a 5-point effect becomes detectable, and PR #8 still needs its rebase.
+
 ## Resume point (L4 training feasibility, 2026-10-12 20:35 Asia/Shanghai)
 
 **Read this first if you are resuming the four-L4 training work (issue #13). The acceptance criterion is
@@ -196,15 +457,105 @@ $env:HF_HOME     = 'E:\Desktop\CodingAI\artifacts\hf-cache'   # datasets refuses
 
 ## Current project state
 
-- October 12 21:04 completion audit: issue #13's technical acceptance is met by local commits
-  `650f306` and `7356a80`, but the collaboration handoff is not complete. `git ls-remote` confirms
-  PR #8 and `origin/experiment/swe-lora-v1` still point to `ccfcff0`; the two review follow-ups in
-  `docs/experiments/2026-10-12-pr8-review.md` (strict handling for silently dropped terminal answers
-  and deterministic support for sharded base-weight hashes) are therefore not upstream. The L4 branch
-  is also not pushed, issue #13 has not been updated from this checkout, and no independent teammate
-  approval is recorded here. The private GitHub pages return 404 without browser authentication, so
-  the merge/review state remains externally unverified. Local re-verification passed all 53 L4 tests
-  with the documented dependency path and the notebook generator reports `status: ok`.
+- October 23 integration state: the isolated branch `integration/oct22-main-v31` contains `origin/main` through
+  merge `8ef3c82` and the complete v31 branch through merge `46bad80`. The original dirty
+  `fix/oct20-handoff-audit` worktree remains untouched. The combined tree preserves the remote wheelhouse
+  registry plus the local adapter, compressed-payload, deterministic-ZIP, batch-freeze, flat-mount and
+  validation behavior. A follow-up repair tracks the control-sweep dependency helpers and permits the
+  POSIX-backed evaluation module's pure functions to be imported on Windows. All local CPU gates pass
+  (154 tests, one expected artifact-dependent skip); nothing has been pushed and no PR exists yet. The next
+  workstream is custom tooling, but the saved handoff contains no concrete acceptance criteria beyond the
+  organizer constraint that custom scripts ship as sandbox skills rather than host-registry tools.
+
+- October 22: the October 24 LoRA round remains ready but cannot start early. A fresh raw quota check at
+  `2026-10-22T04:15:41Z` reported 114,317.472 of 108,000 GPU seconds used, zero reserved, zero remaining,
+  and the same refresh at `2026-10-24T00:00:00Z` (08:00 Asia/Shanghai). The local V10 notebook still has
+  the recorded SHA-256 `49762f3bd123c6b7caf75f6571f05bb984b4dadcf1f6004316ef80453ed0fc3f`.
+  All 184 CPU tests now pass in the current working tree, including 44 focused guard/confirmation tests;
+  `scripts/check_repository.py` also exits successfully, with shell syntax checks unavailable on this
+  Windows host because Bash is absent. No kernel was pushed and no competition submission was created.
+  Resume by rechecking quota after 08:00 on October 24, then push V10 and read `collapse-guard.json` before
+  deciding whether any evaluation or confirmation arm is allowed to run.
+
+- October 20: quota is 114,317.5 s of 108,000 until 2026-10-24T00:00Z, so the round is prepared rather than
+  run. Three things are now push-ready: the **collapse guard** (a flat or collapsed arm is stopped from its own
+  training loss for ≈2,800 quota-seconds instead of 22,000-30,000), the **V10 lr 5e-5 notebook**
+  (`artifacts/tmp/lora-v10-tail3-r16-lr5e5`, digest-verified against V9, private, not pushed), and the
+  **fixed 60-task confirmation set** (`resource/manifests/confirmation-tasks-2026-10-24.json`), which excludes
+  both the screening tasks and the four tasks the training targets came from. Nothing has been submitted and no
+  adapter has beaten the baseline: the screening verdict of October 19 stands (V1's 10/24 is the repeated
+  baseline's resolved set, V9 collapsed to 0/24). The 2026-10-13→20 backlog is still uncommitted on
+  `fix/lora-rank8-controlled`, and two pre-existing failures (a stale `max_memory_mib` test fixture, a deleted
+  localization `gate.json`) block the full CPU suite locally.
+
+- October 18 continuation: authenticated GitHub identity is `KaltistEsperanta`; current task
+  sources are archived in `runs/2026-10-18-task-audit/`. The E-drive memo requires rank-32
+  feasibility, leakage-free paired evaluation, and recommendations before selecting another research
+  direction; issue #24 implementation remains deferred. Fresh quota is 108,000 GPU seconds with
+  zero used/reserved, refreshing October 24. New assignments include PR #18 review, private
+  `trajectories-r3` access, and a bounded budget-fit trajectory LoRA pilot. Requested reviews also
+  include #23 and #25. Issue #13's technical work is complete; add its closing reference to PR #16.
+  The October 16 meeting's rank-16 gain/rank-32 progress claims are not supported by local evidence.
+  Execute items sequentially and record each completion below; do not treat this inventory as execution.
+
+- October 14 23:43: live GitHub API inspection confirms the user's direct task in team tracker #7,
+  issue #13, is technically complete: all five checkboxes are checked, PR #16 is mergeable, its
+  `Repository checks` job passes, and the evidence comment is present. The issue remains open only
+  because PR #16 has no reviews and branch protection still requires the requested independent review
+  from `liaodid`; the author cannot legitimately complete that step. PR #8 remains a separate dirty
+  research PR. Issue #24 records a real rules conflict: Kaggle Staff explicitly announced that the 31B,
+  12B, E4B, and E2B QAT W4A16 variants are allowed with one shared variant per submission, while the
+  competition Overview still says only 31B. This team can archive the announcement and implement the
+  validator/documentation/runtime changes, but only the organizer can reconcile the official page; a
+  12B end-to-end result additionally needs the model weights, v31 runtime, and H100 or L4 compute.
+
+- October 14 01:24: fetched and pruned `origin`; remote `main` remains
+  `625a597661848058f4398850e7a3f8423a4083b8`, and its hosted `Repository checks` job passes. Local
+  `main` was merged with `origin/main` in the clean auxiliary worktree `artifacts/main-sync` and now
+  points to `a809b6c`, two commits ahead only because it retains the Windows-safe filename rename and
+  the merge commit; nothing was pushed. The dirty active branch was not merged: a dry merge reports
+  content conflicts in `docs/README.md`, `resource/manifests/README.md`,
+  `scripts/prepare_kaggle_runtime.py`, and `tests/test_kaggle_preparation.py`, so resolution awaits the
+  user's decision. PR #16's exact remote head still passes 53 L4 tests (3 documented dependency skips),
+  notebook generation, and real rank-16 adapter validation. No verified capability lift exists on the
+  remote: PR #20 is a promising but unmatched prompt signal, PR #22 is confounded, and PR #8 does not
+  improve clean/resolved counts. PR #21 does provide a clear wheelhouse/API compatibility recovery.
+
+- October 14 01:14: **all five technical tasks in GitHub issue #13 are complete and checked off.**
+  PR #16 now includes the missing efficiency/agent-training survey and a dependency-free safetensors
+  header check that repairs its earlier CI failure; commit `1fa3e28` is pushed and GitHub `Repository
+  checks` run `38436904198` passed. The issue has an evidence mapping comment and remains open only for
+  the project-policy handoff: `liaodid` has been requested for the required independent review, after
+  which PR #16 can merge. PR #8 remains a separate dirty/rebase collaboration item; its two issue #13
+  review fixes were already merged into its head through PR #15 (`bd9b167`). No GPU run or competition
+  submission was made in this audit.
+
+- October 13 24:45: **the rank ladder has started and is paused by quota.** Rank 16 trained 32 updates on
+  32 real SFT records with the required QAT base dispatched across four L4s, exported an 820-tensor
+  adapter (244,982,352 bytes, SHA256 `bec7346f…`, validated 820/820 on the served scheme) and the file is
+  downloaded locally; the CPU preflight proves all 116 records encode on the real tokenizer, 115
+  supervised. Rank 32 failed at the base load after 600 s and consumed **2,570.542 quota-seconds**, so
+  **787.753 s of 108,000 s remain** against ~1,750 s per rung and a 2026-10-17T00:00Z refresh. Rank 64 was
+  never attempted and **no paired evaluation has been run for any rung**, so the ladder has a trained
+  artifact and no capability claim. Supporting changes: `python_literal`/`@@@NAME@@@` placeholder
+  rendering, dataset-driven device-map training, `--dataset-check` CPU preflight, and
+  `scripts/fetch_kernel_log.py` for when `kaggleusercontent.com` does not resolve. Full suite 131 tests.
+
+- October 13 21:30: **the control-valid task set is 99 tasks (fastapi 60, rich 39)**, past the 78 that
+  a 10-point paired gain needs at 80 % power, so the instrument is no longer the constraint. The
+  decisive measurement is the CPU-only sweep `junzhejiao/gemma4-control-fastapi-starlette` version 1
+  (28 of 30 usable against 28 of 30 failing in the same-task batch that morning), recovered by
+  pinning starlette to the newest wheelhouse wheel that accepts `Router(on_startup=...)` -- measured
+  1.6.0 rejects, 1.3.1 rejects, 0.52.1 accepts. Tracked in
+  `resource/manifests/control-valid-tasks-2026-10-13-final.json`; the earlier 73-task manifest is kept
+  as history. Quota is unchanged at **5,306.051 s of 108,000 s** and refreshes 2026-10-17T00:00Z, so
+  about 2,653 s of L4x4 wall time remain against roughly 8-10 GPU hours for a 99-task paired run:
+  **compute is now the binding constraint**, and no adapter has been trained yet. Full offline suite
+  passes (116 tests, 3 subtests).
+
+- The October 12 completion audit is superseded by the October 14 entry above: both review fixes are
+  upstream in PR #8's head through merged PR #15, the L4 branch is published as PR #16, issue #13 is
+  updated, and authenticated GitHub state is verified. Independent approval and merge remain external.
 
 - October 12 20:35 issue #13 (four-L4 training feasibility): **the acceptance criterion is met.** Run 11
   (kernel `junzhejiao/gemma-4-four-l4-lora-training-feasibility-v5` version 7) trained a replicated LoRA
@@ -234,14 +585,21 @@ $env:HF_HOME     = 'E:\Desktop\CodingAI\artifacts\hf-cache'   # datasets refuses
 
 - October 11 19:55 readiness audit: random rank-8/rank-32 serving effects are recorded, but no trained adapter exists. Real training is blocked by an executed generated-config type error and unvalidated loader/environment integration. Holdout filtering, trajectory provenance, and explicit paired-run identities need fixes before efficacy claims. The 116 training records overlap three historical evaluation tasks. See `docs/experiments/2026-10-11-lora-readiness-audit.md`; implementation remains unchanged after this advisory task.
 
-- The canonical remote is `origin` at `https://github.com/jwj1342/gemma-agent-lab.git`; future references to the project remote mean this repository unless the user says otherwise. `origin/main` is `3054da842f794c854f438a5478ea9437b119e9bc`.
-- Local `main` is based directly on `origin/main` and is one compatibility commit ahead: `88823c0f556874608cd993cd37ba32d94df7bbd8` renames one leaderboard CSV whose colon-containing timestamp cannot be checked out on Windows. The blob content is unchanged and nothing has been pushed.
-- Active work is on `fix/lora-rank8-controlled` at `71027b4`, with the earlier Localization v1 migration
+- The canonical remote is `origin` at `https://github.com/jwj1342/gemma-agent-lab.git`; future references
+  to the project remote mean this repository unless the user says otherwise. `origin/main` is
+  `625a597661848058f4398850e7a3f8423a4083b8`.
+- Local `main` has incorporated `origin/main` through merge commit
+  `a809b6cee4cae74624948be08be8db88793f0f11` and is two commits ahead: the other local commit,
+  `88823c0f556874608cd993cd37ba32d94df7bbd8`, renames one leaderboard CSV whose colon-containing
+  timestamp cannot be checked out on Windows. The blob content is unchanged and nothing has been
+  pushed.
+- Active work is on `fix/oct20-handoff-audit` at `89ee95f`, with the earlier Localization v1 migration
   preserved and unrelated localization edits still in the working tree. The branch is local-only and holds
   the *uncurated* copies of the L4 documents. The curated task branch
-  `experiment/four-l4-lora-feasibility` (`c0648f7`) **is published on `origin`**, and
-  `fix/pr8-contracts-v2` (`bd9b167`) is published too; opening the pull request is the remaining human
-  step. The remote PR #8 head remains `ccfcff0`.
+  `experiment/four-l4-lora-feasibility` (`1fa3e28`) is published on `origin` as PR #16 with passing CI;
+  `liaodid` has been requested for review. `fix/pr8-contracts-v2` (`bd9b167`) merged into
+  `experiment/swe-lora-v1` through PR #15, so PR #8 now points to `bd9b167` but remains dirty against
+  `main` and needs its own rebase/review decision.
 - October 10 paired L4x4 attempt (budget exhausted at 10 kernel pushes, one further push rejected by the platform): exactly one task pair completed, `rich_3675`, with valid controls in both arms; both arms left it unresolved with the **byte-identical patch**, and the portable arm's trace shows the `localization-v1` skill was **never invoked**, at +44% agent time. Predeclared acceptance is unmet (0.0 points, p = 1.0, n = 1); no promotion. The organisers **republished the official wheelhouse dataset in place on 2026-10-09T14:43Z** (`swegemma` 0.2.10 → 0.2.11, which deleted `swegemma.models.registry`, plus changed `adk_eval_core`/`adk_submission` bytes), so the frozen runner cannot import on the served wheelhouse; the reviewed wheels were restored from the private publisher kernel `junzhejiao/gemma4-pinned-wheels` v1, hash-verified against the frozen manifest. Evidence and the full ledger are in `runs/2026-10-10-localization-ab/{REPORT.md,ab-summary.json}`. `rich_3676` and `rich_3930` remain unmeasured because the pinned-wheel kernel-source mount was missing for both `rich_3676` baseline pushes.
 - October 9 continuation: the user authorized private Kaggle trials and iterative v1 changes until a meaningful improvement is demonstrated. All 46 CPU tests passed after correcting Windows-specific expectations; 114 frozen cases and 18 notebooks passed integrity verification. The first private BM25 pilot uploaded successfully after compressing its notebook payload, but version 1 failed its input mount-path check before inference. A CPU-only input-layout probe is underway. No repair improvement has been measured or candidate promoted. Local checkpoint `ef5e199` contains the prior preserved module; continuation changes are in the working tree.
 - The October 8 preservation handoff is in `docs/localization-handoff.md`, linked from the root README. It explains baseline localization, the implemented optional module, offline gains, rollback, local artifacts, and pending manual remote confirmation; no background GPU work was started.
@@ -286,6 +644,954 @@ $env:HF_HOME     = 'E:\Desktop\CodingAI\artifacts\hf-cache'   # datasets refuses
 - Programming v1 is implemented as a prompt-only planning-gate experiment with localization and all runtime settings fixed. Its paired smoke test found no resolution gain, only 1/2 complete plan compliance, higher latency and edit churn, and fewer failed tool calls; keep it as an ablation and retain retrieval v1 as the control.
 
 ## Work history
+
+### 2026-10-23 01:58 (Asia/Shanghai) - Complete isolated main/v31 integration and restore the CPU gate
+
+- Objective: resume the approved October 22 A1 integration from `E:\备忘录.txt`, complete both merges without
+  changing the original dirty worktree, run the CPU checks, and then recover the scope of the queued custom-tool
+  workstream.
+- Continued the in-progress merge whose `MERGE_HEAD` was `bae1443`. All conflicts were already resolved;
+  14 staged paths matched `origin/chore/wheelhouse-v31` byte-for-byte and the only differing path,
+  `docs/experiments/README.md`, retained the additive index union. The merge was committed as `46bad80` after
+  the earlier `origin/main` merge `8ef3c82`.
+- The first Windows repository-check attempt failed because Python used GBK and Bash was absent from `PATH`;
+  rerunning with UTF-8 mode and the verified Git Bash path exposed one real invalid root-relative link, which
+  was repaired. The initial unit run then exposed two integration gaps: the committed control-sweep generator
+  imported an untracked helper, and `run_eval_suite.py` imported POSIX-only `fcntl` at module import time.
+- Added the existing `scripts/test_dependency_payload.py` and its documented builder
+  `scripts/build_test_dependency_set.py` from the preserved worktree. Moved `fcntl` imports to the two Slurm
+  execution paths so Linux locking semantics are unchanged while Windows can collect and test `indexed_hash`.
+- Verification: both focused suites passed (7 control-sweep tests with one artifact-dependent skip, and 9
+  evaluation-suite tests); the full suite passed 154 tests with that same skip; `scripts/check_repository.py`
+  passed over 76 Python, 14 shell, 32 configuration, 83 Markdown and five agent-package checks; and
+  `git diff --cached --check` passed after normalizing the two new files' EOFs.
+- Changed after the merge: `WORKLOG.md`, `scripts/run_eval_suite.py`, and new
+  `scripts/build_test_dependency_set.py` / `scripts/test_dependency_payload.py`. No push, PR, Kaggle run, GPU
+  run or competition submission was performed. Remaining follow-up: ask the user to restate the custom-tool
+  deliverable because the surviving handoff records only the workstream name.
+
+### 2026-10-22 12:23 (Asia/Shanghai) - Fetched remote state and audited integration conflicts; merge awaits user choice
+
+- Objective: fetch current remote work, identify every conflict with the local branch and dirty working tree,
+  propose resolutions, and stop before merging so the user can choose. The custom-tool workstream remains next
+  after the integration decision; no implementation of that second workstream started in this audit.
+- `git fetch --prune origin` completed. It removed the stale remote-tracking ref
+  `origin/experiment/heredoc-prompt-v9`; `origin/main` remains at `e2837a8` (October 21). The active
+  `fix/oct20-handoff-audit` branch is 26 commits ahead and 5 behind, with merge base `3054da8`.
+- A read-only `git merge-tree --write-tree --name-only HEAD origin/main` simulation found four committed
+  content conflicts: `docs/README.md`, `resource/manifests/README.md`,
+  `scripts/prepare_kaggle_runtime.py`, and `tests/test_kaggle_preparation.py`. No index or working-tree merge
+  state was created.
+- Dirty-path comparison found five overlaps with remote changes. Two are byte-identical to main:
+  `scripts/evaluate_agent.py` (`88576f2...`) and
+  `resource/manifests/kaggle-wheelhouse-snapshots.json` (`e512638...`). The three substantive dirty overlaps
+  are `scripts/README.md`, `scripts/prepare_kaggle_runtime.py`, and `tests/test_kaggle_preparation.py`.
+  No untracked local path collides with a remote-added path.
+- Resolution finding: the two README conflicts are additive and should keep both sets of indexed evidence.
+  The runtime conflict is semantic: main supplies the registered `wheelhouse_runtime.py` verified/record mode,
+  while the local working copy supplies adapter mounting, deterministic final-ZIP verification, compressed
+  under-1-MB notebook payloads, optional reviewed test dependencies, and flat Kaggle mount handling. The
+  recommended resolution is a tested union with main's wheelhouse registry as the source of truth, not the
+  local fixed October 9 manifest. Its tests must likewise be a union, restoring main's snapshot/mode tests and
+  retaining the local adapter, size, mount-layout, batch-freeze, and dependency tests.
+- Important contradiction: the previous handoff said the V10 v31 snapshot would arrive from `origin/main`,
+  but main still contains only the October 5/v29 registry. The v31 work is on unmerged
+  `origin/chore/wheelhouse-v31`, which is 7 commits ahead and 3 commits behind its main divergence. Decide
+  separately whether to integrate that branch after main; a merge-tree simulation reports only one additive
+  conflict in `docs/experiments/README.md`, so the complete measured v31 environment can be retained without
+  selecting an isolated manifest. V10's notebook already embeds the measured v31 map, but repository provenance
+  should not continue to claim main contains it.
+- One inspection command failed: this Git version does not support `git show-ref --remotes`; remote refs were
+  then read successfully with `git for-each-ref refs/remotes/origin`. No failed command was repeated.
+- Repository changes: `WORKLOG.md` only. External/local Git metadata changed through fetch and the merge-tree
+  simulation; no source/configuration file, branch tip, index entry, Kaggle resource, or competition submission
+  was changed. The existing staged, unstaged, and untracked backlog remains intact.
+
+### 2026-10-22 12:16 (Asia/Shanghai) - October 24 LoRA round revalidated; execution still quota-blocked
+
+- Objective: continue the unfinished October 20 work without spending or misreporting unavailable GPU quota.
+- Read-only external check: `scripts/check_kaggle_quota.py`, run with the documented `.pylibs` environment,
+  reported 114,317.472 of 108,000 GPU seconds used, zero reserved, zero remaining, and refresh at
+  `2026-10-24T00:00:00Z` (08:00 Asia/Shanghai). The receipt is local-only at
+  `artifacts/tmp/accelerator-quota-2026-10-22.json`; no credential content was printed or stored in Git.
+- Revalidated the prepared V10 kernel directory without pushing it: `evaluation.ipynb` is still 104,573 bytes
+  with SHA-256 `49762f3bd123c6b7caf75f6571f05bb984b4dadcf1f6004316ef80453ed0fc3f`; its metadata file is present.
+- Verification: the focused guard and confirmation suites passed 44/44; the complete CPU suite passed
+  184/184; `scripts/check_repository.py` exited successfully and checked 56 Python files, 22 configurations,
+  58 maintained Markdown files, and three agent packages. It could not execute the ten shell syntax checks
+  because Bash is not installed on this Windows host, so that platform-specific check remains unverified.
+- Important correction to the prior handoff: the formerly reported `max_memory_mib` fixture and missing
+  localization resource failures do not reproduce in the current working tree. No repair was needed.
+- Repository changes: `WORKLOG.md` only. No source/configuration change, commit, push, Kaggle kernel push,
+  GPU run, or competition submission was made. The large pre-existing staged/unstaged backlog was preserved.
+- Remaining follow-up: after 08:00 Asia/Shanghai on October 24, recheck quota, push the prepared private V10
+  kernel, and inspect `collapse-guard.json` first. Only `proceed` permits the fixed 24-task measurement; only
+  a real measured improvement permits the already frozen 60-task confirmation pair.
+
+### 2026-10-20 23:39 (Asia/Shanghai) - Withdrawn: no external CUMCM skill was installed
+
+- The user pointed at a 50.3 MB external archive (`CUMCM_repo-main(1).zip`) holding a CUMCM C modelling skill
+  package and asked for it to be loaded as a workspace skill that all later commands would follow. Ten skills
+  were inspected (`1start-cumcm-c`, `2c-analysis-modeling`, `3c-solver-experiments`, `4c-writing-visual`,
+  `5c-judge-reflection`, `4drawio`, `doctor`, `mathmodel-figure-templates`, `typst-author`, `_references`;
+  12.7 MB of `skills/` plus a 37.7 MB web application) and the install scope was being confirmed with the user.
+- **The user withdrew the request before anything was installed.** Nothing was written to `.agents/skills/`
+  (still only `basic-programming-principles`), no modelling directory was created, and the staging copy under
+  `artifacts/tmp/cumcm-skill-staging` was deleted. Repository changes: none.
+- Also corrected in this entry's parent: the 2026-10-20 round entry was labelled 12:55 but the measured
+  artifact mtimes put its completion at 12:24-12:26, so the heading now reads 12:25.
+
+### 2026-10-20 12:25 (Asia/Shanghai) - The 2026-10-24 round prepared: loss-trajectory guard, lr 5e-5 notebook, fixed 60-task confirmation set
+
+- Objective: continue the 2026-10-19 work (user instruction "继续昨天的工作") with no GPU available — quota is
+  114,317.5 s of 108,000 until 2026-10-24T00:00Z — by building everything the refresh needs so that no session
+  time is spent preparing a kernel that day.
+- **Decision taken with the user before acting**: three options were offered (build the 10-24 round, commit the
+  six-day uncommitted backlog, or both in that order); the user chose the round, so the backlog stays open and
+  is recorded as a follow-up rather than silently absorbed.
+- **Guard module** `resource/l4_feasibility/collapse_guard.py`: pure function over
+  `device-map-result.json['updates']`, returning `collapsed` / `flat` / `proceed` with the whole trajectory
+  recorded. Thresholds are taken from the two measured arms, not tuned: floor 1.0 (V9 0.7323 vs V1 2.0966) and
+  flat ratio 0.005 (V1 moved 1.1e-3, the moving fixture arm 0.22). Registered in `WORKER_FILES` so the kernel
+  receives and hashes it like the other workers.
+- **Generator changes** `scripts/prepare_lora_eval_notebook.py`: `--collapse-loss-floor` and
+  `--collapse-flat-ratio` (0 disables either), both embedded in the payload; the guard runs inside the training
+  branch after the adapter is mounted; the evaluation body became `evaluate_arm()` so a stop can skip it
+  without an exit code that looks like a crash. A baseline kernel (no `--train-dataset`) still starts with
+  `GUARD = {'verdict': 'proceed', 'reason': 'no_training'}`.
+- **V10 built** (`artifacts/tmp/lora-v10-tail3-r16-lr5e5/`, 104,573 bytes,
+  SHA-256 `49762f3bd123c6b7caf75f6571f05bb984b4dadcf1f6004316ef80453ed0fc3f`): same 24 tasks, same 41-wheel v31
+  digest map, same agent bundle hashes, same evaluator/hook text, same dataset, same rank/alpha/seq/adapter;
+  **lr 5e-5**, `--max-updates 8` explicit, guard present. Verified by
+  `artifacts/tmp/verify_v10.py` (16 field checks, all true, every code cell parses); build inputs were recovered
+  from the V9 payload by `artifacts/tmp/recover_v9_inputs.py` rather than remembered. Not pushed: pushing needs
+  quota to be meaningful, and the kernel stays private.
+- **Confirmation set** `resource/manifests/confirmation-tasks-2026-10-24.json` (SHA-256 `2da2b2b7…`, 60 tasks =
+  41 fastapi + 19 rich), drawn by the new `scripts/select_confirmation_tasks.py`. The first draw put four
+  **trained** tasks (`rich_3676`, `rich_3882`, `rich_3894`, `rich_4077`) into the confirmation set; the tool now
+  derives the trained task ids from the dataset (`--trained-from`, stripping the `seedNNN-` prefix) and refuses
+  an overlap, and the manifest records the exclusion with the dataset hash. `requests_7205` is trained but
+  outside the control-valid manifest and is recorded as `tasks_outside_manifest`.
+- **Verification actually run**: `tests/test_lora_eval_notebook.py` 13 tests OK, `tests/test_confirmation_tasks.py`
+  19 tests OK. Full suite through `artifacts/tmp/run_checks_lenient.py`: 165 tests, 20 failures / 22 errors /
+  3 skipped, all in modules this session did not touch — 18 in `test_l4_feasibility` (stale `Args` fixture,
+  script modified 2026-10-18), 10 in `test_repository_checks` and 8 in `test_kaggle_preparation` (sandbox
+  write denials inside subprocess temp directories, a missing deleted localization resource, and
+  `build_submission` writing into `mkdtemp`). Without the wrapper the suite reports 15 failures / 74 errors,
+  all `PermissionError`. `scripts/check_repository.py` cannot complete here for the reasons above and its
+  result is reported as blocked, not passing.
+- Changed files: `resource/l4_feasibility/collapse_guard.py` (new), `scripts/prepare_lora_eval_notebook.py`,
+  `scripts/select_confirmation_tasks.py` (new), `resource/manifests/confirmation-tasks-2026-10-24.json` (new),
+  `tests/test_lora_eval_notebook.py` (new), `tests/test_confirmation_tasks.py` (new), `scripts/README.md`,
+  `docs/experiments/2026-10-18-lora-improvement-program.md` (§13 row, new §15), `WORKLOG.md`. Local-only
+  artifacts (gitignored): `artifacts/tmp/lora-v10-tail3-r16-lr5e5/`, the build/verify helpers under
+  `artifacts/tmp/`, and the lenient check runner. No GPU run, no competition submission, no kernel push.
+- Remaining follow-up, in order: (1) on 2026-10-24 push V10 and read the guard verdict, then follow the ladder
+  (proceed → 24-task measurement; flat → lr 1e-4; collapsed → ≈3e-5); (2) only a measured `proceed` arm
+  unlocks the 60-task pair (≈85,600 quota-seconds); (3) repair the pre-existing `test_l4_feasibility` fixture
+  and the missing localization resource, and commit the 2026-10-13→20 backlog on a feature branch; (4) the
+  guard's skip path still needs one real kernel run to be trusted end to end.
+
+### 2026-10-19 22:30 (Asia/Shanghai) - V9 closes the screening round: lr 2e-4 destroys tool use
+
+- Objective: read the last funded arm (V9, lr 2e-4) and close the screening round with a verdict.
+- **V9 completed** (`junzhejiao/lora-v9-tail3-r16-lr2e4`, wall 14,946.1 s) and resolved **0 of 24**. Every task
+  has **0 tool calls**, 1-2 LLM calls, a 0-byte patch and the 8-minute session timeout (mean 525.9 s, median
+  527.4 s, 24 of 24 tasks ≥7 min). Training fitted the targets instead of staying flat: loss 2.0966 → 0.7323,
+  gradient norms to 28.7, adapter sha256 `63ae2cf39079d139d06b3c887af173f33bc4fb479f3d52c63a06324a3a565d4a`.
+- **Mechanism, measured at token level**: all 24 traces were downloaded and read
+  (`artifacts/tmp/v9-out/**/traces/`, `artifacts/tmp/summarise_v9_traces.py`). Every trace records
+  `model_name: "main_lora"` (a third confirmation the adapter served the requests); 13 of 24 end at exactly
+  `total_completion_tokens: 8192`, the output cap, and the rest accumulate 12,3xx; 24 of 24 repeat one line at
+  least 5 times, up to 2,666× ("Done."), and `fastapi_13537` repeats "The fix is to keep track of already
+  visited field…" 170 times until the cap. So it is a decode loop of the tail-3 target — the model narrates a
+  final answer instead of calling tools — not a server stall.
+- **Configuration correction found while writing this up**: `train_l4_device_map.py` builds its update plan from
+  one pass over the records and only truncates it (`plan = plan[:args.max_updates]`), so every run on this
+  8-record dataset trained **8 updates**. The V9b "32 updates" notebook would have run the same 8 updates; the
+  §12.2 projection that assumed 16-32 steps was wrong on the step axis, and only the learning rate moved.
+- **Cost**: V9 consumed **29,935.3 quota-seconds**, the most expensive arm of the programme, because a collapsed
+  agent maximises runtime. Month-to-date is now **114,317.5 s used against 108,000**, i.e. 6,317.5 s over, with
+  the refresh on 2026-10-24T00:00Z. Nothing further can run before then.
+- **Final screening verdict**: four arms, no adapter better than no adapter; the measured ±2 noise floor from
+  the byte-identical repeat is what the adapter's "+1" turned out to be; the next test is a single arm at
+  lr 5e-5, then a 60-task paired confirmation (≈85,000 quota-seconds) only if that arm moves.
+- Changed files: `docs/experiments/2026-10-18-lora-improvement-program.md` (§4 status, §12 consequence, §12.2
+  step-axis correction, new §14), `docs/experiments/2026-10-18-merge-plan.md` (V9 evidence, slot stays empty),
+  `runs/2026-10-19-lora-screening/` (`V9-summary.json`, `V9-stdout.txt`, `all-arms.json`, updated `REPORT.md`,
+  `diagnostics.json`, `timeout-proximity.json`), `WORKLOG.md`. No competition submission; kernel private.
+
+### 2026-10-19 18:15 (Asia/Shanghai) - Screening verdict: the adapter did not beat a re-run of the baseline
+
+- Objective: price the 24-task noise floor with a byte-identical baseline repeat, then spend the last
+  affordable arm on an adapter that can actually move weights.
+- **The repeat completed** (`junzhejiao/lora-v0b-baseline-repeat`, 9,761.5 s wall, 19,542.3 quota-seconds)
+  and resolved **10/24**. Paired with V0 (9/24): 7 both, 2 V0-only, 3 V0b-only, 12 neither — the same 3-gain
+  / 2-regression split the adapter was credited with, exact McNemar p = 1.0. Against V1 it is exactly equal:
+  **10 both, 0 discordant, 14 neither**, so V1's resolved set *is* V0b's resolved set.
+  Record: `runs/2026-10-19-lora-screening/noise-floor.json`,
+  `docs/experiments/2026-10-18-lora-improvement-program.md` §12.
+- **What replicates against the repeat**: the adapter arm is 10-13 % slower per task (361.5 s vs 319.1 and
+  328.2 s), which is the KV-cache cost and explains `rich_3278` flipping to a timeout; and it writes a patch
+  on 21/24 tasks versus 19/24 in both baselines, which resolves nothing extra (`rich_3470`, `rich_3944`,
+  `rich_4075` all fail verification). Everything else is noise.
+- **Weight-scale measurement added** (`artifacts/tmp/adapter_delta_norms.py`): reading only the LoRA factors,
+  the exported adapter has RMS(`B`) = 8.2e-5 and RMS(`ΔW`) = 4.6e-6 per element, versus 1.26e-4 / 7.0e-6 for
+  the older 32-update rank-16 adapter, against base scales of 1e-2 or more. The flat loss and the
+  byte-identical patches are the same fact seen three ways.
+- **Launched the last affordable arm**: `junzhejiao/lora-v9-tail3-r16-lr2e4` (V9, 18:06 local) — identical
+  to V1 except lr 2e-4, launched with `--max-updates 16`. **Corrected by the 22:30 entry:** the trainer caps
+  every run at 8 updates on this dataset, so V9 differs from V1 only in the learning rate (10×), and that
+  alone collapsed it to 0/24.
+- **Budget ruling recorded**: a 99-task paired confirmation costs ≈126,000 quota-seconds at the measured
+  2.00 × billing, so it cannot fit one 108,000 s allowance; confirmation must shrink to 50-60 tasks per arm
+  or move to the Trillium H100 runtime.
+- Changed files: `docs/experiments/2026-10-18-lora-improvement-program.md` (§4 status column, §12.1 rewritten
+  against the repeat, §12.2 weight measurement, §12.3 cost model), `docs/experiments/2026-10-18-lora-submission-theory.md`
+  (the trained-adapter serving gap closed with the measured kernel counts), `runs/2026-10-19-lora-screening/`
+  (`REPORT.md`, `noise-floor.json`, `arms/{V0b-summary.json,V0b-stdout.txt,diagnostics.json,adapter-norms-*.json}`,
+  `notebooks/V9b-evaluation.ipynb`), `WORKLOG.md`. No competition submission; all kernels private. Git: the
+  branch still carries the 2026-10-18 uncommitted work, so nothing was committed here (see follow-up).
+
+### 2026-10-19 12:10 (Asia/Shanghai) - LoRA screening: baseline V0 and adapter V1 measured, repeat launched
+
+- Objective: continue the 2026-10-18 LoRA programme (user instruction "continue yesterday's work"), i.e.
+  read the two kernels left running overnight, report them, and keep the screening round moving.
+- **Both overnight kernels completed without failure.** `lora-m2b-baseline-site-packages` resolved 9/24 in
+  9,595.9 s; `lora-m3-v1-tail3-r16` (tail-3 supervision, rank 16 / α32, 8 updates, lr 2e-5, trained inside
+  the same kernel) resolved 10/24 in 10,976.8 s. Paired: 7 both, 2 V0-only, 3 V1-only, 12 neither, net +1,
+  exact McNemar p = 1.0. Summaries were recovered from `kaggle kernels logs` (reconstructed stdout written
+  next to them) because `kernels_output` re-downloads the whole working tree slowly.
+- **The trained-adapter serving gap is closed by measurement.** The V1 evaluation Triton cache contains 96
+  LoRA kernel artifacts (`_lora_shrink_kernel`, `_lora_expand_kernel`, fused `…lora_shrink_marlin_gemm…`);
+  the V0 cache contains none. So the adapter was mounted through `adk_submission.VllmServer`
+  (`--enable-lora --max-loras 1 --max-lora-rank 16 --lora-modules main_lora=…`) and executed, which is the
+  one gap `docs/experiments/2026-10-18-lora-submission-theory.md` left open.
+- **The adapter arm did not test the hypothesis, and that is the main finding.** Training moved
+  122,429,440 parameters through 8 AdamW steps at lr 2e-5 (two `rich_3894` records skipped: 2,050-token
+  prompt), loss 2.0966 → 2.0989, i.e. ≈1.6e-4 of coordinate movement. Six of the seven tasks resolved by
+  both arms have byte-identical patch sizes, so the served weights changed almost no tokens.
+- **Measured noise floor, from data already in hand**: the 4-task probe (`fastapi_9425`, `fastapi_9753`,
+  `rich_3454`, `rich_2943`) resolved 4/4 with no adapter, while this 24-task baseline resolved 2 of the same
+  4 with the same weights, seed and prompt. Sandbox/test observations, not sampling, drive that divergence,
+  so ±2 at 24 tasks is the planning floor and the V1 "+1" sits inside it.
+- **Carrier validation of the new notebooks**: `artifacts/tmp/v0b-repeat/evaluation.ipynb` is byte-identical
+  to the V0 notebook; `artifacts/tmp/lora-v9-tail3-r16-lr2e4/evaluation.ipynb` is byte-identical to M3 in
+  `agent_bundle`, `model`, `scripts`, `task_ids` and `wheelhouse` (the v31 snapshot must be passed as
+  `artifacts/review-pr23/resource/manifests/kaggle-wheelhouse-snapshots.json`; the workspace copy of that
+  file is absent on this branch and `artifacts/main-sync` holds a different, non-matching entry).
+- **Launched**: `junzhejiao/lora-v0b-baseline-repeat` (noise floor at 24 tasks, pushed 12:03 local).
+  **Prepared, not pushed**: V9 (lr 2e-4, 16 updates), which fits the remaining quota once the repeat drains.
+- Quota: **64,839.9 s used of 108,000 s, 43,160.1 s remaining** (refresh 2026-10-24); the pair cost
+  41,227.6 s, exactly 2.00 × summed wall, so a 24-task arm with training costs ≈22,000 s.
+- Changed files: `docs/experiments/2026-10-18-lora-improvement-program.md` (§12), new
+  `runs/2026-10-19-lora-screening/` (REPORT.md, report.json, paired-table.md, per-arm summaries and
+  stdout, four notebooks), `WORKLOG.md`. Helper scripts for the recovery live in `artifacts/tmp/`
+  (`extract_m2b_m3.py`, `build_screening_report.py`, `compare_payloads.py`, `decode_payload.py`).
+  No competition submission; all kernels private. No source change outside documentation.
+
+### 2026-10-18 23:30 (Asia/Shanghai) - LoRA programme: M2 baseline, the fastapi dependency gap, M2b and M3
+
+- Objective: run M2 (24-task baseline) and start M3 (first adapter arm), reporting quota promptly.
+- **M2 completed but is not a usable baseline**: kernel `lora-m2-budgetfit-screening` (session wall 5,608 s)
+  reported 6/24 resolved, all `rich`. Nine of the twelve `fastapi` tasks never started the agent:
+  `Workspace editable install failed: ... annotated-doc>=0.0.2 (from fastapi) (from versions: none)`.
+  `annotated-doc` and `pytest-timeout` exist only in the official container's `/eval-test-wheels` mount,
+  which a Kaggle kernel cannot attach. Recorded as an environment gap, not a task outcome.
+- **Fix and probe**: added `--site-packages` to `scripts/prepare_lora_eval_notebook.py`, so each sandbox may
+  satisfy those two packages from the image while the task's workspace package still wins the import (the hook
+  asserts the imported origin is inside the workspace). Probe `lora-probe-fastapi-deps` with four tasks:
+  **4/4 resolved** — `fastapi_9753` (26 calls, 2,057 B), `fastapi_9425` (24 calls, 544 B), `rich_3454`
+  (17 calls, 657 B), `rich_2943` (22 calls, 400 B); wall 1,679 s.
+- **Launched with the corrected setting**: `lora-m2b-baseline-site-packages` (no-adapter baseline, same 24
+  tasks) and `lora-m3-v1-tail3-r16` (V1 adapter: tail-3 supervision, rank 16 / alpha 32, 8 updates,
+  learning rate 2e-5, task-statement prompt, sequence 2,048; trained inside the kernel and mounted at
+  `agent/adapters/main_lora` before evaluation). Both were running or queued at this entry.
+- **Quota**: **23,597.2 s of 108,000 s used, 84,402.8 s remaining** after M1 v1/v2, M2 and the probe.
+- Changed files: `scripts/prepare_lora_eval_notebook.py` (`--site-packages`),
+  `docs/experiments/2026-10-18-lora-improvement-program.md` (§10 corrections, §11 invalidators), `WORKLOG.md`.
+  No competition submission; all kernels private.
+
+### 2026-10-18 21:20 (Asia/Shanghai) - LoRA programme M1: the in-kernel evaluation carrier works
+
+- Objective: start milestone M1 of the LoRA improvement programme (user instruction), report quota
+  exhaustion promptly, and later name the best trained model with its measured data. Quota is not exhausted:
+  **8,947.6 s used of 108,000 s, 99,052.4 s remaining** at the last check.
+- **Built the carrier**: `scripts/prepare_lora_eval_notebook.py` generates one private Kaggle L4 kernel that
+  verifies the 41-wheel v31 snapshot, installs the reviewed stack plus torchao 0.16, unpacks a frozen
+  budget-fit agent (recovered byte-wise from the trajectories-r3 release), and runs
+  `evaluate_agent.py infer --task-ids ...` + `verify --patch-source agent` in batch mode (one server, one
+  sandbox per task) with its own offline dependency hook, because the repository hook hardcodes the official
+  container's `/data/wheels` and `/eval-test-wheels` mounts and asserts `swegemma == 0.2.10`.
+- **M1 v1 failed honestly** (wall 550.5 s): every task stopped in sandbox setup because
+  `pytest-timeout==2.1.0` exists in neither mounted wheel source; the official test-wheelhouse mount is not
+  attachable from a Kaggle kernel.
+- **M1 v2 passed** (wall 1,354.3 s): `rich_3454` resolved (14 calls, 656 B patch, 207 s), `rich_3675` timed
+  out at 4.0 min with an empty patch, `rich_3676` resolved (1,649 B) but also hit the 4.0 min timeout. So
+  2/3 resolved, 1/3 clean, 2/3 timed out. The carrier — install → vLLM → batch inference → official
+  verification → summary JSON — is proven; the tolerant hook and the budget finding are recorded in
+  `docs/experiments/2026-10-18-lora-improvement-program.md` §9.
+- **Budget correction applied before screening**: the recorded agent enforces `max_time_minutes: 4.0` while
+  its prompt promises 8 minutes and the 0.18 submission ran at 8 minutes, so the screening arms now use 8.0
+  with `max_tool_calls: 28`.
+- **M2 launched**: `junzhejiao/lora-m2-budgetfit-screening` evaluates the no-adapter budget-fit baseline on
+  the fixed 24-task screening sample (12 fastapi + 12 rich, seeded hash of the 99-task manifest, stored in
+  `artifacts/tmp/m1/screening-tasks.json`). It is running at the time of this entry.
+- **Training extension prepared but not yet run**: the same generator accepts `--train-dataset` and embeds the
+  four-L4 workers, so M3 trains the variant adapter in the same session and mounts it at
+  `agent/adapters/main_lora` before evaluation. No adapter has to cross the 1 MB notebook limit.
+- Changed files: `scripts/prepare_lora_eval_notebook.py` (new),
+  `docs/experiments/2026-10-18-lora-improvement-program.md` (§9), `WORKLOG.md`. GPU work: two private kernels,
+  no competition submission.
+
+### 2026-10-18 20:17 (Asia/Shanghai) - LoRA programme: submission theory, experiment design, merge plan
+
+- Objective: the user asked for three things in order — (1) a theory-only answer to whether a LoRA can be
+  submitted without disturbing the trained base, no real submission allowed; (2) an experiment programme
+  that measures whether LoRA raises accuracy and searches for the best training variant; (3) a comparison
+  of the best Kaggle submission with GitHub `main` and the local workspace plus a merge plan.
+- **Clarified before acting.** Six questions were answered by the user: the no-submission rule covers the
+  whole task; the evaluation carrier is an in-kernel "train then evaluate" Kaggle run; the budget is not
+  capped and may wait for the 2026-10-24 refresh; screening uses 20-30 tasks first and the full 99 afterwards;
+  both the budget-fit baseline and the rank-16 v3 adapter are baselines; the merge plan must cover both git
+  and the final submission configuration.
+- **Part 1 written**: `docs/experiments/2026-10-18-lora-submission-theory.md`. It separates three readings of
+  "not losing the trained parameters" (base untouched; adapter bytes and honouring; behaviour unchanged and
+  therefore a score property), shows the read-only base and separate LoRA tensors, and cites the measured
+  evidence: the serving probe (base repeat delta 0.0, rank-8 adapter 1.187468, rank-32 10.069917), the run-11
+  official-runtime reload (`status: applied`, effect 0.596932), and our adapter (820 tensors, all keys
+  matching, `problems: []`). It also records the one unclosed gap: no trained adapter has yet been mounted
+  through `adk_submission.VllmServer` itself, only through `vllm` directly.
+- **Part 2 designed**: `docs/experiments/2026-10-18-lora-improvement-program.md`. Fixed factors, nine
+  screening variants (tail vs loop, rank 8/16/32, two-projection vs all-projection, LR, updates, task
+  weighting), the screening/confirmation split (24 tasks then 99), the decision rule (McNemar p < 0.05 with
+  clean completion not falling), the cost model (≈11.5-13.7k quota-seconds per screening kernel), and the
+  carrier: one kernel that trains the adapter, assembles the agent in `/kaggle/working`, then runs the
+  batch evaluator (`--task-ids`, one server, seed 42) and the official verifier — no adapter transport at
+  all. The known limitation is stated: on four L4s training can only use the task statement prompt while
+  evaluation uses the harness system prompt.
+- **Part 3 prepared**: `docs/experiments/2026-10-18-merge-plan.md`. Compares the three artifacts, records two
+  configuration traps (the submitted prompt promises 8 minutes while `eval_config.yaml` enforces 4; the
+  prompt forbids the graph tools, which explains zero graph calls), gives the git sequence (commit local
+  work, cherry-pick #21, merge `main`, resolve the four conflicts, open a small integration PR, rerun
+  `check_repository.py`) and the configuration composition table with the adapter slot conditional on part 2.
+- **Verified while writing**: the budget-fit agent is recoverable byte-wise from the release
+  (`agent.yaml`, `configs/sampling.yaml`, `eval_config.yaml`, `prompts/system.md`), the release's system
+  prompt itself forbids the three graph tools, the pending `max_tool_calls 50` submission is still PENDING,
+  and no submission ZIP for the 0.18 run is identified in this workspace.
+- **Not done, stated plainly**: the part-2 instrument has not been built or run yet, so no accuracy result
+  exists; part 3's adapter slot therefore defaults to empty. The next step is the instrument's first
+  milestone (baseline arm on 3 tasks, one kernel) followed by the baseline and first trained variant on the
+  24-task screening set.
+- Changed files: three new documents under `docs/experiments/` and `WORKLOG.md`. No GPU run, no submission,
+  no remote mutation in this round.
+
+### 2026-10-18 20:02 (Asia/Shanghai) - Complete the outstanding review request: PR #8
+
+- Objective: the user asked for every review that someone requested of this account but that was never
+  submitted. Inventoried all 15 PRs through the API (requested reviewers plus submitted reviews): only
+  **PR #8** was outstanding (`liaodid` and `KaltistEsperanta` requested, 0 reviews); #18, #23 and #25 were
+  already reviewed by this account; #16 is authored here and awaits `liaodid`; #20 and #22 request
+  `jwj1342` and `Sholpan1no`; #17 (closed without merge) still lists this account but cannot be reviewed
+  into anything. Repo-wide comments were also scanned for `@KaltistEsperanta` asks: #18 (done), #13's
+  closing instruction (done), and the October 15/16 team asks (done or superseded).
+- **PR #8 reviewed at `bd9b167`** (head), in the four areas the PR assigns to this account: model/protocol,
+  save/resume, adapter loading, completion behaviour. Read the code rather than the description:
+  prefix/token boundary assertions and the `<|tool_response>` stop id 50 check in `src/sft_data.py` and
+  `scripts/encode_sft_dataset.py`; the resume contract and `base_weights_digest`; the zero-versus-trained
+  adapter instrument in `scripts/check_lora_serving.py`; the SLURM/full-replica constraint that keeps the
+  trainer Trillium-only.
+- **Both previously requested fixes are in, with tests.** `convert_trajectory` now raises
+  `UnsupportedAction('Final answer lacks an observed submit_patch call')` instead of silently dropping a
+  terminal turn (`tests/test_sft_data.py` asserts the message), and `base_weights_digest` hashes every
+  sharded safetensors file or fails with a message that names the layout
+  (`tests/test_swe_lora_contract.py` covers shard/index changes and invalid names). The thinking-channel
+  mismatch is now stated in the report's limitations, which was the earlier review's top question.
+- **Manifest and code agree** on the claims checked: comparison 3/11 versus 2/11 resolved, 4/11 versus 8/11
+  clean, 2/11 both; peak 67.38113355636597 GiB; `encoding_protocol.tool_handoff_stop_id: 50`; and
+  `src/sft_schedule.py::loss_weights` implements the equal-weight example normalisation the report describes.
+- **Local test run at this head**: 71 tests over 11 files, 67 pass, 4 platform-only failures (three assert
+  POSIX path separators, one is the CRLF-versus-LF hash in `verify_eval_run`), and `test_eval_suite.py`
+  cannot import on Windows (`fcntl`). `scripts/check_repository.py` passes once the materialised tree is
+  git-tracked: **55 python, 19 shell, 15 configuration, 49 markdown, 1 agent package**.
+- **Merge state measured, and it is the reason this is not a merge approval**: 15 conflicting files against
+  `a5bbc85` (`src/sft_data.py`, `scripts/prepare_terminal_sft.py`, `scripts/prepare_sft_data.py`,
+  `scripts/check_lora_serving.py`, `scripts/evaluate_agent.py`, `scripts/verify_eval_run.py`,
+  `tests/test_sft_data.py`, `tests/test_eval_suite.py`, the READMEs); 40 of 86 changed files are already
+  byte-identical on `main`; 29 exist only on the branch; and `bd9b167` has no CI run (0 check runs, pending
+  combined status; the cited green run is `ccfcff0`).
+- **Posted**: APPROVE with those conditions —
+  [review 5562903932](https://github.com/jwj1342/gemma-agent-lab/pull/8#pullrequestreview-5562903932) — and a
+  correction comment after noticing I had quoted the repository-check counts from the other PRs:
+  [comment 6249674045](https://github.com/jwj1342/gemma-agent-lab/pull/8#issuecomment-6249674045) with the
+  measured 55/19/15/49/1.
+- Changed files: `WORKLOG.md` only. Remote mutations: one review and one PR comment.
+- Follow-up: PR #8 needs an author rebase onto `main` and a fresh `Repository checks` run; this account
+  should re-review the rebased head because the last-push approval rule invalidates this approval after any
+  new push.
+
+### 2026-10-18 19:46 (Asia/Shanghai) - Re-review PR #18 after a review notification
+
+- Objective: the user received a review notification for PR #18 and asked for a review. The earlier round
+  had already approved this PR, so the job was to establish whether anything changed and to review the
+  current head rather than duplicate a review event.
+- **State read first.** Head is still `c75571aaed57` (2 commits, 3 files, +26/-31), `mergeable: true`,
+  `mergeable_state: behind`, base `625a597`. My APPROVE at that head (2026-10-18T09:37:26Z) is undismissed,
+  and `requested_reviewers` no longer lists this account (Sholpan1no, liaodid, shizongniji are listed), so the
+  notification is a stale request rather than a new push.
+- **Content verified, not restated.** The only JSON change is `require_last_push_approval: true`; every bullet
+  in `docs/ci-and-review.md` is backed by the versioned file (`strict: true`, check context `Repository checks`
+  with `app_id` 15368, one approving review, stale dismissal, last-push approval, conversation resolution,
+  `enforce_admins`, no force pushes or deletion); the `#protection-for-main` anchor exists; the repository is
+  public (`private: false`) so the "became public on October 12" explanation holds; `GET /branches/main`
+  reports `protected: true` at `a5bbc85`.
+- **Boundary measured again.** The detailed protection endpoint still returns 404 to this account even with a
+  public repository, so individual live settings remain owner-reported; only `protected: true` is
+  independently observable.
+- **Base drift checked.** `git diff 625a597 origin/main --` the three PR paths is empty, so `#10`/`#21` did not
+  touch them and being behind `main` creates no content conflict for this PR.
+- **Repository checks re-run** on the existing `artifacts/review-pr18` checkout at `c75571a`: passed (48
+  python, 14 shell, 15 configuration, 60 markdown, 2 agent packages). Confined runs cannot do this (bash
+  named pipes and temp writes are denied), so it used one approved unconfined command.
+- **Three non-blocking findings posted as a PR comment** (6249530035): (1) `docs/repository-map.md` still calls
+  the protection file an "intended ... request; actual enforcement depends on account entitlement", which now
+  contradicts the PR; (2) the `#11` citation is an open issue about tool-call recovery — the post-merge review
+  comment lives there and was summarized on PR #10 by `shizongniji` on 2026-10-13T01:19Z, and it listed three
+  behavioural findings, so "found no defects" overstates it; (3) "Last checked: October 12" should say who
+  verified it with admin credentials, since a collaborator cannot re-derive it.
+- **Deliberately did not submit a second review.** A COMMENT review from the same account risks replacing the
+  counted approval, so the findings went in as an issue comment and the APPROVED state was re-read afterwards
+  to confirm it is unchanged. Recommendation recorded: keep the approval; the PR is mergeable as it stands.
+- Changed files: `WORKLOG.md` only; the transcript of the review is in `artifacts/tmp/gh-2026-10-18/` and the
+  remote mutation is one PR comment.
+
+### 2026-10-18 18:44 (Asia/Shanghai) - Execute the task board: PR reviews, trajectory audit, budget-fit adapter
+
+- Objective: carry out the tasks assigned to this account in the team tracker (#13/PR #16, PR #18, #4 data,
+  #7 training, PR #8, PR #23, PR #25, SWE-Gym/SWE-smith research, weekly note) and report whether the rank-32
+  model improved.
+- **PR #16**: read the live body through the API and confirmed `Closes #13` is present (description last
+  updated 2026-10-18T09:34Z) and `mergeable_state: behind`. No new action was needed; the remaining gate is
+  `liaodid`'s requested review. Re-fetched `requested_reviewers`: `liaodid` only.
+- **PR #18**: verified the posted review from the earlier round (`KaltistEsperanta`, APPROVE, `c75571a`,
+  2026-10-18T09:37Z) and its repository-checker log (48 Python, 14 shell, 15 configuration, 60 Markdown, 2
+  agent packages). No further mutation, to avoid a duplicate review.
+- **PR #23**: read the 15-file diff, not just the description. Reproduced the v31 manifest claim by
+  comparing snapshots: 41 wheels in both, `swegemma` 0.2.10 -> 0.2.11, exactly three digests changed
+  (`adk_eval_core`, `adk_submission`, `vllm`). Ran `scripts/check_repository.py` on a materialized tree of
+  `b9c9c4d` (Windows cannot check out the colon-bearing CSV, so `artifacts/tmp/materialise_tree.py` writes
+  every other tracked blob): passed 48/14/15/61/2. Posted APPROVE with two follow-ups: the branch is behind
+  `main` (`a5bbc85` has #21's import migration, the head alone still imports removed
+  `swegemma.models.registry/discovery`), and the new lock re-resolves seven packages the wheelhouse snapshot
+  does not cover (`cryptography` 48.0.1 -> 46.0.7, `pyarrow` 25.0.1 -> 26.0.0, `typer` 0.27.2 -> 0.27.3,
+  `SQLAlchemy` 2.1.3 -> 2.1.4, `google-cloud-bigtable` 2.49.0 -> 2.50.0, `iniconfig` 2.3.0 -> 2.3.1,
+  `truststore` 0.10.4 -> 0.10.5).
+- **PR #25**: five-file docs diff. Verified the new anchor resolves, the generator and generated README move
+  together, `validate_agent.py` still enforces the 31B base, the checker passes (48/14/15/60/2) and hosted CI
+  is green. Posted COMMENT rather than approval: the new sentence "a local 12B smoke ... resolved 1/10
+  fast-cohort tasks" has no run, receipt, or note in this repository (issue #24 proposes that smoke, it does
+  not report one), which conflicts with the AGENTS.md rule to separate author claims from executed results.
+- **PR #8**: re-fetched the PR and its reviews. Unchanged since 2026-10-12T16:33Z: 86 files, 59 commits,
+  `mergeable_state: dirty` against `3054da8`, 0 reviews, 0 comments, and 0 check runs on `bd9b167`. The two
+  review fixes are on the head. Since the prior review is recorded in
+  `docs/experiments/2026-10-12-pr8-review.md`, no duplicate review was posted; the action is the author's
+  rebase.
+- **#4 data**: confirmed push access to `jwj1342/gemma-agent-lab-data`, downloaded the release asset by API
+  (192,965 bytes, SHA256 `7deafdd5…`, matches the receipt) and audited all 31 trajectories: 31/31
+  directories, 31/31 recomputed `trace_sha256` matches, 31/31 non-empty verifier-resolved patches (324-2,175
+  bytes), 874 steps, 704 tool calls, 0 empty messages, 0 empty observations, per-task spread exactly as
+  declared, baseline 13 / budget-fit 18. Prompt fixedness: `prompts/system.md` identical per family and the
+  task prompt identical within a family; the only per-seed difference is `configs/sampling.yaml: seed`, which
+  also explains why `agent_archive_sha256` differs per seed run. One labelling anomaly: `seed103-requests_7205`
+  has no `final`-tagged step. Posted the audit to issue #4
+  (https://github.com/jwj1342/gemma-agent-lab/issues/4#issuecomment-6248795836) and left the deeper quality
+  audit to `liaodid`. The two reviews are
+  [PR #23 approval 5562560592](https://github.com/jwj1342/gemma-agent-lab/pull/23#pullrequestreview-5562560592)
+  and [PR #25 comment 5562560684](https://github.com/jwj1342/gemma-agent-lab/pull/25#pullrequestreview-5562560684).
+- **Tool boundary research**: counted every tool invocation in the 31 trajectories. Budget-fit uses
+  `run_command` 60.8%, `read_file` 26.9%, `edit_file` 6.8%, `submit_patch` 4.6%, `get_status` 0.5%,
+  `write_file` 0.5%, and **zero** calls to the three graph tools; baseline uses `write_file` 7.1%. Recorded
+  reading: trimming is measurable and success-only confounded, and the rules boundary is that new tools must
+  ship as sandbox skills (host discussion 743573), so trimming our `agent.yaml` is inside our control while
+  host-registry substitution is not.
+- **SWE-Gym / SWE-smith**: read both papers' method sections (SWE-Gym: 2,438 executable instances from 11
+  repos, 491 trajectories give +12.3/+13.6 points, metrics include Empty Patch and Stuck in Loop; SWE-smith:
+  50k instances from 128 repos, bug synthesis at 35-97% yield per strategy, LM-generated issue text, one
+  environment per repository). Wrote `docs/meetings/2026-10-18-weekly.md` with configuration, submissions,
+  results, concrete trajectories, the tool boundary, the integration plan, and five questions for the team.
+- **#7 training**: wrote `scripts/build_trajectory_sft_dataset.py` (release -> prompt/completion records,
+  trace-hash gate, per-task cap, head/tail step rendering with truncation counters, and a `--prompt-mode
+  task|full` switch) and produced `artifacts/tmp/budgetfit-sft/budgetfit-sft-v1.jsonl`: 10 records over 5
+  tasks at `--max-per-task 2`, seed 20261018. Encoding preflight on Kaggle measured the boundary that the
+  default sequence length breaks: 2048 skips all 10 records (prompts 2,631-3,654 tokens,
+  `dataset_incompatible`), 8192 encodes 10/10 with mean prompt 3,213.6 and mean target 1,683.5 tokens.
+- **Four training attempts, one success.** `budgetfit-trajectory-lora-rank16-v1` (seq 6144) and
+  `...-tail-v2` (seq 4608) both OOM on the first backward (158.00 MiB and 120.00 MiB requests) after
+  loading 66 modules 7/19/19/21; `...-tail-v3` with `--max-memory-mib 13500` reproduced the identical
+  placement (`cpu_modules: 0`) and OOM'd the same way, proving `balanced` ignores the lowered cap and the
+  CPU fallback only fires on load failure; `...-v4` (seq 2560, task prompt only) completed **3** updates
+  (losses 2.013/1.975/2.351, peaks to 20.05 GiB) and OOM'd at the fourth, which located the ceiling: the
+  AdamW state for 122,429,440 parameters is allocated on the first step and peaks land at ~20.0 GiB per
+  card. `junzhejiao/budgetfit-task-tail-rank16-v5` (seq 2048, task prompt only, tail-3 completion,
+  1,865 tokens worst case) **completed 8/8 updates** and exported a validated adapter: 820 tensors,
+  244,982,352 bytes, SHA256 `f9db770dc600ed57c3e0e5de7be7fd3d51549a3a41a76b09793c670747947514`,
+  `unmatched_keys: []`, `problems: []`, losses 2.0966/2.2445/2.8107/2.4196/2.1903/1.7857/2.2695/2.0943,
+  session 361.8 s (~723.6 quota-seconds), artifact at
+  `artifacts/tmp/budgetfit-v5-out/l4-feasibility/adapter/` (copying into `runs/` is sandbox-denied).
+  Recorded as a starting point, not a capability claim: 8 single-record updates at 2e-5 are not convergence,
+  and the training prompt omits the harness system instruction because the full prompt (2,631-3,654 tokens)
+  cannot share a 20.5 GiB card with any completion.
+- **Generator change**: `scripts/prepare_l4_feasibility_notebook.py` gained `--max-memory-mib` (passes the
+  worker's existing flag through the plan and the launch command; verified in the rendered notebook). It did
+  not change placement, so the real fix is a training-OOM retry with `device_map: auto` plus a host-RAM
+  allowance. Also recorded: the generator emits `machine_shape: NvidiaL4` even with `--cpu-only`, so "free"
+  CPU preflights land on accelerators (quota 0 -> 553.749 s observed).
+- **Reporting**: posted the October 18 measurement comment to #7
+  (https://github.com/jwj1342/gemma-agent-lab/issues/7#issuecomment-6249358114) with the rank-32 verdict, the
+  five-attempt memory table, the adapter hashes, both caveats, and the carrier blocker.
+- **Rank-32 verdict**: no rank-32 model or submission exists. The 09:40Z retry kernel completed with
+  `updates_completed: 0` and `adapter: null` because `--session-limit 1500` was below the device-map phase's
+  advertised 1500 s requirement; the newest competition submission is a `max_tool_calls` change with no LoRA
+  and was still PENDING. The only measured score movement this week is 0.18 -> 0.17.
+- **Environment findings that cost time**: (1) the generator emits `machine_shape: NvidiaL4` even with
+  `--cpu-only`, so CPU preflights land on accelerators and consume quota (0 -> 553.749 s observed);
+  (2) kernel slug is derived from the *title*, so a title that does not slugify to the metadata `id` makes a
+  push conflict (409) — the second push needed a metadata edit; (3) a Kaggle output file named with a
+  Windows-style absolute path cannot be downloaded by the CLI, so preflight receipts should be written to a
+  plain relative name; (4) the sandbox denies spawned-process writes to `runs/`, `scripts/` and `.git`, and
+  denies `bash` named pipes, so `check_repository.py` needs one unconfined run (approved) and generated
+  reports are written with the agent file tools.
+- Changed files: `scripts/build_trajectory_sft_dataset.py` (new),
+  `scripts/prepare_l4_feasibility_notebook.py` (`--max-memory-mib` pass-through),
+  `docs/meetings/2026-10-18-weekly.md` (new),
+  `docs/experiments/2026-10-18-budgetfit-trajectory-lora.md` (new),
+  `docs/experiments/2026-10-11-lora-paired-protocol.md` (carrier amendment), `WORKLOG.md`,
+  `runs/2026-10-18-task-audit/gh_api.py` (new helper, reads the credential without printing it), plus
+  `artifacts/tmp/` receipts and the gitignored `data/private/trajectories-r3/`. No GPU code was changed and
+  nothing was pushed to any branch; all remote mutations were two PR reviews, two issue comments (one under
+  #4, one under #7), and no merge.
+- Verification gaps stated rather than hidden: the new dataset builder has no unit test in this round (it was
+  exercised on the real release and its selection, sizes and truncation counts are recorded, but there is no
+  committed test); `--max-memory-mib` is verified to render into the notebook and the v3 session executed with
+  it, but its intended effect (host offload) did not materialise; and `scripts/check_repository.py` could not
+  run confined, so the one local run used an approved unconfined command.
+
+### 2026-10-18 17:52 (Asia/Shanghai) - Complete PR #18 review and start the bounded rank-32 retry
+
+- Completed PR #18 review at `c75571aaed57324ec4f13869ebabcbaa759bdc7d`: read all three changed
+  files, compared protection semantics with official GitHub documentation, and ran the repository
+  checker successfully (48 Python, 14 shell, 15 configuration, 60 Markdown, two agent packages).
+  Submitted APPROVE with a PR-description wording correction and the explicit limitation that the
+  account can verify `protected=true` but cannot read detailed live protection settings. No merge.
+- The isolated review checkout is `artifacts/review-pr18`; Windows rejects one historical colon-bearing
+  CSV path. Non-cone exclusion plus invocation-local `core.protectNTFS=false` materialized every
+  checked file while leaving that unrelated CSV absent; the checker passed without changing source.
+- Completed private release acquisition: `data/private/trajectories-r3/release.tar.zst`, 192965 bytes,
+  SHA256 `7deafdd56991128fb76a1c9c9ebdfd21da3fd31c1422365efe219041ff129233`, matching the receipt.
+- Imported PR #16's existing dependency-free adapter checker into the active continuation tree.
+  The targeted suite passed 83 tests with three PyTorch-dependent skips. Earlier failures were local
+  NumPy ABI mismatch, then the obsolete verifier's PyTorch dependency; neither was a GPU result.
+- Generated `runs/2026-10-18-lora-rank32-v3/` and launched exactly one private Kaggle version with
+  a 1500-second timeout: https://www.kaggle.com/code/junzhejiao/gemma-4-rank32-bounded-retry-october-18.
+  Kaggle derived the actual slug from the title, differing from the metadata's requested slug;
+  monitoring must use the returned URL above. Rank 32/alpha 64, 32 updates, 900-second load cap.
+  No training success is claimed until outputs are inspected; no competition submission was made.
+- Preserved the original memo under ignored `runs/2026-10-18-task-audit/memo-original.txt`, then
+  replaced `E:/备忘录.txt` with pending tasks; completed preparation evidence is retained here and
+  in the pre-existing notebook preparation records. User authorized this cleanup.
+- Network recovery: two Python urllib TLS failures led to a PowerShell REST helper; checked for
+  an existing review before posting, avoiding a duplicate mutation.
+- Changed files: `WORKLOG.md`, `resource/l4_feasibility/verify_l4_adapter.py`; ignored run receipts,
+  Windows-only development dependencies, private data archive, and external memo.
+
+
+### 2026-10-18 17:45 (Asia/Shanghai) - Complete issue #13's closing link and private-data access
+
+- Completed: added `Closes #13` to PR #16's existing description and read back the result.
+  The five checked technical tasks remain complete; independent approval/merge is still pending.
+- Completed: accepted the invitation for `jwj1342/gemma-agent-lab-data` (invitation 337574852),
+  then successfully retrieved private release `trajectories-r3` metadata. Its two assets are the
+  192965-byte archive and SHA256 receipt; acquisition and training audit follow separately.
+- With explicit user authorization, posted task acceptance, bounded rank-32 plan, and the local
+  evidence correction to #7: https://github.com/jwj1342/gemma-agent-lab/issues/7#issuecomment-6248285468.
+- Branch metadata confirms `main.protected=true`; the detailed protection endpoint returns 404 to
+  this account, so specific live settings cannot yet be independently verified. PR #18 review will
+  distinguish the visible protection flag from owner-reported settings.
+- Verification: successful API responses for invitation acceptance, release access, PR description
+  update, and branch metadata. Sanitized receipts are in `runs/2026-10-18-task-audit/`.
+- Changed repository file: `WORKLOG.md`; remote PR metadata, membership, and one authorized comment.
+- Local preflight found two tests blocked by incompatible local NumPy binaries; installed Windows
+  NumPy/safetensors/PyYAML into ignored `artifacts/windows-ci` for a clean retry. One guessed review
+  branch name failed; subsequent reads use the API-confirmed `docs/branch-protection-status` ref.
+- User additionally authorized removing completed memo content after transferring results here.
+  Remaining: rank-32 run, matched evaluation, reviews, data audit/pilot, research and meeting notes.
+
+
+### 2026-10-18 17:35 (Asia/Shanghai) - Recover the memo and translate current assigned tasks
+
+- Objective: finish the E-drive memo and the user's current GitHub assignments, translating them
+  before execution and checkpointing each completed item.
+- Read `E:/备忘录.txt`, the work log, repository guides, and the programming skill. Preserved all
+  existing dirty changes, including the uncommitted adapter-mount/frozen-archive repair.
+- Authenticated read-only GitHub requests identified `KaltistEsperanta`; fetched all 25 issues/PRs,
+  open PR metadata, complete threads for #4/#7/#13/#8/#16, and reviews for #8/#16. Snapshots are
+  under `runs/2026-10-18-task-audit/`. Translated direct assignments, shared asks, and requested
+  reviews in chat, distinguishing already completed #13 work from new budget-fit training work.
+- Fresh Kaggle raw-duration check: 108000 GPU seconds allowed, 0 used, 0 reserved; refresh
+  2026-10-24T00:00Z. No training or inference was launched in this inventory step.
+- Decision: retain the memo's #24 deferral. Treat the meeting's approximately 3% rank-16 gain and
+  half-trained rank-32 statements as unverified conflicts with local receipts, not measured results.
+- Verification: GitHub API reads and quota command succeeded; `git fetch origin --prune` completed.
+- Changed files: `WORKLOG.md` only; ignored API/quota snapshots and local remote refs were updated.
+- Remaining checklist: complete memo experiments; review #18; obtain private data; close-link #13;
+  audit #8/#23/#25 review requests; read SWE-Gym/SWE-smith and tool-extension contract; prepare
+  budget-fit trajectory pilot and meeting evidence. External messages await explicit user consent.
+
+
+### 2026-10-14 23:43 (Asia/Shanghai) - Re-audit the GitHub task and assess issue #24
+
+- Objective: re-check whether the user's assigned GitHub task is complete; if so, translate issue #24's
+  objective and determine whether the team can resolve it.
+- GitHub evidence: authenticated API inspection identified `KaltistEsperanta` and confirmed that team
+  tracker #7 delegates this member's focused work to issue #13. All five issue #13 tasks are checked.
+  PR #16 remains open at `1fa3e28`, is mergeable, has a passing hosted `Repository checks` run, and has
+  no reviews; `liaodid` remains the requested reviewer. Therefore the technical assignment is complete,
+  but the policy handoff cannot close until an independent teammate approves and the PR merges. PR #8
+  remains open and dirty as a separate research/rebase item. Other open team review requests were noted
+  but were not conflated with the completed #13 assignment.
+- Issue #24 evidence: read the complete issue and comment thread. The public Kaggle discussion API
+  returned topic 748287, posted by Kaggle Staff Ryan Holbrook on 2026-10-11, explicitly allowing the
+  31B, 12B, E4B, and E2B QAT W4A16 variants and requiring every agent/sub-agent in a submission to use
+  the same variant. Staff replies say smaller models keep the same hardware and budgets, point LoRA
+  training to the matching unquantized checkpoints, prescribe a 12B `--hf-overrides`, and say the
+  `vision_embedder` failure is fixed in the newest wheelhouse. A same-day web recheck still found the
+  competition Overview saying only 31B, so the official sources remain inconsistent.
+- Capability assessment: evidence collection and the requested `AGENTS.md`, validator, training-plan,
+  tests, and runtime parameterization are within this repository's capabilities. PR #23 already records
+  wheelhouse v31 and passing CI, but remains open/blocked with no review and its measured H100 cohort is
+  still 31B. The current v31 branch still hard-codes 31B across validation, model registry, asset paths,
+  Kaggle metadata, and evaluation receipts, so a credible 12B smoke needs deliberate parameterization
+  rather than a one-line allowlist edit. Final rule-page reconciliation requires the organizer, and an
+  empirical 12B verdict requires external model/compute access.
+- Tooling note: the GitHub plugin exists but is not installed and was already suggested within the
+  seven-day cooldown, so no duplicate suggestion was issued. The existing private-repository PAT was
+  used only for sanitized read requests; no credential contents were printed or recorded. One Git fetch
+  and one later API request hit transient TLS failures; the required state was obtained through other
+  successful API calls without repeating a failed approach more than once.
+- Changed files: `WORKLOG.md` only. No GitHub/Kaggle comment, review, merge, push, GPU run, competition
+  submission, source/configuration change, or credential change was made.
+- Follow-up: wait for `liaodid` to review PR #16. For #24, ask the host to make the Model Selection page
+  match topic 748287 (or explicitly state that the announcement supersedes it), archive the full official
+  topic under `resource/`, review/merge the v31 compatibility work, parameterize model selection, then run
+  a bounded 12B serving and matched fast-cohort smoke before considering any submission switch.
+
+### 2026-10-14 01:36 (Asia/Shanghai) - Resolve the origin/main conflicts step by step
+
+- Setup: created `integration/lora-rank8-origin-main` in `artifacts/integration-origin-main` at
+  `89ee95f` and started a no-commit merge of `origin/main`; the expected four files conflicted. The
+  first combined create-and-merge command failed because its not-yet-created directory was used as the
+  working directory; splitting creation and merge succeeded without repeating that approach.
+- Step 1/4 complete: resolved and staged `docs/README.md` by retaining all three local LoRA navigation
+  entries and the remote prompt/context entry. Conflict-marker search and staged `diff --check` passed.
+- Step 2/4 complete: resolved and staged `resource/manifests/README.md` by retaining every unique local
+  and remote record, deduplicating `eval-assets-verification.json`, relabeling the fixed October 9
+  manifest as historical, and retaining the snapshot registry as the notebook selection source.
+  All referenced existing manifests were checked, and conflict-marker search plus staged
+  `diff --check` passed. A PowerShell inspection initially repeated the unsupported `foreach { ... } |
+  Format-Table` form and failed at parse time; the approach was replaced with collection into `$rows`
+  before formatting and will not be reused.
+- Remaining: `scripts/prepare_kaggle_runtime.py` and `tests/test_kaggle_preparation.py`; the merge has
+  not been committed or pushed.
+
+### 2026-10-14 01:31 (Asia/Shanghai) - Decompose the four active-branch merge conflicts
+
+- Objective: identify the exact competing changes behind the four conflicts reported when comparing
+  `fix/lora-rank8-controlled` with `origin/main`, without performing the merge or choosing a resolution.
+- Method and evidence: inspected the conflict tree produced by `git merge-tree HEAD origin/main` and
+  compared its stage-1 base, stage-2 local, and stage-3 remote blobs. The common base is `3054da8`;
+  all relevant remote edits come from `625a597` (PR #10), while the local edits span the LoRA runtime,
+  serving-probe, dependency, and evaluation work.
+- Findings: the four files contain 11 conflict hunks. `docs/README.md` has one additive navigation-row
+  conflict (three local LoRA reports versus the remote prompt/context guide). `resource/manifests/README.md`
+  has two additive catalog conflicts (local SFT/module and October 9 wheel records versus remote first-LoRA,
+  test-wheel, and snapshot-registry records). `scripts/prepare_kaggle_runtime.py` has five substantive
+  contract conflicts: explicit October 9 manifest plus test-dependency/adapter validation versus the remote
+  wheelhouse registry; payload fields; run-manifest fields; compressed base85 notebook/test-dependency/size
+  behavior versus plain base64 plus snapshot metadata; and output metadata. `tests/test_kaggle_preparation.py`
+  has three corresponding fixture conflicts: payload encoding and wheel schema, copied manifest input, and
+  dynamic platform-safe baseline hash versus the remote constant plus wheelhouse receipt assertions.
+- Resolution assessment: both documentation sides should be retained. The runtime should combine the remote
+  snapshot registry and receipt with the local adapter staging, reviewed test dependencies, compressed base85
+  payload, size gate, input paths, and dynamic hashes; the tests must assert that combined contract. Choosing
+  either whole side would discard independently required behavior.
+- Changed files: `WORKLOG.md` only. No conflicted file, branch, index, remote ref, runtime artifact, or
+  experiment was modified; resolution still awaits the user's decision.
+
+### 2026-10-14 01:24 (Asia/Shanghai) - Fetch remote updates, sync local main, and audit regressions and improvement signals
+
+- Objective: fetch any remote updates without disturbing the dirty experiment worktree, stop for a
+  user decision on conflicts, and re-check the GitHub task metrics and any positive remote changes.
+- Fetch and sync: `git fetch --prune origin` left `origin/main` at `625a597` and pruned the merged/deleted
+  `origin/fix/pr8-contracts-v2` ref. A conflict-free normal merge was completed in the separate clean
+  worktree `artifacts/main-sync`; local `main` is now `a809b6c`, ahead of `origin/main` by the retained
+  Windows-safe filename commit plus the merge commit. Nothing was pushed and the dirty active worktree
+  was not modified except for this log.
+- Conflict audit: a dry merge of `origin/main` into `fix/lora-rank8-controlled` reports four content
+  conflicts: `docs/README.md`, `resource/manifests/README.md`, `scripts/prepare_kaggle_runtime.py`, and
+  `tests/test_kaggle_preparation.py`. The recommended default is to leave the experiment branch intact
+  until PR #17 settles the known-negative PR #10 main change. If immediate integration is chosen, use a
+  dedicated branch, union the documentation/manifests, retain the local dependency/adapter/runtime
+  preparation behavior, and add the remote tests while preserving dynamic hashes and Windows-safe byte
+  handling.
+- Regression verification: the exact PR #16 head `1fa3e28` passed all 53 L4 tests with 3 documented
+  torch-dependent skips, the notebook generator returned `status: ok`, and the real rank-16 adapter
+  validated at rank 16 with 820 tensors and 244,982,352 bytes. Synced `main` produced eight failures and
+  one error under the Windows full suite: unavailable `fcntl`, checkout-byte/hash differences, and
+  POSIX-path assertions. These are platform gaps already addressed on the local branch, not a hosted
+  regression; GitHub's `Repository checks` for `625a597` completed successfully. The repository checker
+  also cannot run its Bash checks on this host. `git diff --check origin/main..main` passed and the clean
+  synced tree contains no colon-named path.
+- Remote improvement audit: no capability lift is sufficiently controlled for promotion. PR #20's
+  heredoc prompt is the strongest signal (`rich_3278` 1/3 versus a historical 0/22, plus two 1/1 task
+  results), but it is not a matched cohort and needs independent reproduction. PR #22 changed prompt and
+  wheelhouse together and never exercised its fallback; PR #8 reports 3/11 versus 2/11 patch verification
+  but unchanged 2/11 clean/resolved with loop/time regressions. PR #21 is a clear compatibility recovery:
+  it updates the runner to the republished wheelhouse API and turns the prior import failure into a
+  successful 83-test `rich_3454` execution. PR #10 on current main is negative (11/31 versus 16/31 and
+  +15.4% inference time) and PR #17 proposes reverting it.
+- Failed approaches and recovery: the GitHub CLI was absent, so authenticated status inspection used the
+  existing Git credential helper and GitHub REST API without logging credentials. A PowerShell pipeline
+  directly after `foreach` caused one parser error and was replaced with a collected array. Earlier range
+  arguments using `$base..ref` were parsed as variable names; subsequent Git diffs used braced variables
+  or separate revision arguments. No failed approach was repeated.
+- Changed files: `WORKLOG.md`; local Git metadata/main history also changed through fetch/prune and the
+  local merge. No active-branch conflict was resolved, no remote ref was modified, and no GPU, Kaggle, or
+  competition operation was performed.
+
+### 2026-10-14 01:14 (Asia/Shanghai) - Complete the copied GitHub issue #13 tasks and repair PR #16 CI
+
+- Objective: check whether the previously copied GitHub task was complete, finish every actionable
+  gap, and stop if nothing technical remained.
+- Remote audit: authenticated read-only inspection showed issue #13 open with five unchecked tasks,
+  PR #15 merged, PR #16 open with no review and one failed `Repository checks` run, and PR #8 still
+  open/dirty. Four issue #13 tasks already had measured evidence; the requested technique survey was
+  incomplete, and PR #16's three failing tests depended on `numpy`/`safetensors` absent from the
+  deliberately lightweight CI environment.
+- Work performed on `experiment/four-l4-lora-feasibility`: added the issue's comparison matrix for
+  standard LoRA, checkpointing, packing, trajectory SFT, replay filtering, rsLoRA, DoRA, NF4 QLoRA,
+  DPO and GRPO; recorded benefit, cost, serving compatibility, evidence quality and two recommended
+  next experiments. Replaced the adapter checker's framework dependency with validated standard-library
+  safetensors-header parsing, and made the CLI tests write a minimal real-format file with the standard
+  library. Commit `1fa3e28` was pushed to PR #16.
+- Verification: 53 targeted L4 tests passed with 3 documented torch-dependent skips; the notebook
+  generator returned `status: ok`; the new checker validated the real rank-16 adapter (820 tensors,
+  244,982,352 bytes); `git diff --check` passed; GitHub `Repository checks` run `38436904198` passed.
+  One initial generator check omitted its required owner/slug/output arguments and was corrected with
+  the documented invocation. The local repository checker still cannot represent CI in this sparse
+  Windows worktree (missing out-of-cone files, GBK decoding and no Bash), matching the prior recorded
+  environment limitation; hosted Linux CI is the authoritative full gate.
+- GitHub handoff: all five issue #13 boxes were checked, evidence was posted at issue comment
+  `6151059197`, and independent review was requested from `liaodid` on PR #16. The issue was deliberately
+  left open until that teammate approval and merge; no self-approval or policy bypass was attempted.
+- Files changed: `docs/experiments/2026-10-12-l4-training-feasibility.md`,
+  `resource/l4_feasibility/verify_l4_adapter.py`, `tests/test_l4_feasibility.py`, and `WORKLOG.md`.
+  No GPU job, Kaggle upload, credential change, or competition submission was performed.
+
+### 2026-10-13 24:45 (Asia/Shanghai) - Rank 32 hit the load budget and consumed the rest of the quota: the ladder pauses at rank 16
+
+- Objective: run the next rung of the rank ladder, rank 32, with the encoding fixes that rank 16 proved.
+- **The run failed at the base load, not at training.**
+  `junzhejiao/gemma4-lora-rank32-sft-v1` (`gemma-4-rank-32-lora-sft-v1-four-l4`) ended COMPLETE with
+  `single_process_device_map.status` reporting the placement ladder's single attempt as
+  `outcome: timeout, seconds: 600.0` on `device_map: balanced` with the same 20,500 MiB per-GPU budget
+  that loaded the base in 217 s one rung earlier. Verdict: *the sharded load did not finish within
+  `--load-budget-seconds`*. Session wall 1,263.8 s.
+- **Cost: 2,570.542 quota-seconds for nothing, and the quota is now 787.753 s remaining** (was
+  3,358.295; refresh still 2026-10-17T00:00Z). At the L4x4 2x billing rate that is about **394 s of
+  usable wall time**, while one rung costs roughly 470 s of wall time and ~1,750 quota-seconds. **The
+  ladder cannot be continued without the refresh or another platform.**
+- What this rung did establish: the same notebook shape, dataset embedding, tokenizer path and
+  `--load-budget` plumbing ran to the load phase without an encoding error, so rank 16's fixes hold at
+  rank 32. What it did not establish: anything about rank 32, since no update ran.
+- The load timeout is unmeasured as to cause rather than explained: the same placement loaded in 217 s
+  on the rank-16 run and in 196-217 s on the four feasibility runs, so a 600 s cap that this run
+  exceeded is either host contention on the shared machine or a genuine variance in dispatch time that
+  the earlier runs did not show. The cheapest correction for the next attempt is to raise
+  `--load-budget` to match the measured worst case (the four-L4 feasibility notebook uses 480 s for its
+  worker while its subprocess timeout is 1,100 s; this run's subprocess timeout was 1,500 s, so the
+  worker's own cap was the binding limit, not the harness).
+- Verification: the full suite passes (**131 tests, 4 subtests**), `tests/test_l4_feasibility.py` alone
+  passes 68, and the generator's `--check` still reports `status: ok`. `scripts/fetch_kernel_log.py` is
+  new: `kernels_output` downloads through `www.kaggleusercontent.com`, which stopped resolving from this
+  machine (`getaddrinfo failed`, twice), while `api.kaggle.com` answered -- the log alone carried this
+  measurement.
+- State of the ladder: **rank 16 trained, validated and downloaded** (adapter at
+  `runs/2026-10-13-lora-rank16-v3/output/l4-feasibility/adapter/`), rank 32 attempted and failed at load,
+  rank 64 never attempted. No paired evaluation has been run for either rung, so no capability claim
+  exists.
+- Changed files: `scripts/fetch_kernel_log.py` (new), `WORKLOG.md`. Run directories under `runs/` are
+  gitignored.
+
+### 2026-10-13 24:10 (Asia/Shanghai) - Rank 16 of the ladder is trained on the real records, and the encoding cost two GPU sessions to get right
+
+- Objective (user request): begin the LoRA experiment, training one rank group at a time from low rank to
+  high rank. **Rank 16 is done and its artifact is in hand; rank 32 is launched next.**
+- **Result of the rank-16 rung** (`junzhejiao/gemma4-lora-rank16-sft-v3`, title slug
+  `gemma-4-rank-16-lora-sft-pilot-v3-four-l4`): `status: ok`. The required
+  `gemma-4-31b-it-qat-w4a16-ct` base was dequantised to BF16 and dispatched across four L4s by one
+  process, PEFT wrapped it at rank 16 / alpha 32, **32 of 32 optimizer updates completed**
+  (`stopped_reason: completed_updates`) over 32 distinct records (0.278 of one pass, 115 trainable
+  records after one over-long prompt was refused), and the adapter exported and validated:
+  **820 tensors, 244,982,352 bytes**, SHA256 `bec7346f3e820873105545bf473909780c52940bf71bcbd21adec9afb8aa9e65`,
+  `adapter-check.json` -> all 820 keys on the served naming scheme, 0 unmatched, layers 0-59, all seven
+  projections. Session wall **468.4 s**, charged **1,743.06 quota-seconds**; per-update seconds
+  1.382 / 5.030 / 16.509 (first update includes warm-up); per-GPU peaks 14.299 / 19.931 / 20.102 /
+  19.255 GiB. The adapter file itself was downloaded into the run directory, so the artifact is local.
+- **Two encoding defects were found by training, not by review, and both are now fixed with tests.**
+  Run 1 (v1) died at `NameError: name 'true' is not defined` -- `json.dumps(True)` is `true`, and the
+  generator had always rendered placeholders as JSON. Run 2 (v2) trained through PEFT and then died at
+  the first update with `ValueError: too many dimensions 'str'`: on this image
+  `apply_chat_template(..., tokenize=True)` returns **token strings, not ids**. The encoder now renders
+  the template to text and tokenises explicitly, which also let the boundary be computed by comparing
+  the prompt rendering with the full rendering token by token.
+- **The fix was proven before another GPU second was spent, by a CPU-only preflight.**
+  `train_l4_device_map.py --dataset-check` tokenises the dataset on the real tokenizer and exits before
+  any model load; `prepare_l4_feasibility_notebook.py --dataset-check --cpu-only` emits that notebook with
+  `enable_gpu: false` and without the four-L4 hardware assertion. The preflight
+  (`junzhejiao/gemma4-lora-rank16-preflight`) reported `status: ok` for all 116 records: 115 supervised
+  examples, 10 truncated at `--seq-len 2048`, mean 232.4 prompt and 522.0 target tokens, one record
+  refused because its prompt alone exceeds the cap. That is the measurement that made run 3 safe.
+- **Data normalisation found in passing**: 25 of the 116 reviewed records end their completion with
+  `"\n "`, an extraction artifact; the reader now strips it and records `completion_trimmed` so the
+  supervised region equals the rendered completion.
+- Verification: `tests/test_l4_feasibility.py` -> **68 tests pass** (dataset reader, mask boundary,
+  boundary-refusal, merged-token boundary, placeholder rendering as Python rather than JSON, unsubstituted
+  placeholder, CPU-preflight shape and `enable_gpu`), and the generator's `--check` reports `status: ok`.
+- Quota after this rung: **3,358.295 s remaining of 108,000 s** (refresh 2026-10-17T00:00Z). The failed
+  v1 run cost 204.696 s and the successful v3 run 1,743.06 s, so the ladder now costs about 1,750 s per
+  rung at this update count.
+- Honesty limits for this rung, unchanged from the previous entry: the records are public-task
+  prompt/patch pairs rather than verified agent trajectories, they overlap the control-valid evaluation
+  tasks, and no paired evaluation was run, so this rung establishes that the ladder trains on real data
+  end to end and nothing about capability.
+- Changed files: `resource/l4_feasibility/train_l4_device_map.py`,
+  `scripts/prepare_l4_feasibility_notebook.py`, `tests/test_l4_feasibility.py`, `WORKLOG.md`. Run
+  directories under `runs/` are gitignored.
+
+### 2026-10-13 23:15 (Asia/Shanghai) - The rank ladder starts: rank 16 trains on the real SFT records (session running)
+
+- Objective (user request): begin the LoRA experiment, training one rank group at a time from low rank to
+  high rank.
+- **Scope agreed first, because the ladder is not affordable in one step.** Three rungs (16/32/64) with
+  their paired evaluations need roughly 10,000 s of L4x4 wall time; the quota holds **5,306.051 s** and
+  does not refresh until **2026-10-17T00:00Z**, about 2,653 s of wall time. The user chose a bounded
+  low-rank pilot now (rank 16, training only) with evaluation waiting for the refresh, and the existing
+  116-record public-task SFT artifact as the training data.
+- **What was missing was not a rank flag but a training loop.** The measured four-L4 route
+  (`train_l4_device_map.py`) trained the *synthetic handoff example* for at most 8 updates; the rank
+  ladder needs real records. Added to that worker, offline-first:
+  - `load_sft_jsonl`: reads the prompt/completion artifact, skipping malformed or empty records instead of
+    ending a session on one bad line, and recording `prompt_chars` so the objective can supervise the
+    patch alone;
+  - `encode_sft_record`: the same boundary rule TRL uses for `completion_only_loss` -- the
+    generation-prompt rendering must be a token prefix of the full rendering, and everything after that
+    measured prefix is supervised. Deriving the boundary as `len(whole) - len(completion)` looks right and
+    **drops one token of supervision**, which the new test caught before any GPU was spent;
+  - a dataset-driven loop over one pass of the training split (`--dataset`, `--batch-size`,
+    `--max-updates`), accumulating one forward/backward per record, still ending in the shared
+    `target_loss`, so both routes measure one objective; per-update loss, records and instance ids are
+    recorded.
+- **The generator now has two shapes.** `--rank/--alpha/--batch-size/--max-updates/--dataset` plus
+  `--skip-probe-routes` (drops the packed and four-FSDP probe routes, which train the synthetic example)
+  and `--skip-serving` (the rank ladder spends its session on training and leaves the official-runtime
+  reload to the evaluation step). The dataset is embedded as text, so no dataset upload is needed -- which
+  this machine cannot do anyway -- and `--expected-rank` now follows the plan instead of a hardcoded 16.
+  The feasibility shape is unchanged by default.
+- **Prepared and pushed: `junzhejiao/gemma4-lora-rank16-sft-v1` version 1**, title slug
+  `gemma-4-rank-16-lora-sft-pilot-four-l4`, four L4s, competition-attached, rank 16 / alpha 32, batch 1,
+  bound 24 updates over one deterministic pass of the 116 records, `--device-map-budget 900`,
+  `--device-map-timeout 1500`, `--session-limit 3300`, notebook 465,645 bytes.
+- **Run 1 failed in the device-map cell, and the defect was ours, for 204.696 quota-seconds**
+  (5,306.051 -> 5,101.355, measured): `NameError: name 'true' is not defined`, because
+  `json.dumps(True)` renders `true` and the cell is Python. The generator's `render()` had always used
+  `json.dumps`, so any boolean, `None` or numeric placeholder was a latent crash; `--skip-probe-routes`
+  was simply the first feature to put one in a cell. Fixed by adding `python_literal()`, which recurses
+  through containers and keeps Python spellings for booleans and `None`, and by moving the placeholders
+  to an `@@@NAME@@@` sentinel: with a double-`@` placeholder, the "left unsubstituted" check fired on the
+  embedded base85 worker payloads, which contain `@@` pairs.
+- **Run 2 pushed as `junzhejiao/gemma4-lora-rank16-sft-v2`** (title slug
+  `gemma-4-rank-16-lora-sft-pilot-v2-four-l4`), `--max-updates 32` at ~8 s per update from the recorded
+  probe cost, inside the same 900 s wall budget. Its result is recorded in the entry above this one once
+  the session ends.
+- **Offline verification**: `tests/test_l4_feasibility.py` -> **64 tests pass** (8 new dataset tests, the
+  rank-ladder shape test, the placeholder-rendering test that would have caught run 1's crash, and the
+  boundary-refusal test), the generator's `--check` reports `status: ok`, and the full suite passes
+  (**125 tests, 4 subtests**) before this entry was finalised.
+- **Estimated truncation at `--seq-len 2048`**: 4 of 116 records exceed the cap on a 4-chars/token
+  estimate (`fastapi_14463` has a ~2,569-token prompt and is refused by design rather than truncated
+  silently, while the other three lose part of the completion and are recorded as `truncated`), so the
+  first rung trains a near-complete pass.
+- Changed files: `resource/l4_feasibility/train_l4_device_map.py`,
+  `scripts/prepare_l4_feasibility_notebook.py`, `tests/test_l4_feasibility.py`, `WORKLOG.md`. Generated
+  run directory `runs/2026-10-13-lora-rank16/` (gitignored).
+- Known honesty limits for this rung: the records are the public-task prompt/patch pairs, not verified
+  agent trajectories, and the training records overlap the control-valid evaluation tasks, so this rung can
+  establish that the ladder trains on real data end to end -- it cannot support a capability claim. No
+  paired evaluation is attempted in this rung.
+
+### 2026-10-13 21:30 (Asia/Shanghai) - The fastapi starlette sweep landed: 99 control-valid tasks, past the 10-point power bar
+
+- Objective: resume yesterday's task and launch the 30-task fastapi sweep that was prepared but
+  deliberately left unlaunched, because the control-valid set had to grow before any LoRA gain
+  could be measured.
+- **The prepared notebook was first proven reproducible, then pushed.** Its cells already carried
+  the measured-starlette logic, and regenerating it with the committed generator differed in
+  exactly one payload string: the declarative `test_deps.manifest_path`. Every wheel digest, the
+  test-deps manifest digest, the agent scripts, the eval config and all task ids were identical,
+  so the recorded file was rewritten with the committed generator's output
+  (`notebook_sha256 de25354d1108f067838288b9f2755036a8440ef7c1f729f67055368296640dac`) and the
+  earlier file kept as `notebook-previous.ipynb`.
+- **Kernel `junzhejiao/gemma4-control-fastapi-starlette` version 1, CPU-only, COMPLETE in about
+  30 minutes of notebook time (RUNNING 12:47Z, COMPLETE 13:19Z).** Result: **28 of 30 usable**
+  (`usable_count: 28`), against 28 of 30 failing in the same-task batch earlier the same day. The
+  two non-usable tasks are honestly different failures, not a broken sweep: `fastapi_14186` has an
+  empty-arm collection error with a gold arm that runs but fails
+  `test_model_description_escaped_with_formfeed`, and `fastapi_14077` resolves in **both** arms, so
+  it is already green at base.
+- **The pin is measured, not assumed.** `task-environment-pins.json` records the same entry for all
+  30 tasks -- `Requested: measured: newest wheel whose Router accepts on_startup`, installed
+  `0.52.1`, returncode 0 -- and the probe trail is
+  `[1.6.0 rejects, 1.3.1 rejects, 0.52.1 accepts]`. Exit-code pairs across the 30 tasks: 26 at
+  (empty 1, gold 0), 3 at (2, 0), 1 at (0, 0).
+- **Union recomputed: 99 control-valid tasks (fastapi 60, rich 39)**, up from 73, with 26 additions
+  and no losses. That is past the **78** the paired protocol needs for a 10-point gain at 80 % power
+  and 8 validated in more than one sweep. Recorded in `runs/2026-10-13-control-valid-set.json` and
+  in the new tracked manifest `resource/manifests/control-valid-tasks-2026-10-13-final.json`, which
+  supersedes the 73-task manifest. `artifacts/tmp/union_valid_tasks.py` now discovers executed
+  sweeps by globbing `runs/**/control-sweep-report.json` instead of a hand-maintained source list.
+- **The pairing protocol document now carries an amendment** stating that the task-set constraint
+  is cleared and that the binding constraint has moved to compute: quota is unchanged at
+  **5,306.051 s of 108,000 s** and refreshes **2026-10-17T00:00Z** (re-read this session, about
+  **2,653 s** of L4x4 wall time), while the recorded agent cost on four L4s is ~119 s baseline and
+  ~171 s portable per arm, so a 99-task paired run needs roughly 8-10 GPU hours. A full paired
+  evaluation therefore waits for the refresh; this session spent **no GPU quota**.
+- Verification: the full offline suite passes with the local wheel-installed pytest --
+  **116 passed, 1 warning, 3 subtests passed** -- and `tests/test_control_sweep_notebook.py` alone
+  passes 7. The sweep's own artifacts were read from the downloaded output
+  (`control-sweep-report.json`, `task-environment-pins.json`, `pinned-wheels.json`), not inferred.
+- Environment facts worth keeping: the kaggle CLI is only in the `kaggle` conda environment
+  (`C:\Users\32747\miniconda3\envs\kaggle\python.exe`), `bounded_connect.py -m scripts.X` requires
+  `PYTHONPATH=E:\Desktop\CodingAI`, and pytest is not installed in either interpreter -- it was
+  installed from the reviewed local wheels into `artifacts/tmp/pylibs` with
+  `--no-index --no-deps --target`.
+- Changed files: `resource/manifests/control-valid-tasks-2026-10-13-final.json` (new),
+  `docs/experiments/2026-10-11-lora-paired-protocol.md` (amendment), `WORKLOG.md`. Generated
+  notebooks, downloaded sweep output and helper scripts live under `runs/` and `artifacts/`
+  (gitignored).
+- Remaining follow-up: the 53 tasks still invalid (11 fastapi that now fail exit 1 in both arms, 9
+  rich, 13 requests, 1 httpx) each need a per-class measurement like this one before a 5-point
+  effect becomes detectable; no adapter has been trained yet, so the paired run still has nothing
+  to compare; PR #8 still needs its rebase.
 
 ### 2026-10-13 02:00 (Asia/Shanghai) - The control-valid set grew from 4 tasks to 73; the fastapi class is measured and fixed
 
@@ -1156,7 +2462,7 @@ $env:HF_HOME     = 'E:\Desktop\CodingAI\artifacts\hf-cache'   # datasets refuses
 - Objective: continue last night's work by advancing its self-declared highest-value, no-training item -- deciding whether LoRA is applied at all when serving the compressed-tensors W4A16 competition base -- without spending GPU quota before the user picks the execution route.
 - Gap found by inspection, not assumption: `scripts/prepare_kaggle_runtime.py` stages and hash-verifies a mounted adapter, but it runs the official harness end to end and **measures no logprobs**. The plan written at 07:20 ("compare greedy logprobs with and without the adapter") therefore had no executor. The probe adapter itself did exist and was re-checked this round: `artifacts/lora-probe/` holds `adapter_config.json` plus `adapter_model.safetensors` (434,760 bytes, rank 8, `q_proj`/`o_proj`), and `scripts/check_lora_adapter.py` still exits 0 with `served_max_lora_rank: 32`, `max_loras: 1`.
 - Delivery: `scripts/prepare_lora_probe_notebook.py` (new) generates a private, offline L4x4 notebook (`probe.ipynb`, 512,266 bytes) that embeds the loud adapter as gzip+base85 -- so **no Kaggle dataset publication is needed**, removing the 403-prone step -- proves its SHA256 before vLLM sees it, and then compares greedy logprobs on one fixed prompt between the base model name and the adapter name: `LLM(..., tensor_parallel_size=4, max_model_len=4096, gpu_memory_utilization=0.90, enable_lora=True, max_loras=1, max_lora_rank=128)` with `SamplingParams(temperature=0, max_tokens=40, logprobs=3)` and `LoRARequest('main_lora', 1, ADAPTER)`. The constructor arguments mirror the harness defaults in `resource/harness-source/adk_submission/server.py` instead of inventing a different server, and the model handle (`google/gemma-4/Other/gemma-4-31b-it-qat-w4a16-ct/2`) plus the official `dockerImage` come from the existing generators and `resource/notebooks/official/kernel-metadata.json`.
-- Why the result is readable either way: the probe cell records, in `probe-result.json`, the first eight top-logprob positions of both arms, token-id and text differences, and the engine's own LoRA log lines split into `Successfully loaded LoRA weights for module ...` and `No LoRA weights found for module ...decoder_layers.N...`. Identical logprobs with loads *followed by* alias skips is the exact wipe of [discussion 743508](../../resource/discussions/743508.txt); loads only is the upstream #50059 pattern; no loads at all means the adapter never reached the engine. Each case gets a distinct verdict string rather than one undifferentiated "no change".
+- Why the result is readable either way: the probe cell records, in `probe-result.json`, the first eight top-logprob positions of both arms, token-id and text differences, and the engine's own LoRA log lines split into `Successfully loaded LoRA weights for module ...` and `No LoRA weights found for module ...decoder_layers.N...`. Identical logprobs with loads *followed by* alias skips is the exact wipe of [discussion 743508](resource/discussions/743508.txt); loads only is the upstream #50059 pattern; no loads at all means the adapter never reached the engine. Each case gets a distinct verdict string rather than one undifferentiated "no change".
 - Self-inflicted defect caught by running the cells, not by reading them: the first version's probe cell relied on globals defined in the staging cell (`WORK`, `MODEL_PATH`, `PROBE`) and died with `NameError: name 'WORK' is not defined` under independent execution. The probe cell now re-derives every constant from `probe-config.json`, which the staging cell writes; the second generation was re-verified from scratch.
 - Verification actually executed offline (no GPU, no vLLM, no base weights): the staging cell ran standalone and reproduced both adapter files byte-identically (`adapter_config.json` `6a3cb6d1df48b8fb…`, `adapter_model.safetensors` `b43e139956c95f2a…`); the probe cell exits 1 at an explicit "Base model mount is missing" wall instead of silently doing nothing; `--check` returns `status: ok` and `identity_fields_match: true`, and returns 1 with `status: mismatch` on a one-byte tamper of the weights; generating into an existing `--output` exits 1; an adapter directory without `adapter_model.safetensors` exits 1 and writes nothing. All 32 relative links in the touched documentation resolve.
 - Honest scope limit: **no GPU session has run and no verdict exists.** The probe cannot be exercised past the mount check locally, because vLLM is not installed in this workspace; that wall is verified behaviour, not a working measurement. GPU quota is untouched at 102,698.778 s of 108,000 s (refresh 2026-10-17), checked this round.
