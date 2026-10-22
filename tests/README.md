@@ -29,6 +29,9 @@ input mismatch, execution provenance, the downloaded-run submission dry-run, and
 It also checks compressed inline payloads, rejection of source over Kaggle's 1 MB limit,
 both observed input mount layouts, and the hash of an explicitly selected wheel inventory.
 Synthetic result JSON files exercise the submission handoff without claiming model performance.
+`test_eval_suite.py` checks grouped cohorts, label-free frozen inputs, explicit holdout access,
+changed control identities, artifact receipts, fixed score denominators, and matched comparisons.
+Its synthetic results do not establish runtime speed or model quality; allocated runs provide that evidence.
 The wheel-inventory test also executes the start of the installation cell with pip mocked, requiring
 unexpected wheels to fail before any installation or deletion. It never installs the wheelhouse, contacts
 Kaggle, loads a model, runs repository tests, or consumes GPU quota.
@@ -45,3 +48,7 @@ See [CI and review](../docs/ci-and-review.md) for the hosted workflow and local 
 Changes to inference, hardware settings, dependencies, or agent behavior also need a platform
 experiment with valid controls. Historical runtime evidence is indexed in
 [resource/manifests/](../resource/manifests/README.md).
+
+`test_wheelhouse_runtime.py` covers old/new snapshot selection, same-name byte changes,
+explicit record mode, package metadata, malformed registries, and mutations between
+setup and installation. The notebook tests also check policy embedding and receipts.

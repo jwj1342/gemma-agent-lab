@@ -83,13 +83,33 @@ class NotebookPreparationTests(unittest.TestCase):
                      '--task-id', 'fixture_task', '--tasks', tasks, '--run-dir', run)
         return run
 
+    def test_batch_freeze_redacts_all_tasks_and_rejects_duplicate_ids(self):
+        tasks = self.work / 'batch.jsonl'
+        second = dict(self.task, instance_id='fixture_second')
+        tasks.write_text('\n'.join(json.dumps(task) for task in (self.task, second)) + '\n')
+        run = self.work / 'batch-run'
+        self.command('prepare_eval_run.py', '--agent-dir', ROOT / 'configs/baseline',
+                     '--task-ids', 'fixture_task', 'fixture_second', '--tasks', tasks, '--run-dir', run)
+        raw = (run / 'inputs/tasks.jsonl').read_bytes()
+        self.assertNotIn(b'PRIVATE', raw)
+        manifest = json.loads((run / 'run-manifest.json').read_text())
+        self.assertEqual(manifest['task_ids'], ['fixture_task', 'fixture_second'])
+        self.assertEqual(manifest['public_task_sha256'], hashlib.sha256(raw).hexdigest())
+        self.command('prepare_eval_run.py', '--agent-dir', ROOT / 'configs/baseline',
+                     '--task-ids', 'fixture_task', 'fixture_task', '--tasks', tasks,
+                     '--run-dir', self.work / 'duplicates', succeeds=False)
+        self.assertFalse((self.work / 'duplicates').exists())
+
     def setup_cell(self, notebook, payload, task=None, flat_mounts=False):
         mounts = self.work / 'mounts'
         for name in ('data', 'wheels', 'model'):
             (mounts / name).mkdir(parents=True, exist_ok=True)
         (mounts / 'data/tasks.jsonl').write_text(json.dumps(task or self.task) + '\n')
         (mounts / 'wheels/fixture.whl').write_bytes(b'tiny fixture')
-        payload = dict(payload, wheels={'fixture.whl': hashlib.sha256(b'tiny fixture').hexdigest()})
+        payload = dict(payload, wheelhouse_snapshots=[{
+            'id': 'test-snapshot', 'dataset': 'metric/gemma-4-developer-agent-wheelhouse',
+            'wheels': {'fixture.whl': hashlib.sha256(b'tiny fixture').hexdigest()},
+            'versions': {}, 'compatibility': 'synthetic test fixture'}])
         encoded = base64.b85encode(gzip.compress(json.dumps(payload).encode(), mtime=0)).decode()
         source = notebook['cells'][1]['source'].split('\n', 1)[1]
         substitutions = {
@@ -116,7 +136,7 @@ class NotebookPreparationTests(unittest.TestCase):
         # environments, tokens, or downloaded wheels from the maintainer's tree.
         paths = [*Path(ROOT / 'scripts').glob('*.py'), *Path(ROOT / 'configs/baseline').rglob('*'),
                  ROOT / 'resource/notebooks/official/kernel-metadata.json',
-                 ROOT / 'resource/manifests/eval-wheelhouse-2026-10-09.json']
+                 ROOT / 'resource/manifests/kaggle-wheelhouse-snapshots.json']
         for path in paths:
             if path.is_file():
                 target = checkout / path.relative_to(ROOT)
@@ -131,7 +151,10 @@ class NotebookPreparationTests(unittest.TestCase):
         self.assertEqual(hashlib.sha256(base64.b64decode(payload['bundle'])).hexdigest(), self.baseline_sha)
         for name, source in payload['scripts'].items():
             self.assertEqual(source, (ROOT / 'scripts' / name).read_text())
-        self.assertEqual(len(payload['wheels']), 41)
+        self.assertEqual(payload['wheelhouse_mode'], 'verified')
+        self.assertEqual(payload['wheelhouse_snapshot'], 'auto')
+        self.assertTrue(all(len(snapshot['wheels']) == 41
+                            for snapshot in payload['wheelhouse_snapshots']))
         for cell in notebook['cells']:
             if cell['cell_type'] == 'code':
                 ast.parse(cell['source'])
@@ -157,6 +180,9 @@ class NotebookPreparationTests(unittest.TestCase):
         manifest = json.loads((runtime / 'run-manifest.json').read_text())
         self.assertEqual(manifest['public_task_sha256'], hashlib.sha256(public.encode()).hexdigest())
         self.assertEqual(manifest['agent_archive_sha256'], self.baseline_sha)
+        receipt = json.loads((runtime / 'inputs/wheelhouse.json').read_text())
+        self.assertEqual(receipt, manifest['wheelhouse'])
+        self.assertEqual(receipt['matched_snapshot'], 'test-snapshot')
         self.assertTrue((runtime / 'inputs/agent/agent.yaml').is_file())
         with self.assertRaisesRegex(AssertionError, 'Runtime output already exists'):
             self.setup_cell(notebook, payload)
@@ -184,15 +210,15 @@ class NotebookPreparationTests(unittest.TestCase):
         wheels.mkdir(parents=True)
         extra = wheels / 'unchecked_extra.whl'
         extra.write_bytes(b'Not in the reviewed inventory')
-        with self.assertRaisesRegex(AssertionError, 'wheelhouse inventory changed'):
+        with self.assertRaisesRegex(ValueError, 'wheelhouse inventory or SHA256 changed'):
             self.setup_cell(notebook, payload)
-        shutil.rmtree(self.work / 'runtime')
+        self.assertFalse((self.work / 'runtime').exists())
         extra.unlink()
         self.setup_cell(notebook, payload)
         # Catch input changes between setup and installation, before pip or any deletion.
         extra.write_bytes(b'Added after setup')
         with patch('subprocess.run') as pip:
-            with self.assertRaisesRegex(AssertionError, 'wheelhouse inventory changed'):
+            with self.assertRaisesRegex(ValueError, 'Wheelhouse changed after setup'):
                 exec(notebook['cells'][2]['source'], self.setup_namespace)
             pip.assert_not_called()
 
@@ -296,19 +322,59 @@ class NotebookPreparationTests(unittest.TestCase):
         self.assertIn('Notebook source exceeds Kaggle 1 MB limit', failed.stderr)
         self.assertFalse(self.output.exists())
 
-    def test_explicit_wheel_manifest_is_frozen_in_notebook(self):
-        manifest = self.work / 'reviewed-wheels.json'
-        digest = hashlib.sha256(b'tiny fixture').hexdigest()
-        manifest.write_text(json.dumps({'wheelhouse_files': [{'path': 'fixture.whl', 'sha256': digest}]}))
-        expected_hash = hashlib.sha256(manifest.read_bytes()).hexdigest()
+    def test_explicit_record_mode_is_embedded_without_changing_bundle(self):
         self.generate('--agent-dir', ROOT / 'configs/baseline', '--task-id', 'fixture_task',
-                      '--wheel-manifest', manifest)
+                      '--wheelhouse-mode', 'record')
         notebook, payload = self.notebook()
-        self.assertEqual(payload['wheels'], {'fixture.whl': digest})
-        self.assertEqual(payload['wheel_manifest_sha256'], expected_hash)
+        self.assertEqual(payload['wheelhouse_mode'], 'record')
+        self.assertEqual(payload['bundle_sha256'], self.baseline_sha)
+        self.assertIn('Record mode permits unreviewed versions', notebook['cells'][0]['source'])
+
+    def test_unknown_or_conflicting_snapshot_options_fail_before_output(self):
+        failed = self.generate('--agent-dir', ROOT / 'configs/baseline', '--task-id', 'fixture_task',
+                               '--wheelhouse-snapshot', 'unknown', succeeds=False)
+        self.assertIn('Unknown wheelhouse snapshot', failed.stderr)
+        self.assertFalse(self.output.exists())
+        failed = self.generate('--agent-dir', ROOT / 'configs/baseline', '--task-id', 'fixture_task',
+                               '--wheelhouse-snapshot', 'official-2026-10-05',
+                               '--wheelhouse-mode', 'record', succeeds=False)
+        self.assertIn('requires --wheelhouse-mode verified', failed.stderr)
+        self.assertFalse(self.output.exists())
+
+    def test_adapter_can_be_mounted_from_a_kernel_output(self):
+        adapter = self.work / 'adapter'
+        adapter.mkdir()
+        (adapter / 'adapter_config.json').write_text(json.dumps({'r': 16}))
+        (adapter / 'adapter_model.safetensors').write_bytes(b'fixture adapter weights')
+        self.generate('--agent-dir', ROOT / 'configs/baseline', '--task-id', 'fixture_task',
+                      '--adapter-dir', adapter,
+                      '--adapter-mount', '/kaggle/input/trained-adapter/l4-feasibility',
+                      '--adapter-source-name', 'adapter',
+                      '--adapter-kernel-source', 'example-user/trained-adapter')
+        metadata = json.loads((self.output / 'kernel-metadata.json').read_text())
+        self.assertEqual(metadata['kernel_sources'], ['example-user/trained-adapter'])
+        self.assertEqual(metadata['dataset_sources'],
+                         ['metric/gemma-4-developer-agent-wheelhouse'])
+        notebook = json.loads((self.output / 'runtime.ipynb').read_text())
+        encoded = ast.literal_eval(ast.parse(notebook['cells'][1]['source']).body[0].value)
+        payload = json.loads(gzip.decompress(base64.b85decode(encoded)))
+        self.assertEqual(payload['adapter']['config']['r'], 16)
+        self.assertEqual(payload['adapter']['name'], 'main_lora')
+        self.assertEqual(payload['adapter']['source_name'], 'adapter')
+        self.assertEqual(payload['adapter']['weights_sha256'],
+                         hashlib.sha256(b'fixture adapter weights').hexdigest())
+        self.assertNotEqual(payload['agent_archive_sha256'], payload['bundle_sha256'])
+        expected = {item['path'] for item in payload['archive_manifest']['files']}
+        self.assertIn('adapters/main_lora/adapter_model.safetensors', expected)
+        mounted = self.work / 'mounted-adapter' / 'adapter'
+        mounted.mkdir(parents=True)
+        shutil.copy2(adapter / 'adapter_config.json', mounted / 'adapter_config.json')
+        shutil.copy2(adapter / 'adapter_model.safetensors', mounted / 'adapter_model.safetensors')
+        payload['adapter']['mount'] = str(mounted.parent)
         runtime = self.setup_cell(notebook, payload)
-        record = json.loads((runtime / 'run-manifest.json').read_text())
-        self.assertEqual(record['wheel_manifest_sha256'], expected_hash)
+        self.command('verify_eval_run.py', '--run-dir', runtime)
+        manifest = json.loads((runtime / 'run-manifest.json').read_text())
+        self.assertEqual(manifest['agent_archive_sha256'], payload['agent_archive_sha256'])
 
     def test_source_archive_can_generate_without_git_installed(self):
         with patch.dict(os.environ, {'PATH': ''}):

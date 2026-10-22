@@ -18,15 +18,19 @@ def ordinary_test_failure(result):
             and 'error during collection' not in result.get('test_output', '').lower())
 
 
+def control_checks(empty, gold, task_id):
+    if empty.get('task_id') != task_id or gold.get('task_id') != task_id:
+        raise ValueError('Control results refer to different tasks')
+    return {'empty_patch_fails_tests': ordinary_test_failure(empty),
+            'gold_patch_passes_tests': (gold.get('resolved') is True
+                                       and gold.get('test_exit_code') == 0
+                                       and not gold.get('error_message'))}
+
+
 def summarize(run_dir, controls_only=False):
     empty = read(run_dir / 'verify/empty/result.json')
     gold = read(run_dir / 'verify/gold/result.json')
-    if empty['task_id'] != gold['task_id']:
-        raise ValueError('Control results refer to different tasks')
-    checks = {'empty_patch_fails_tests': ordinary_test_failure(empty),
-              'gold_patch_passes_tests': (gold.get('resolved') is True
-                                          and gold.get('test_exit_code') == 0
-                                          and not gold.get('error_message'))}
+    checks = control_checks(empty, gold, gold['task_id'])
     result = {'checked_at': datetime.now(timezone.utc).isoformat(), 'task_id': gold['task_id'],
               'checks': checks, 'controls_valid': all(checks.values())}
     if not controls_only:

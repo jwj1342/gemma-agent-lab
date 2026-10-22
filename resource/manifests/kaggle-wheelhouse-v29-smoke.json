@@ -1,0 +1,177 @@
+{
+  "recorded_at": "2026-10-09T13:05:35.630328+00:00",
+  "kernel": "jwj1342/gemma4-wheelhouse-v29-smoke",
+  "version": 1,
+  "status": "COMPLETE",
+  "wheelhouse_snapshot": "official-v29-2026-10-08",
+  "dataset_version": 29,
+  "task_id": "rich_3454",
+  "hardware": "4 x NVIDIA L4, 23034 MiB each, driver 580.178.04",
+  "tensor_parallel_size": 4,
+  "gpu_memory_utilization": 0.9,
+  "model_handle": "google/gemma-4/Other/gemma-4-31b-it-qat-w4a16-ct/2",
+  "agent_archive_sha256": "02bb939095ded0c970088fc9d19634e203e2d3119a36a5feff20bad55c9343fc",
+  "source_parent_revision": "3054da842f794c854f438a5478ea9437b119e9bc",
+  "source_note": "Prepared with uncommitted fix on the parent revision; all embedded helper hashes match commit 571d6e84f3e4670d00580308c11c44e0db39210d. See preparation receipt and notebook hash.",
+  "script_sha256": {
+    "validate_agent.py": "f1b822d5e5fe6c90a93ed5be9cf0354e65999c8ca00a7bf11c4615ee119bc3a0",
+    "evaluate_agent.py": "ab226e02d065a8ec36dbc5572ba63d443c07defbd0e532330f8c54d12b049e86",
+    "summarize_eval_smoke.py": "8f33f7679198e7c9dcc7ae2313ce987983f06a9de0cc7cbc57c4bba5ca26283e",
+    "verify_eval_run.py": "63c5b6a694c5cc416ee74e7ca4cc5b19ea4071fe7e37984a077691242f338c17",
+    "build_submission.py": "2527cb82e509c5b5b90e10af25c762a100410063879356386f2cb78a4161df26",
+    "prepare_eval_task.py": "91e6a2dba1177480cd79e10668d848ab2bd974fa11ce3668e49e5ec2c0da5871",
+    "wheelhouse_runtime.py": "37fc485d1b560ac5336695aa8f0ca2f32d4dea6096338e387261403b9a3b5082"
+  },
+  "checks": {
+    "empty_patch_fails_tests": true,
+    "gold_patch_passes_tests": true,
+    "official_compiler_passed": true,
+    "real_nonempty_prediction": true,
+    "llm_was_called": true,
+    "agent_tests_executed": true
+  },
+  "controls_valid": true,
+  "pipeline_executed": true,
+  "agent_resolved": true,
+  "test_counts": {
+    "empty": {
+      "failed": 1,
+      "passed": 82
+    },
+    "gold": {
+      "failed": 0,
+      "passed": 83
+    },
+    "agent": {
+      "failed": 0,
+      "passed": 83
+    }
+  },
+  "llm_calls": 19,
+  "tool_calls": 13,
+  "agent_inference_seconds": 129.47597197599998,
+  "agent_time_excludes_model_startup": true,
+  "notebook_elapsed_seconds_at_smoke_completion": 661.387005482,
+  "quota_used_delta_seconds": 1338.026,
+  "quota_delta_scope": "Account-level before/after observation, including L4 billing multiplier; not physical GPU seconds.",
+  "cpu_validation": {
+    "slurm_job": 1062413,
+    "tests_passed": 31,
+    "repository_checks_passed": true,
+    "hosted_ci_run": "https://github.com/jwj1342/gemma-agent-lab/actions/runs/37933277547"
+  },
+  "scope": "One-task compatibility smoke. No aggregate benchmark, graph-benefit estimate, LoRA validation, or competition submission.",
+  "artifact_root": "runs/20261009-wheelhouse-update",
+  "evidence": [
+    {
+      "path": "l4-output/runtime-smoke/run-manifest.json",
+      "bytes": 8571,
+      "sha256": "0a97e6cfcaa2d6e9e94c19b2dcb00e28a4fa6b4c7219b2097cd4cb4133800b7c"
+    },
+    {
+      "path": "l4-output/runtime-smoke/inputs/wheelhouse.json",
+      "bytes": 7012,
+      "sha256": "f9edacf2e07a37528a968c65a27298579811d6b269c950b6133124f25057ae14"
+    },
+    {
+      "path": "l4-output/runtime-smoke/inputs/tasks.jsonl",
+      "bytes": 1109,
+      "sha256": "6bf8045a08a3d0e71165e66e18f9b8bd8d79057446ce912b74ea32b597b68b8c"
+    },
+    {
+      "path": "l4-output/runtime-smoke/inputs/submission.zip",
+      "bytes": 3695,
+      "sha256": "02bb939095ded0c970088fc9d19634e203e2d3119a36a5feff20bad55c9343fc"
+    },
+    {
+      "path": "l4-output/runtime-smoke/compile/validation.json",
+      "bytes": 700,
+      "sha256": "77e0e5ec068cbd4ad2ab0f20d2f82a0c174309ec96a0a3cf954c6bfc74c7ef20"
+    },
+    {
+      "path": "l4-output/runtime-smoke/hardware.csv",
+      "bytes": 173,
+      "sha256": "871a7248fdd9cca5e92abae9272f9d97aea8c8a69c4d81dc346e4315c8e118d9"
+    },
+    {
+      "path": "l4-output/runtime-smoke/controls-summary.json",
+      "bytes": 276,
+      "sha256": "3ce6910dcf2f6c0cb457da9a6ef729ba4ade99667bb27fbb4f07470333088ec6"
+    },
+    {
+      "path": "l4-output/runtime-smoke/infer/prediction.json",
+      "bytes": 955,
+      "sha256": "5aa9d8e5a49e7daee365c4215da8a18f3de3beacdcf0ef0f1848439a7f2f18a1"
+    },
+    {
+      "path": "l4-output/runtime-smoke/infer/inference.log",
+      "bytes": 1341,
+      "sha256": "0872b7f610d1e38ce3389ab8f5ec5f6b9b7042223ccc48846d6e39e358825875"
+    },
+    {
+      "path": "l4-output/runtime-smoke/infer/results/result.json",
+      "bytes": 1165,
+      "sha256": "bd08e965a761bf1fd60c80916e545c11552dade05a80d3c9d8e00d3256a5e0fb"
+    },
+    {
+      "path": "l4-output/runtime-smoke/infer/results/traces/trace_rich_3454.json",
+      "bytes": 68599,
+      "sha256": "befab12c83dae06974139a3dfb394daa474665edaa7c56e26172f36bbde7a9ab"
+    },
+    {
+      "path": "l4-output/runtime-smoke/smoke-summary.json",
+      "bytes": 550,
+      "sha256": "62dfffcbb7644d506d8ca753dbb45f8fcddda5ffde89e4b18a826bbce7795312"
+    },
+    {
+      "path": "l4-output/runtime-smoke/installation.log",
+      "bytes": 6264,
+      "sha256": "eda31745a38da8b99bd55d3abd86e91446f9866158987e48c78511d74df9c1b1"
+    },
+    {
+      "path": "l4-output/runtime-smoke/verify/empty/result.json",
+      "bytes": 2151,
+      "sha256": "6427620665486d468da5d8944c9498b6e5cd0d187958658b4d8eabba54755fb4"
+    },
+    {
+      "path": "l4-output/runtime-smoke/verify/empty/tests.log",
+      "bytes": 1497,
+      "sha256": "3c6874a174c3e7453d8bcdf8736e3e06c3e4b7cf1c18b5c12628f500c13618d3"
+    },
+    {
+      "path": "l4-output/runtime-smoke/verify/gold/result.json",
+      "bytes": 1582,
+      "sha256": "46d67eee1b263875b2bcd0de5162ab74d256df669578753b60e5ca9ca918939b"
+    },
+    {
+      "path": "l4-output/runtime-smoke/verify/gold/tests.log",
+      "bytes": 337,
+      "sha256": "7d3dd352b63ef798f5d6565492de50976b60f38efe429b25d8dee4b793f0c663"
+    },
+    {
+      "path": "l4-output/runtime-smoke/verify/agent/result.json",
+      "bytes": 1675,
+      "sha256": "56927241aa44bc75231c7f32e0e37ef3a0085ff87d8f9d9c6468c7c41101ba86"
+    },
+    {
+      "path": "l4-output/runtime-smoke/verify/agent/tests.log",
+      "bytes": 337,
+      "sha256": "66c8f7bb39547aa1c8dc3be8d6bf315463c38b79a532da652a2938e73bf241e9"
+    },
+    {
+      "path": "l4-output/gemma4-wheelhouse-v29-smoke.log",
+      "bytes": 22699,
+      "sha256": "a6c4d67ec7271127b399d2b7520168673f8fd075c20ca1a8a120d64ad1cf3d04"
+    },
+    {
+      "path": "l4-notebook/preparation.json",
+      "bytes": 1163,
+      "sha256": "916e9fde70f21e5504aad0eb440abf0181055a5075002c6f02126e3a4121d645"
+    },
+    {
+      "path": "l4-notebook/runtime.ipynb",
+      "bytes": 73077,
+      "sha256": "aa9324bc78b0727fb3cc8ae468c4cbe00f04b680945f12be4a1216c02ccb1454"
+    }
+  ]
+}

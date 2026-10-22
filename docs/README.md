@@ -16,6 +16,7 @@ Start with a question, then follow the matching guide. All team guides are in En
 | Choose between PEFT, SFT, and RL | [PEFT/SFT/RL adjudication](experiments/2026-10-10-lora-sft-rl-adjudication.md) |
 | Judge whether a paired LoRA A/B can be read | [Paired protocol and power](experiments/2026-10-11-lora-paired-protocol.md) |
 | Check whether LoRA even applies to the served W4A16 base | [Serving-path risk](experiments/2026-10-11-lora-serving-risk.md), with the runnable probe in [`scripts/prepare_lora_probe_notebook.py`](../scripts/prepare_lora_probe_notebook.py) |
+| Explore zero-update agent improvements | [Prompt and context adaptation](prompt-route.md) |
 | Record a new experiment | [Experiment reports](experiments/README.md) |
 | Open a branch or pull request | [Contribution guide](../CONTRIBUTING.md) |
 | Understand CI, review, and main-branch protection | [CI and review](ci-and-review.md) |

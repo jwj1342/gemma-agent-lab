@@ -6,6 +6,7 @@ import hashlib
 import io
 import json
 from pathlib import Path
+import shutil
 import subprocess
 import tarfile
 import tempfile
@@ -13,6 +14,7 @@ import tempfile
 from build_submission import build, collect_files
 from prepare_eval_task import PUBLIC_FIELDS
 from verify_eval_run import verify_inputs
+from wheelhouse_runtime import load_registry
 
 # Test-only dependencies installed offline before the harness runs. The subprocess sandbox used
 # on Kaggle never installs wheels (see resource/discussions/743973-full.json and the harness
@@ -97,8 +99,6 @@ def main():
     parser.add_argument('--task-id', help='Public task to select from Kaggle inputs, with --agent-dir')
     parser.add_argument('--slug', default='gemma4-official-runtime-smoke')
     parser.add_argument('--title', help='Display title; defaults to the slug with spaces')
-    parser.add_argument('--wheel-manifest', type=Path,
-                        help='Reviewed wheel inventory JSON; defaults to the October 9 snapshot')
     parser.add_argument('--test-deps-dir', type=Path,
                         help='Directory from scripts/build_test_dependency_set.py; installs the '
                              'reviewed test-only wheels offline before the harness runs')
@@ -111,19 +111,40 @@ def main():
                              '/kaggle/input/gemma4-lora-adapter/main_lora; needs --adapter-dir')
     parser.add_argument('--adapter-name', default='main_lora',
                         help='Adapter directory name the agent YAML references')
+    parser.add_argument('--adapter-source-name', default=None,
+                        help='Directory name under --adapter-mount; defaults to --adapter-name. This '
+                             'may differ when a training kernel exports a generic adapter/ directory')
     parser.add_argument('--adapter-dataset-source', default=None,
                         help='Kaggle dataset handle holding the adapter, recorded in kernel metadata')
+    parser.add_argument('--adapter-kernel-source', default=None,
+                        help='Kaggle kernel handle whose output holds the adapter, recorded in kernel '
+                             'metadata; mutually exclusive with --adapter-dataset-source')
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--wheelhouse-mode', choices=['verified', 'record'], default='verified',
+                        help='Match a registered snapshot, or record unreviewed inputs for exploration')
+    parser.add_argument('--wheelhouse-snapshot', default='auto',
+                        help='Registered snapshot ID; auto accepts any registered matching snapshot')
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
+    snapshots = load_registry(root / 'resource/manifests/kaggle-wheelhouse-snapshots.json')
+    if args.wheelhouse_snapshot != 'auto':
+        if args.wheelhouse_mode == 'record':
+            parser.error('--wheelhouse-snapshot requires --wheelhouse-mode verified')
+        if args.wheelhouse_snapshot not in {snapshot['id'] for snapshot in snapshots}:
+            parser.error('Unknown wheelhouse snapshot: ' + args.wheelhouse_snapshot)
     if args.agent_dir and not args.task_id:
         parser.error('--agent-dir requires --task-id')
     if args.run_dir and args.task_id:
         parser.error('--run-dir already records its task; omit --task-id')
     if bool(args.adapter_dir) != bool(args.adapter_mount):
         parser.error('--adapter-dir and --adapter-mount must be given together')
-    if args.adapter_mount and not args.adapter_dataset_source:
-        parser.error('--adapter-mount needs --adapter-dataset-source for the kernel metadata')
+    adapter_sources = [source for source in
+                       (args.adapter_dataset_source, args.adapter_kernel_source) if source]
+    if args.adapter_mount and len(adapter_sources) != 1:
+        parser.error('--adapter-mount needs exactly one of --adapter-dataset-source or '
+                     '--adapter-kernel-source for the kernel metadata')
+    if adapter_sources and not args.adapter_mount:
+        parser.error('adapter input sources require --adapter-dir and --adapter-mount')
     if args.output.exists():
         raise ValueError('Output directory exists; choose a new path to preserve previous notebook evidence')
     try:
@@ -154,10 +175,8 @@ def main():
         raise ValueError('Inline runtime notebook only supports small baseline bundles')
     if hashlib.sha256(bundle).hexdigest() != run['agent_archive_sha256']:
         raise ValueError('Run bundle hash changed')
+    base_bundle_sha256 = run['agent_archive_sha256']
     official = json.loads((root / 'resource/notebooks/official/kernel-metadata.json').read_text())
-    wheel_manifest = args.wheel_manifest or root / 'resource/manifests/eval-wheelhouse-2026-10-09.json'
-    assets = json.loads(wheel_manifest.read_text(encoding='utf-8'))
-    wheel_manifest_sha256 = hashlib.sha256(wheel_manifest.read_bytes()).hexdigest()
     test_deps_blob = None
     test_deps_record = None
     if args.test_deps_dir:
@@ -173,9 +192,24 @@ def main():
             raise ValueError('adapter_config.json must carry a positive integer r')
         if not args.agent_dir:
             raise ValueError('--adapter-dir requires --agent-dir so the adapter can be referenced')
-    payload = {'bundle': base64.b64encode(bundle).decode(), 'bundle_sha256': run['agent_archive_sha256'],
+        # The notebook embeds only the small agent configuration, but its frozen run must describe
+        # the final submission after the mounted adapter is staged. Build that exact archive locally
+        # to freeze every member hash and the deterministic ZIP digest without embedding the weights.
+        with tempfile.TemporaryDirectory(prefix='gemma-adapter-bundle-') as temporary:
+            staged_agent = Path(temporary) / 'agent'
+            shutil.copytree(args.agent_dir, staged_agent)
+            staged_adapter = staged_agent / 'adapters' / args.adapter_name
+            staged_adapter.mkdir(parents=True, exist_ok=True)
+            for required in ('adapter_config.json', 'adapter_model.safetensors'):
+                shutil.copy2(args.adapter_dir / required, staged_adapter / required)
+            final_bundle = Path(temporary) / 'submission.zip'
+            archive_manifest = build(staged_agent, final_bundle)
+        run['agent_archive_sha256'] = archive_manifest['sha256']
+    payload = {'bundle': base64.b64encode(bundle).decode(), 'bundle_sha256': base_bundle_sha256,
+               'agent_archive_sha256': run['agent_archive_sha256'],
                'archive_manifest': archive_manifest,
                'adapter': ({'name': args.adapter_name,
+                            'source_name': args.adapter_source_name or args.adapter_name,
                             'mount': args.adapter_mount,
                             'config': json.loads((args.adapter_dir / 'adapter_config.json').read_text()),
                             'config_sha256': hashlib.sha256(
@@ -189,13 +223,14 @@ def main():
                'source_run_git_revision': run.get('git_revision') if args.run_dir else None,
                'scripts': {name: (root / 'scripts' / name).read_text() for name in
                            ['validate_agent.py', 'evaluate_agent.py', 'summarize_eval_smoke.py',
-                            'verify_eval_run.py', 'build_submission.py', 'prepare_eval_task.py']},
-               'wheels': {item['path']: item['sha256'] for item in assets['wheelhouse_files']},
-               'wheel_manifest_sha256': wheel_manifest_sha256}
+                            'verify_eval_run.py', 'build_submission.py', 'prepare_eval_task.py',
+                            'wheelhouse_runtime.py']},
+               'wheelhouse_snapshots': snapshots, 'wheelhouse_mode': args.wheelhouse_mode,
+               'wheelhouse_snapshot': args.wheelhouse_snapshot}
     payload['script_sha256'] = {name: hashlib.sha256(source.encode()).hexdigest()
                                 for name, source in payload['scripts'].items()}
     encoded = base64.b85encode(gzip.compress(json.dumps(payload).encode(), mtime=0)).decode()
-    setup = '''import base64, gzip, hashlib, json, os, subprocess, sys, zipfile, io
+    setup = '''import base64, gzip, hashlib, json, os, shutil, stat, subprocess, sys, zipfile, io
 from pathlib import Path
 PAYLOAD = json.loads(gzip.decompress(base64.b85decode(PAYLOAD_B85)))
 WORK = Path('/kaggle/working/runtime-smoke')
@@ -219,6 +254,11 @@ if PAYLOAD['public_task'] is not None:
 task_text = json.dumps(public_task) + '\\n'
 del matches
 assert not WORK.exists(), 'Runtime output already exists. Export it and start a fresh session before rerunning.'
+wheelhouse_module = {}
+exec(compile(PAYLOAD['scripts']['wheelhouse_runtime.py'], '<wheelhouse-runtime>', 'exec'), wheelhouse_module)
+wheelhouse_record = wheelhouse_module['capture'](
+    WHEELS, PAYLOAD['wheelhouse_snapshots'], PAYLOAD['wheelhouse_mode'], PAYLOAD['wheelhouse_snapshot'])
+ACTIVE_WHEELS = dict(wheelhouse_record['wheels'])
 WORK.mkdir(parents=True)
 (WORK/'scripts').mkdir(exist_ok=True)
 (WORK/'inputs').mkdir(exist_ok=True)
@@ -231,11 +271,10 @@ with zipfile.ZipFile(io.BytesIO(raw)) as archive:
         assert not path.is_absolute() and '..' not in path.parts
     archive.extractall(AGENT)
 # Stage a mounted PEFT adapter into the run's agent directory. Adapters are far too large to embed
-# in the notebook, so they arrive as a versioned dataset input and are copied in before validation.
+# in the notebook, so they arrive as a versioned Kaggle input and are copied in before validation.
 ADAPTER = PAYLOAD.get('adapter')
 if ADAPTER:
-    import shutil
-    source = Path(ADAPTER['mount'])/ADAPTER['name']
+    source = Path(ADAPTER['mount'])/ADAPTER['source_name']
     assert source.is_dir(), f'Adapter mount missing: {source}'
     destination = AGENT/'adapters'/ADAPTER['name']
     destination.mkdir(parents=True, exist_ok=True)
@@ -249,7 +288,25 @@ if ADAPTER:
     assert actual_weights == ADAPTER['weights_sha256'], 'Mounted adapter_model.safetensors differs from the reviewed one'
     print('Staged adapter', ADAPTER['name'], 'rank', ADAPTER['config'].get('r'),
           'bytes', ADAPTER['weights_bytes'], flush=True)
-(WORK/'inputs/submission.zip').write_bytes(raw)
+# Rebuild the exact reviewed submission after staging. The local preparation step froze this
+# deterministic archive's member hashes and final ZIP digest without embedding the large weights.
+submission = WORK/'inputs/submission.zip'
+with zipfile.ZipFile(submission, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=6) as archive:
+    for record in PAYLOAD['archive_manifest']['files']:
+        candidate = AGENT/record['path']
+        assert candidate.is_file(), f'Frozen agent member missing: {candidate}'
+        assert candidate.stat().st_size == record['bytes'], f'Frozen agent member size changed: {candidate}'
+        assert hashlib.sha256(candidate.read_bytes()).hexdigest() == record['sha256'], \
+            f'Frozen agent member changed: {candidate}'
+        info = zipfile.ZipInfo(record['path'], (2020, 1, 1, 0, 0, 0))
+        info.create_system = 3
+        info.external_attr = (stat.S_IFREG | 0o644) << 16
+        info.compress_type = zipfile.ZIP_DEFLATED
+        with candidate.open('rb') as source, archive.open(info, 'w') as target:
+            for chunk in iter(lambda: source.read(1024**2), b''):
+                target.write(chunk)
+assert hashlib.sha256(submission.read_bytes()).hexdigest() == PAYLOAD['agent_archive_sha256'], \
+    'Runtime submission archive differs from the reviewed local build'
 archive_manifest = dict(PAYLOAD['archive_manifest'], archive=str(WORK/'inputs/submission.zip'))
 (WORK/'inputs/submission.manifest.json').write_text(json.dumps(archive_manifest, indent=2) + '\\n')
 (WORK/'inputs/tasks.jsonl').write_bytes(task_text.encode('utf-8'))
@@ -257,8 +314,7 @@ archive_manifest = dict(PAYLOAD['archive_manifest'], archive=str(WORK/'inputs/su
     'task_id': PAYLOAD['task_id'], 'git_revision': PAYLOAD['git_revision'],
     'source_run_git_revision': PAYLOAD['source_run_git_revision'],
     'script_sha256': PAYLOAD['script_sha256'],
-    'wheel_manifest_sha256': PAYLOAD['wheel_manifest_sha256'],
-    'agent_archive_sha256': PAYLOAD['bundle_sha256'],
+    'agent_archive_sha256': PAYLOAD['agent_archive_sha256'],
     'public_task_sha256': hashlib.sha256(task_text.encode()).hexdigest(),
     'public_fields': sorted(public_task),
     'adapter': (dict(PAYLOAD['adapter'], mount=str(PAYLOAD['adapter']['mount']))
@@ -266,20 +322,18 @@ archive_manifest = dict(PAYLOAD['archive_manifest'], archive=str(WORK/'inputs/su
     'model_handle': 'google/gemma-4/Other/gemma-4-31b-it-qat-w4a16-ct/2',
     'tensor_parallel_size': 4, 'gpu_memory_utilization': 0.90,
     'input_paths': {'data': str(DATA), 'wheels': str(WHEELS), 'model': str(MODEL)},
+    'wheelhouse': wheelhouse_record,
     'status': 'inputs prepared; see smoke-summary.json for executed results'
 }, indent=2) + '\\n')
 for name, source in PAYLOAD['scripts'].items():
     (WORK/'scripts'/name).write_text(source)
+(WORK/'inputs/wheelhouse.json').write_text(json.dumps(wheelhouse_record, indent=2) + '\\n')
 def verify_wheels():
-    actual = {path.name for path in WHEELS.glob('*.whl')}
-    assert actual == set(PAYLOAD['wheels']), 'Official wheelhouse inventory changed.'
-    for name, expected in PAYLOAD['wheels'].items():
-        h=hashlib.sha256()
-        with (WHEELS/name).open('rb') as stream:
-            for chunk in iter(lambda: stream.read(8*1024**2), b''):h.update(chunk)
-        assert h.hexdigest() == expected, 'Official wheelhouse changed: '+name
+    wheelhouse_module['recheck'](WHEELS, ACTIVE_WHEELS)
 verify_wheels()
-print('Exact local bundle and official wheel inventory/hashes match.')
+print('Wheelhouse:', wheelhouse_record['status'], wheelhouse_record['matched_snapshot'])
+print('Versions:', wheelhouse_record['versions'])
+print('Exact local bundle and captured official wheel inventory/hashes match.')
 '''
     install = '''# Same installation scope as the reviewed official starter, in this disposable notebook.
 import glob
@@ -291,7 +345,7 @@ for pattern in ('/usr/local/lib/python*/dist-packages/*cutlass*.pth',
 normalized = Path('/tmp/gemma4-official-wheels')
 normalized.mkdir(exist_ok=True)
 packages=[]
-for name in sorted(PAYLOAD['wheels']):
+for name in sorted(ACTIVE_WHEELS):
     source = WHEELS/name
     if 'cutlass' in source.name.lower():continue
     with zipfile.ZipFile(source) as z:
@@ -346,12 +400,12 @@ run_script('evaluate_agent.py',['verify',*common,'--tasks',DATA/'tasks.jsonl','-
                                '--prediction',WORK/'infer/prediction.json','--results',WORK/'verify/agent'],
                                'verify','agent.log')
 run_script('summarize_eval_smoke.py',['--run-dir',WORK],'checks','summary.log')
-Path('/kaggle/working/submission.zip').write_bytes(base64.b64decode(PAYLOAD['bundle']))
+shutil.copy2(WORK/'inputs/submission.zip', '/kaggle/working/submission.zip')
 print('One-task smoke complete; this notebook has NOT submitted a competition entry.')
 '''
     nb = {'nbformat': 4, 'nbformat_minor': 4,
           'metadata': {'kernelspec': {'display_name': 'Python 3', 'language': 'python', 'name': 'python3'}},
-          'cells': [cell('markdown', '# Official L4 × 4 runtime smoke\nPrivate, offline, one public task. Not a competition submission or benchmark.\nThe official subprocess backend is used; Kaggle inputs remain mounted by the platform.'),
+          'cells': [cell('markdown', '# Official L4 x 4 runtime smoke\nPrivate, offline, one public task. Not a competition submission or benchmark.\nThe official subprocess backend is used; Kaggle inputs remain mounted by the platform.\n\nWheelhouse mode: **'+args.wheelhouse_mode+'**; snapshot: **'+args.wheelhouse_snapshot+'**. Record mode permits unreviewed versions and fingerprints this run; it does not establish compatibility.'),
                     cell('code', 'PAYLOAD_B85 = '+repr(encoded)+'\n'+setup),
                     cell('code', install)]
                     + ([test_dependency_cell(test_deps_blob, test_deps_record)] if test_deps_blob else [])
@@ -369,14 +423,14 @@ print('One-task smoke complete; this notebook has NOT submitted a competition en
                 'competition_sources': ['gemma-4-developer-agent'],
                 'dataset_sources': (['metric/gemma-4-developer-agent-wheelhouse']
                                     + ([args.adapter_dataset_source] if args.adapter_dataset_source else [])),
-                'kernel_sources': [],
+                'kernel_sources': ([args.adapter_kernel_source] if args.adapter_kernel_source else []),
                 'model_sources': ['google/gemma-4/Other/gemma-4-31b-it-qat-w4a16-ct/2']}
     (args.output / 'kernel-metadata.json').write_text(json.dumps(metadata, indent=2)+'\n')
     (args.output / 'preparation.json').write_text(json.dumps({
         'task_id': run['task_id'], 'agent_archive_sha256': run['agent_archive_sha256'],
         'git_revision': git_revision, 'source_run_git_revision': payload['source_run_git_revision'],
         'script_sha256': payload['script_sha256'], 'kernel': metadata['id'],
-        'wheel_manifest_sha256': wheel_manifest_sha256,
+        'wheelhouse_mode': args.wheelhouse_mode, 'wheelhouse_snapshot': args.wheelhouse_snapshot,
         'test_deps_manifest_sha256': test_deps_record['manifest_sha256'] if test_deps_record else None,
         'test_deps_installed': [item['name'] for item in test_deps_record['install']] if test_deps_record else [],
         'task_source': 'frozen run checked against Kaggle inputs' if args.run_dir else 'Kaggle inputs at runtime',

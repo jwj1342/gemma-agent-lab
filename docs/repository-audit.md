@@ -37,10 +37,9 @@ historical evidence for their original notebook and scripts.
 
 ## Remaining collaboration limits
 
-- **Main protection:** the private repository's current GitHub entitlement rejects branch protection
-  with HTTP 403. The [intended rule and live limitation](ci-and-review.md#enforcement-status) are
-  documented. PRs, passing checks, and one other teammate's approval are team policy until GitHub
-  can enforce the rule. Repository privacy is unchanged.
+- **Main protection:** at audit time, the private repository's GitHub entitlement rejected branch
+  protection with HTTP 403. Resolved on October 12, 2026: the repository became public and the
+  [documented rule](ci-and-review.md#protection-for-main) is now enforced on `main`.
 - **Artifacts and access:** a fresh clone contains code and receipts, not raw data, weights, private
   run outputs, or another member's credentials. Use the [Kaggle walkthrough](kaggle-runtime.md)
   for independent execution and record shared artifact locations in experiment reports.

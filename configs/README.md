@@ -3,6 +3,9 @@
 Version agent YAML, data split rules, training parameters, environment versions, and evaluation settings.
 Keep account credentials in HOME and out of configuration files.
 
+The frozen [public evaluation cohorts](evaluation/public-v1.json) record task membership and known
+exposure exclusions. Follow [local evaluation](../docs/local-evaluation.md) before using or changing them.
+
 ## Agent files
 
 | File | What it controls |

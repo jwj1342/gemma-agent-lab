@@ -1,0 +1,9 @@
+# Load StdEnv/2023 python/3.12.4 cuda/12.9; use the Alliance wheelhouse.
+# Data preparation additionally loads arrow/25.0.0 before the environment.
+torch==2.14.1
+transformers==5.18.0
+peft==0.19.1
+accelerate==1.14.0
+compressed-tensors==0.17.1
+safetensors==0.8.0
+PyYAML==6.0.3
