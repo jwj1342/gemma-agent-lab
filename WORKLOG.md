@@ -457,6 +457,17 @@ $env:HF_HOME     = 'E:\Desktop\CodingAI\artifacts\hf-cache'   # datasets refuses
 
 ## Current project state
 
+- October 23 custom-tool track: `feature/repair-checkpoint-skill` adds a submission-contained, read-only
+  `repair-checkpoint` ADK skill and a baseline-matched experiment under
+  `configs/experiments/repair-checkpoint-v1/`. It checks for empty patches, protected test/config edits,
+  Python syntax errors, conflict markers, and debugger residue before `submit_patch`; it does not run
+  repository code or mutate the worktree. Six focused tests, the repository gate, and the complete 160-test
+  CPU suite pass (one expected artifact-dependent skip). Deterministic packaging includes the skill, but an
+  official compiler/model smoke remains manual because this Windows host lacks `google.adk` and a reviewed
+  local wheel. No GPU run, competition submission, push, or PR has occurred; remote A/B evidence is still
+  required before promotion. The implementation is published on
+  `origin/feature/repair-checkpoint-skill` at `60b07ee`; no PR exists yet because this host has no GitHub CLI.
+
 - October 23 integration state: the isolated branch `integration/oct22-main-v31` contains `origin/main` through
   merge `8ef3c82` and the complete v31 branch through merge `46bad80`. The original dirty
   `fix/oct20-handoff-audit` worktree remains untouched. The combined tree preserves the remote wheelhouse
@@ -644,6 +655,41 @@ $env:HF_HOME     = 'E:\Desktop\CodingAI\artifacts\hf-cache'   # datasets refuses
 - Programming v1 is implemented as a prompt-only planning-gate experiment with localization and all runtime settings fixed. Its paired smoke test found no resolution gain, only 1/2 complete plan compliance, higher latency and edit churn, and fewer failed tool calls; keep it as an ablation and retain retrieval v1 as the control.
 
 ## Work history
+
+### 2026-10-23 02:12 (Asia/Shanghai) - Implement submission-contained repair checkpoint skill v1
+
+- Objective: begin the custom-tool workstream by identifying and implementing a missing tool that the coding
+  agent can call while preserving competition submission compatibility.
+- Fetched `origin` and reviewed the existing agent contracts, official competition/ADK skill documentation,
+  the frozen v31 harness source, the failure-mechanism branch (`93a7483`), the selective-graph branch
+  (`9dc37de`), and public reference repository `Gosling-dude/gemma4-developer-agent` at
+  `fb0826b7a560d766ece173f8d96f2827c0db2646`. The public reference had no visible license, so no source was
+  copied. Existing evidence showed that relevant source was often already exposed while empty or incomplete
+  patches remained common; another search tool was therefore not selected as the first intervention.
+- Created `feature/repair-checkpoint-skill` and added `configs/experiments/repair-checkpoint-v1/`, matching the
+  baseline model, tools, sampling, analyzer, and evaluation budgets while adding one direct skill plus one
+  mandatory post-test/pre-submit call. The standard-library script reads tracked and untracked Git changes,
+  parses changed Python without imports, and reports deterministic structural blockers as compact JSON. It
+  never executes target code, runs tests, stages files, edits files, or reads hidden tests.
+- Added six focused tests covering ready, empty, protected-edit, syntax/conflict/debugger, untracked-file, CLI,
+  prompt, and non-mutation behavior. Added the experiment report and navigation entries. Verification passed:
+  focused tests 6/6; repository checks over 78 Python, 14 shell, 36 configuration, 87 Markdown, and six
+  deterministic agent packages; full CPU suite 160/160 with one expected historical-wheel artifact skip;
+  `git diff --cached --check` passed before the final documentation update.
+- The first repository-check attempt used Windows defaults and failed on GBK decoding and missing `bash`;
+  UTF-8 mode plus the verified Git Bash path passed. The first full-suite attempt used an interpreter without
+  `numpy`/`safetensors`; the documented local `.pylibs` path passed. One attempted reference-clone path was
+  wrong and was corrected without repeating it. Frozen compiler import was attempted once and stopped at the
+  absent `google.adk`; no local wheel was found, so official compilation and model execution remain an explicit
+  Kaggle/Trillium v31 gate rather than a claimed result.
+- Changed files: `WORKLOG.md`, `configs/README.md`, `docs/experiments/README.md`,
+  `docs/experiments/2026-10-23-repair-checkpoint-skill.md`, new
+  `configs/experiments/repair-checkpoint-v1/`, and `tests/test_repair_checkpoint_skill.py`. No GPU run, Kaggle
+  upload, competition submission, PR, or merge was performed. Implementation commit `60b07ee` was pushed to
+  `origin/feature/repair-checkpoint-skill`; the remote supplied
+  `https://github.com/jwj1342/gemma-agent-lab/pull/new/feature/repair-checkpoint-skill` for PR creation, but this
+  host has no `gh` executable. Next: open the PR, obtain independent approval, then run official compile/smoke
+  and a matched baseline-versus-checkpoint repair A/B before promotion.
 
 ### 2026-10-23 01:58 (Asia/Shanghai) - Complete isolated main/v31 integration and restore the CPU gate
 
