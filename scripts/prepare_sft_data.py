@@ -23,6 +23,8 @@ def main():
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--reject-setup-actions", action="store_true",
                         help="Reject whole trajectories containing explicit dependency/network setup commands")
+    parser.add_argument("--preserve-reasoning", action="store_true",
+                        help="Copy explicit text reasoning/reasoning_content into assistant reasoning; never infer it")
     parser.add_argument("--tasks", type=Path, default=Path("data/raw/gemma-4-developer-agent/tasks.jsonl"))
     parser.add_argument("--eval-benchmark", type=Path, default=Path("configs/evaluation/public-v1.json"),
                         help="Exclude all frozen development/holdout snapshots from future training")
@@ -58,7 +60,8 @@ def main():
             rejected["duplicate issue attempt"] += 1
             continue
         try:
-            messages = convert_trajectory(row, reject_setup_actions=args.reject_setup_actions)
+            messages = convert_trajectory(row, reject_setup_actions=args.reject_setup_actions,
+                                          preserve_reasoning=args.preserve_reasoning)
             group = group_key(row["instance_id"])
             if group.lower() in {g.lower() for g in reserved}:
                 raise UnsupportedAction("Reserved evaluation snapshot")
@@ -69,7 +72,9 @@ def main():
         split = split_for_group(group, args.seed)
         metadata = {"source": DATASET, "revision": REVISION, "license": "MIT", "instance_id": row["instance_id"],
                     "traj_id": row["traj_id"], "group": group, "split": split, "teacher_model": row["model"],
-                    "verification": "upstream resolved=True; target-tool replay not performed"}
+                    "verification": "upstream resolved=True; target-tool replay not performed",
+                    "reasoning_policy": "explicit-text" if args.preserve_reasoning else "actions-only",
+                    "assistant_messages_with_reasoning": sum(bool(m.get("reasoning")) for m in messages)}
         selected.append(metadata)
         groups[split].add(group)
         examples[split].extend(action_examples(messages, metadata))
@@ -82,6 +87,8 @@ def main():
                 "actions": {k: len(v) for k, v in examples.items()}, "groups": {k: sorted(v) for k, v in groups.items()},
                 "selected": selected, "rejected": dict(rejected), "reserved_evaluation_groups": sorted(reserved),
                 "reject_setup_actions": args.reject_setup_actions,
+                "preserve_reasoning": args.preserve_reasoning,
+                "reasoning_policy": "explicit-text" if args.preserve_reasoning else "actions-only",
                 "eval_benchmark_sha256": benchmark_hash,
                 "scope": "Action-level warm start. Upstream success labels retained; observations have not been replayed with competition tools."}
     (args.output / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")

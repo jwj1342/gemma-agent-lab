@@ -1,0 +1,37 @@
+{
+  "name": "c2-diagnosis-checkpoint-v1",
+  "control": "frozen kaggle-l4-r5/c2/agent",
+  "control_members": {
+    "agent.yaml": "680799291cc7d156d06fb7bfb5577f683ccc0d555b00e8ddb662d577f9bfa5e4",
+    "configs/sampling.yaml": "571a934e89911734927533f1d36cbcc7b8d493592febe63b217e911cf7ed4926",
+    "eval_config.yaml": "916cf6cb34a6cc3de39837fa72cac681599b9ac2a3ee0b893adadfd36474c531",
+    "prompts/system.md": "454defe0a629786f524cee48a3d76fbdeefd6e1701f94a4ed958567216e3ea72"
+  },
+  "prompt_path": "prompts/system.md",
+  "old_paragraph": "- As soon as you have read the code that produces the wrong behaviour, make your edit in the very next call. Do not run more searches or re-read the same region to confirm first; verification comes after the edit.",
+  "new_paragraph": "- After reading a candidate implementation, compare it with the issue’s expected behavior. Briefly identify the conflicting operation and smallest justified change, or explain why this implementation does not explain the issue. If a conflict is identified, edit next. If uncertain, perform at most one check that distinguishes two specific hypotheses before deciding. Do not repeat an unchanged check.",
+  "evaluation": {
+    "hardware": "Kaggle 4xL4",
+    "seeds": [
+      42,
+      1
+    ],
+    "registered_tasks": 29,
+    "historically_valid_controls": 21,
+    "tools": 28,
+    "minutes": 8,
+    "thinking_budget": 4096,
+    "adapters": false,
+    "status": "CPU packaging only; compiler/runtime and matched repair experiments pending",
+    "seed_contract": "Use matching c2/c2-seed1 control and candidate members. The c2 control omits a sampling seed; explicitly freeze and record server seed 42. The c2-seed1 sampling seed is 1."
+  },
+  "selection": "Conditional diagnostic candidate; semantic classifications require reviewer evidence. No promotion from exposure counts alone.",
+  "alternate_controls": {
+    "c2-seed1": {
+      "agent.yaml": "680799291cc7d156d06fb7bfb5577f683ccc0d555b00e8ddb662d577f9bfa5e4",
+      "configs/sampling.yaml": "ccedfe69ae3e9e93e4cbd748fb757b26062e12302501f05bfcb1b1ce272b9bf7",
+      "eval_config.yaml": "916cf6cb34a6cc3de39837fa72cac681599b9ac2a3ee0b893adadfd36474c531",
+      "prompts/system.md": "454defe0a629786f524cee48a3d76fbdeefd6e1701f94a4ed958567216e3ea72"
+    }
+  }
+}

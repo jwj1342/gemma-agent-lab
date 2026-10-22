@@ -1,0 +1,297 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-22",
+  "baseline_main": "e2837a847a89",
+  "scope": "CPU signal audit, initial reviewer annotations, prompt packaging and converter contract; no new agent repair outcomes",
+  "python": "3.14.5",
+  "sources": {
+    "kaggle-l4-r5": {
+      "release_url": "https://github.com/jwj1342/gemma-agent-lab-data/releases/tag/kaggle-l4-r5",
+      "archive_sha256": "8efa27ea037e3df1fb00f2fe5ce1695d25abcc0468ed71502e91552c7e60c808",
+      "reference_map_sha256": "4545afc18f53988a6a4577a94bef54b9e3578d13da27f0dfecb5d3eb8e827cc5",
+      "tasks_sha256": "e4b3fd60f69dbc2b9213e54eeb9636db78aefe92c1d06269d73d9f5f8f3c8ad6",
+      "failed_attempts": 59,
+      "unique_failed_tasks": 16,
+      "summary": {
+        "budgetfit": {
+          "attempts": 29,
+          "valid_controls": 21,
+          "resolved": 6,
+          "failed": 15,
+          "unique_failed_tasks": 15,
+          "missing_trace": 0,
+          "missing_prediction": 0,
+          "mechanisms": {
+            "insufficient_evidence": 15
+          },
+          "read_reference": 13,
+          "attempted_reference": 9,
+          "successful_editor_reference": 5,
+          "final_patch_reference": 5,
+          "read_no_reference_patch": 8,
+          "empty_final_patch": 8,
+          "old_line_coverage_measured": 15,
+          "with_changed_old_lines": 12,
+          "with_exposed_changed_old_lines": 9
+        },
+        "c2": {
+          "attempts": 29,
+          "valid_controls": 21,
+          "resolved": 11,
+          "failed": 10,
+          "unique_failed_tasks": 10,
+          "missing_trace": 0,
+          "missing_prediction": 0,
+          "mechanisms": {
+            "insufficient_evidence": 9,
+            "diagnosis_unresolved": 1
+          },
+          "read_reference": 6,
+          "attempted_reference": 3,
+          "successful_editor_reference": 3,
+          "final_patch_reference": 3,
+          "read_no_reference_patch": 3,
+          "empty_final_patch": 4,
+          "old_line_coverage_measured": 10,
+          "with_changed_old_lines": 9,
+          "with_exposed_changed_old_lines": 4
+        },
+        "c2-seed1": {
+          "attempts": 29,
+          "valid_controls": 21,
+          "resolved": 9,
+          "failed": 12,
+          "unique_failed_tasks": 12,
+          "missing_trace": 0,
+          "missing_prediction": 0,
+          "mechanisms": {
+            "insufficient_evidence": 11,
+            "recognized_not_applied": 1
+          },
+          "read_reference": 9,
+          "attempted_reference": 8,
+          "successful_editor_reference": 5,
+          "final_patch_reference": 5,
+          "read_no_reference_patch": 4,
+          "empty_final_patch": 6,
+          "old_line_coverage_measured": 12,
+          "with_changed_old_lines": 10,
+          "with_exposed_changed_old_lines": 5
+        },
+        "c2-recover": {
+          "attempts": 29,
+          "valid_controls": 21,
+          "resolved": 9,
+          "failed": 12,
+          "unique_failed_tasks": 12,
+          "missing_trace": 0,
+          "missing_prediction": 0,
+          "mechanisms": {
+            "insufficient_evidence": 12
+          },
+          "read_reference": 9,
+          "attempted_reference": 7,
+          "successful_editor_reference": 2,
+          "final_patch_reference": 4,
+          "read_no_reference_patch": 5,
+          "empty_final_patch": 6,
+          "old_line_coverage_measured": 12,
+          "with_changed_old_lines": 10,
+          "with_exposed_changed_old_lines": 6
+        },
+        "c3": {
+          "attempts": 29,
+          "valid_controls": 21,
+          "resolved": 11,
+          "failed": 10,
+          "unique_failed_tasks": 10,
+          "missing_trace": 0,
+          "missing_prediction": 0,
+          "mechanisms": {
+            "insufficient_evidence": 9,
+            "wrong_or_incomplete_patch": 1
+          },
+          "read_reference": 8,
+          "attempted_reference": 4,
+          "successful_editor_reference": 2,
+          "final_patch_reference": 2,
+          "read_no_reference_patch": 6,
+          "empty_final_patch": 8,
+          "old_line_coverage_measured": 10,
+          "with_changed_old_lines": 9,
+          "with_exposed_changed_old_lines": 6
+        }
+      },
+      "private_audit_sha256": "82e7b480c976c260f9e58d77642b9535e0b98b7f4b0f39f3d2299df67bc429c9",
+      "private_annotations_sha256": "4b5ecca1a14734195a6a2fdacd901b9aaa394afab49b371f988698753d64ecbc",
+      "input_files": {
+        "budgetfit/cohort-summary.json": "08e1c7d467925106f071ef19b171fce2f75bcac13dbaa2f8bb78c41248b54c11",
+        "budgetfit/run-manifest.json": "3d586a5607ec04534c10895af12994aa7361877142dd0259aadbf3595393925f",
+        "c2/cohort-summary.json": "8c42564f1de4242f196003d46466cd966bafda53b00312f9aef0b3a9a2a1b210",
+        "c2/run-manifest.json": "8dc1b139f862af72e4a7c78c0b63786e9bce5d0649ba62bb4d037545744529e6",
+        "c2-seed1/cohort-summary.json": "735cb9116612e657095b3e11fcb71e3862c420f153c425a693deb74146e1d7cc",
+        "c2-seed1/run-manifest.json": "5fd87ca365373088adc807206d4ffc8c4d08d3ed2676bdaa4b5012e2a9f95156",
+        "c2-recover/cohort-summary.json": "5612b40840d94a66c83bbaa8eebda7f676b46b54c35e84a59dff468ef1c84c72",
+        "c2-recover/run-manifest.json": "0f18029331c8579fedaf766ca7a4d7f9398fe994a25b20af90a2f3d3b1a70761",
+        "c3/cohort-summary.json": "04d1842c86c294f9d06bc457a11bd1dc92f3524e8d13a1f2cc016f7386179c4d",
+        "c3/run-manifest.json": "ad8bcadb8e029ebd76bcbc5509b4f54487eaa65fa6b2e3d2190406e2c9318ac3"
+      }
+    },
+    "budgetfit-dev-r4": {
+      "release_url": "https://github.com/jwj1342/gemma-agent-lab-data/releases/tag/budgetfit-dev-r4",
+      "archive_sha256": "029c14749b2d89ad152fc09b467924f6a5b222fbe9d1d10e6dc5d4cb4b204e4a",
+      "reference_map_sha256": "4545afc18f53988a6a4577a94bef54b9e3578d13da27f0dfecb5d3eb8e827cc5",
+      "tasks_sha256": "e4b3fd60f69dbc2b9213e54eeb9636db78aefe92c1d06269d73d9f5f8f3c8ad6",
+      "failed_attempts": 49,
+      "unique_failed_tasks": 22,
+      "summary": {
+        "run-s0": {
+          "attempts": 40,
+          "valid_controls": 29,
+          "resolved": 12,
+          "failed": 17,
+          "unique_failed_tasks": 17,
+          "missing_trace": 0,
+          "missing_prediction": 0,
+          "mechanisms": {
+            "insufficient_evidence": 17
+          },
+          "read_reference": 13,
+          "attempted_reference": 10,
+          "successful_editor_reference": 7,
+          "final_patch_reference": 7,
+          "read_no_reference_patch": 6,
+          "empty_final_patch": 8,
+          "old_line_coverage_measured": 17,
+          "with_changed_old_lines": 16,
+          "with_exposed_changed_old_lines": 10
+        },
+        "run-s1": {
+          "attempts": 40,
+          "valid_controls": 29,
+          "resolved": 14,
+          "failed": 15,
+          "unique_failed_tasks": 15,
+          "missing_trace": 0,
+          "missing_prediction": 0,
+          "mechanisms": {
+            "insufficient_evidence": 15
+          },
+          "read_reference": 12,
+          "attempted_reference": 7,
+          "successful_editor_reference": 5,
+          "final_patch_reference": 5,
+          "read_no_reference_patch": 7,
+          "empty_final_patch": 7,
+          "old_line_coverage_measured": 15,
+          "with_changed_old_lines": 14,
+          "with_exposed_changed_old_lines": 10
+        },
+        "run-s2": {
+          "attempts": 40,
+          "valid_controls": 29,
+          "resolved": 12,
+          "failed": 17,
+          "unique_failed_tasks": 17,
+          "missing_trace": 0,
+          "missing_prediction": 0,
+          "mechanisms": {
+            "insufficient_evidence": 17
+          },
+          "read_reference": 14,
+          "attempted_reference": 11,
+          "successful_editor_reference": 6,
+          "final_patch_reference": 5,
+          "read_no_reference_patch": 9,
+          "empty_final_patch": 9,
+          "old_line_coverage_measured": 17,
+          "with_changed_old_lines": 16,
+          "with_exposed_changed_old_lines": 12
+        }
+      },
+      "private_audit_sha256": "4c38b58370b2e93c6121e9ac14530f5ebb398f0c5c3055067ea9ac4e28aa00ea",
+      "private_annotations_sha256": null,
+      "input_files": {
+        "run-s0/run-manifest.json": "323fb4b06c872e1c61488372887d1c6d4b2ba1e059a789145933fa32529fa097",
+        "run-s0/runtime-inputs.json": "8e264126a5cce0703966b26d90af215c71ad1ab9f3ec3a795e2bd59a23f277a4",
+        "run-s0/summary.json": "bc9e925c464536489ee8e8faa048b6531c088c7ffba395a76c50a2a5317dc019",
+        "run-s1/run-manifest.json": "4d5b92582fbb5bf831df9f92d7eceabc90e2f50457dac608b7edc0e9ee778975",
+        "run-s1/runtime-inputs.json": "2bae94c89893c806d0d31c2adb3ff02edf6267d8a3d9a8e4ed5bf3ca26bda6e5",
+        "run-s1/summary.json": "982c2a2aad386e5a39249480bd49d1574038b89cc938a384b9754ddbdb4d913f",
+        "run-s2/run-manifest.json": "15ba73f9efc4b4e2ae2265b84f64a41296c4669294bce81c77cde32059f5c1a9",
+        "run-s2/runtime-inputs.json": "10818bee3f195eee42360a06cfee1225e79d2f25f8cae85b349bd96e05cba8e8",
+        "run-s2/summary.json": "369d19ee66ce16dbd491834d17279569099a787551c40feccbfefc5a38a693cd"
+      }
+    }
+  },
+  "implementation_sha256": {
+    "src/failure_mechanisms.py": "a5f88d2c120fabe6face9b75b6d374eff7956094fa0d5e9d2a70f73b96f406ef",
+    "scripts/audit_failure_mechanisms.py": "972ddf197ada33835380e0c40f7129cda5db043e43a19477229578b34dde2e0c",
+    "scripts/build_diagnosis_candidate.py": "ab7e3355da7e835c5ccfb9960eb732c531879dd8af66374533b03881daf438da",
+    "src/sft_data.py": "45e8dc6eb21d0abbc069fae65934e9f432be10e5244fca8652155a4f3d25b2fd",
+    "scripts/prepare_sft_data.py": "f2f7a4f645932047aaa97b809b83201889ff04ebcea007c937bd0802e4db3025"
+  },
+  "initial_annotations": {
+    "count": 3,
+    "author": "Codex initial trace interpretation",
+    "independently_reviewed": false,
+    "selection": "Illustrative cases, not a prevalence sample"
+  },
+  "validation": {
+    "cpu_tests_passed": 80,
+    "real_tokenizer_template": "pending",
+    "official_compilation": "pending",
+    "gpu_inference": "not run",
+    "training": "not run",
+    "task_verifier": "not rerun",
+    "repository_checks": "passed: 54 Python, 14 shell, 20 configuration, 66 Markdown, 3 agent packages"
+  },
+  "candidates": {
+    "seed42": {
+      "name": "c2-diagnosis-checkpoint-v1",
+      "control_variant": "c2",
+      "spec_sha256": "c3424aff3266210a8660f2a12a409d32d31f5b27cc69f332a5f49750bda30353",
+      "control_members": {
+        "agent.yaml": "680799291cc7d156d06fb7bfb5577f683ccc0d555b00e8ddb662d577f9bfa5e4",
+        "configs/sampling.yaml": "571a934e89911734927533f1d36cbcc7b8d493592febe63b217e911cf7ed4926",
+        "eval_config.yaml": "916cf6cb34a6cc3de39837fa72cac681599b9ac2a3ee0b893adadfd36474c531",
+        "prompts/system.md": "454defe0a629786f524cee48a3d76fbdeefd6e1701f94a4ed958567216e3ea72"
+      },
+      "candidate_members": {
+        "agent.yaml": "680799291cc7d156d06fb7bfb5577f683ccc0d555b00e8ddb662d577f9bfa5e4",
+        "configs/sampling.yaml": "571a934e89911734927533f1d36cbcc7b8d493592febe63b217e911cf7ed4926",
+        "eval_config.yaml": "916cf6cb34a6cc3de39837fa72cac681599b9ac2a3ee0b893adadfd36474c531",
+        "prompts/system.md": "dc162f5264c27f64a59480cb71613ff32ca05290a952467aa37662a34d33a5fe"
+      },
+      "changed_members": [
+        "prompts/system.md"
+      ],
+      "archive_sha256": "4c2c26e0e569b0e0118a0010af703b77670304d92f3d8e03ca061b297b24b18f",
+      "weight_updates": 0,
+      "status": "CPU packaging only; official compilation, inference and repair evaluation pending"
+    },
+    "seed1": {
+      "name": "c2-diagnosis-checkpoint-v1",
+      "control_variant": "c2-seed1",
+      "spec_sha256": "c3424aff3266210a8660f2a12a409d32d31f5b27cc69f332a5f49750bda30353",
+      "control_members": {
+        "agent.yaml": "680799291cc7d156d06fb7bfb5577f683ccc0d555b00e8ddb662d577f9bfa5e4",
+        "configs/sampling.yaml": "ccedfe69ae3e9e93e4cbd748fb757b26062e12302501f05bfcb1b1ce272b9bf7",
+        "eval_config.yaml": "916cf6cb34a6cc3de39837fa72cac681599b9ac2a3ee0b893adadfd36474c531",
+        "prompts/system.md": "454defe0a629786f524cee48a3d76fbdeefd6e1701f94a4ed958567216e3ea72"
+      },
+      "candidate_members": {
+        "agent.yaml": "680799291cc7d156d06fb7bfb5577f683ccc0d555b00e8ddb662d577f9bfa5e4",
+        "configs/sampling.yaml": "ccedfe69ae3e9e93e4cbd748fb757b26062e12302501f05bfcb1b1ce272b9bf7",
+        "eval_config.yaml": "916cf6cb34a6cc3de39837fa72cac681599b9ac2a3ee0b893adadfd36474c531",
+        "prompts/system.md": "dc162f5264c27f64a59480cb71613ff32ca05290a952467aa37662a34d33a5fe"
+      },
+      "changed_members": [
+        "prompts/system.md"
+      ],
+      "archive_sha256": "0d2c3763f78e9025ff1aa78ce1c07aa70fd841738e2ac35d43b5b9cddefdfa3b",
+      "weight_updates": 0,
+      "status": "CPU packaging only; official compilation, inference and repair evaluation pending"
+    }
+  }
+}

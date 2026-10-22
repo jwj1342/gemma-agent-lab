@@ -12,6 +12,63 @@ def upstream_call(name, arguments, call_id="c1"):
 
 
 class SFTDataTests(unittest.TestCase):
+    def test_reasoning_is_opt_in_and_does_not_change_calls_or_observations(self):
+        messages = [{"role": "user", "content": "Repair"},
+                    {"role": "assistant", "content": "Do not infer thought from prose",
+                     "reasoning_content": "Inspect /testbed/pkg.py before changing it.",
+                     "tool_calls": [upstream_call("bash", {"command": "cat /testbed/pkg.py"})]},
+                    {"role": "tool", "tool_call_id": "c1", "content": "actual source"}]
+        row = {"resolved": True, "messages": json.dumps(messages)}
+        old = convert_trajectory(row)
+        kept = convert_trajectory(row, preserve_reasoning=True)
+        self.assertNotIn("reasoning", old[2])
+        self.assertEqual(kept[2].pop("reasoning"), "Inspect /workspace/pkg.py before changing it.")
+        self.assertEqual(old, kept)
+        self.assertEqual(kept[2]["content"], "")
+
+    def test_reasoning_is_not_invented_and_ambiguous_formats_are_rejected(self):
+        assistant = {"role": "assistant", "content": "ordinary text",
+                     "tool_calls": [upstream_call("submit", {})]}
+        def convert(value):
+            return convert_trajectory({"resolved": True, "messages": json.dumps([
+                {"role": "user", "content": "Repair"}, value])}, preserve_reasoning=True)
+        self.assertNotIn("reasoning", convert(assistant)[-1])
+        for fields in ({"reasoning": ["not text"]},
+                       {"reasoning": "first", "reasoning_content": "different"}):
+            with self.assertRaises(UnsupportedAction):
+                convert({**assistant, **fields})
+        self.assertEqual(convert({**assistant, "reasoning": "same", "reasoning_content": "same"})[-1]["reasoning"], "same")
+
+    def test_terminal_reasoning_remains_after_real_submission(self):
+        messages = [{"role": "user", "content": "Repair"},
+                    {"role": "assistant", "tool_calls": [upstream_call("submit", {})]},
+                    {"role": "tool", "tool_call_id": "c1", "content": "captured"},
+                    {"role": "assistant", "content": "Done", "reasoning": "The tool confirmed submission."}]
+        result = convert_trajectory({"resolved": True, "messages": json.dumps(messages)}, preserve_reasoning=True)
+        self.assertEqual(result[-1]["reasoning"], "The tool confirmed submission.")
+        self.assertEqual(list(action_examples(result, {}))[-1]["metadata"]["target_kind"], "terminal")
+
+    def test_reasoning_tokens_are_supervised_but_prompt_is_masked(self):
+        # Contract fixture only; the pinned real tokenizer remains a manual preflight.
+        class ReasoningTokenizer:
+            def apply_chat_template(self, messages, add_generation_prompt=False, **kwargs):
+                prefix = messages[0]["content"] + "ASSISTANT:"
+                if add_generation_prompt:
+                    return prefix
+                return prefix + "<thought>" + messages[-1]["reasoning"] + "</thought>CALL<|tool_response>"
+
+            def encode(self, text, **kwargs):
+                return list(text.encode())
+
+        example = {"messages": [{"role": "user", "content": "prompt"},
+                   {"role": "assistant", "content": "", "reasoning": "source supports this",
+                    "tool_calls": [upstream_call("submit", {})]}], "tools": [], "metadata": {}}
+        result = encode_example(example, ReasoningTokenizer(), 256)
+        target = bytes(t for t in result["labels"] if t != -100).decode()
+        self.assertEqual(target, "<thought>source supports this</thought>CALL")
+        prefix_length = len("promptASSISTANT:")
+        self.assertEqual(result["labels"][:prefix_length], [-100] * prefix_length)
+
     def test_setup_filter_is_explicit_and_preserves_observation_integrity(self):
         for command in ("pip install -e .", "cd /workspace && python3 -m pip install missing",
                         "sudo apt-get install package", "git clone https://example.invalid/repo", "curl https://example.invalid"):
