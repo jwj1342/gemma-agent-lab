@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-10-05T05:42:20.921613+00:00",
+  "checked_at": "2026-10-13T18:23:40.005462+00:00",
   "status": "known_metadata_conflicts",
   "pip_check_returncode": 1,
   "pip_check_stdout": "pygobject 3.42.1 requires pycairo, which is not installed.\nopentelemetry-exporter-otlp 1.44.0 has requirement opentelemetry-exporter-otlp-proto-grpc==1.44.0, but you have opentelemetry-exporter-otlp-proto-grpc 1.41.0.\nopentelemetry-exporter-otlp 1.44.0 has requirement opentelemetry-exporter-otlp-proto-http==1.44.0, but you have opentelemetry-exporter-otlp-proto-http 1.41.0.\nprometheus-fastapi-instrumentator 8.1.0 has requirement starlette<2.0.0,>=1.0.0, but you have starlette 0.52.1.\nxgrammar 0.2.5.post1 has requirement transformers<5,>=4.38.0, but you have transformers 5.13.1.\n",

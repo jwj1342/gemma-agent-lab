@@ -28,12 +28,12 @@ apptainer exec --nv --cleanenv --containall --no-home --no-mount hostfs,bind-pat
   --env TRITON_CACHE_DIR=/output/cache/triton --env TORCH_EXTENSIONS_DIR=/output/cache/torch-extensions \
   --env FLASHINFER_WORKSPACE_BASE=/output/cache/flashinfer \
   --bind "$project_root/src:/app/src:ro" --bind "$project_root/scripts:/app/scripts:ro" \
-  --bind /home/jwj/venvs/gemma4-eval-v29:/home/jwj/venvs/gemma4-eval-v29:ro \
+  --bind /home/jwj/venvs/gemma4-eval-v31:/home/jwj/venvs/gemma4-eval-v31:ro \
   --bind "$project_root/model/base/gemma-4-31b-it-qat-w4a16-ct-v2:/model:ro" \
   --bind "$train_run/train/adapter:/adapter:ro" --bind "$project_root/data/processed:/data:ro" \
   --bind "$train_run/serving-work:/output" --bind "$train_run/serving-work/tmp:/tmp" \
   "${terminal_mounts[@]}" \
   "$project_root/resource/downloads/images/vllm-0.19.1.sif" \
-  /home/jwj/venvs/gemma4-eval-v29/bin/python -m scripts.check_lora_serving \
+  /home/jwj/venvs/gemma4-eval-v31/bin/python -m scripts.check_lora_serving \
   --base /model --adapter /adapter --data "/data/$swe_dataset" --graph-data /data/first-graph-lora \
   --output /output/check "${terminal_args[@]}"
