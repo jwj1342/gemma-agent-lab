@@ -86,61 +86,80 @@ def overlaps(start, end, hunk):
             and end >= hunk['old_start'])
 
 
-def patch_paths(patch):
-    # Include deleted paths; final diff membership is not proof of correctness.
-    return sorted({line[6:] for line in patch.splitlines()
-                   if line.startswith(('+++ b/', '--- a/'))})
-
-
-def changed_old_lines(patch):
-    """Removed/replaced old statements only; pure additions have no old statement.
-
-    Hunk context is deliberately excluded. Unsupported quoted paths fail closed.
-    """
-    result, path, old = {}, None, None
+def diff_records(patch):
+    """Parse headers only outside counted unified-diff hunks."""
+    old_path = new_path = None
+    old_left = new_left = 0
+    old_line = 0
     for line in patch.splitlines():
+        if old_left or new_left:
+            if line.startswith('\\ No newline'):
+                continue
+            kind = line[:1]
+            if kind not in (' ', '-', '+'):
+                raise ValueError('Malformed or truncated diff hunk')
+            yield ('body', old_path, old_line, kind)
+            if kind in (' ', '-'):
+                old_left -= 1
+                old_line += 1
+            if kind in (' ', '+'):
+                new_left -= 1
+            if old_left < 0 or new_left < 0:
+                raise ValueError('Diff hunk exceeds declared lengths')
+            continue
         if line.startswith('diff --git '):
-            path, old = None, None
-        elif line.startswith('--- '):
+            old_path = new_path = None
+        elif line.startswith(('--- ', '+++ ')):
             raw = line[4:].split('\t', 1)[0]
+            prefix = 'a/' if line.startswith('--- ') else 'b/'
             if raw == '/dev/null':
                 path = None
-            elif raw.startswith('a/'):
+            elif raw.startswith(prefix):
                 path = raw[2:]
             else:
                 raise ValueError('Unsupported reference diff path')
-            old = None
+            if prefix == 'a/':
+                old_path, new_path = path, None
+            else:
+                new_path = path
+            yield ('path', path, 0, '')
         elif line.startswith('@@ '):
-            match = re.match(r'@@ -(\d+)(?:,\d+)? \+\d+(?:,\d+)? @@', line)
-            if not match:
-                raise ValueError('Malformed reference hunk')
-            old = int(match[1])
-        elif old is not None and line.startswith('-'):
-            if path:
-                result.setdefault(path, set()).add(old)
-            old += 1
-        elif old is not None and line.startswith(' '):
-            old += 1
+            match = re.match(r'@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@', line)
+            if not match or (old_path is None and new_path is None):
+                raise ValueError('Malformed reference hunk/path')
+            old_line = int(match[1])
+            old_left, new_left = int(match[2] or 1), int(match[4] or 1)
+            yield ('hunk', old_path or new_path, old_line, old_left)
+    if old_left or new_left:
+        raise ValueError('Truncated diff hunk')
+
+
+def patch_paths(patch):
+    return sorted({path for kind, path, _, _ in diff_records(patch)
+                   if kind == 'path' and path is not None})
+
+
+def changed_old_lines(patch):
+    result = {}
+    for kind, path, line, operation in diff_records(patch):
+        if kind == 'body' and operation == '-' and path is not None:
+            result.setdefault(path, set()).add(line)
     return result
 
 
 def reference_hunks(patch):
-    """Reconstruct the released old-coordinate map to reject mismatched task patches."""
-    result, path = {}, None
-    for line in patch.splitlines():
-        if line.startswith('diff --git '):
-            path = None
-        elif line.startswith('+++ b/') and path is None:
-            path = line[6:]
-        elif line.startswith('--- a/'):
-            path = line[6:]
-        elif line.startswith('@@ '):
-            match = re.match(r'@@ -(\d+)(?:,(\d+))? \+\d+(?:,\d+)? @@', line)
-            if not match or path is None:
-                raise ValueError('Unsupported reference hunk/path')
-            result.setdefault(path, []).append({'old_start': int(match[1]),
-                                                'old_len': int(match[2] or 1)})
+    result = {}
+    for kind, path, line, length in diff_records(patch):
+        if kind == 'hunk':
+            result.setdefault(path, []).append({'old_start': line, 'old_len': length})
     return result
+
+
+def prediction_paths(prediction):
+    """Missing or invalid patch evidence is unknown, never an empty diff."""
+    if not isinstance(prediction, dict) or not isinstance(prediction.get('agent_patch'), str):
+        return None
+    return patch_paths(prediction['agent_patch'])
 
 
 def statement_exposure(trace, patch):
@@ -231,7 +250,7 @@ def audit(trace, prediction, reference):
     readpaths = {x['path'] for x in exposure}
     attempted = {x['path'] for x in attempts}
     edited = {x['path'] for x in attempts if x['status'] == 'ok'}
-    final = patch_paths(prediction.get('agent_patch', '')) if prediction is not None else None
+    final = prediction_paths(prediction)
     return dict(recorded_calls=len(ev), reference_exposures=exposure,
         observed_budget_rejection=any(e['obs'].get('error_type') == 'BudgetExceeded' for e in ev),
         editor_attempts=attempts, possible_shell_mutations=shell_flags,
@@ -275,8 +294,9 @@ def load_run(root, name, reference):
                 prediction, reference[tid]))
             result['trace_sha256'] = sha(tr)
         elif prediction is not None:
-            result['final_patch_paths'] = patch_paths(prediction.get('agent_patch', ''))
-            result['final_patch_reference'] = bool(set(result['final_patch_paths']) & reference[tid].keys())
+            result['final_patch_paths'] = prediction_paths(prediction)
+            result['final_patch_reference'] = (bool(set(result['final_patch_paths']) & reference[tid].keys())
+                                                if result['final_patch_paths'] is not None else None)
         if pred.exists():
             result['prediction_sha256'] = sha(pred)
         results.append(result)

@@ -293,5 +293,11 @@
       "weight_updates": 0,
       "status": "CPU packaging only; official compilation, inference and repair evaluation pending"
     }
+  },
+  "review_fix_validation": {
+    "date": "2026-10-23",
+    "tests_passed": 82,
+    "r4_r5_summary_counts": "recomputed; unchanged",
+    "changes": "Counted diff hunks; LF fixture bytes; invalid patch data remains unknown"
   }
 }

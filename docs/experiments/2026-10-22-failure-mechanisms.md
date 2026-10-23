@@ -233,3 +233,17 @@ contract; and whether explicit-field reasoning preservation matches the intended
 training path. The three private sample interpretations need a second reader
 before they guide GPU allocation. Please also confirm access to the actual
 thought-preserving training revision before Experiment B proceeds.
+
+## October 23 reviewer corrections
+
+The reviewer identified three valid issues: header-like source lines could be
+misparsed inside diff hunks; the packaging fixture depended on Windows newline
+translation; and missing patch fields were treated as explicit empty diffs.
+The shared parser now consumes declared old/new hunk lengths before recognizing
+headers, including in reference-map reconstruction. Fixtures use LF bytes.
+Missing/non-string patch fields remain unknown with or without a trace.
+Regression tests cover syntactically valid Python docstrings via difflib and
+both missing-evidence paths. All 82 CPU tests and repository checks pass.
+Both private r4/r5 audits were recomputed: every published summary counter is
+unchanged. Historical receipts above describe the original run, not the revised
+parser. No official verifier, real tokenizer or GPU experiment was rerun.

@@ -27,6 +27,35 @@ def read(start=10, content='context\nold\ncontext\n'):
 
 
 class FailureMechanismTests(unittest.TestCase):
+    def test_header_like_docstring_lines_are_hunk_content(self):
+        import difflib
+        before = '"""\n-- old separator\n"""\n'
+        after = '"""\n++ b/phantom.py\n"""\n'
+        compile(before, 'before.py', 'exec')
+        compile(after, 'after.py', 'exec')
+        patch = ''.join(difflib.unified_diff(before.splitlines(True), after.splitlines(True),
+                                            fromfile='a/pkg/a.py', tofile='b/pkg/a.py'))
+        from src.failure_mechanisms import patch_paths, reference_hunks
+        self.assertEqual(patch_paths(patch), ['pkg/a.py'])
+        self.assertEqual(changed_old_lines(patch), {'pkg/a.py': {2}})
+        self.assertEqual(reference_hunks(patch), {'pkg/a.py': [{'old_start': 1, 'old_len': 3}]})
+
+    def test_invalid_patch_fields_remain_unknown_with_and_without_trace(self):
+        from src.failure_mechanisms import load_run
+        for prediction in ({}, {'agent_patch': None}, {'agent_patch': 12}, {'agent_patch': ''}):
+            expected = [] if prediction.get('agent_patch') == '' else None
+            self.assertEqual(audit(trace(read()), prediction, REF)['final_patch_paths'], expected)
+            with tempfile.TemporaryDirectory() as d:
+                root = Path(d)
+                task = root / 'run/tasks/task'
+                task.mkdir(parents=True)
+                (task / 'prediction.json').write_text(json.dumps(prediction))
+                (root / 'run/summary.json').write_text(json.dumps({'tasks': [
+                    {'task_id': 'task', 'controls_valid': True, 'resolved': False}]}))
+                row = load_run(root, 'run', {'task': REF})[0]
+                self.assertEqual(row['final_patch_paths'], expected)
+                self.assertEqual(row['final_patch_reference'], False if expected == [] else None)
+
     def test_context_overlap_is_not_changed_statement_exposure(self):
         t = trace(read(content='context\n'))
         self.assertTrue(audit(t, {'agent_patch': ''}, REF)['read_reference'])

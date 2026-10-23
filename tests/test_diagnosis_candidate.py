@@ -16,7 +16,7 @@ class DiagnosisCandidateTests(unittest.TestCase):
             source = root / 'control'
             source.mkdir()
             (source / 'agent.yaml').write_text('name: test\n')
-            (source / 'prompt.md').write_text('before\nOLD\nafter\n')
+            (source / 'prompt.md').write_bytes(b'before\nOLD\nafter\n')
             spec = {'name': 'fixture', 'control_members': {
                 p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in source.iterdir()},
                     'prompt_path': 'prompt.md', 'old_paragraph': 'OLD', 'new_paragraph': 'NEW'}
@@ -36,7 +36,7 @@ class DiagnosisCandidateTests(unittest.TestCase):
             (source / 'prompt.md').write_text('changed control')
             with self.assertRaises(ValueError):
                 build_candidate(source, root / 'changed', spec_path)
-            (source / 'prompt.md').write_text('before\nOLD\nafter\n')
+            (source / 'prompt.md').write_bytes(b'before\nOLD\nafter\n')
             (source / 'extra.md').write_text('unexpected helper')
             with self.assertRaises(ValueError):
                 build_candidate(source, root / 'extra', spec_path)
