@@ -42,7 +42,10 @@ class FailureMechanismTests(unittest.TestCase):
 
     def test_invalid_patch_fields_remain_unknown_with_and_without_trace(self):
         from src.failure_mechanisms import load_run
-        for prediction in ({}, {'agent_patch': None}, {'agent_patch': 12}, {'agent_patch': ''}):
+        for prediction in ({}, {'agent_patch': None}, {'agent_patch': 12}, {'agent_patch': 'not a diff'},
+                           {'agent_patch': 'diff --git a/a.py b/b.py\nsimilarity index 100%\nrename from a.py\nrename to b.py\n'},
+                           {'agent_patch': 'diff --git a/x.png b/x.png\nBinary files a/x.png and b/x.png differ\n'},
+                           {'agent_patch': PATCH[:-10]}, {'agent_patch': ''}):
             expected = [] if prediction.get('agent_patch') == '' else None
             self.assertEqual(audit(trace(read()), prediction, REF)['final_patch_paths'], expected)
             with tempfile.TemporaryDirectory() as d:

@@ -159,7 +159,15 @@ def prediction_paths(prediction):
     """Missing or invalid patch evidence is unknown, never an empty diff."""
     if not isinstance(prediction, dict) or not isinstance(prediction.get('agent_patch'), str):
         return None
-    return patch_paths(prediction['agent_patch'])
+    patch = prediction['agent_patch']
+    if patch == '':
+        return []
+    try:
+        paths = patch_paths(patch)
+    except ValueError:
+        return None
+    # Headerless Git changes and unrecognized text are not evidence of no edit.
+    return paths or None
 
 
 def statement_exposure(trace, patch):

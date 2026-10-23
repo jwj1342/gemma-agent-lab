@@ -247,3 +247,14 @@ both missing-evidence paths. All 82 CPU tests and repository checks pass.
 Both private r4/r5 audits were recomputed: every published summary counter is
 unchanged. Historical receipts above describe the original run, not the revised
 parser. No official verifier, real tokenizer or GPU experiment was rerun.
+
+### Additional prediction-format guard
+
+Only an explicitly empty `agent_patch` string is classified as an empty patch.
+Nonempty input without recognized file headers, and input that fails counted-hunk
+parsing, now produce unknown final-patch membership. This includes headerless Git
+rename/binary changes; support for extracting their paths is not claimed. Regression
+cases exercise these inputs with and without traces. This is a conservative input
+guard, not a general Git-diff validator. The 82 tests and repository checks pass;
+recomputed r4/r5 summary counters remain unchanged. No runtime or GPU validation
+was added. Private rerun outputs are in `runs/20261023-patch-evidence/`.
