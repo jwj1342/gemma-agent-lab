@@ -112,7 +112,18 @@ def convert_call(call):
     return {"id": call["id"], "type": "function", "function": {"name": name, "arguments": args}}
 
 
-def convert_trajectory(row, reject_setup_actions=False):
+def assistant_reasoning(message):
+    """Accept explicit plain-text reasoning fields, never infer thoughts from content."""
+    fields = [message[key] for key in ("reasoning", "reasoning_content")
+              if message.get(key) is not None]
+    if any(not isinstance(value, str) for value in fields):
+        raise UnsupportedAction("Reasoning must be plain text")
+    if len(set(fields)) > 1:
+        raise UnsupportedAction("Conflicting reasoning fields")
+    return fields[0] if fields else ""
+
+
+def convert_trajectory(row, reject_setup_actions=False, preserve_reasoning=False):
     """Keep successful upstream trajectories; preserve raw observations with path normalization."""
     if row.get("resolved") is not True:
         raise UnsupportedAction("Upstream trajectory is not marked resolved")
@@ -124,6 +135,7 @@ def convert_trajectory(row, reject_setup_actions=False):
         if role == "system":
             continue
         if role == "assistant":
+            reasoning = assistant_reasoning(original) if preserve_reasoning else ""
             converted = [convert_call(c) for c in original.get("tool_calls") or []]
             if reject_setup_actions and any(c["function"]["name"] == "run_command"
                     and is_setup_command(c["function"]["arguments"]["command"]) for c in converted):
@@ -133,11 +145,17 @@ def convert_trajectory(row, reject_setup_actions=False):
                 if (source_index == len(originals) - 1 and messages[-1]["role"] == "tool"
                         and messages[-1].get("name") == "submit_patch"
                         and text_content(original.get("content")).strip()):
-                    messages.append({"role": "assistant", "content": text_content(original["content"])})
+                    final = {"role": "assistant", "content": text_content(original["content"])}
+                    if reasoning:
+                        final["reasoning"] = workspace_text(reasoning)
+                    messages.append(final)
                     break
                 continue
             calls.update({c["id"]: c["function"]["name"] for c in converted})
-            messages.append({"role": "assistant", "content": "", "tool_calls": converted})
+            assistant = {"role": "assistant", "content": "", "tool_calls": converted}
+            if reasoning:
+                assistant["reasoning"] = workspace_text(reasoning)
+            messages.append(assistant)
         elif role == "tool":
             ids = original.get("tool_call_ids") or [original.get("tool_call_id")]
             if len(ids) != 1 or ids[0] not in calls:
