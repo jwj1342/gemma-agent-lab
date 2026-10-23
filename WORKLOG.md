@@ -457,6 +457,14 @@ $env:HF_HOME     = 'E:\Desktop\CodingAI\artifacts\hf-cache'   # datasets refuses
 
 ## Current project state
 
+- October 24 custom-tool evaluation: the matched v31 Kaggle pilot is frozen under the Git-ignored
+  `runs/2026-10-24-repair-checkpoint-fast-ab/`. It compares baseline and `repair-checkpoint-v1` on the ten
+  valid-control tasks from the historical fast cohort with identical 31B model, seed, scripts, wheelhouse and
+  budgets. Both private L4x4 notebooks compile locally and their package/notebook hashes are recorded in the
+  experiment report. They have not been pushed: the raw API at 01:19 Asia/Shanghai still reported zero GPU
+  seconds remaining and an 08:00 refresh. Recheck quota after 08:00, then push the two frozen notebook
+  directories without regeneration; no competition submission is part of this experiment.
+
 - October 23 custom-tool track: `feature/repair-checkpoint-skill` adds a submission-contained, read-only
   `repair-checkpoint` ADK skill and a baseline-matched experiment under
   `configs/experiments/repair-checkpoint-v1/`. It checks for empty patches, protected test/config edits,
@@ -655,6 +663,38 @@ $env:HF_HOME     = 'E:\Desktop\CodingAI\artifacts\hf-cache'   # datasets refuses
 - Programming v1 is implemented as a prompt-only planning-gate experiment with localization and all runtime settings fixed. Its paired smoke test found no resolution gain, only 1/2 complete plan compliance, higher latency and edit churn, and fewer failed tool calls; keep it as an ablation and retain retrieval v1 as the control.
 
 ## Work history
+
+### 2026-10-24 01:21 (Asia/Shanghai) - Freeze repair-checkpoint versus baseline Kaggle pilot; launch waits for quota refresh
+
+- Objective: start measuring whether the submission-contained `repair-checkpoint` skill improves repair
+  outcomes relative to the unchanged baseline, without using a formal competition submission as the tuning
+  instrument.
+- Selected the ten valid-control tasks from the predeclared v31 `fast` cohort, excluding only
+  `fastapi_15745` and `requests_7502`, whose controls were already invalid in the matching historical study.
+  The comparison uses `gemma-4-31b-it-qat-w4a16-ct`, no LoRA, seed 42, wheelhouse v31, four minutes, 40 tool
+  calls and 80 turns for both arms. Success will be reported as paired issue resolution plus structural,
+  adoption, timing and tool-cost diagnostics; a checkpoint `ready` result is not a resolved issue.
+- Generated deterministic ZIPs and private offline L4x4 notebooks under the local ignored run directory
+  `runs/2026-10-24-repair-checkpoint-fast-ab/`. Baseline ZIP SHA256 is `aa597ea3...e822c`; candidate ZIP is
+  `47db85f0...eb2b2`. Baseline notebook SHA256 is `d9203e42...25d8`; candidate notebook is
+  `552fd250...beaa`. Payload inspection confirmed identical task order, 41 wheel hashes and six embedded
+  runtime scripts, no training payload, and the intended model/data mounts. All code cells compile.
+- Semantic parity checks confirmed identical sampling, evaluation budget, analyzer prompt and analyzer
+  configuration. The candidate differs only by agent name, the direct `repair-checkpoint` skill, and the
+  pre-submission checkpoint instructions; Windows line-ending differences explain additional member-byte
+  hash differences. The existing batch generator at `E:/Desktop/CodingAI/scripts/prepare_lora_eval_notebook.py`
+  has SHA256 `07055b7f...d8219e`; its 19 focused CPU tests passed, and the frozen notebooks embed the current
+  branch's evaluator/helpers rather than the original worktree copies.
+- The raw Kaggle quota check at 2026-10-23 17:19:51 UTC reported 114,317.472 of 108,000 GPU seconds used,
+  zero reserved and zero remaining, with refresh at 2026-10-24 00:00:00 UTC (08:00 Asia/Shanghai). No kernel
+  push was attempted, no GPU was reserved, and no competition submission was made. One initial quota command
+  lacked the documented `.pylibs` path and one obsolete manifest path was absent; both were corrected by
+  using the recorded environment and current branch paths without repeating the failed commands.
+- Changed tracked files: `WORKLOG.md` and
+  `docs/experiments/2026-10-23-repair-checkpoint-skill.md`. Local-only generated files are the two ZIPs,
+  manifests and notebook directories under the run path above, plus the dated quota receipt in
+  `artifacts/tmp/`. Next: after 08:00, recheck quota and push both already frozen notebooks, then download and
+  analyze both outputs before any promotion decision.
 
 ### 2026-10-23 02:12 (Asia/Shanghai) - Implement submission-contained repair checkpoint skill v1
 
