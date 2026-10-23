@@ -15,3 +15,4 @@ Existing baseline results predate this convention. Their authoritative receipts 
 | 2026-10-09 | [Prompt and context adaptation](2026-10-09-prompt-context.md) |
 | 2026-10-13 | [Heredoc-repair prompt v9 on official wheelhouse v29](2026-10-13-heredoc-prompt-v9.md) |
 | 2026-10-22 | [Failure mechanisms, diagnosis checkpoint and reasoning-preserving SFT](2026-10-22-failure-mechanisms.md) |
+| 2026-10-23 | [Matched r5 traces and observed edit context](2026-10-23-matched-trace-comparison.md) |

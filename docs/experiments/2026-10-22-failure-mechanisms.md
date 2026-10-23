@@ -258,3 +258,11 @@ cases exercise these inputs with and without traces. This is a conservative inpu
 guard, not a general Git-diff validator. The 82 tests and repository checks pass;
 recomputed r4/r5 summary counters remain unchanged. No runtime or GPU validation
 was added. Private rerun outputs are in `runs/20261023-patch-evidence/`.
+
+### Matched comparison follow-up
+
+The [October 23 matched comparison](2026-10-23-matched-trace-comparison.md) adds
+15 success/failure timelines across three outcome-selected tasks, independent
+AI readings with explicit disagreements, and a narrower proposed next experiment.
+The original diagnosis-checkpoint candidate above is deferred in favor of the
+registered observed-edit-context comparison; neither has been run on GPU.

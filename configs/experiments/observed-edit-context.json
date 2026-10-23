@@ -1,0 +1,47 @@
+{
+  "name": "c2-observed-edit-context-v1",
+  "control": "frozen kaggle-l4-r5/c2/agent",
+  "control_members": {
+    "agent.yaml": "680799291cc7d156d06fb7bfb5577f683ccc0d555b00e8ddb662d577f9bfa5e4",
+    "configs/sampling.yaml": "571a934e89911734927533f1d36cbcc7b8d493592febe63b217e911cf7ed4926",
+    "eval_config.yaml": "916cf6cb34a6cc3de39837fa72cac681599b9ac2a3ee0b893adadfd36474c531",
+    "prompts/system.md": "454defe0a629786f524cee48a3d76fbdeefd6e1701f94a4ed958567216e3ea72"
+  },
+  "alternate_controls": {
+    "c2-seed1": {
+      "agent.yaml": "680799291cc7d156d06fb7bfb5577f683ccc0d555b00e8ddb662d577f9bfa5e4",
+      "configs/sampling.yaml": "ccedfe69ae3e9e93e4cbd748fb757b26062e12302501f05bfcb1b1ce272b9bf7",
+      "eval_config.yaml": "916cf6cb34a6cc3de39837fa72cac681599b9ac2a3ee0b893adadfd36474c531",
+      "prompts/system.md": "454defe0a629786f524cee48a3d76fbdeefd6e1701f94a4ed958567216e3ea72"
+    }
+  },
+  "prompt_path": "prompts/system.md",
+  "old_paragraph": "- Use edit_file for changes to existing code. Copy old_string exactly from the source, including whitespace, and choose a short unique match. Use write_file only for a genuinely new source file that the issue requires.",
+  "new_paragraph": "- Use edit_file for changes to existing code. Build old_string from one contiguous block in a returned source observation, preserving line order, whitespace and every intervening line. If the target text occurs more than once, include adjacent lines from that same observation to distinguish the intended occurrence. Do not reconstruct the block from memory or join nonadjacent lines. Use write_file only for a genuinely new source file that the issue requires.",
+  "hypothesis": "Observed contiguous context reduces matching errors when an actionable local correction has already been identified. It does not test localization or retained reasoning history.",
+  "evaluation": {
+    "hardware": "Kaggle 4xL4",
+    "seeds": [
+      42,
+      1
+    ],
+    "registered_tasks": 29,
+    "historically_valid_controls": 21,
+    "tools": 28,
+    "minutes": 8,
+    "thinking_budget": 4096,
+    "adapters": false,
+    "status": "Registered, not run; matched-case AI readings complete only after the accompanying report; teammate semantic review and Kaggle suite preflight required before inference.",
+    "seed_contract": "Use matching c2/c2-seed1 control and candidate members. The c2 control omits a sampling seed; explicitly freeze and record server seed 42. The c2-seed1 sampling seed is 1."
+  },
+  "protocol": {
+    "intervention": "Replace only the existing first edit-construction paragraph. All other members and prompt rules remain fixed.",
+    "cohort": "Full frozen 29-task r5 registration, seeds 42 and 1; use identical valid-control task intersection per control/candidate pair. Publish all exclusions. The three selected cases are illustrative, not a promotion set.",
+    "preflight": "Official compiler and Kaggle 4xL4 suite notebook (#26); no competition submission before successful preflight. Freeze all member, ZIP, runtime and task hashes.",
+    "primary_metric": "Paired task-level resolved outcome; report candidate-only/control-only resolutions separately for each seed.",
+    "mechanism_metric": "Matching-error events per attempted edit_file call and attempts with at least one accepted source edit, separately by seed. Shell edits remain separately identified.",
+    "interpretation": "Mechanistic support requires fewer matching errors in both seed comparisons; require no net resolved-task loss in either seed to justify a further run. Any resolved gain is exploratory until independently repeated; matching success alone cannot promote a submission.",
+    "stop": "Stop on preflight exception; do not change time/output budgets or add another prompt rule within this comparison.",
+    "causal_limit": "Selected historical traces motivate this experiment but do not establish the intervention will work."
+  }
+}
