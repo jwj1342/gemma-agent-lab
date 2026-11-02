@@ -88,6 +88,15 @@ def overlaps(start, end, hunk):
 
 def diff_records(patch):
     """Parse headers only outside counted unified-diff hunks."""
+    # Each Git section must have a supported text header pair. A partial path
+    # inventory is unsafe even when another section is a normal text edit.
+    sections = re.split(r'^diff --git ', patch, flags=re.M)
+    for section in sections[1:]:
+        lines = section.splitlines()[1:]
+        if (not any(line.startswith('--- ') for line in lines)
+                or not any(line.startswith('+++ ') for line in lines)
+                or any(line.startswith(('Binary files ', 'GIT binary patch')) for line in lines)):
+            raise ValueError('Unsupported Git diff section')
     old_path = new_path = None
     old_left = new_left = 0
     old_line = 0

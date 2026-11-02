@@ -27,6 +27,31 @@ def read(start=10, content='context\nold\ncontext\n'):
 
 
 class FailureMechanismTests(unittest.TestCase):
+    def test_mixed_diff_unsupported_sections_are_unknown(self):
+        from src.failure_mechanisms import prediction_paths
+        rename = ('diff --git a/pkg/old.py b/pkg/new.py\n'
+                  'similarity index 100%\nrename from pkg/old.py\nrename to pkg/new.py\n')
+        text = 'diff --git a/pkg/a.py b/pkg/a.py\n' + PATCH
+        for patch in (text + rename, rename + text):
+            self.assertIsNone(prediction_paths({'agent_patch': patch}))
+            self.assertIsNone(audit(trace(read()), {'agent_patch': patch}, REF)['final_patch_reference'])
+
+    def test_git_file_change_kinds(self):
+        from src.failure_mechanisms import prediction_paths
+        cases = [
+            ('diff --git a/old.py b/new.py\nsimilarity index 50%\nrename from old.py\nrename to new.py\n--- a/old.py\n+++ b/new.py\n@@ -1 +1 @@\n-old\n+new\n', ['new.py', 'old.py']),
+            ('diff --git a/a.py b/a.py\ndeleted file mode 100644\n--- a/a.py\n+++ /dev/null\n@@ -1 +0,0 @@\n-old\n', ['a.py']),
+            ('diff --git a/new.py b/new.py\nnew file mode 100644\n--- /dev/null\n+++ b/new.py\n@@ -0,0 +1 @@\n+new\n', ['new.py']),
+            ('diff --git a/x b/x\nBinary files a/x and b/x differ\n', None),
+            ('diff --git a/x b/x\nold mode 100644\nnew mode 100755\n', None),
+        ]
+        for patch, expected in cases:
+            with self.subTest(patch=patch):
+                self.assertEqual(prediction_paths({'agent_patch': patch}), expected)
+                mixed = 'diff --git a/pkg/a.py b/pkg/a.py\n' + PATCH + patch
+                self.assertEqual(prediction_paths({'agent_patch': mixed}),
+                                 sorted(set(expected + ['pkg/a.py'])) if expected is not None else None)
+
     def test_header_like_docstring_lines_are_hunk_content(self):
         import difflib
         before = '"""\n-- old separator\n"""\n'
