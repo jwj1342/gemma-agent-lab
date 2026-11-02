@@ -139,6 +139,10 @@ def diff_records(patch):
             old_line = int(match[1])
             old_left, new_left = int(match[2] or 1), int(match[4] or 1)
             yield ('hunk', old_path or new_path, old_line, old_left)
+        elif line and not line.startswith(('index ', 'new file mode ', 'deleted file mode ',
+                'old mode ', 'new mode ', 'similarity index ', 'dissimilarity index ',
+                'rename from ', 'rename to ', 'copy from ', 'copy to ', '\\ No newline')):
+            raise ValueError('Unparsed diff section content')
     if old_left or new_left:
         raise ValueError('Truncated diff hunk')
 

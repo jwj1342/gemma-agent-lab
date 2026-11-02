@@ -32,7 +32,7 @@ class FailureMechanismTests(unittest.TestCase):
         rename = ('diff --git a/pkg/old.py b/pkg/new.py\n'
                   'similarity index 100%\nrename from pkg/old.py\nrename to pkg/new.py\n')
         text = 'diff --git a/pkg/a.py b/pkg/a.py\n' + PATCH
-        for patch in (text + rename, rename + text):
+        for patch in (text + rename, rename + text, text + 'unparsed section\n'):
             self.assertIsNone(prediction_paths({'agent_patch': patch}))
             self.assertIsNone(audit(trace(read()), {'agent_patch': patch}, REF)['final_patch_reference'])
 
