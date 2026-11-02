@@ -24,7 +24,7 @@ def main():
     parser.add_argument("--reject-setup-actions", action="store_true",
                         help="Reject whole trajectories containing explicit dependency/network setup commands")
     parser.add_argument("--preserve-reasoning", action="store_true",
-                        help="Copy explicit text reasoning/reasoning_content into assistant reasoning; never infer it")
+                        help="Preserve native tool-call reasoning; omit terminal reasoning to match Kaggle v2")
     parser.add_argument("--tasks", type=Path, default=Path("data/raw/gemma-4-developer-agent/tasks.jsonl"))
     parser.add_argument("--eval-benchmark", type=Path, default=Path("configs/evaluation/public-v1.json"),
                         help="Exclude all frozen development/holdout snapshots from future training")
@@ -59,9 +59,10 @@ def main():
         if row["instance_id"] in seen:
             rejected["duplicate issue attempt"] += 1
             continue
+        export_stats = {"terminal_reasoning_dropped": 0}
         try:
             messages = convert_trajectory(row, reject_setup_actions=args.reject_setup_actions,
-                                          preserve_reasoning=args.preserve_reasoning)
+                                          preserve_reasoning=args.preserve_reasoning, export_stats=export_stats)
             group = group_key(row["instance_id"])
             if group.lower() in {g.lower() for g in reserved}:
                 raise UnsupportedAction("Reserved evaluation snapshot")
@@ -73,8 +74,9 @@ def main():
         metadata = {"source": DATASET, "revision": REVISION, "license": "MIT", "instance_id": row["instance_id"],
                     "traj_id": row["traj_id"], "group": group, "split": split, "teacher_model": row["model"],
                     "verification": "upstream resolved=True; target-tool replay not performed",
-                    "reasoning_policy": "explicit-text" if args.preserve_reasoning else "actions-only",
-                    "assistant_messages_with_reasoning": sum(bool(m.get("reasoning")) for m in messages)}
+                    "reasoning_policy": "native-tool-reasoning-terminal-omitted-v1" if args.preserve_reasoning else "actions-only",
+                    "assistant_messages_with_reasoning": sum(bool(m.get("reasoning")) for m in messages),
+                    "terminal_reasoning_dropped": export_stats["terminal_reasoning_dropped"]}
         selected.append(metadata)
         groups[split].add(group)
         examples[split].extend(action_examples(messages, metadata))
@@ -88,7 +90,9 @@ def main():
                 "selected": selected, "rejected": dict(rejected), "reserved_evaluation_groups": sorted(reserved),
                 "reject_setup_actions": args.reject_setup_actions,
                 "preserve_reasoning": args.preserve_reasoning,
-                "reasoning_policy": "explicit-text" if args.preserve_reasoning else "actions-only",
+                "reasoning_policy": "native-tool-reasoning-terminal-omitted-v1" if args.preserve_reasoning else "actions-only",
+                "terminal_reasoning_dropped": sum(m["terminal_reasoning_dropped"] for m in selected),
+                "terminal_reasoning_policy": "omit-reasoning-retain-answer" if args.preserve_reasoning else "actions-only",
                 "eval_benchmark_sha256": benchmark_hash,
                 "scope": "Action-level warm start. Upstream success labels retained; observations have not been replayed with competition tools."}
     (args.output / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")

@@ -59,13 +59,14 @@ class SFTDataTests(unittest.TestCase):
                 self.assertEqual(kept[-1].pop('reasoning', ''), expected)
                 self.assertEqual(kept, default)
 
-    def test_terminal_reasoning_remains_after_real_submission(self):
+    def test_terminal_reasoning_is_omitted_after_real_submission(self):
         messages = [{"role": "user", "content": "Repair"},
                     {"role": "assistant", "tool_calls": [upstream_call("submit", {})]},
                     {"role": "tool", "tool_call_id": "c1", "content": "captured"},
                     {"role": "assistant", "content": "Done", "reasoning": "The tool confirmed submission."}]
         result = convert_trajectory({"resolved": True, "messages": json.dumps(messages)}, preserve_reasoning=True)
-        self.assertEqual(result[-1]["reasoning"], "The tool confirmed submission.")
+        self.assertNotIn("reasoning", result[-1])
+        self.assertEqual(result[-1]["content"], "Done")
         self.assertEqual(list(action_examples(result, {}))[-1]["metadata"]["target_kind"], "terminal")
 
     def test_reasoning_tokens_are_supervised_but_prompt_is_masked(self):

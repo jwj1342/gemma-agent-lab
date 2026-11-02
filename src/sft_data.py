@@ -130,8 +130,14 @@ def assistant_reasoning(message):
                                     if message.get("tool_calls") else "")
 
 
-def convert_trajectory(row, reject_setup_actions=False, preserve_reasoning=False):
-    """Keep successful upstream trajectories; preserve raw observations with path normalization."""
+def convert_trajectory(row, reject_setup_actions=False, preserve_reasoning=False, export_stats=None):
+    """Keep upstream observations and native tool reasoning under the opt-in flag.
+
+    Kaggle v2 serializes reasoning only beside tool_calls. Omit terminal reasoning
+    instead of moving it into visible content or modifying the official template.
+    Count nonempty terminal reasoning omissions in optional export_stats; keep the
+    terminal answer itself. Without the flag, actions-only behavior is unchanged.
+    """
     if row.get("resolved") is not True:
         raise UnsupportedAction("Upstream trajectory is not marked resolved")
     messages = [{"role": "system", "content": SYSTEM}]
@@ -153,8 +159,8 @@ def convert_trajectory(row, reject_setup_actions=False, preserve_reasoning=False
                         and messages[-1].get("name") == "submit_patch"
                         and text_content(original.get("content")).strip()):
                     final = {"role": "assistant", "content": text_content(original["content"])}
-                    if reasoning:
-                        final["reasoning"] = workspace_text(reasoning)
+                    if reasoning and export_stats is not None:
+                        export_stats["terminal_reasoning_dropped"] = export_stats.get("terminal_reasoning_dropped", 0) + 1
                     messages.append(final)
                     break
                 continue

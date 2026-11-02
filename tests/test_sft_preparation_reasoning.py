@@ -18,7 +18,10 @@ class SFTPreparationReasoningTests(unittest.TestCase):
                'messages': json.dumps([{'role': 'user', 'content': 'Repair'},
                    {'role': 'assistant', 'reasoning': 'Observed a source conflict.', 'tool_calls': [
                        {'id': 'c1', 'function': {'name': 'bash', 'arguments': {'command': 'git diff'}}}]},
-                   {'role': 'tool', 'tool_call_id': 'c1', 'content': 'real observation'}])}
+                   {'role': 'tool', 'tool_call_id': 'c1', 'content': 'real observation'},
+                   {'role': 'assistant', 'tool_calls': [{'id': 'c2', 'function': {'name': 'submit', 'arguments': {}}}]},
+                   {'role': 'tool', 'tool_call_id': 'c2', 'content': 'captured'},
+                   {'role': 'assistant', 'content': 'Done', 'reasoning': 'Terminal thought.'}])}
         parquet = ModuleType('pyarrow.parquet')
         parquet.read_table = lambda path: SimpleNamespace(to_pylist=lambda: [row])
         package = ModuleType('pyarrow')
@@ -41,13 +44,18 @@ class SFTPreparationReasoningTests(unittest.TestCase):
                     prepare_sft_data.main()
                 manifest = json.loads((output / 'manifest.json').read_text())
                 self.assertEqual(manifest['preserve_reasoning'], preserve)
+                self.assertEqual(manifest['terminal_reasoning_dropped'], int(preserve))
+                self.assertEqual(manifest['selected'][0]['terminal_reasoning_dropped'], int(preserve))
                 self.assertEqual(manifest['selected'][0]['assistant_messages_with_reasoning'], int(preserve))
-                expected = 'explicit-text' if preserve else 'actions-only'
+                expected = 'native-tool-reasoning-terminal-omitted-v1' if preserve else 'actions-only'
                 self.assertEqual(manifest['reasoning_policy'], expected)
                 records = [json.loads(line) for split in ('train', 'validation')
                            for line in (output / (split + '.jsonl')).read_text().splitlines()]
                 self.assertEqual(records[0]['metadata']['reasoning_policy'], expected)
                 self.assertEqual('reasoning' in records[0]['messages'][-1], preserve)
+                self.assertNotIn('reasoning', records[-1]['messages'][-1])
+                self.assertEqual(records[-1]['messages'][-1]['content'], 'Done')
+                self.assertEqual(records[-1]['metadata']['terminal_reasoning_dropped'], int(preserve))
 
 
 if __name__ == '__main__':
