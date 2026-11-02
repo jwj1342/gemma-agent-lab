@@ -20,8 +20,8 @@ observed-edit-context candidate.
 
 ## Freeze and controls
 
-Code baseline: `d961cba` (full revision in Git history). Protocol text: the commit
-introducing this document. The owner must approve both revisions before preparing
+Code baseline for this draft: `aa76bb0` (full revision in Git history). Protocol
+text: the commit updating this document. The owner must approve both revisions before preparing
 an immutable run manifest; any implementation of this paragraph needs a new
 explicitly recorded full commit before inference. This draft does not claim that
 an executable refined candidate has already been frozen.
@@ -62,22 +62,59 @@ Target: at least **30% relative reduction**, `(control_rate - candidate_rate) /
 control_rate >= 0.30`, not 30 percentage points. Report rates, numerators and
 denominators per seed and pooled; also report the eligible-pair sensitivity.
 
-No loss in resolution means **zero allowed net lost resolved attempts** on the
-full paired valid-control intersection, pooled and in each seed. Report paired
-gains/losses separately; this observed threshold does not prove non-inferiority.
-Success requires the mechanism target in both pooled and eligible-pair analyses,
-the resolution condition, complete endpoints, and no new compilation/runtime
-failure. Otherwise the candidate fails the promotion gate or is inconclusive
-when inputs/controls/endpoints are incomplete. Do not select a favorable seed.
-Report first accepted editor call (and no-edit count), repeated unchanged checks
-with a frozen definition, and final edits outside all reference files as secondary
-metrics; shell mutations require separate attribution. No significance or
-population-level benefit claim follows from this pilot.
+Pooled resolution non-inferiority margin: at most **one fewer resolved task per
+29-task seed on average**, i.e. **four net lost resolved attempts out of 116**
+with four seeds and complete controls (3.45 percentage points). On a smaller
+paired valid-control intersection of N attempts, use the same rate margin,
+`delta >= -N/29` (integer losses at most floor(N/29)); do not silently keep a
+four-task allowance after exclusions. Delta is candidate minus control resolved
+attempts. This is a chosen practical tolerance, not a margin inferred from the
+reported between-seed sd of about 1.6/29. The owner must approve it before launch.
+
+For an inferential non-inferiority claim, require the one-sided 95% lower bound
+for the pooled paired resolution-rate difference to exceed `-1/29`. Prespecify
+10,000 paired bootstrap resamples of task IDs (all paired seeds of a task move
+together), analysis RNG seed 20261102, percentile lower bound. This exploratory
+interval captures task clustering but four seeds cannot characterize seed
+variation reliably. Report the interval and its assumptions; failure to clear
+it is inconclusive evidence, not proof of harm. The empirical margin alone must
+not be described as statistically established non-inferiority. Per-seed outcomes
+and paired gains/losses are reporting only, with no per-seed zero-loss gate.
+
+Success requires the 30% relative mechanism target in both pooled and eligible-
+pair analyses, the pooled empirical resolution margin and interval criterion,
+complete endpoints, and no new compilation/runtime failure. Failure of the
+mechanism target or an empirical resolution loss beyond the margin fails the
+promotion gate. Missing inputs/controls/endpoints or an interval crossing the
+margin are inconclusive. Do not select a favorable seed or change the margin
+after seeing results. Four seeds remain a pilot with uncertain power.
+
+Secondary metrics, fixed before running:
+
+- Call index of first accepted `edit_file` or `write_file` (`status=ok`), plus
+  no-accepted-editor count; separately report confirmed shell source writes.
+- Repeated unchanged checks: repeated exact command text with identical returned
+  stdout/stderr/status and no intervening accepted editor or confirmed shell
+  source write. Report unknowns when observations or mutation attribution are
+  incomplete; this is a conservative proxy, not semantic equivalence.
+- Edits outside every reference file: a known, nonempty final patch whose complete
+  affected-path inventory has no reference-file overlap. Unsupported diffs are
+  unknown, never counted as outside-reference edits.
 
 ## Owner questions before registration
 
-Confirm C2 as the sole control, seed list, complete H100 inventory and hashes,
-time scaling, and the strict zero-loss / 30%-relative promotion gate. Confirm the
-paragraph and independent annotation review before freezing implementation.
-XML trajectory conversion, real-tokenizer validation, official compilation and
-GPU execution remain separate work or preflight gates, not completed results.
+Owner decisions remain open; this draft does not authorize additional arms:
+
+- C2 as the only control, or also budget-fit?
+- Seeds 42/1/2/3, or the owner's complete eight-seed set? If changed, register the
+  full seed list and scaled pooled margin before inference.
+- One observation-grounded checkpoint only, or a second arm with refinement 1
+  relative to the original checkpoint? Define each paragraph and multiplicity
+  policy before running; do not silently compare two changing controls.
+- Which full code/candidate commit and data/runtime manifest should be frozen?
+- Approve the pooled one-task-per-seed margin, interval procedure, time scaling
+  and independent annotation review before registration.
+
+XML trajectory conversion, official compilation and GPU execution remain separate
+work or preflight gates. Real-template checks validate only the tested native
+formats; they do not establish training readiness.
