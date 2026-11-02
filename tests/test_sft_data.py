@@ -32,12 +32,32 @@ class SFTDataTests(unittest.TestCase):
         def convert(value):
             return convert_trajectory({"resolved": True, "messages": json.dumps([
                 {"role": "user", "content": "Repair"}, value])}, preserve_reasoning=True)
-        self.assertNotIn("reasoning", convert(assistant)[-1])
+        self.assertEqual(convert(assistant)[-1]["reasoning"], "ordinary text")
         for fields in ({"reasoning": ["not text"]},
                        {"reasoning": "first", "reasoning_content": "different"}):
             with self.assertRaises(UnsupportedAction):
                 convert({**assistant, **fields})
         self.assertEqual(convert({**assistant, "reasoning": "same", "reasoning_content": "same"})[-1]["reasoning"], "same")
+
+    def test_reasoning_source_priority_and_default_compatibility(self):
+        for fields, expected in [
+            ({'content': 'native thought'}, 'native thought'),
+            ({'reasoning': 'explicit'}, 'explicit'),
+            ({'reasoning_content': 'explicit'}, 'explicit'),
+            ({'content': [{'type': 'text', 'text': 'block thought'}]}, 'block thought'),
+            ({'content': 'fallback', 'reasoning': 'explicit'}, 'explicit'),
+            ({'content': 'fallback', 'reasoning_content': 'explicit'}, 'explicit'),
+            ({'content': 'fallback', 'reasoning': ''}, ''),
+        ]:
+            with self.subTest(fields=fields):
+                row = {'resolved': True, 'messages': json.dumps([
+                    {'role': 'user', 'content': 'Repair'},
+                    {'role': 'assistant', 'tool_calls': [upstream_call('submit', {})], **fields}])}
+                default = convert_trajectory(row)
+                kept = convert_trajectory(row, preserve_reasoning=True)
+                self.assertNotIn('reasoning', default[-1])
+                self.assertEqual(kept[-1].pop('reasoning', ''), expected)
+                self.assertEqual(kept, default)
 
     def test_terminal_reasoning_remains_after_real_submission(self):
         messages = [{"role": "user", "content": "Repair"},

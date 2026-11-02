@@ -113,14 +113,21 @@ def convert_call(call):
 
 
 def assistant_reasoning(message):
-    """Accept explicit plain-text reasoning fields, never infer thoughts from content."""
+    """Prefer explicit text reasoning fields, including an explicitly empty value.
+
+    Conflicting explicit fields are rejected. Only when neither is present,
+    native tool-call messages use text_content(content) as reasoning. Dedicated
+    annotations take priority to avoid duplicating or conflating the two sources.
+    Terminal prose and XML-only actions are not reinterpreted as reasoning.
+    """
     fields = [message[key] for key in ("reasoning", "reasoning_content")
               if message.get(key) is not None]
     if any(not isinstance(value, str) for value in fields):
         raise UnsupportedAction("Reasoning must be plain text")
     if len(set(fields)) > 1:
         raise UnsupportedAction("Conflicting reasoning fields")
-    return fields[0] if fields else ""
+    return fields[0] if fields else (text_content(message.get("content"))
+                                    if message.get("tool_calls") else "")
 
 
 def convert_trajectory(row, reject_setup_actions=False, preserve_reasoning=False):
