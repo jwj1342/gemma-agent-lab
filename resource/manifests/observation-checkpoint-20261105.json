@@ -1,0 +1,175 @@
+{
+  "date": "2026-11-05",
+  "source_archive_sha256": "8efa27ea037e3df1fb00f2fe5ce1695d25abcc0468ed71502e91552c7e60c808",
+  "source_branch_revision": "65ff10e148a0a1e94a2858894a99b20745e8f237",
+  "owner_confirmation": "https://github.com/jwj1342/gemma-agent-lab/pull/29#issuecomment-6597549165",
+  "schema_version": 1,
+  "name": "c2-observation-checkpoint-v1",
+  "spec_sha256": "1b4ff6e20806f855dcc28fad797c8b555f2b1a930560c746b2b458113289fae6",
+  "evaluation": {
+    "hardware": "H100 owner protocol; L4 confirmation remains separate",
+    "seeds": [
+      42,
+      1,
+      2,
+      3
+    ],
+    "server_seed": 42,
+    "sampling_seed_contract": "42 means no sampling seed key; 1/2/3 explicitly set seed in both arms",
+    "registered_tasks": 29,
+    "tools": 28,
+    "base_minutes": 8,
+    "time_scaling": 0.5,
+    "effective_minutes": 4,
+    "command_timeout_seconds": 240,
+    "thinking_budget": 4096,
+    "tensor_parallel_size": 1,
+    "gpu_memory_utilization": 0.8,
+    "max_model_len": 32768,
+    "concurrency": 1,
+    "adapters": false,
+    "status": "Candidate freeze only; full owner runtime/task/model hashes and official preflight required before inference"
+  },
+  "pairs": [
+    {
+      "seed_label": 42,
+      "sampling_seed": null,
+      "changed_members": [
+        "prompts/system.md"
+      ],
+      "control": {
+        "members": {
+          "agent.yaml": "680799291cc7d156d06fb7bfb5577f683ccc0d555b00e8ddb662d577f9bfa5e4",
+          "configs/sampling.yaml": "571a934e89911734927533f1d36cbcc7b8d493592febe63b217e911cf7ed4926",
+          "eval_config.yaml": "916cf6cb34a6cc3de39837fa72cac681599b9ac2a3ee0b893adadfd36474c531",
+          "prompts/system.md": "454defe0a629786f524cee48a3d76fbdeefd6e1701f94a4ed958567216e3ea72"
+        },
+        "archive_sha256": "57b2b12433ec2895796527bba6a9e6754914d41ce2bf27f19823cee97f03c6e2"
+      },
+      "candidate": {
+        "members": {
+          "agent.yaml": "680799291cc7d156d06fb7bfb5577f683ccc0d555b00e8ddb662d577f9bfa5e4",
+          "configs/sampling.yaml": "571a934e89911734927533f1d36cbcc7b8d493592febe63b217e911cf7ed4926",
+          "eval_config.yaml": "916cf6cb34a6cc3de39837fa72cac681599b9ac2a3ee0b893adadfd36474c531",
+          "prompts/system.md": "d00405d6ba826c8beeb922046cd047e296984d39c4a5a54e4947cdc88f6fd8d0"
+        },
+        "archive_sha256": "5dfb3a5f47ddf44dafbf60583df9ca77f442cfae1c105a1c4c4311ce14bf84d8"
+      }
+    },
+    {
+      "seed_label": 1,
+      "sampling_seed": 1,
+      "changed_members": [
+        "prompts/system.md"
+      ],
+      "control": {
+        "members": {
+          "agent.yaml": "680799291cc7d156d06fb7bfb5577f683ccc0d555b00e8ddb662d577f9bfa5e4",
+          "configs/sampling.yaml": "ccedfe69ae3e9e93e4cbd748fb757b26062e12302501f05bfcb1b1ce272b9bf7",
+          "eval_config.yaml": "916cf6cb34a6cc3de39837fa72cac681599b9ac2a3ee0b893adadfd36474c531",
+          "prompts/system.md": "454defe0a629786f524cee48a3d76fbdeefd6e1701f94a4ed958567216e3ea72"
+        },
+        "archive_sha256": "4dd829ccd4aef0de16858c5fb3a5eeab3782e89903d633fc13c3f721b58a6667"
+      },
+      "candidate": {
+        "members": {
+          "agent.yaml": "680799291cc7d156d06fb7bfb5577f683ccc0d555b00e8ddb662d577f9bfa5e4",
+          "configs/sampling.yaml": "ccedfe69ae3e9e93e4cbd748fb757b26062e12302501f05bfcb1b1ce272b9bf7",
+          "eval_config.yaml": "916cf6cb34a6cc3de39837fa72cac681599b9ac2a3ee0b893adadfd36474c531",
+          "prompts/system.md": "d00405d6ba826c8beeb922046cd047e296984d39c4a5a54e4947cdc88f6fd8d0"
+        },
+        "archive_sha256": "153bb91cc1db3700b841f4553f1083fda08bbdefd47d813afda706e299f1a09f"
+      }
+    },
+    {
+      "seed_label": 2,
+      "sampling_seed": 2,
+      "changed_members": [
+        "prompts/system.md"
+      ],
+      "control": {
+        "members": {
+          "agent.yaml": "680799291cc7d156d06fb7bfb5577f683ccc0d555b00e8ddb662d577f9bfa5e4",
+          "configs/sampling.yaml": "a9aac8e0212c797944331eb627c1fdb63b3c8b71288047fdfd934ba3246c77d4",
+          "eval_config.yaml": "916cf6cb34a6cc3de39837fa72cac681599b9ac2a3ee0b893adadfd36474c531",
+          "prompts/system.md": "454defe0a629786f524cee48a3d76fbdeefd6e1701f94a4ed958567216e3ea72"
+        },
+        "archive_sha256": "ceeedc297b39d8d16b326c682e9db222691c10f489d122b3f277c4a1341a6653"
+      },
+      "candidate": {
+        "members": {
+          "agent.yaml": "680799291cc7d156d06fb7bfb5577f683ccc0d555b00e8ddb662d577f9bfa5e4",
+          "configs/sampling.yaml": "a9aac8e0212c797944331eb627c1fdb63b3c8b71288047fdfd934ba3246c77d4",
+          "eval_config.yaml": "916cf6cb34a6cc3de39837fa72cac681599b9ac2a3ee0b893adadfd36474c531",
+          "prompts/system.md": "d00405d6ba826c8beeb922046cd047e296984d39c4a5a54e4947cdc88f6fd8d0"
+        },
+        "archive_sha256": "1099749244a0830aa50308d82cfe668bdfe2f5432a6416ce4ae97e2ed9fe7c68"
+      }
+    },
+    {
+      "seed_label": 3,
+      "sampling_seed": 3,
+      "changed_members": [
+        "prompts/system.md"
+      ],
+      "control": {
+        "members": {
+          "agent.yaml": "680799291cc7d156d06fb7bfb5577f683ccc0d555b00e8ddb662d577f9bfa5e4",
+          "configs/sampling.yaml": "4612d7f6b685a0ec01de6354356ecb326af77a98c7f27c18c4ed9821f9eee0a2",
+          "eval_config.yaml": "916cf6cb34a6cc3de39837fa72cac681599b9ac2a3ee0b893adadfd36474c531",
+          "prompts/system.md": "454defe0a629786f524cee48a3d76fbdeefd6e1701f94a4ed958567216e3ea72"
+        },
+        "archive_sha256": "46860f8376ee743574e86a691e875e077c341fd348638664a816327516883f4c"
+      },
+      "candidate": {
+        "members": {
+          "agent.yaml": "680799291cc7d156d06fb7bfb5577f683ccc0d555b00e8ddb662d577f9bfa5e4",
+          "configs/sampling.yaml": "4612d7f6b685a0ec01de6354356ecb326af77a98c7f27c18c4ed9821f9eee0a2",
+          "eval_config.yaml": "916cf6cb34a6cc3de39837fa72cac681599b9ac2a3ee0b893adadfd36474c531",
+          "prompts/system.md": "d00405d6ba826c8beeb922046cd047e296984d39c4a5a54e4947cdc88f6fd8d0"
+        },
+        "archive_sha256": "ede898111fde086ab25ec840c16aaabfda20e6459acc07e24ed7e313c73c7e80"
+      }
+    }
+  ],
+  "status": "CPU packages frozen; runtime preflight and complete run-input manifest pending",
+  "analysis_tasks": [
+    "fastapi_13207",
+    "fastapi_14266",
+    "fastapi_14306",
+    "fastapi_14372",
+    "fastapi_14430",
+    "fastapi_14455",
+    "fastapi_14458",
+    "fastapi_14463",
+    "fastapi_14482",
+    "fastapi_14609",
+    "fastapi_14794",
+    "fastapi_15800",
+    "fastapi_5077",
+    "fastapi_5624",
+    "fastapi_9425",
+    "fastapi_9753",
+    "httpx_3672",
+    "requests_7427",
+    "rich_2943",
+    "rich_3063",
+    "rich_3180",
+    "rich_3278",
+    "rich_3468",
+    "rich_3471",
+    "rich_3506",
+    "rich_3518",
+    "rich_3944",
+    "rich_4076",
+    "rich_4079"
+  ],
+  "benchmark_sha256": "b2d6ed557261dc2d11f6ada0fdbe7ca62f66ccf9ca90273f77fbc56ff1293d37",
+  "runtime_provenance": {
+    "owner_run": "runs/20261017-seeds/budgetfit-s1/dev",
+    "owner_git_short": "ccfcff0",
+    "owner_digest_abbreviated": "c06a26c8\u2026",
+    "full_runtime_manifest_verified": false,
+    "partition": "dev[k::4], k=0..3; run full dev quarters, analyze valid intersection with analysis_tasks"
+  }
+}

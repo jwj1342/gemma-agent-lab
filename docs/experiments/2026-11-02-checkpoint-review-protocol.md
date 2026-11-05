@@ -1,6 +1,8 @@
-# Diagnosis checkpoint: draft protocol for owner confirmation
+# Diagnosis checkpoint: protocol and candidate freeze
 
-No inference, training, GPU allocation or submission is authorized by this draft.
+No inference, training, GPU allocation or submission is launched by this protocol.
+The November 3 owner decisions and November 5 package freeze are recorded in
+[the freeze handoff](2026-11-05-observation-checkpoint-freeze.md).
 This supersedes the older two-seed evaluation suggestion for the checkpoint;
 existing JSON registrations remain historical CPU packaging receipts.
 
@@ -101,20 +103,30 @@ Secondary metrics, fixed before running:
   affected-path inventory has no reference-file overlap. Unsupported diffs are
   unknown, never counted as outside-reference edits.
 
-## Owner questions before registration
+## Owner decisions and remaining preflight
 
-Owner decisions remain open; this draft does not authorize additional arms:
+[Owner confirmation](https://github.com/jwj1342/gemma-agent-lab/pull/29#issuecomment-6597549165)
+on November 3 settles C2 as sole control, budget-fit as historical reference,
+seeds 42/1/2/3, one observation-grounded paragraph and the pooled margin design.
+H100 scaling is 0.5 (eight base minutes become four); server seed 42,
+TP 1, memory utilization 0.8, 32K context, concurrency 1, 28 calls and 240-second
+command timeout are fixed in both arms. The exact bootstrap procedure above is
+prespecified, with no later outcome-based adjustment.
 
-- C2 as the only control, or also budget-fit?
-- Seeds 42/1/2/3, or the owner's complete eight-seed set? If changed, register the
-  full seed list and scaled pooled margin before inference.
-- One observation-grounded checkpoint only, or a second arm with refinement 1
-  relative to the original checkpoint? Define each paragraph and multiplicity
-  policy before running; do not silently compare two changing controls.
-- Which full code/candidate commit and data/runtime manifest should be frozen?
-- Approve the pooled one-task-per-seed margin, interval procedure, time scaling
-  and independent annotation review before registration.
+The November 5 executable packages supersede the draft's missing-candidate gate.
+The earlier code-baseline paragraphs describe the draft's historical state.
+Full private runtime/model/tokenizer/task/reference hashes, semantic second review,
+official compilation and runtime preflight remain required in the run manifest.
+Abbreviated owner hashes are provenance hints, not verified SHA-256 identities.
+The owner's 29-task mask is the analysis ceiling; run the full frozen development
+quarters and retain newly invalid controls/exclusions rather than selecting cases.
 
-XML trajectory conversion, official compilation and GPU execution remain separate
-work or preflight gates. Real-template checks validate only the tested native
-formats; they do not establish training readiness.
+The historical `audit_failure_mechanisms.py` report covers failures only. It must
+not supply this protocol's primary denominator, which includes successful attempts.
+The runner must export per-attempt endpoints for both arms, all four seeds,
+unknown reasons and paired valid-control masks, and implement the prespecified
+paired analysis before interpreting results. No H100 metric implementation or
+bootstrap execution is claimed by the CPU package freeze.
+
+XML trajectory conversion and GPU execution remain separate work. Real-template
+checks validate only tested native formats; they do not establish training readiness.

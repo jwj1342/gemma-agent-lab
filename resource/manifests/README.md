@@ -60,3 +60,5 @@ workspace; those artifacts are not included in a Git clone.
 Preserve historical receipts when creating a new run. Place new compact reports in
 [docs/experiments/](../../docs/experiments/README.md), with commands, hashes, and accessible artifact
 locations. Old account quota or submission allowance does not establish today's remaining resources.
+
+[Observation checkpoint freeze](observation-checkpoint-20261105.json) records paired CPU packages; H100 preflight remains pending.
