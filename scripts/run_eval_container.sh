@@ -29,8 +29,10 @@ args=(exec --cleanenv --containall --no-home --no-mount hostfs,bind-paths,cwd
   --pwd /work/run
   --bind "$runtime_dir:/app:ro" --bind "$agent_dir:/agent:ro"
   --bind "$eval_venv:$eval_venv:ro" --bind "$work:/work/run" --bind "$work/tmp:/tmp")
+hook=()
 if [[ -f "$runtime_dir/local_eval_setup.py" && -d "$run_dir/inputs/runtime" ]]; then
   args+=(--bind "$project_root/resource/downloads/eval-test-wheels-v3:/eval-test-wheels:ro")
+  hook=(--local-dependency-hook)
 fi
 if [[ "$mode" == compile ]]; then
   exec apptainer "${args[@]}" "$image" /bin/bash /app/container_entry.sh \
@@ -47,4 +49,4 @@ if [[ "$mode" == infer ]]; then
 else
   args+=(--bind "$data_dir/tasks.jsonl:/data/tasks.jsonl:ro" --bind "$run_dir/infer:/predictions:ro")
 fi
-exec apptainer "${args[@]}" "$image" /bin/bash /app/container_entry.sh /app/evaluate_agent.py "$mode" "$@"
+exec apptainer "${args[@]}" "$image" /bin/bash /app/container_entry.sh /app/evaluate_agent.py "$mode" "${hook[@]}" "$@"

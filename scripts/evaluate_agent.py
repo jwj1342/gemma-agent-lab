@@ -27,6 +27,8 @@ def parse_args():
     p.add_argument('--gpu-memory-utilization', type=float, default=0.80)
     p.add_argument('--prediction', type=Path, default=Path('/predictions/prediction.json'))
     p.add_argument('--patch-source', choices=['agent', 'gold', 'empty'], default='agent')
+    p.add_argument('--local-dependency-hook', action='store_true',
+                   help='Batch mode on the local container: install task test dependencies from mounted wheels')
     return p.parse_args()
 
 
@@ -125,7 +127,7 @@ async def run(args):
                                 events_compaction_config=EventsCompactionConfig(compaction_interval=15, overlap_size=2,
                                                                                token_threshold=14336, event_retention_size=5))
             evaluator = Evaluator(config)
-            if batch:
+            if batch and args.local_dependency_hook:
                 from local_eval_setup import configure
                 configure(evaluator)
             snapshot = args.data_dir / 'snapshots' / (task.instance_id + '.tgz')
