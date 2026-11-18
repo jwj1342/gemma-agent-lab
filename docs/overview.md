@@ -13,8 +13,10 @@ locates relevant code, changes the implementation, checks its work, and submits 
 Participants can change prompts, ADK agent structure, skills, or optional LoRA adapters.
 The submission is an agent ZIP that Kaggle executes on hidden tasks.
 
-Every agent and subagent must use `gemma-4-31b-it-qat-w4a16-ct`, with optional different adapters.
-Other Models-page entries or locally supported model sizes do not extend the approved scoring models.
+Every agent and subagent in a submission must use the same base model, with optional different adapters.
+Since 2026-10-11 the host allows four QAT W4A16 bases: 31B, 12B, E4B and E2B. The team uses 31B; see
+[competition research](competition-research.md#models-four-entries-in-the-captured-page) for why.
+Other Models-page entries do not extend the approved scoring models.
 A baseline without an adapter can establish the complete submission path.
 
 ## Scoring
