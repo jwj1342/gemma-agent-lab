@@ -7,7 +7,7 @@ import shutil
 
 
 VARIANTS = {'workflow': ['workflow'], 'protocol': ['workflow', 'protocol'], 'icl': ['workflow', 'fewshot'],
-            'reflect': ['workflow', 'fewshot', 'reflection']}
+            'reflect': ['workflow', 'fewshot', 'reflection'], 'recover': ['workflow', 'recover']}
 
 
 def build_candidate(source, output, variant):
