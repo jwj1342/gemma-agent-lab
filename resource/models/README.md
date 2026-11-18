@@ -2,7 +2,8 @@
 
 The captured page lists 4 model instances. Metadata, descriptions, and available
 model cards are saved. Required Gemma v2 weights were verified separately; other weights were not downloaded.
-Official scoring requires the specified quantized Gemma 31B base.
+At capture time, official scoring required the quantized Gemma 31B base; later host clarifications
+are recorded in docs/competition-research.md.
 Other entries on this page do not imply approval for submissions.
 
 | Instance | Version | Package bytes | Local card / instance record |
