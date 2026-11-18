@@ -2,7 +2,7 @@
 # Invoked inside the pinned Ubuntu 22.04 vLLM image on a preparation node.
 set -eo pipefail
 project_root=${1:?project root}
-eval_venv=/home/jwj/venvs/gemma4-eval
+eval_venv=/home/jwj/venvs/gemma4-eval-v31
 apt_root="$project_root/cache/eval-apt"
 mkdir -p "$apt_root/lists/partial" "$apt_root/debs" "$eval_venv/vendor/git"
 cat > "$apt_root/sources.list" <<'SOURCES'
@@ -22,7 +22,7 @@ for package in ./*.deb; do
 done
 cat > "$eval_venv/bin/git" <<'WRAPPER'
 #!/bin/sh
-git_root=/home/jwj/venvs/gemma4-eval/vendor/git
+git_root=/home/jwj/venvs/gemma4-eval-v31/vendor/git
 export GIT_EXEC_PATH="$git_root/usr/lib/git-core"
 export GIT_TEMPLATE_DIR="$git_root/usr/share/git-core/templates"
 export LD_LIBRARY_PATH="$git_root/usr/lib/x86_64-linux-gnu${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
@@ -35,7 +35,7 @@ from pathlib import Path
 from datetime import datetime, timezone
 import hashlib, json, subprocess, sys, tempfile
 root, debs = map(Path, sys.argv[1:])
-git='/home/jwj/venvs/gemma4-eval/bin/git'
+git='/home/jwj/venvs/gemma4-eval-v31/bin/git'
 with tempfile.TemporaryDirectory(dir=root/'cache',prefix='git-check-') as tmp:
     def run(*args):
         return subprocess.check_output([git,'-C',tmp,*args],text=True,stderr=subprocess.STDOUT)
