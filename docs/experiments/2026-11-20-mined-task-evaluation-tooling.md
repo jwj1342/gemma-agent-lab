@@ -62,9 +62,9 @@ python scripts/collect_mined_sweep.py --kernel <owner/slug> --out runs/<date>-sw
 
 ## Limitations
 
-- The `.tgz` layout (repository content at the archive root) is our assumption; it works for patching and
-  testing in the CPU controls but must be confirmed against a public snapshot in a kernel that mounts the
-  competition data before inference runs depend on it.
+- The `.tgz` layout is confirmed against the harness we run: swegemma 0.2.11 extracts the archive directly
+  into the sandbox directory (`tar -xzf <archive> -C <dest>`) and treats that directory as the repository, so
+  the repository content sits at the archive root, which is what `build_mined_eval_bundle.py` produces.
 - The control pair is a patch/test comparison, not the official verifier; parity with the evaluator is a
   separate check.
 - The sweep payload is public task metadata only (patches, test lists); no competition data is involved.

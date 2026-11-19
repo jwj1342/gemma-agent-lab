@@ -11,8 +11,9 @@ For every selected task it:
      (Linux cp312 manylinux, which is what the Kaggle kernel runs),
   4. writes `<out>/bundle-manifest.json` with source commits, digests, sizes and the layout used.
 
-The `.tgz` layout is the one assumption this script makes; confirm it against a public snapshot inside the
-Kaggle kernel before running controls. Nothing is uploaded and no GPU is used.
+The `.tgz` layout matches what swegemma 0.2.11 expects: `evaluate` extracts the archive directly into the
+sandbox directory (`tar -xzf <archive> -C <dest>`) and treats that directory as the repository, so the
+repository content must sit at the archive root. Nothing is uploaded and no GPU is used.
 """
 from __future__ import annotations
 
@@ -110,7 +111,8 @@ def main() -> int:
     snapshots = out / 'snapshots'
     wheels = out / 'wheels'
     snapshots.mkdir(parents=True, exist_ok=True)
-    record = {'layout': 'tgz root = repository content at base_commit (no .git, no top-level directory)',
+    record = {'layout': 'tgz root = repository content at base_commit (no .git, no top-level directory); '
+                        'matches swegemma 0.2.11, which untars the archive into the sandbox directory',
               'source': 'codeload.github.com tar.gz', 'python': 'cp312 manylinux2014_x86_64',
               'tasks': [], 'wheels': {}, 'errors': []}
     repos: dict[str, list[str]] = {}
