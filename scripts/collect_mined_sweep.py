@@ -14,6 +14,7 @@ import argparse
 import json
 import math
 import os
+import re
 import subprocess
 import sys
 import urllib.request
@@ -43,18 +44,44 @@ def fetch(kernel: str, out: Path) -> list[dict]:
     return rows
 
 
+def from_log(path: Path, tasks: Path) -> list[dict]:
+    """Parse a kernel log instead of the output tree.
+
+    The sweep's working directory also holds the cached repository checkouts, so downloading the whole
+    output tree can take longer than the sweep itself. The notebook prints one line per task, and the log
+    is a few hundred kilobytes, so this path is the fast fallback.
+    """
+    units = json.loads(path.read_text(encoding='utf-8'))
+    text = ''.join(unit.get('data', '') for unit in units)
+    repo_of = {}
+    if tasks.is_file():
+        for line in tasks.read_text(encoding='utf-8').splitlines():
+            if line.strip():
+                task = json.loads(line)
+                repo_of[task['instance_id']] = task['repo']
+    rows = []
+    for match in re.finditer(r'\[(\d+)/(\d+)\] (\S+) gold=(\S+) empty=(\S+) valid=(True|False)', text):
+        rows.append({'instance_id': match.group(3), 'repo': repo_of.get(match.group(3), 'unknown'),
+                     'gold_rc': match.group(4), 'empty_rc': match.group(5),
+                     'valid': match.group(6) == 'True'})
+    return rows
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument('--kernel', default='junzhejiao/mined-control-sweep-2026-11-20')
     parser.add_argument('--out', type=Path, default=Path('runs/2026-11-20-mined-control-sweep'))
+    parser.add_argument('--from-log', type=Path, help='parse this kernel log instead of downloading the output')
+    parser.add_argument('--tasks', type=Path, default=Path('artifacts/tmp/swe-eval-validity/tasks.jsonl'),
+                        help='mined tasks file, used to map instance IDs to repositories with --from-log')
     parser.add_argument('--post', action='store_true')
     parser.add_argument('--token-file', type=Path, default=DEFAULT_TOKEN_FILE,
                         help='file holding a GitHub token for --post (GITHUB_TOKEN wins if set)')
     args = parser.parse_args()
 
-    rows = fetch(args.kernel, args.out)
+    rows = from_log(args.from_log, args.tasks) if args.from_log else fetch(args.kernel, args.out)
     if not rows:
-        raise SystemExit('no results.jsonl found in the kernel output')
+        raise SystemExit('no control rows found')
 
     per_repo: dict[str, dict[str, int]] = {}
     for row in rows:
