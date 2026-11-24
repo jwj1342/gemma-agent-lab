@@ -15,6 +15,12 @@ the two comparison tasks; this selected sample does not estimate the overall val
 The [official-verifier CPU smoke](mined-verifier-smoke-20261125.json) passes both tasks after isolated
 offline dependency setup; it does not validate the full provisional cohort or model inference.
 
+Teacher work for #39 uses a separate [12-task development manifest](teacher-dev-20261125.json), with
+four repositories absent from the mined evaluation cohort. The [first mechanism record](teacher-mechanism-20261125.json)
+records actual graph queries and a frozen teacher patch; it is not a model A/B or a student improvement.
+The [independent teacher-patch receipt](teacher-verifier-20261125.json) confirms valid controls and a
+resolved patch on the first task. The graph's marginal diagnostic information remained null in this case.
+
 ## Results and submission receipts
 
 | File | Purpose |

@@ -9,6 +9,7 @@ Existing baseline results predate this convention. Their authoritative receipts 
 
 | Date | Report |
 | --- | --- |
+| 2026-11-25 | [Teacher source-graph mechanism pilot](2026-11-25-teacher-source-graph-pilot.md) |
 | 2026-11-24 | [Evaluation infrastructure closeout and corrected handoff](2026-11-24-evaluation-infrastructure-closeout.md) |
 | 2026-11-21 | [Mined cohort arm specification, with corrected L4 billing](2026-11-21-h100-arm-spec.md) |
 | 2026-11-20 | [Mined-task tooling and per-task controls](2026-11-20-mined-task-evaluation-tooling.md) |

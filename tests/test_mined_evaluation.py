@@ -158,6 +158,20 @@ class MinedControlTests(unittest.TestCase):
         namespace['offline_dependencies'](manager, 'sandbox', repo='example/fixture')
         self.assertTrue(state['editable'])
 
+    def test_teacher_prediction_cannot_target_an_unselected_task(self):
+        tasks = self.work / 'teacher-tasks.jsonl'
+        tasks.write_text(json.dumps({'instance_id': 'selected', 'repo': 'example/repo',
+                                    'base_commit': 'a' * 40}) + '\n')
+        prediction = self.work / 'prediction.json'
+        prediction.write_text(json.dumps({'task_id': 'another', 'agent_patch': 'a patch'}))
+        output = self.work / 'teacher-notebook'
+        done = subprocess.run([sys.executable, str(ROOT / 'scripts/make_mined_verifier_notebook.py'),
+                               '--tasks', str(tasks), '--ids', 'selected', '--prediction', str(prediction),
+                               '--out', str(output)], capture_output=True, text=True)
+        self.assertNotEqual(done.returncode, 0)
+        self.assertIn('selected task', done.stderr)
+        self.assertFalse(output.exists())
+
 
 if __name__ == '__main__':
     unittest.main()

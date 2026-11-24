@@ -50,7 +50,7 @@ wheels = data / 'wheels'
 requirements = set(SANDBOX_BOOTSTRAP)
 for task in P['tasks']:
     fetch_snapshot(task['repo'], task['base_commit'], snapshots / (task['instance_id'] + '.tgz'))
-    requirements.update(req for req in REQUIREMENTS[task['repo']] if not req.startswith('pytest'))
+    requirements.update(req for req in REQUIREMENTS.get(task['repo'], ['pytest']) if not req.startswith('pytest'))
 download_wheels(sorted(requirements), wheels)
 with zipfile.ZipFile(io.BytesIO(base64.b64decode(P['agent_zip']))) as archive:
     archive.extractall(WORK / 'agent')
@@ -63,6 +63,8 @@ receipt = {'preparation_revision': P['git_revision'], 'script_sha256': P['script
            'snapshots': {f.name: hashlib.sha256(f.read_bytes()).hexdigest() for f in snapshots.iterdir()},
            'wheels': {f.name: hashlib.sha256(f.read_bytes()).hexdigest() for f in wheels.iterdir()},
            'wheelhouse': actual, 'model_execution': False, 'python': sys.version}
+receipt['teacher_patch_sha256'] = {key: hashlib.sha256(value.encode()).hexdigest()
+                                 for key, value in P.get('teacher_patches', {}).items()}
 (WORK / 'inputs.json').write_text(json.dumps(receipt, indent=2))
 
 from adk_submission import ModelRegistry
@@ -101,7 +103,10 @@ async def smoke():
         run_dir = WORK / task.instance_id
         subprocess.run([sys.executable, str(SCRIPTS / 'verify_eval_run.py'), '--run-dir', str(run_dir)], check=True)
         results = {}
-        for side in ('empty', 'gold'):
+        sides = ('empty', 'gold') + (('teacher',) if task.instance_id in P.get('teacher_patches', {}) else ())
+        for side in sides:
+            if side == 'teacher' and not all(control_checks(results['empty'], results['gold'], task.instance_id).values()):
+                continue
             output = run_dir / 'verify' / side
             output.mkdir(parents=True)
             config = EvalConfig(tasks_path=tasks_path, snapshots_dir=snapshots, results_dir=output,
@@ -110,7 +115,9 @@ async def smoke():
             manager = SubprocessManager(timeout_seconds=120, system_site_packages=False)
             result = await verification.verify_task(manager, config, task,
                          snapshots / (task.instance_id + '.tgz'), fast_path=False,
-                         agent_patch=task.patch if side == 'gold' else '', start_time=time.perf_counter())
+                         agent_patch=(task.patch if side == 'gold' else
+                                      P['teacher_patches'][task.instance_id] if side == 'teacher' else ''),
+                         start_time=time.perf_counter())
             record = result.model_dump(mode='json', exclude={'trace'})
             record['task_id'] = task.instance_id
             record['error_message'] = record.get('error_message') or record.get('error')
@@ -121,6 +128,10 @@ async def smoke():
         row = {'task_id': task.instance_id, 'checks': checks, 'valid': all(checks.values()),
                'empty_rc': results['empty'].get('test_exit_code'),
                'gold_rc': results['gold'].get('test_exit_code')}
+        if 'teacher' in results:
+            row['teacher_resolved'] = results['teacher']['resolved']
+            row['teacher_rc'] = results['teacher'].get('test_exit_code')
+            row['teacher_error'] = results['teacher'].get('error_message')
         rows.append(row)
         print('VERIFIER_RESULT ' + json.dumps(row), flush=True)
         for side, record in results.items():
@@ -138,6 +149,7 @@ def main():
     parser.add_argument('--snapshot', type=Path,
                         default=ROOT / 'resource/manifests/mined-verifier-runtime-20261124.json')
     parser.add_argument('--agent-dir', type=Path, default=ROOT / 'configs/baseline')
+    parser.add_argument('--prediction', type=Path, help='Grade one teacher-produced task_id/agent_patch JSON after valid controls')
     parser.add_argument('--out', type=Path, required=True)
     parser.add_argument('--owner', default='junzhejiao')
     parser.add_argument('--slug', default='mined-verifier-smoke-20261124')
@@ -146,6 +158,12 @@ def main():
     selected = [row for row in rows if row['instance_id'] in set(args.ids)]
     if len(selected) != len(set(args.ids)) or args.out.exists():
         raise ValueError('Missing/duplicate IDs or output directory already exists')
+    teacher_patches = {}
+    if args.prediction:
+        prediction = json.loads(args.prediction.read_text(encoding='utf-8'))
+        if prediction.get('task_id') not in args.ids or not isinstance(prediction.get('agent_patch'), str) or not prediction['agent_patch']:
+            raise ValueError('Teacher prediction must identify a selected task and contain a nonempty patch')
+        teacher_patches[prediction['task_id']] = prediction['agent_patch']
     args.out.mkdir(parents=True)
     archive = args.out / 'agent.zip'
     build(args.agent_dir, archive)
@@ -155,7 +173,7 @@ def main():
     snapshot = json.loads(args.snapshot.read_text(encoding='utf-8'))['snapshots'][-1]
     if snapshot.get('dataset_version') != 31:
         raise ValueError('This verifier smoke requires the reviewed v31 snapshot')
-    payload = {'tasks': selected, 'scripts': scripts,
+    payload = {'tasks': selected, 'scripts': scripts, 'teacher_patches': teacher_patches,
                'script_sha256': {name: hashlib.sha256(text.encode()).hexdigest() for name, text in scripts.items()},
                'wheelhouse': snapshot['wheels'], 'agent_zip': base64.b64encode(archive.read_bytes()).decode(),
                'git_revision': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()}

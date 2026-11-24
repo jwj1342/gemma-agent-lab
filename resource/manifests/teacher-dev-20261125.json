@@ -1,0 +1,126 @@
+{
+  "schema_version": 1,
+  "seed": "teacher-repository-disjoint-2026-11-25",
+  "scope": "Teacher development only; repository-disjoint from all seven mined evaluation repositories.",
+  "source_tasks_sha256": "4cad48101e855d56f73c9f2fa418c3b29c608a50cdc7071d5729eeea94bc3676",
+  "excluded_evaluation_repositories": [
+    "andialbrecht/sqlparse",
+    "arrow-py/arrow",
+    "google/ml_collections",
+    "google/mobly",
+    "lark-parser/lark",
+    "pallets/click",
+    "python-poetry/tomlkit"
+  ],
+  "teacher": "Current Codex session for mechanism pilot; no independent paired model evaluation claimed.",
+  "tasks": [
+    {
+      "instance_id": "more_itertools_757",
+      "repo": "more-itertools/more-itertools",
+      "base_commit": "468755cbb6e40cce1d015d57129ae6137ae1f19e",
+      "statement_type": "terse",
+      "leak_flag": false,
+      "upstream_license": "MIT",
+      "problem_sha256": "67ff3500cc7251b9e4de751ca910bb35ec02fdb3935672bac2496cb3a4f88a11"
+    },
+    {
+      "instance_id": "more_itertools_1116",
+      "repo": "more-itertools/more-itertools",
+      "base_commit": "3e87c08ac878f4bb79349d38ac69ba75c45dc5bf",
+      "statement_type": "terse",
+      "leak_flag": false,
+      "upstream_license": "MIT",
+      "problem_sha256": "f884a0a8d7b6e9270901649df8a7c5b07502d47bf249721b079e0c61b1010533"
+    },
+    {
+      "instance_id": "more_itertools_1157",
+      "repo": "more-itertools/more-itertools",
+      "base_commit": "bd8475cc1e9b2efdbc055ab4af4d4693a9c5cb7a",
+      "statement_type": "terse",
+      "leak_flag": false,
+      "upstream_license": "MIT",
+      "problem_sha256": "cc7d4639e65582cce05348b10526d6f2be3bdbb137e09a113b86dd10345cf0c7"
+    },
+    {
+      "instance_id": "tenacity_317",
+      "repo": "jd/tenacity",
+      "base_commit": "06413c391f7fed0d286e35ce2226c1ac577cce67",
+      "statement_type": "terse",
+      "leak_flag": false,
+      "upstream_license": "Apache-2.0",
+      "problem_sha256": "64b928aec143972b1b9cd2be8aeda4abf9022290022461bc40efe633222c06c2"
+    },
+    {
+      "instance_id": "tenacity_645",
+      "repo": "jd/tenacity",
+      "base_commit": "949dcfa6c0a4f0109dbbd019ff58208a580d185b",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "upstream_license": "Apache-2.0",
+      "problem_sha256": "f1e4a44c2126a51fbe53231d6da9fc6333f7d71775542b9aad698e6953526d24"
+    },
+    {
+      "instance_id": "tenacity_615",
+      "repo": "jd/tenacity",
+      "base_commit": "0a3ca8a208a9365f2cae45b83c7673e606d1b563",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "upstream_license": "Apache-2.0",
+      "problem_sha256": "c500fa3413060e629853ed88cc44f6697565723a15909294b44da978f97bcbad"
+    },
+    {
+      "instance_id": "w3lib_338",
+      "repo": "scrapy/w3lib",
+      "base_commit": "a00b135faf75dc910aed9390f19fec13c8eedea2",
+      "statement_type": "terse",
+      "leak_flag": false,
+      "upstream_license": "BSD-3-Clause",
+      "problem_sha256": "9cfe129c1827337462f0a356fc2afa9664d405bea3b9feeb18bab0e5e1802682"
+    },
+    {
+      "instance_id": "w3lib_317",
+      "repo": "scrapy/w3lib",
+      "base_commit": "dc5ed388eb39dcc6d27dcf2880c98a1a7b673be5",
+      "statement_type": "terse",
+      "leak_flag": false,
+      "upstream_license": "BSD-3-Clause",
+      "problem_sha256": "c29f264b7331730d052f24d6f14b053cf189759a9f99745bad33011ad04fc5d2"
+    },
+    {
+      "instance_id": "w3lib_167",
+      "repo": "scrapy/w3lib",
+      "base_commit": "2300dccce7bdefff760f366e572139eb958e97aa",
+      "statement_type": "terse",
+      "leak_flag": false,
+      "upstream_license": "BSD-3-Clause",
+      "problem_sha256": "9b22c6edd7c59f3fa76a2fc03328b039dec01c6ae1f265a7a516bdf2893d7b0a"
+    },
+    {
+      "instance_id": "mistune_395",
+      "repo": "lepture/mistune",
+      "base_commit": "77f925e1de25e453a4d8c190fc8099ad1bd2386b",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "upstream_license": "BSD-3-Clause",
+      "problem_sha256": "a874fb1d0dd6ef37a460b4794f4f486930af4e443d5ea7542eb52cd9356f126b"
+    },
+    {
+      "instance_id": "mistune_502",
+      "repo": "lepture/mistune",
+      "base_commit": "397bade9aa6b8babacfa35bfd7cb19fa7f6526c5",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "upstream_license": "BSD-3-Clause",
+      "problem_sha256": "ec6bb0b555fdc4c092226c1c2f9eaa0a48e6ac78507f044a01327fed393920da"
+    },
+    {
+      "instance_id": "mistune_486",
+      "repo": "lepture/mistune",
+      "base_commit": "029cd5f8f3c8f383763d729ecd3528a3a7ddb9bf",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "upstream_license": "BSD-3-Clause",
+      "problem_sha256": "ff78ccd785896bfde6eeb15724c838c7360e0b9cbc6a363abd7b097e27cb1785"
+    }
+  ]
+}
