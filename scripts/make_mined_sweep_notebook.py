@@ -16,10 +16,13 @@ import gzip
 import json
 from pathlib import Path
 
+CHECKS_SOURCE = Path(__file__).with_name('mined_control_checks.py').read_text(encoding='utf-8')
+
 CELL = r'''
-import base64, gzip, json, shutil, subprocess, sys, tarfile, urllib.request
+import base64, gzip, hashlib, json, shutil, subprocess, sys, tarfile, urllib.request
 from pathlib import Path
 
+exec(CONTROL_CHECKS_SOURCE, globals())
 PAYLOAD = json.loads(gzip.decompress(base64.b85decode(PAYLOAD_B85)))
 WORK = Path('/kaggle/working/mined-sweep')
 CACHE = WORK / 'commits'
@@ -28,10 +31,15 @@ WORK.mkdir(parents=True, exist_ok=True)
 CACHE.mkdir(parents=True, exist_ok=True)
 
 DEPS = {
-    'pallets/click': ['pytest'], 'google/ml_collections': ['pytest', 'absl-py', 'numpy', 'pyyaml'],
-    'lark-parser/lark': ['pytest'], 'google/mobly': ['pytest', 'pyyaml', 'portpicker'],
-    'google/openhtf': ['pytest', 'pyyaml', 'protobuf'], 'andialbrecht/sqlparse': ['pytest'],
-    'python-poetry/tomlkit': ['pytest'], 'python-humanize/humanize': ['pytest'], 'arrow-py/arrow': ['pytest'],
+    'pallets/click': ['pytest', 'pytest-mock'],
+    'google/ml_collections': ['pytest', 'absl-py', 'numpy', 'pyyaml'],
+    'lark-parser/lark': ['pytest', 'regex'],
+    'google/mobly': ['pytest', 'mock', 'pytz', 'pyyaml', 'portpicker'],
+    'google/openhtf': ['pytest', 'mock', 'protobuf', 'pyyaml'],
+    'andialbrecht/sqlparse': ['pytest'],
+    'python-poetry/tomlkit': ['pytest'],
+    'python-humanize/humanize': ['pytest'],
+    'arrow-py/arrow': ['pytest', 'dateparser', 'pytz', 'simplejson', 'pytest-mock', 'pytest-cov'],
 }
 
 def sh(command, cwd=None, timeout=600):
@@ -41,8 +49,16 @@ def sh(command, cwd=None, timeout=600):
 def boot():
     for repo in sorted({t['repo'] for t in PAYLOAD}):
         subprocess.run([sys.executable, '-m', 'pip', 'install', '-q', *DEPS.get(repo, ['pytest'])],
-                       capture_output=True, text=True)
+                       capture_output=True, text=True, check=True)
     print('dependencies installed', flush=True)
+
+def install_repo(repo_dir):
+    """Make src-layout checkouts importable; plain layouts already import from the repository root."""
+    if not (repo_dir / 'src').is_dir():
+        return None
+    done = subprocess.run([sys.executable, '-m', 'pip', 'install', '-q', '--no-deps', '-e', '.'],
+                          cwd=repo_dir, capture_output=True, text=True)
+    return done.returncode
 
 def checkout(task):
     key = task['repo'].replace('/', '__') + '@' + task['base_commit']
@@ -81,17 +97,31 @@ def apply_patch(repo_dir, text, label):
     return None if done.returncode == 0 else (done.stdout + done.stderr)[-400:]
 
 def run_tests(repo_dir, node_ids, timeout=420):
+    """Run the FAIL_TO_PASS node IDs.
+
+    `-o addopts=` drops repository-level coverage gates. Recorded node IDs are kept exact;
+    collection errors are not retried with a broader, potentially unrelated set of tests.
+    """
+    report = repo_dir.parent / (repo_dir.name + '-junit.xml')
+    report.unlink(missing_ok=True)
+    command = [sys.executable, '-m', 'pytest', '-x', '-q', '-o', 'addopts=', '-p', 'no:cacheprovider',
+               '--junitxml=' + str(report)]
     try:
-        done = subprocess.run([sys.executable, '-m', 'pytest', '-x', '-q', *node_ids],
-                              cwd=repo_dir, capture_output=True, text=True, timeout=timeout)
-        return done.returncode, (done.stdout + done.stderr)[-600:]
+        done = subprocess.run(command + node_ids, cwd=repo_dir, capture_output=True, text=True, timeout=timeout)
+        return done.returncode, (done.stdout + done.stderr)[-6000:], junit_counts(report)
     except subprocess.TimeoutExpired:
-        return 124, 'pytest timeout'
+        return 124, 'pytest timeout', junit_counts(report)
 
 boot()
+(WORK / 'runtime.json').write_text(json.dumps({
+    'python': sys.version, 'model_execution': False,
+    'payload_sha256': hashlib.sha256(json.dumps(PAYLOAD, sort_keys=True).encode()).hexdigest(),
+    'control_checks_sha256': hashlib.sha256(CONTROL_CHECKS_SOURCE.encode()).hexdigest(),
+    'installed': subprocess.check_output([sys.executable, '-m', 'pip', 'freeze'], text=True).splitlines(),
+}, indent=2))
 for index, task in enumerate(PAYLOAD, 1):
     task_id = task['instance_id']
-    record = {'instance_id': task_id, 'repo': task['repo']}
+    record = {'instance_id': task_id, 'repo': task['repo'], 'base_commit': task['base_commit']}
     try:
         base = checkout(task)
         gold_dir = copy_tree(base, WORK / 'work' / (task_id + '-gold'))
@@ -105,7 +135,8 @@ for index, task in enumerate(PAYLOAD, 1):
             if error:
                 record['error'] = 'gold_patch: ' + error
             else:
-                record['gold_rc'], record['gold_tail'] = run_tests(gold_dir, task['FAIL_TO_PASS'])
+                record['gold_install_rc'] = install_repo(gold_dir)
+                record['gold_rc'], record['gold_tail'], record['gold_tests'] = run_tests(gold_dir, task['FAIL_TO_PASS'])
         shutil.rmtree(gold_dir, ignore_errors=True)
         empty_dir = copy_tree(base, WORK / 'work' / (task_id + '-empty'))
         error = apply_patch(empty_dir, task['test_patch'], 'test')
@@ -113,15 +144,17 @@ for index, task in enumerate(PAYLOAD, 1):
         if error:
             record['error'] = record.get('error') or ('empty patch: ' + error)
         else:
-            record['empty_rc'], record['empty_tail'] = run_tests(empty_dir, task['FAIL_TO_PASS'])
+            record['empty_install_rc'] = install_repo(empty_dir)
+            record['empty_rc'], record['empty_tail'], record['empty_tests'] = run_tests(empty_dir, task['FAIL_TO_PASS'])
         shutil.rmtree(empty_dir, ignore_errors=True)
     except Exception as exc:  # noqa: BLE001
         record['error'] = f'{type(exc).__name__}: {exc}'
-    record['valid'] = record.get('gold_rc') == 0 and record.get('empty_rc') not in (0, None)
+    record.update(control_verdict(record))
     with RESULTS.open('a') as handle:
         handle.write(json.dumps(record) + '\n')
     print(f"[{index}/{len(PAYLOAD)}] {task_id} gold={record.get('gold_rc')} empty={record.get('empty_rc')} "
           f"valid={record['valid']}", flush=True)
+    print('CONTROL_RESULT ' + json.dumps(record), flush=True)
 
 rows = [json.loads(line) for line in RESULTS.read_text().splitlines() if line.strip()]
 per_repo = {}
@@ -140,19 +173,29 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument('--tasks', type=Path, required=True)
     parser.add_argument('--splits', nargs='+', default=['mined-197', 'google-100'])
+    parser.add_argument('--ids', nargs='+', help='Run only these IDs, irrespective of split')
+    parser.add_argument('--repos', nargs='*', help='only these repositories (exact owner/name)')
     parser.add_argument('--owner', default='junzhejiao')
     parser.add_argument('--slug', default='mined-control-sweep-2026-11-20')
     parser.add_argument('--title', default='mined control sweep 2026-11-20')
     parser.add_argument('--out', type=Path, required=True)
     args = parser.parse_args()
+    if args.out.exists():
+        raise SystemExit('Output exists; preserve it and choose a new directory')
 
     rows = [json.loads(line) for line in args.tasks.read_text(encoding='utf-8').splitlines() if line.strip()]
-    hold = [row for row in rows if row.get('paper_split') in set(args.splits)]
+    hold = [row for row in rows if (args.ids and row['instance_id'] in set(args.ids)
+            or not args.ids and row.get('paper_split') in set(args.splits))
+            and (not args.repos or row['repo'] in set(args.repos))]
+    if args.ids and {row['instance_id'] for row in hold} != set(args.ids):
+        raise SystemExit('Requested task IDs are missing')
+    if not hold:
+        raise SystemExit('No tasks selected')
     payload = [{'instance_id': r['instance_id'], 'repo': r['repo'], 'base_commit': r['base_commit'],
                 'patch': r['patch'], 'test_patch': r['test_patch'], 'FAIL_TO_PASS': r['FAIL_TO_PASS']}
                for r in hold]
     blob = base64.b85encode(gzip.compress(json.dumps(payload).encode(), 9)).decode()
-    code = CELL.replace('PAYLOAD_B85', repr(blob))
+    code = CELL.replace('CONTROL_CHECKS_SOURCE', repr(CHECKS_SOURCE)).replace('PAYLOAD_B85', repr(blob))
     notebook = {
         'cells': [
             {'cell_type': 'markdown', 'metadata': {}, 'source': [
@@ -168,6 +211,10 @@ def main() -> int:
                 'language': 'python', 'kernel_type': 'notebook', 'is_private': True, 'enable_gpu': False,
                 'enable_tpu': False, 'enable_internet': True, 'kernel_sources': [],
                 'competition_sources': [], 'dataset_sources': [], 'model_sources': []}
+    metadata['docker_image'] = json.loads((Path(__file__).resolve().parents[1] /
+                                         'resource/notebooks/official/kernel-metadata.json').read_text())['dockerImage']
+    if len((json.dumps(notebook, indent=1) + '\n').encode()) > 1_000_000:
+        raise SystemExit('notebook exceeds the 1 MB source limit')
     out = args.out
     out.mkdir(parents=True, exist_ok=True)
     (out / 'sweep.ipynb').write_text(json.dumps(notebook, indent=1) + '\n', encoding='utf-8')

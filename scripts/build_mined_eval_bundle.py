@@ -31,13 +31,17 @@ from pathlib import Path
 # Per-repository test dependencies for the sampled holdout repositories. Kept deliberately small: the
 # kernel wheelhouse already carries the test harness, this list only covers what those repos import.
 REQUIREMENTS = {
-    'pallets/click': ['pytest'],
+    'pallets/click': ['pytest==8.3.4', 'pytest-mock'],
     'google/ml_collections': ['pytest', 'absl-py', 'numpy', 'pyyaml'],
-    'lark-parser/lark': ['pytest'],
-    'google/mobly': ['pytest', 'pyyaml', 'portpicker'],
-    'google/openhtf': ['pytest', 'pyyaml', 'protobuf'],
+    'lark-parser/lark': ['pytest', 'regex'],
+    'google/mobly': ['pytest==8.3.4', 'mock', 'pytz', 'pyyaml', 'portpicker'],
+    'google/openhtf': ['pytest==8.3.4', 'mock', 'pyyaml', 'protobuf'],
     'andialbrecht/sqlparse': ['pytest'],
+    'python-poetry/tomlkit': ['pytest'],
+    'arrow-py/arrow': ['pytest', 'dateparser', 'pytz', 'simplejson', 'pytest-mock', 'pytest-cov'],
 }
+BUILD_REQUIREMENTS = ['setuptools', 'wheel', 'flit-core', 'hatchling', 'poetry-core', 'editables']
+SANDBOX_BOOTSTRAP = ['pytest==8.3.4', 'wrapt', *BUILD_REQUIREMENTS]
 
 
 def sha256(path: Path) -> str:
@@ -75,7 +79,7 @@ def fetch_snapshot(repo: str, commit: str, destination: Path) -> int:
 
 def download_wheels(requirements: list[str], wheels: Path) -> list[str]:
     wheels.mkdir(parents=True, exist_ok=True)
-    command = [sys.executable, '-m', 'pip', 'download', '--only-binary=:all:', '--no-deps',
+    command = [sys.executable, '-m', 'pip', 'download', '--only-binary=:all:',
                '--python-version', '312', '--implementation', 'cp', '--abi', 'cp312',
                '--platform', 'manylinux2014_x86_64', '--index-url', 'https://pypi.org/simple',
                '--dest', str(wheels), *requirements]
@@ -100,6 +104,8 @@ def main() -> int:
     if args.ids:
         wanted = set(args.ids)
         rows = [row for row in rows if row['instance_id'] in wanted]
+        if {row['instance_id'] for row in rows} != wanted:
+            raise SystemExit('Requested task IDs are missing')
     if args.split:
         rows = [row for row in rows if row.get('paper_split') == args.split]
     if args.limit:
@@ -108,13 +114,22 @@ def main() -> int:
         raise SystemExit('no tasks selected')
 
     out = args.out
+    if out.exists():
+        raise SystemExit('Output exists; preserve the previous bundle and choose a new directory')
     snapshots = out / 'snapshots'
     wheels = out / 'wheels'
     snapshots.mkdir(parents=True, exist_ok=True)
+    (out / 'tasks.jsonl').write_bytes(''.join(json.dumps(row) + '\n' for row in rows).encode())
+    from prepare_eval_task import PUBLIC_FIELDS
+    (out / 'tasks.public.jsonl').write_bytes(''.join(
+        json.dumps({key: value for key, value in row.items() if key in PUBLIC_FIELDS}) + '\n'
+        for row in rows).encode())
     record = {'layout': 'tgz root = repository content at base_commit (no .git, no top-level directory); '
                         'matches swegemma 0.2.11, which untars the archive into the sandbox directory',
               'source': 'codeload.github.com tar.gz', 'python': 'cp312 manylinux2014_x86_64',
-              'tasks': [], 'wheels': {}, 'errors': []}
+              'tasks': [], 'wheels': {}, 'errors': [],
+              'tasks_sha256': sha256(out / 'tasks.jsonl'),
+              'public_tasks_sha256': sha256(out / 'tasks.public.jsonl')}
     repos: dict[str, list[str]] = {}
 
     for row in rows:
@@ -134,7 +149,8 @@ def main() -> int:
             print(f'fail {task_id}: {error}', file=sys.stderr)
 
     for repo in sorted(repos):
-        requirements = REQUIREMENTS.get(repo, ['pytest'])
+        requirements = [*SANDBOX_BOOTSTRAP,
+                        *(req for req in REQUIREMENTS.get(repo, []) if req != 'pytest' and not req.startswith('pytest=='))]
         try:
             names = download_wheels(requirements, wheels)
             record['wheels'][repo] = {'requirements': requirements, 'files': names}
@@ -143,12 +159,13 @@ def main() -> int:
             record['errors'].append({'repo': repo, 'error': f'wheels: {type(error).__name__}: {error}'})
             print(f'wheels fail {repo}: {error}', file=sys.stderr)
 
+    record['wheel_sha256'] = {path.name: sha256(path) for path in sorted(wheels.glob('*.whl'))}
     (out / 'bundle-manifest.json').write_text(json.dumps(record, indent=2) + '\n', encoding='utf-8')
     total = sum(item['snapshot_bytes'] for item in record['tasks'])
     print(json.dumps({'tasks': len(record['tasks']), 'errors': len(record['errors']),
                       'snapshot_bytes': total, 'repos': sorted(repos),
                       'wheel_files': sum(len(v['files']) for v in record['wheels'].values())}, indent=2))
-    return 0
+    return 1 if record['errors'] else 0
 
 
 if __name__ == '__main__':

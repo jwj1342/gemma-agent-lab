@@ -26,6 +26,15 @@ The generated Kaggle notebook subsequently runs in Kaggle's evaluation environme
 
 ## Shared evaluation helpers
 
+Mined-task evaluation is described in the
+[November 24 infrastructure handoff](../docs/experiments/2026-11-24-evaluation-infrastructure-closeout.md).
+Use [make_mined_sweep_notebook.py](make_mined_sweep_notebook.py) for strict JUnit controls,
+[select_mined_cohort.py](select_mined_cohort.py) for deterministic selection, and
+[make_mined_verifier_notebook.py](make_mined_verifier_notebook.py) for a CPU official-verifier smoke.
+[build_mined_eval_bundle.py](build_mined_eval_bundle.py) exports separate full verification and redacted
+inference tasks, snapshots, offline test wheels, and content hashes. Old rc-only controls require explicit
+provisional screening; they never approve inference.
+
 | Script | Purpose |
 | --- | --- |
 | [wheelhouse_runtime.py](wheelhouse_runtime.py) | Match registered wheelhouse snapshots or explicitly record new inputs; recheck captured bytes before installation |

@@ -11,6 +11,7 @@ uploaded unless `--post` is given, and that only posts a comment.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 import os
@@ -19,6 +20,8 @@ import subprocess
 import sys
 import urllib.request
 from pathlib import Path
+
+from mined_control_checks import control_verdict
 
 GITHUB = 'https://api.github.com/repos/jwj1342/gemma-agent-lab'
 DEFAULT_TOKEN_FILE = Path.home() / '.github-token'
@@ -35,13 +38,15 @@ def wilson(successes: int, total: int, z: float = 1.96) -> tuple[float, float]:
 
 
 def fetch(kernel: str, out: Path) -> list[dict]:
+    """Capture one log stream; avoid cached checkout downloads and content-host TLS failures."""
+    from kaggle.api.kaggle_api_extended import KaggleApi
     out.mkdir(parents=True, exist_ok=True)
-    command = [sys.executable, str(Path(__file__).resolve().parent / 'fetch_kernel_output.py'), kernel, str(out)]
-    subprocess.run(command, check=True, capture_output=True, text=True)
-    rows = []
-    for path in out.rglob('results.jsonl'):
-        rows.extend(json.loads(line) for line in path.read_text(encoding='utf-8').splitlines() if line.strip())
-    return rows
+    api = KaggleApi()
+    api.authenticate()
+    events = list(api.kernels_logs_stream(kernel))
+    log = out / 'kernel.log'
+    log.write_bytes((json.dumps(events) + '\n').encode())
+    return from_log(log, out / 'unused-task-map')
 
 
 def from_log(path: Path, tasks: Path) -> list[dict]:
@@ -51,8 +56,21 @@ def from_log(path: Path, tasks: Path) -> list[dict]:
     output tree can take longer than the sweep itself. The notebook prints one line per task, and the log
     is a few hundred kilobytes, so this path is the fast fallback.
     """
-    units = json.loads(path.read_text(encoding='utf-8'))
+    units = json.loads(path.read_text(encoding='utf-8-sig'))
+    if isinstance(units, dict) and 'records' in units:
+        expected = units.get('source_tasks_sha256')
+        if expected and tasks.is_file() and hashlib.sha256(tasks.read_bytes()).hexdigest() != expected:
+            raise ValueError('Source tasks differ from the recorded control screen')
+        rows = units['records']
+        for row in rows:
+            row.update(control_verdict(row))
+        return rows
     text = ''.join(unit.get('data', '') for unit in units)
+    detailed = [json.loads(match.group(1)) for match in re.finditer(r'^CONTROL_RESULT (.+)$', text, re.M)]
+    if detailed:
+        for record in detailed:
+            record.update(control_verdict(record))
+        return detailed
     repo_of = {}
     if tasks.is_file():
         for line in tasks.read_text(encoding='utf-8').splitlines():
@@ -63,7 +81,8 @@ def from_log(path: Path, tasks: Path) -> list[dict]:
     for match in re.finditer(r'\[(\d+)/(\d+)\] (\S+) gold=(\S+) empty=(\S+) valid=(True|False)', text):
         rows.append({'instance_id': match.group(3), 'repo': repo_of.get(match.group(3), 'unknown'),
                      'gold_rc': match.group(4), 'empty_rc': match.group(5),
-                     'valid': match.group(6) == 'True'})
+                     'legacy_valid': match.group(6) == 'True',
+                     'valid': False, 'reason': 'legacy_log_missing_test_evidence'})
     return rows
 
 
@@ -82,6 +101,10 @@ def main() -> int:
     rows = from_log(args.from_log, args.tasks) if args.from_log else fetch(args.kernel, args.out)
     if not rows:
         raise SystemExit('no control rows found')
+    args.out.mkdir(parents=True, exist_ok=True)
+    for record in rows:
+        record.update(control_verdict(record))
+    (args.out / 'results-parsed.json').write_text(json.dumps(rows, indent=2) + '\n', encoding='utf-8')
 
     per_repo: dict[str, dict[str, int]] = {}
     for row in rows:
