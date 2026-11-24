@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "kernel": "junzhejiao/mined-verifier-smoke-20261125",
+  "kernel_version": 2,
+  "local_attempt": 6,
+  "scope": "Official swegemma 0.2.11 CPU verifier controls on two mined tasks; no model inference or broad-cohort parity claim.",
+  "notebook_sha256": "59866af6e01320dc89b2ff5dce34500a4e33a21e776e32c581bcaa218bd92c9c",
+  "log_sha256": "eb3c7daf68e5099a21817a78a09be41d88f7c40b94af382e89fd3ba219a4a96c",
+  "docker_image": "gcr.io/kaggle-private-byod/python@sha256:37c64f7dd9c54116ecd1bcc88817c5469b88387388fade02bfa8bf3fc647d461",
+  "wheelhouse_version": 31,
+  "script_sha256": {
+    "build_mined_eval_bundle.py": "ca0a60c2405eef6093083115061a9be126619666100c89f617e8f0f7e562379d",
+    "prepare_eval_task.py": "91e6a2dba1177480cd79e10668d848ab2bd974fa11ce3668e49e5ec2c0da5871",
+    "prepare_eval_run.py": "2159aa3be87e9d4ce3fc63770df762f5d272c311aa1e86d640eeea994e879540",
+    "build_submission.py": "2527cb82e509c5b5b90e10af25c762a100410063879356386f2cb78a4161df26",
+    "verify_eval_run.py": "244e38f5143eaaeb64be074c3efe73f75d0247910fc650791af5d5e67e9c32ee",
+    "summarize_eval_smoke.py": "841a7e29b8d635c14377c411bbeb37d74bc8500c23ac639061421e642d9b53df"
+  },
+  "model_execution": false,
+  "runtime_inputs_path": "/kaggle/working/mined-verifier/inputs.json in this CPU kernel output",
+  "tasks": [
+    {
+      "instance_id": "sqlparse_8b0342730b",
+      "repo": "andialbrecht/sqlparse",
+      "base_commit": "5a24e36d19ae10e9663d379fd981b4a9c8d39f6d"
+    },
+    {
+      "instance_id": "lark_1540",
+      "repo": "lark-parser/lark",
+      "base_commit": "87bb8efe0d425187159b39fd788640da33d1878e"
+    }
+  ],
+  "results": [
+    {
+      "task_id": "sqlparse_8b0342730b",
+      "checks": {
+        "empty_patch_fails_tests": true,
+        "gold_patch_passes_tests": true
+      },
+      "valid": true,
+      "empty_rc": 1,
+      "gold_rc": 0
+    },
+    {
+      "task_id": "lark_1540",
+      "checks": {
+        "empty_patch_fails_tests": true,
+        "gold_patch_passes_tests": true
+      },
+      "valid": true,
+      "empty_rc": 1,
+      "gold_rc": 0
+    }
+  ],
+  "verification_details": [
+    {
+      "task_id": "sqlparse_8b0342730b",
+      "side": "empty",
+      "resolved": false,
+      "test_exit_code": 1,
+      "error_message": null,
+      "total_llm_calls": 0,
+      "tool_calls": 0,
+      "duration_seconds": 9.255078828000023,
+      "test_output_sha256": "a34fadb8d14ccca3805716b66d131f5d0a2821f031736641bab10bda05b48cd1"
+    },
+    {
+      "task_id": "sqlparse_8b0342730b",
+      "side": "gold",
+      "resolved": true,
+      "test_exit_code": 0,
+      "error_message": null,
+      "total_llm_calls": 0,
+      "tool_calls": 0,
+      "duration_seconds": 9.381691415000034,
+      "test_output_sha256": "5e49d0509de324a1c4effbee2aee9bfe869643fa2bc893d8fe7fce0ba5a7ec83"
+    },
+    {
+      "task_id": "lark_1540",
+      "side": "empty",
+      "resolved": false,
+      "test_exit_code": 1,
+      "error_message": null,
+      "total_llm_calls": 0,
+      "tool_calls": 0,
+      "duration_seconds": 9.928562474999978,
+      "test_output_sha256": "e625011e7c445c3d299ba647025d43d8fc38733aded29e2385aa95f4ddb88f79"
+    },
+    {
+      "task_id": "lark_1540",
+      "side": "gold",
+      "resolved": true,
+      "test_exit_code": 0,
+      "error_message": null,
+      "total_llm_calls": 0,
+      "tool_calls": 0,
+      "duration_seconds": 9.917310664000013,
+      "test_output_sha256": "c65a41cce2449d9f55d685881d709eb890c1a711bef71b8ae6a6634abd789c30"
+    }
+  ]
+}

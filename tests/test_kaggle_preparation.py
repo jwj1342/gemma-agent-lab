@@ -213,11 +213,12 @@ class NotebookPreparationTests(unittest.TestCase):
         self.assertEqual(json.loads(result.stdout)['sha256'], BASELINE_SHA)
         self.assertFalse((runtime / 'competition-submission.json').exists())
         task_path = runtime / 'inputs/tasks.jsonl'
-        original = task_path.read_text()
-        task_path.write_text(original.replace('Fix the public issue.', 'Changed task'))
+        original = task_path.read_bytes()
+        self.assertNotIn(b'\r\n', original)
+        task_path.write_bytes(original.replace(b'Fix the public issue.', b'Changed task'))
         failed = self.command('submit_competition.py', '--run-dir', runtime, succeeds=False)
         self.assertIn('Frozen public task hash changed', failed.stderr)
-        task_path.write_text(original)
+        task_path.write_bytes(original)
         for name, record in records.items():
             if 'task_id' in record:
                 (runtime / name).write_text(json.dumps(dict(record, task_id='other_task')))

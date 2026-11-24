@@ -1,0 +1,781 @@
+{
+  "seed": "mined-cohort-2026-11-24",
+  "schema_version": 2,
+  "control_policy": "legacy_return_code_screen",
+  "evaluation_ready": false,
+  "source_tasks_sha256": "4cad48101e855d56f73c9f2fa418c3b29c608a50cdc7071d5729eeea94bc3676",
+  "source_log_sha256": [
+    "b6f7cefa4bf08395e6ab9170f9208cc175c6c1d0bd60dcf1a00aeb195b0ebdc0"
+  ],
+  "requested_size": 105,
+  "valid_pool": 220,
+  "valid_by_repository": {
+    "andialbrecht/sqlparse": 15,
+    "arrow-py/arrow": 11,
+    "google/ml_collections": 8,
+    "google/mobly": 43,
+    "lark-parser/lark": 17,
+    "pallets/click": 71,
+    "python-poetry/tomlkit": 55
+  },
+  "quotas": {
+    "andialbrecht/sqlparse": 7,
+    "arrow-py/arrow": 5,
+    "lark-parser/lark": 8,
+    "pallets/click": 34,
+    "python-poetry/tomlkit": 26,
+    "google/ml_collections": 4,
+    "google/mobly": 21
+  },
+  "selected": 105,
+  "tasks": [
+    {
+      "instance_id": "arrow_1200",
+      "repo": "arrow-py/arrow",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "016fb9eb9b3835bcd4efc69dc048a0436bd7bfec"
+    },
+    {
+      "instance_id": "sqlparse_1a3bfbd50b",
+      "repo": "andialbrecht/sqlparse",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "e92a032c81d51a6645b4f8c32470481894818ba0"
+    },
+    {
+      "instance_id": "lark_1614",
+      "repo": "lark-parser/lark",
+      "statement_type": "concrete",
+      "leak_flag": true,
+      "base_commit": "332acf8982f1320a0b29a7c074e0da29a6d32b98"
+    },
+    {
+      "instance_id": "click_3681",
+      "repo": "pallets/click",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "8a4ce842564ae94ab050062db8525196ad476c19"
+    },
+    {
+      "instance_id": "mobly_942",
+      "repo": "google/mobly",
+      "statement_type": "design",
+      "leak_flag": true,
+      "base_commit": "cf3fbfd758180f40bd442dd70e15aade15a2da0f"
+    },
+    {
+      "instance_id": "click_3581",
+      "repo": "pallets/click",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "16fc00e2f4a2717a521084f193709a6058afc693"
+    },
+    {
+      "instance_id": "mobly_989",
+      "repo": "google/mobly",
+      "statement_type": "terse",
+      "leak_flag": false,
+      "base_commit": "6aa58093145669c99c1d6680ab2c1ace42f7f229"
+    },
+    {
+      "instance_id": "click_3021",
+      "repo": "pallets/click",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "5f86603a84e12bdec1584c15c9f982740e613c45"
+    },
+    {
+      "instance_id": "lark_1642",
+      "repo": "lark-parser/lark",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "9bae96161b45a5bf70011c75b1ef41228d3f4caa"
+    },
+    {
+      "instance_id": "click_3642",
+      "repo": "pallets/click",
+      "statement_type": "design",
+      "leak_flag": false,
+      "base_commit": "fe3ad76e5807e7a401ed7520f051071c6ae1fa6e"
+    },
+    {
+      "instance_id": "mobly_935",
+      "repo": "google/mobly",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "d32f15bd9f8e9cd9e556284a405370b6fcc10167"
+    },
+    {
+      "instance_id": "click_3013",
+      "repo": "pallets/click",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "3be1f33c8e0b13295853f6aa64d1f7412b5312df"
+    },
+    {
+      "instance_id": "mobly_1060",
+      "repo": "google/mobly",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "54f0991ce8d25e91870fbb999da1d56320957b78"
+    },
+    {
+      "instance_id": "lark_1481",
+      "repo": "lark-parser/lark",
+      "statement_type": "concrete",
+      "leak_flag": true,
+      "base_commit": "24d0cf7b5b56db77203dbbe794e50958433130ea"
+    },
+    {
+      "instance_id": "click_2727",
+      "repo": "pallets/click",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "c326df95e9e3da0425360e030413f6a3ee25fdee"
+    },
+    {
+      "instance_id": "sqlparse_31903e09db",
+      "repo": "andialbrecht/sqlparse",
+      "statement_type": "terse",
+      "leak_flag": false,
+      "base_commit": "13577264eb38b88e24825022fea4bd4351449e7c"
+    },
+    {
+      "instance_id": "mobly_1071",
+      "repo": "google/mobly",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "78a15aaa8de4648c158cad65752f64eb886c6458"
+    },
+    {
+      "instance_id": "tomlkit_591",
+      "repo": "python-poetry/tomlkit",
+      "statement_type": "concrete",
+      "leak_flag": true,
+      "base_commit": "49d6efa980fedb321f16371a4b05abd2a449f775"
+    },
+    {
+      "instance_id": "click_3079",
+      "repo": "pallets/click",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "2ed395b0b5ac4d56553ff715335f456f812cdc78"
+    },
+    {
+      "instance_id": "tomlkit_628",
+      "repo": "python-poetry/tomlkit",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "89cdcc7845da111e5d6b7eb0c1823684a274711a"
+    },
+    {
+      "instance_id": "click_3004",
+      "repo": "pallets/click",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "a1235aacb1be55dc66ddcfefbf64dec44b6ab54d"
+    },
+    {
+      "instance_id": "mobly_2c6135e1ef",
+      "repo": "google/mobly",
+      "statement_type": "terse",
+      "leak_flag": true,
+      "base_commit": "5eb9d5b8f120a3ce43a776c2d5f5b9a6f3b257f5"
+    },
+    {
+      "instance_id": "tomlkit_599",
+      "repo": "python-poetry/tomlkit",
+      "statement_type": "concrete",
+      "leak_flag": true,
+      "base_commit": "88aa4b1c1128587b8c8ee92d0db11db7bfbdc0ed"
+    },
+    {
+      "instance_id": "lark_1619",
+      "repo": "lark-parser/lark",
+      "statement_type": "concrete",
+      "leak_flag": true,
+      "base_commit": "5892df12bd6badd3ee555db3b2ae54a4e5911147"
+    },
+    {
+      "instance_id": "tomlkit_552",
+      "repo": "python-poetry/tomlkit",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "446d6fab132ef38a2ec052a5b2124e04b427dea6"
+    },
+    {
+      "instance_id": "ml_collections_b4368a2013",
+      "repo": "google/ml_collections",
+      "statement_type": "terse",
+      "leak_flag": false,
+      "base_commit": "06499acda741094f193c7a972f7affd2ac7ed197"
+    },
+    {
+      "instance_id": "tomlkit_613",
+      "repo": "python-poetry/tomlkit",
+      "statement_type": "concrete",
+      "leak_flag": true,
+      "base_commit": "763bd661bfed068209c03510ae94493eb2db12b5"
+    },
+    {
+      "instance_id": "click_3877",
+      "repo": "pallets/click",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "06b2a678741131fd577ce170e23e5ca0aeba0309"
+    },
+    {
+      "instance_id": "mobly_1034",
+      "repo": "google/mobly",
+      "statement_type": "concrete",
+      "leak_flag": true,
+      "base_commit": "8eec42656563cab3d3af111614609ff75676af2c"
+    },
+    {
+      "instance_id": "sqlparse_7334ac9915",
+      "repo": "andialbrecht/sqlparse",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "60486b91ca7b4183313b06f62f7b559f4920f099"
+    },
+    {
+      "instance_id": "tomlkit_514",
+      "repo": "python-poetry/tomlkit",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "82bb211e031dc50ebf4e25465ee6144b23acd9bf"
+    },
+    {
+      "instance_id": "tomlkit_530",
+      "repo": "python-poetry/tomlkit",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "f40ae46323992b1cda523424bdfb30de899eb4f6"
+    },
+    {
+      "instance_id": "click_3137",
+      "repo": "pallets/click",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "ea70da487b05d6bb758d472a3a9ffab4a5b7fcd5"
+    },
+    {
+      "instance_id": "mobly_959",
+      "repo": "google/mobly",
+      "statement_type": "design",
+      "leak_flag": false,
+      "base_commit": "72d5f0f843b58bf4c9251f39ac60b57f9f1f3e6b"
+    },
+    {
+      "instance_id": "mobly_1001",
+      "repo": "google/mobly",
+      "statement_type": "design",
+      "leak_flag": false,
+      "base_commit": "51bf917d6de8cd3a26d1823c2b13f7039f32253e"
+    },
+    {
+      "instance_id": "click_3391",
+      "repo": "pallets/click",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "ba745ac64037b7d4cdd0abce10446c0a2861935f"
+    },
+    {
+      "instance_id": "sqlparse_791e25de46",
+      "repo": "andialbrecht/sqlparse",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "073099d963e904ca45817e85d10bd81bf2b4373a"
+    },
+    {
+      "instance_id": "tomlkit_641",
+      "repo": "python-poetry/tomlkit",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "90365ea1d67cee7aa3bc62e03ba817a6ddb6f67d"
+    },
+    {
+      "instance_id": "click_2846",
+      "repo": "pallets/click",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "565f36d5bc4a15d304337b749e113fb4477b1843"
+    },
+    {
+      "instance_id": "mobly_683",
+      "repo": "google/mobly",
+      "statement_type": "design",
+      "leak_flag": false,
+      "base_commit": "d8ac439736cebcce8852b66497aef8a35c8e162e"
+    },
+    {
+      "instance_id": "lark_1521",
+      "repo": "lark-parser/lark",
+      "statement_type": "design",
+      "leak_flag": true,
+      "base_commit": "1640da56f6c2a9c86f5ff622db3e551b3a2e8de1"
+    },
+    {
+      "instance_id": "tomlkit_600",
+      "repo": "python-poetry/tomlkit",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "7ab7469addd60e03ca3bfbb1287642e8d771e1c0"
+    },
+    {
+      "instance_id": "mobly_686",
+      "repo": "google/mobly",
+      "statement_type": "terse",
+      "leak_flag": false,
+      "base_commit": "d87c88e2fd8847fb4f30c28707dd1583cda6fef4"
+    },
+    {
+      "instance_id": "click_3473",
+      "repo": "pallets/click",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "1a994adbb114d402275a614942e2f838a654e648"
+    },
+    {
+      "instance_id": "click_2271",
+      "repo": "pallets/click",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "fde47b4b4f978f179b9dff34583cb2b99021f482"
+    },
+    {
+      "instance_id": "click_3420",
+      "repo": "pallets/click",
+      "statement_type": "concrete",
+      "leak_flag": true,
+      "base_commit": "d959898db264aaf07e70ad4eafa254286f9a5185"
+    },
+    {
+      "instance_id": "click_2523",
+      "repo": "pallets/click",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "948d7a707a0abda8ce0a1b39ba87390f11ffcd5e"
+    },
+    {
+      "instance_id": "ml_collections_5f70ada5a8",
+      "repo": "google/ml_collections",
+      "statement_type": "terse",
+      "leak_flag": false,
+      "base_commit": "c2713447a83ce5d5853546d23a8850ebbfa41b6c"
+    },
+    {
+      "instance_id": "lark_1596",
+      "repo": "lark-parser/lark",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "eb015d1b5c236b22bf3215fd4a76c891262e1bf8"
+    },
+    {
+      "instance_id": "tomlkit_532",
+      "repo": "python-poetry/tomlkit",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "ee4eedbacc8eb72872af050996c7396ecce190b9"
+    },
+    {
+      "instance_id": "tomlkit_623",
+      "repo": "python-poetry/tomlkit",
+      "statement_type": "concrete",
+      "leak_flag": true,
+      "base_commit": "4bec845b604f899a18da29cd3ea692e1b320354a"
+    },
+    {
+      "instance_id": "lark_1540",
+      "repo": "lark-parser/lark",
+      "statement_type": "terse",
+      "leak_flag": false,
+      "base_commit": "87bb8efe0d425187159b39fd788640da33d1878e"
+    },
+    {
+      "instance_id": "tomlkit_595",
+      "repo": "python-poetry/tomlkit",
+      "statement_type": "concrete",
+      "leak_flag": true,
+      "base_commit": "72eef9159b497d0867cc9c0495c96d6b7317bce0"
+    },
+    {
+      "instance_id": "sqlparse_5ca50a2ee9",
+      "repo": "andialbrecht/sqlparse",
+      "statement_type": "concrete",
+      "leak_flag": true,
+      "base_commit": "acd8e5817b5be5f9b9a7b159c1bacc45179f4e44"
+    },
+    {
+      "instance_id": "tomlkit_506",
+      "repo": "python-poetry/tomlkit",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "fdfbc8a18c5fd5cfdcaaf11bfd59c4151da1f2ca"
+    },
+    {
+      "instance_id": "sqlparse_8b0342730b",
+      "repo": "andialbrecht/sqlparse",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "5a24e36d19ae10e9663d379fd981b4a9c8d39f6d"
+    },
+    {
+      "instance_id": "click_c3535905c7",
+      "repo": "pallets/click",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "bc36cd1a2b3bc18f401a98476154dbc5a2d212c9"
+    },
+    {
+      "instance_id": "click_3677",
+      "repo": "pallets/click",
+      "statement_type": "terse",
+      "leak_flag": false,
+      "base_commit": "8dd4d60eb5ad4532abdd9b2809a7d9e2aa679b87"
+    },
+    {
+      "instance_id": "tomlkit_477",
+      "repo": "python-poetry/tomlkit",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "8694e4d3323df68eb325bf3d5ab7caa66f8c206a"
+    },
+    {
+      "instance_id": "tomlkit_544",
+      "repo": "python-poetry/tomlkit",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "8cd44f58b499da3c80a29bc877a512665a15e0bb"
+    },
+    {
+      "instance_id": "click_2818",
+      "repo": "pallets/click",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "5961d31fb566f089ad468a5b26a32f1ebfa7f63e"
+    },
+    {
+      "instance_id": "tomlkit_550",
+      "repo": "python-poetry/tomlkit",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "21a4942ed31e773061c9fc047d55b1bb3c637ee3"
+    },
+    {
+      "instance_id": "arrow_1217",
+      "repo": "arrow-py/arrow",
+      "statement_type": "concrete",
+      "leak_flag": true,
+      "base_commit": "d8bf13d4441300fff017d2fe33d4eae032e37768"
+    },
+    {
+      "instance_id": "click_3068",
+      "repo": "pallets/click",
+      "statement_type": "concrete",
+      "leak_flag": true,
+      "base_commit": "7d7183604158f064390539d83d4a19a978c6b08a"
+    },
+    {
+      "instance_id": "click_3777",
+      "repo": "pallets/click",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "61b69e967e525bd502f5bf42def4d551e761fe0e"
+    },
+    {
+      "instance_id": "click_3364",
+      "repo": "pallets/click",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "8a2b48901a08b3d2ec3a9bbd151948a9765368c6"
+    },
+    {
+      "instance_id": "tomlkit_508",
+      "repo": "python-poetry/tomlkit",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "f9b4b227f88ade30c1a95721f40eb19e237fa224"
+    },
+    {
+      "instance_id": "arrow_1184",
+      "repo": "arrow-py/arrow",
+      "statement_type": "concrete",
+      "leak_flag": true,
+      "base_commit": "587af5fbe949e18d60387b0b7cb1e14855e85401"
+    },
+    {
+      "instance_id": "click_3239",
+      "repo": "pallets/click",
+      "statement_type": "concrete",
+      "leak_flag": true,
+      "base_commit": "60cad4ad6583bf885c62d6f4597f3555d1ee1a0f"
+    },
+    {
+      "instance_id": "click_2816",
+      "repo": "pallets/click",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "1c68e531ef5e45f6facdb777c720d0f984614b81"
+    },
+    {
+      "instance_id": "tomlkit_516",
+      "repo": "python-poetry/tomlkit",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "281ca004386b83bc12d88d79c15b99c714477dc6"
+    },
+    {
+      "instance_id": "click_3235",
+      "repo": "pallets/click",
+      "statement_type": "concrete",
+      "leak_flag": true,
+      "base_commit": "1339fd3323357119a9c7a6326c788f80295954ce"
+    },
+    {
+      "instance_id": "arrow_1181",
+      "repo": "arrow-py/arrow",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "714db9c302c2d9a1cab0e1f70e30c337e5e78c67"
+    },
+    {
+      "instance_id": "mobly_957",
+      "repo": "google/mobly",
+      "statement_type": "terse",
+      "leak_flag": false,
+      "base_commit": "93e4847a7bbe95f04156810e956a10a54150f89a"
+    },
+    {
+      "instance_id": "click_2969",
+      "repo": "pallets/click",
+      "statement_type": "design",
+      "leak_flag": false,
+      "base_commit": "ddede2147c9370ab8275f81db4826b6895d2e7dc"
+    },
+    {
+      "instance_id": "arrow_1222",
+      "repo": "arrow-py/arrow",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "7ccbe66122ca53d90acf9c69c37aa95c81a1fe89"
+    },
+    {
+      "instance_id": "mobly_910",
+      "repo": "google/mobly",
+      "statement_type": "terse",
+      "leak_flag": false,
+      "base_commit": "3da49fa2dd58da889ac9673ef055d74ea2497dd7"
+    },
+    {
+      "instance_id": "click_3405",
+      "repo": "pallets/click",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "7c99ebe23b931f27562d926814423cce85fd9766"
+    },
+    {
+      "instance_id": "tomlkit_549",
+      "repo": "python-poetry/tomlkit",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "e23a25438c6cc9b8cc28b6dcf76dc52f9c7a33e3"
+    },
+    {
+      "instance_id": "tomlkit_539",
+      "repo": "python-poetry/tomlkit",
+      "statement_type": "concrete",
+      "leak_flag": true,
+      "base_commit": "5fe4329fee7943d2376104e5977f3e3baa6d6abd"
+    },
+    {
+      "instance_id": "click_3866",
+      "repo": "pallets/click",
+      "statement_type": "concrete",
+      "leak_flag": true,
+      "base_commit": "3cbaa76b6014be7427d1ab06b4af40f01e7c278e"
+    },
+    {
+      "instance_id": "tomlkit_660",
+      "repo": "python-poetry/tomlkit",
+      "statement_type": "concrete",
+      "leak_flag": true,
+      "base_commit": "19edc23b0244e1546abbf3b7890c3d8a0deeaf81"
+    },
+    {
+      "instance_id": "click_2935",
+      "repo": "pallets/click",
+      "statement_type": "concrete",
+      "leak_flag": true,
+      "base_commit": "884af5c20fdc95c9c7352df35c37273391464fb9"
+    },
+    {
+      "instance_id": "click_3363",
+      "repo": "pallets/click",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "c8da1fcc2cb4523c1fb5bef7f0ca82394dde1efd"
+    },
+    {
+      "instance_id": "ml_collections_39c88200a2",
+      "repo": "google/ml_collections",
+      "statement_type": "terse",
+      "leak_flag": false,
+      "base_commit": "91e91a5499186c17c0b282641449194612dd5201"
+    },
+    {
+      "instance_id": "click_2509",
+      "repo": "pallets/click",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "1a4d8c1bb1e8f8e214ede7223bd2c05dc2ce006a"
+    },
+    {
+      "instance_id": "click_3152",
+      "repo": "pallets/click",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "7f7bbe4569ea68e8dabee232eade069ef3310aea"
+    },
+    {
+      "instance_id": "sqlparse_e92a032c81",
+      "repo": "andialbrecht/sqlparse",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "149bebf06c788e93a9b0dbee0e5abbc8e347b8e6"
+    },
+    {
+      "instance_id": "tomlkit_586",
+      "repo": "python-poetry/tomlkit",
+      "statement_type": "concrete",
+      "leak_flag": true,
+      "base_commit": "d8ed1e3cdb024dfc2c6f12b45a0dfd4d4d91f727"
+    },
+    {
+      "instance_id": "click_2930",
+      "repo": "pallets/click",
+      "statement_type": "concrete",
+      "leak_flag": true,
+      "base_commit": "011b9f9d190c71310264e6c54bae6259f5e38a9f"
+    },
+    {
+      "instance_id": "lark_1433",
+      "repo": "lark-parser/lark",
+      "statement_type": "design",
+      "leak_flag": false,
+      "base_commit": "33136b32963d131580217b479cad3a09f3657dae"
+    },
+    {
+      "instance_id": "ml_collections_09742cfcd9",
+      "repo": "google/ml_collections",
+      "statement_type": "terse",
+      "leak_flag": false,
+      "base_commit": "7a5dd45595e30bfe0c0444d75084fbe8ef21e766"
+    },
+    {
+      "instance_id": "tomlkit_545",
+      "repo": "python-poetry/tomlkit",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "34e51e2d6d09af86970f266a4217cea839fdc347"
+    },
+    {
+      "instance_id": "tomlkit_499",
+      "repo": "python-poetry/tomlkit",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "ce58a1dbf8692c631bd64826e60f09c45fa7fb25"
+    },
+    {
+      "instance_id": "mobly_952",
+      "repo": "google/mobly",
+      "statement_type": "terse",
+      "leak_flag": false,
+      "base_commit": "c98717a8c1cac6b33078c12633488e2217070137"
+    },
+    {
+      "instance_id": "tomlkit_567",
+      "repo": "python-poetry/tomlkit",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "229ee8660872df482a56c93c83b14ac98fedf864"
+    },
+    {
+      "instance_id": "tomlkit_612",
+      "repo": "python-poetry/tomlkit",
+      "statement_type": "concrete",
+      "leak_flag": false,
+      "base_commit": "79039653cbe5ff2a2e23042717455a2ac4875539"
+    },
+    {
+      "instance_id": "mobly_945",
+      "repo": "google/mobly",
+      "statement_type": "terse",
+      "leak_flag": false,
+      "base_commit": "de93e1e9cb5766d95fa85a9870f16f01c4c38d20"
+    },
+    {
+      "instance_id": "mobly_995",
+      "repo": "google/mobly",
+      "statement_type": "terse",
+      "leak_flag": true,
+      "base_commit": "c8bdffe90bbe30ddbd88d64eda389019f5855b14"
+    },
+    {
+      "instance_id": "mobly_934",
+      "repo": "google/mobly",
+      "statement_type": "terse",
+      "leak_flag": false,
+      "base_commit": "306e91ce8f28b3d63645866708b34641897b05e7"
+    },
+    {
+      "instance_id": "mobly_954",
+      "repo": "google/mobly",
+      "statement_type": "terse",
+      "leak_flag": false,
+      "base_commit": "ac65869d88f94670f1e556c66a6d12eba608c492"
+    },
+    {
+      "instance_id": "click_2796",
+      "repo": "pallets/click",
+      "statement_type": "terse",
+      "leak_flag": false,
+      "base_commit": "8a47580a00f3404e7071b9ecfec3692a1e18309f"
+    },
+    {
+      "instance_id": "mobly_1022",
+      "repo": "google/mobly",
+      "statement_type": "terse",
+      "leak_flag": false,
+      "base_commit": "09221a517661be95440184f3e82b066465f7575e"
+    },
+    {
+      "instance_id": "mobly_970",
+      "repo": "google/mobly",
+      "statement_type": "terse",
+      "leak_flag": true,
+      "base_commit": "c96f71f21a9dbef97f4f07f8918b5087ebcdc5af"
+    },
+    {
+      "instance_id": "mobly_1023",
+      "repo": "google/mobly",
+      "statement_type": "terse",
+      "leak_flag": false,
+      "base_commit": "06f10861240502ed1f2107e84288aaceb7573dcc"
+    }
+  ],
+  "statement_mix": {
+    "terse": 21,
+    "concrete": 76,
+    "design": 8
+  },
+  "leak_mix": {
+    "True": 27,
+    "False": 78
+  },
+  "source_logs": [
+    "mined-control-screen-20261124.json"
+  ],
+  "note": "Recheck strict controls on the frozen runtime before inference. Legacy rows lack JUnit evidence."
+}

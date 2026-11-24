@@ -1,0 +1,166 @@
+{
+  "schema_version": 1,
+  "kernel": "junzhejiao/mined-infrastructure-controls-20261124",
+  "version": 1,
+  "source_notebook_sha256": "eb97d0154772ae27b106342dde309a77287fcbc04960d97e7c1bde0024528eca",
+  "log_sha256": "87cadb90c4bae5cf8321a32594795a2a78fc0aeafd302b381f3764fb427ac2d1",
+  "runtime": "Kaggle CPU, Python 3.13 (observed traceback paths); no model execution.",
+  "scope": "Targeted audit, not an estimate of overall dataset validity.",
+  "records": [
+    {
+      "instance_id": "sqlparse_8b0342730b",
+      "repo": "andialbrecht/sqlparse",
+      "gold_rc": 0,
+      "empty_rc": 1,
+      "gold_tests": {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "empty_tests": {
+        "tests": 1,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0
+      },
+      "valid": true,
+      "reason": "gold_passes_empty_assertions_fail"
+    },
+    {
+      "instance_id": "arrow_1201",
+      "repo": "arrow-py/arrow",
+      "gold_rc": 4,
+      "empty_rc": 4,
+      "gold_tests": {
+        "tests": 0,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "empty_tests": {
+        "tests": 1,
+        "failures": 0,
+        "errors": 1,
+        "skipped": 0
+      },
+      "valid": false,
+      "reason": "gold_tests_not_executed_cleanly"
+    },
+    {
+      "instance_id": "lark_1452",
+      "repo": "lark-parser/lark",
+      "gold_rc": 0,
+      "empty_rc": 4,
+      "gold_tests": {
+        "tests": 814,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "empty_tests": {
+        "tests": 2,
+        "failures": 0,
+        "errors": 2,
+        "skipped": 0
+      },
+      "valid": false,
+      "reason": "empty_tests_not_executed_cleanly"
+    },
+    {
+      "instance_id": "lark_1540",
+      "repo": "lark-parser/lark",
+      "gold_rc": 0,
+      "empty_rc": 1,
+      "gold_tests": {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "empty_tests": {
+        "tests": 1,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0
+      },
+      "valid": true,
+      "reason": "gold_passes_empty_assertions_fail"
+    },
+    {
+      "instance_id": "click_3637",
+      "repo": "pallets/click",
+      "gold_rc": 0,
+      "empty_rc": 4,
+      "gold_tests": {
+        "tests": 58,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "empty_tests": {
+        "tests": 1,
+        "failures": 0,
+        "errors": 1,
+        "skipped": 0
+      },
+      "valid": false,
+      "reason": "empty_tests_not_executed_cleanly"
+    },
+    {
+      "instance_id": "click_3695",
+      "repo": "pallets/click",
+      "gold_rc": 0,
+      "empty_rc": 4,
+      "gold_tests": {
+        "tests": 67,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "empty_tests": {
+        "tests": 2,
+        "failures": 0,
+        "errors": 2,
+        "skipped": 0
+      },
+      "valid": false,
+      "reason": "empty_tests_not_executed_cleanly"
+    },
+    {
+      "instance_id": "tomlkit_509",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": 0,
+      "empty_rc": 124,
+      "gold_tests": {
+        "tests": 151,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "empty_tests": null,
+      "valid": false,
+      "reason": "empty_tests_not_executed_cleanly"
+    },
+    {
+      "instance_id": "mobly_932",
+      "repo": "google/mobly",
+      "gold_rc": 0,
+      "empty_rc": 4,
+      "gold_tests": {
+        "tests": 20,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "empty_tests": {
+        "tests": 1,
+        "failures": 0,
+        "errors": 1,
+        "skipped": 0
+      },
+      "valid": false,
+      "reason": "empty_tests_not_executed_cleanly"
+    }
+  ]
+}

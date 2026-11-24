@@ -5,6 +5,16 @@ using them. A successful file audit, notebook status, agent run, and official sc
 Paths under `runs/`, data/model storage, HOME, and local slides refer to the maintainer's private
 workspace; those artifacts are not included in a Git clone.
 
+Mined evaluation: [historical 105-task manifest](mined-cohort-20261121-historical.json),
+[portable historical control screen](mined-control-screen-20261124.json), and
+[corrected provisional cohort](mined-cohort-20261124-provisional.json).
+The corrected cohort is drawn from 220 rc=0/1 rows. It has `evaluation_ready: false`: strict controls
+must pass in the frozen runtime before inference. No task patches or repository contents are included.
+The [targeted CPU rerun](mined-control-audit-20261124.json) rejects all six disputed controls and accepts
+the two comparison tasks; this selected sample does not estimate the overall validity rate.
+The [official-verifier CPU smoke](mined-verifier-smoke-20261125.json) passes both tasks after isolated
+offline dependency setup; it does not validate the full provisional cohort or model inference.
+
 ## Results and submission receipts
 
 | File | Purpose |

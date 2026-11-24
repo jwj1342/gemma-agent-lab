@@ -140,10 +140,10 @@ def check(root):
             if team_markdown(relative):
                 for target in markdown_targets(path.read_text()):
                     if not tracked_destination(root, path, target, tracked, directories=True):
-                        errors.append(f'{relative}: untracked or missing local link: {target}')
+                        errors.append(f'{relative.as_posix()}: untracked or missing local link: {target}')
                 counts['markdown'] += 1
         except (OSError, ValueError, SyntaxError, yaml.YAMLError) as error:
-            errors.append(f'{relative}: {error}')
+            errors.append(f'{relative.as_posix()}: {error}')
     with tempfile.TemporaryDirectory(prefix='gemma-ci-') as temporary:
         for index, relative in enumerate(sorted(tracked)):
             if relative.parts[0] == 'configs' and relative.name == 'agent.yaml':
@@ -158,7 +158,7 @@ def check(root):
                         raise ValueError('Identical agent input produced different ZIP bytes')
                     counts['agent_packages'] += 1
                 except (OSError, ValueError, AssertionError) as error:
-                    errors.append(f'{relative.parent}: {error}')
+                    errors.append(f'{relative.parent.as_posix()}: {error}')
     if not counts['agent_packages']:
         errors.append('No versioned agent package found')
     print(json.dumps(counts, indent=2))

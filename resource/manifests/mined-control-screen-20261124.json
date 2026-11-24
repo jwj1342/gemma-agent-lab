@@ -1,0 +1,2690 @@
+{
+  "schema_version": 2,
+  "scope": "Historical CPU screen; no JUnit evidence or inference approval.",
+  "source_tasks_sha256": "4cad48101e855d56f73c9f2fa418c3b29c608a50cdc7071d5729eeea94bc3676",
+  "sources": [
+    {
+      "kernel": "junzhejiao/mined-control-sweep-2026-11-20 v2",
+      "log_sha256": "6e2b5fdf93f20df5d0d24cb1ec1d15bec8f18fb9f3f90c0d7caf095b5c1415d2"
+    },
+    {
+      "kernel": "junzhejiao/mined-control-residual-2026-11-20",
+      "log_sha256": "dea31edb1241aa67882c595f11a5f9745141ebbab7da918323ef2366434869cc"
+    }
+  ],
+  "records": [
+    {
+      "instance_id": "arrow_1172",
+      "repo": "arrow-py/arrow",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "arrow_1181",
+      "repo": "arrow-py/arrow",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "arrow_1184",
+      "repo": "arrow-py/arrow",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "arrow_1186",
+      "repo": "arrow-py/arrow",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "arrow_1190",
+      "repo": "arrow-py/arrow",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "arrow_1194",
+      "repo": "arrow-py/arrow",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "arrow_1200",
+      "repo": "arrow-py/arrow",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "arrow_1201",
+      "repo": "arrow-py/arrow",
+      "gold_rc": "0",
+      "empty_rc": "2",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "arrow_1217",
+      "repo": "arrow-py/arrow",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "arrow_1218",
+      "repo": "arrow-py/arrow",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "arrow_1222",
+      "repo": "arrow-py/arrow",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "arrow_1234",
+      "repo": "arrow-py/arrow",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_1489",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_2271",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_2365",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_2397",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_2509",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_2517",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_2523",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_2622",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_2680",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_2696",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_2727",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_2775",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_2788",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_2796",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_2800",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_2816",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_2818",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_2829",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_2840",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_2846",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_2930",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_2933",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_2934",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_2935",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_2956",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_2969",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_2972",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_3004",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_3013",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_3021",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_3068",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_3079",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_3090",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_3126",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_3137",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_3152",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_3208",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_3211",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_3224",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_3225",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_3228",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_3235",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_3239",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_3240",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_3244",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_3245",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_3256",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_3299",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_3328",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_3363",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_3364",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_3391",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_3405",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_3420",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_3434",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_3473",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_3581",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_3637",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "4",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_3642",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_3653",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_3677",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_3678",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_3681",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_3695",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "4",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_3704",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_3728",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_3739",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_3764",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_3769",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_3777",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_3866",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_3877",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "click_c3535905c7",
+      "repo": "pallets/click",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "humanize_110",
+      "repo": "python-humanize/humanize",
+      "gold_rc": "0",
+      "empty_rc": "0",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "humanize_169",
+      "repo": "python-humanize/humanize",
+      "gold_rc": "2",
+      "empty_rc": "2",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "humanize_173",
+      "repo": "python-humanize/humanize",
+      "gold_rc": "2",
+      "empty_rc": "2",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "humanize_204",
+      "repo": "python-humanize/humanize",
+      "gold_rc": "2",
+      "empty_rc": "2",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "humanize_206",
+      "repo": "python-humanize/humanize",
+      "gold_rc": "0",
+      "empty_rc": "0",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "humanize_230",
+      "repo": "python-humanize/humanize",
+      "gold_rc": "2",
+      "empty_rc": "2",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "humanize_240",
+      "repo": "python-humanize/humanize",
+      "gold_rc": "0",
+      "empty_rc": "0",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "humanize_250",
+      "repo": "python-humanize/humanize",
+      "gold_rc": "0",
+      "empty_rc": "0",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "humanize_254",
+      "repo": "python-humanize/humanize",
+      "gold_rc": "2",
+      "empty_rc": "2",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "humanize_272",
+      "repo": "python-humanize/humanize",
+      "gold_rc": "2",
+      "empty_rc": "2",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "humanize_286",
+      "repo": "python-humanize/humanize",
+      "gold_rc": "2",
+      "empty_rc": "2",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "humanize_295",
+      "repo": "python-humanize/humanize",
+      "gold_rc": "2",
+      "empty_rc": "2",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "humanize_297",
+      "repo": "python-humanize/humanize",
+      "gold_rc": "2",
+      "empty_rc": "2",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "humanize_318",
+      "repo": "python-humanize/humanize",
+      "gold_rc": "0",
+      "empty_rc": "0",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "humanize_320",
+      "repo": "python-humanize/humanize",
+      "gold_rc": "0",
+      "empty_rc": "0",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "humanize_328",
+      "repo": "python-humanize/humanize",
+      "gold_rc": "0",
+      "empty_rc": "0",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "humanize_329",
+      "repo": "python-humanize/humanize",
+      "gold_rc": "0",
+      "empty_rc": "0",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "humanize_334",
+      "repo": "python-humanize/humanize",
+      "gold_rc": "2",
+      "empty_rc": "2",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "humanize_346",
+      "repo": "python-humanize/humanize",
+      "gold_rc": "1",
+      "empty_rc": "1",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "humanize_354",
+      "repo": "python-humanize/humanize",
+      "gold_rc": "1",
+      "empty_rc": "1",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "humanize_359",
+      "repo": "python-humanize/humanize",
+      "gold_rc": "1",
+      "empty_rc": "1",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "humanize_381",
+      "repo": "python-humanize/humanize",
+      "gold_rc": "1",
+      "empty_rc": "1",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "humanize_392",
+      "repo": "python-humanize/humanize",
+      "gold_rc": "1",
+      "empty_rc": "1",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "lark_1395",
+      "repo": "lark-parser/lark",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "lark_1427",
+      "repo": "lark-parser/lark",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "lark_1433",
+      "repo": "lark-parser/lark",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "lark_1444",
+      "repo": "lark-parser/lark",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "lark_1452",
+      "repo": "lark-parser/lark",
+      "gold_rc": "0",
+      "empty_rc": "4",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "lark_1467",
+      "repo": "lark-parser/lark",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "lark_1481",
+      "repo": "lark-parser/lark",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "lark_1521",
+      "repo": "lark-parser/lark",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "lark_1540",
+      "repo": "lark-parser/lark",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "lark_1543",
+      "repo": "lark-parser/lark",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "lark_1562",
+      "repo": "lark-parser/lark",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "lark_1596",
+      "repo": "lark-parser/lark",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "lark_1603",
+      "repo": "lark-parser/lark",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "lark_1613",
+      "repo": "lark-parser/lark",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "lark_1614",
+      "repo": "lark-parser/lark",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "lark_1619",
+      "repo": "lark-parser/lark",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "lark_1632",
+      "repo": "lark-parser/lark",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "lark_1642",
+      "repo": "lark-parser/lark",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "ml_collections_03d52a8935",
+      "repo": "google/ml_collections",
+      "gold_rc": "4",
+      "empty_rc": "4",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "ml_collections_09742cfcd9",
+      "repo": "google/ml_collections",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "ml_collections_21f164575c",
+      "repo": "google/ml_collections",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "ml_collections_29",
+      "repo": "google/ml_collections",
+      "gold_rc": "4",
+      "empty_rc": "4",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "ml_collections_39c88200a2",
+      "repo": "google/ml_collections",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "ml_collections_4815c4a9eb",
+      "repo": "google/ml_collections",
+      "gold_rc": "4",
+      "empty_rc": "4",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "ml_collections_5f70ada5a8",
+      "repo": "google/ml_collections",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "ml_collections_5f7343a407",
+      "repo": "google/ml_collections",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "ml_collections_94ec440d6e",
+      "repo": "google/ml_collections",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "ml_collections_b4368a2013",
+      "repo": "google/ml_collections",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "ml_collections_c2e84ad263",
+      "repo": "google/ml_collections",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_1001",
+      "repo": "google/mobly",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_1022",
+      "repo": "google/mobly",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_1023",
+      "repo": "google/mobly",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_1028",
+      "repo": "google/mobly",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_1033",
+      "repo": "google/mobly",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_1034",
+      "repo": "google/mobly",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_1053",
+      "repo": "google/mobly",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_1060",
+      "repo": "google/mobly",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_1061",
+      "repo": "google/mobly",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_1065",
+      "repo": "google/mobly",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_1069",
+      "repo": "google/mobly",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_1071",
+      "repo": "google/mobly",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_1074",
+      "repo": "google/mobly",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_2c6135e1ef",
+      "repo": "google/mobly",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_577",
+      "repo": "google/mobly",
+      "gold_rc": "4",
+      "empty_rc": "4",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_582",
+      "repo": "google/mobly",
+      "gold_rc": "4",
+      "empty_rc": "4",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_599",
+      "repo": "google/mobly",
+      "gold_rc": "4",
+      "empty_rc": "4",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_626",
+      "repo": "google/mobly",
+      "gold_rc": "4",
+      "empty_rc": "4",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_629",
+      "repo": "google/mobly",
+      "gold_rc": "4",
+      "empty_rc": "4",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_638",
+      "repo": "google/mobly",
+      "gold_rc": "4",
+      "empty_rc": "4",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_647",
+      "repo": "google/mobly",
+      "gold_rc": "4",
+      "empty_rc": "4",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_650",
+      "repo": "google/mobly",
+      "gold_rc": "4",
+      "empty_rc": "4",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_653",
+      "repo": "google/mobly",
+      "gold_rc": "4",
+      "empty_rc": "4",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_681",
+      "repo": "google/mobly",
+      "gold_rc": "4",
+      "empty_rc": "4",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_683",
+      "repo": "google/mobly",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_686",
+      "repo": "google/mobly",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_690",
+      "repo": "google/mobly",
+      "gold_rc": "4",
+      "empty_rc": "4",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_75998207d5",
+      "repo": "google/mobly",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_769",
+      "repo": "google/mobly",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_774",
+      "repo": "google/mobly",
+      "gold_rc": "4",
+      "empty_rc": "4",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_804",
+      "repo": "google/mobly",
+      "gold_rc": "4",
+      "empty_rc": "4",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_813",
+      "repo": "google/mobly",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_822",
+      "repo": "google/mobly",
+      "gold_rc": "4",
+      "empty_rc": "4",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_825",
+      "repo": "google/mobly",
+      "gold_rc": "4",
+      "empty_rc": "4",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_834",
+      "repo": "google/mobly",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_836",
+      "repo": "google/mobly",
+      "gold_rc": "4",
+      "empty_rc": "4",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_840",
+      "repo": "google/mobly",
+      "gold_rc": "4",
+      "empty_rc": "4",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_849",
+      "repo": "google/mobly",
+      "gold_rc": "4",
+      "empty_rc": "4",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_854",
+      "repo": "google/mobly",
+      "gold_rc": "4",
+      "empty_rc": "1",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_867",
+      "repo": "google/mobly",
+      "gold_rc": "4",
+      "empty_rc": "4",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_899",
+      "repo": "google/mobly",
+      "gold_rc": "4",
+      "empty_rc": "4",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_910",
+      "repo": "google/mobly",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_920",
+      "repo": "google/mobly",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_921",
+      "repo": "google/mobly",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_922",
+      "repo": "google/mobly",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_932",
+      "repo": "google/mobly",
+      "gold_rc": "0",
+      "empty_rc": "4",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_934",
+      "repo": "google/mobly",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_935",
+      "repo": "google/mobly",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_942",
+      "repo": "google/mobly",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_945",
+      "repo": "google/mobly",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_947",
+      "repo": "google/mobly",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_948",
+      "repo": "google/mobly",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_949",
+      "repo": "google/mobly",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_952",
+      "repo": "google/mobly",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_953",
+      "repo": "google/mobly",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_954",
+      "repo": "google/mobly",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_957",
+      "repo": "google/mobly",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_959",
+      "repo": "google/mobly",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_964",
+      "repo": "google/mobly",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_970",
+      "repo": "google/mobly",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_973",
+      "repo": "google/mobly",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_982",
+      "repo": "google/mobly",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_989",
+      "repo": "google/mobly",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_995",
+      "repo": "google/mobly",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "mobly_996",
+      "repo": "google/mobly",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "openhtf_06a0bcd61d",
+      "repo": "google/openhtf",
+      "gold_rc": "2",
+      "empty_rc": "2",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "openhtf_1203",
+      "repo": "google/openhtf",
+      "gold_rc": "2",
+      "empty_rc": "2",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "openhtf_1274",
+      "repo": "google/openhtf",
+      "gold_rc": "2",
+      "empty_rc": "2",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "openhtf_1326",
+      "repo": "google/openhtf",
+      "gold_rc": "2",
+      "empty_rc": "2",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "openhtf_170c2f87d1",
+      "repo": "google/openhtf",
+      "gold_rc": "2",
+      "empty_rc": "2",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "openhtf_31f51072e2",
+      "repo": "google/openhtf",
+      "gold_rc": "2",
+      "empty_rc": "2",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "openhtf_4555d73fd3",
+      "repo": "google/openhtf",
+      "gold_rc": "2",
+      "empty_rc": "2",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "openhtf_4749612f99",
+      "repo": "google/openhtf",
+      "gold_rc": "2",
+      "empty_rc": "2",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "openhtf_47c891dbb7",
+      "repo": "google/openhtf",
+      "gold_rc": "2",
+      "empty_rc": "2",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "openhtf_5085a9a785",
+      "repo": "google/openhtf",
+      "gold_rc": "2",
+      "empty_rc": "2",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "openhtf_532484aaf7",
+      "repo": "google/openhtf",
+      "gold_rc": "2",
+      "empty_rc": "2",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "openhtf_75271f2c3b",
+      "repo": "google/openhtf",
+      "gold_rc": "2",
+      "empty_rc": "2",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "openhtf_7eb4cadd60",
+      "repo": "google/openhtf",
+      "gold_rc": "2",
+      "empty_rc": "2",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "openhtf_92a841d970",
+      "repo": "google/openhtf",
+      "gold_rc": "2",
+      "empty_rc": "2",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "openhtf_9bd5cfc1ee",
+      "repo": "google/openhtf",
+      "gold_rc": "2",
+      "empty_rc": "2",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "openhtf_9bfeea83b3",
+      "repo": "google/openhtf",
+      "gold_rc": "2",
+      "empty_rc": "2",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "openhtf_9d2860c2ca",
+      "repo": "google/openhtf",
+      "gold_rc": "2",
+      "empty_rc": "2",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "openhtf_9eae1ac180",
+      "repo": "google/openhtf",
+      "gold_rc": "2",
+      "empty_rc": "2",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "openhtf_a91fa3d284",
+      "repo": "google/openhtf",
+      "gold_rc": "2",
+      "empty_rc": "2",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "openhtf_c3028375a4",
+      "repo": "google/openhtf",
+      "gold_rc": "2",
+      "empty_rc": "2",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "openhtf_cf23a04538",
+      "repo": "google/openhtf",
+      "gold_rc": "2",
+      "empty_rc": "2",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "openhtf_ecd0690b88",
+      "repo": "google/openhtf",
+      "gold_rc": "2",
+      "empty_rc": "2",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "openhtf_f77722967b",
+      "repo": "google/openhtf",
+      "gold_rc": "2",
+      "empty_rc": "2",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "openhtf_f850e7486a",
+      "repo": "google/openhtf",
+      "gold_rc": "2",
+      "empty_rc": "2",
+      "legacy_valid": false,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "sqlparse_0c4902f3f7",
+      "repo": "andialbrecht/sqlparse",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "sqlparse_1a3bfbd50b",
+      "repo": "andialbrecht/sqlparse",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "sqlparse_31903e09db",
+      "repo": "andialbrecht/sqlparse",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "sqlparse_39b5a02551",
+      "repo": "andialbrecht/sqlparse",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "sqlparse_46971e5a80",
+      "repo": "andialbrecht/sqlparse",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "sqlparse_5ca50a2ee9",
+      "repo": "andialbrecht/sqlparse",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "sqlparse_617b8f6cd3",
+      "repo": "andialbrecht/sqlparse",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "sqlparse_6b05583f11",
+      "repo": "andialbrecht/sqlparse",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "sqlparse_7334ac9915",
+      "repo": "andialbrecht/sqlparse",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "sqlparse_791e25de46",
+      "repo": "andialbrecht/sqlparse",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "sqlparse_8b0342730b",
+      "repo": "andialbrecht/sqlparse",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "sqlparse_b126ba5b20",
+      "repo": "andialbrecht/sqlparse",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "sqlparse_bf74d8bc2c",
+      "repo": "andialbrecht/sqlparse",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "sqlparse_da67ac16b8",
+      "repo": "andialbrecht/sqlparse",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "sqlparse_e92a032c81",
+      "repo": "andialbrecht/sqlparse",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_471",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_477",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_486",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_493",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_497",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_498",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_499",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_500",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_501",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_506",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_507",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_508",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_509",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "124",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_510",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_511",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_514",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_516",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_519",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_520",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_526",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_527",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_530",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_532",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_533",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_534",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_536",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_537",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_538",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_539",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_544",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_545",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_549",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_550",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_551",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_552",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_563",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_565",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_567",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_581",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_586",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_591",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_594",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_595",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_599",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_600",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_610",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_612",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_613",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_620",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_623",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_626",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_628",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_629",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_641",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_642",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    },
+    {
+      "instance_id": "tomlkit_660",
+      "repo": "python-poetry/tomlkit",
+      "gold_rc": "0",
+      "empty_rc": "1",
+      "legacy_valid": true,
+      "valid": false,
+      "reason": "legacy_log_missing_test_evidence"
+    }
+  ]
+}
