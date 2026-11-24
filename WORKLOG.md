@@ -16,6 +16,9 @@
 - All 97 project CPU tests pass. The prototype is not the official ADK graph and no independent
   graph-on/off teacher-model comparison or Gemma gain is claimed. The user is unsure about teacher API
   configuration; the current-session mechanism pilot uses no separate paid API.
+- Publication: infrastructure PR #42 at 5d234fd has successful hosted CI; teacher experiment commit
+  4da6631 is published as draft PR #43, stacked on #42's branch. Neither PR is merged, and neither
+  research issue is closed. Human teammate approval remains required before routine merging.
 - Reports: November 24 infrastructure closeout and November 25 teacher source-graph pilot under
   `docs/experiments/`. Raw evidence is under the original workspace's ignored
   `runs/2026-11-25-infra-and-teacher/` and `runs/2026-11-25-issue39-teacher/`. No model inference inside
@@ -50,6 +53,11 @@
 - Verification: 97 CPU tests pass; static/whitespace checks are run for the published experiment branch.
   Infrastructure PR #42's hosted CI is successful at 5d234fd. Independent teammate review remains
   required before merging; neither #34 nor #39 is closed and no model/GPU competition run was launched.
+- Publication completed: teacher experiment commit 4da6631 is on draft PR #43, targeting PR #42's
+  infrastructure branch. Static checks passed (60 Python / 14 shell / 19 configuration / 70 Markdown /
+  three packages), as did whitespace checks. PR #42's body/head were confirmed updated. Follow-up:
+  reviewer acceptance for infrastructure; continue predeclared teacher cases only as a mechanism
+  study until an independent controlled teacher comparison and a held-out Gemma A/B are available.
 
 ### 2026-11-25 01:44 (Asia/Shanghai) - Complete official controls and assess #34 before starting #39
 
