@@ -38,6 +38,15 @@
       "teacher_resolved": true,
       "record": "resource/manifests/teacher-verifier-case4-20261126.json",
       "notes": "after_log applied the seconds format to the callback name and printed the raw seconds; the one-function graph query added nothing. Official verifier accepted the swap."
+    },
+    {
+      "order": 5,
+      "task_id": "tenacity_645",
+      "status": "environment_blocked",
+      "source_graph_novel_fact": false,
+      "teacher_resolved": null,
+      "record": "resource/manifests/teacher-verifier-case5-20261126.json",
+      "notes": "enabled=False on the direct-call path; the teacher patch is frozen and passes local smoke, but the official sandbox could not build the checkout (hatch-vcs needs .git, then the venv had no pip). Recorded as a harness limitation, not a teacher failure."
     }
   ],
   "teacher_patch_policy": "No reference or test patch was read before freezing any patch; case 3 controls were run after the teacher opened the source and that deviation is recorded."

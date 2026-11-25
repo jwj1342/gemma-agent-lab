@@ -134,6 +134,22 @@ the callback name, then the message printed the unformatted `seconds_since_start
 - Recorded deviation: the teacher opened the source before the controls job finished; no reference or test
   patch was read.
 
+## Case 5 (2026-11-26, same session)
+
+**`tenacity_645` — environment-blocked, patch frozen but not graded.** The statement asks that
+`Retrying(enabled=False)(fn)` and `AsyncRetrying(enabled=False)(fn)` call the function once instead of running
+the retry loop. The frozen patch adds the short-circuit to both `__call__` implementations and local smoke
+confirms `ValueError` propagates after a single call.
+
+The official sandbox could not grade it, for two packaging reasons rather than a teacher error: the repository's
+`pyproject.toml` uses `hatch-vcs` with `source = "vcs"`, and the sandbox checkout has no `.git`, so editable
+metadata generation fails; on retry the sandbox venv could not build (`ensurepip` unavailable), leaving no pip
+for the setup hook (`ContainerSetupError`). Kernels: `junzhejiao/teacher-verification-20261126-case5` v1-v3;
+logs in the ignored `runs/2026-11-26-issue39-tenacity_645/`.
+
+This is a reproducibility limit of the CPU verifier for VCS-versioned repositories, worth fixing in the harness
+(setuptools_scm/hatch-vcs pretend version plus a pip-less venv fallback) before using tenacity-family tasks.
+
 ## Decision and next gate
 
 Do not derive a graph-forcing student instruction from this case. Literal search already supplied the

@@ -1,0 +1,11 @@
+{
+  "task_id": "tenacity_645",
+  "status": "environment_blocked",
+  "kernel": "junzhejiao/teacher-verification-20261126-case5",
+  "versions_attempted": 3,
+  "patch_sha256": "31abc717522cf61f5e07650ee5c0870f27b4801f0a989cce2df639a2c14cbce9",
+  "stream_log_sha256": "e898c7f8af706e54691abcca207e27bbbcf9206063cf8a43ab5c9f005cdd6ebe",
+  "second_stream_log_sha256": "94ff092e7fd5689b246a86463111c7e97248cb2dc17c54fa496a8767d8963085",
+  "reason": "hatch-vcs metadata needs .git; sandbox venv had no pip on retry so the setup hook raised ContainerSetupError",
+  "note": "Patch frozen but not graded; no model inference in the jobs."
+}
