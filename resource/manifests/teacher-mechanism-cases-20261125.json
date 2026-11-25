@@ -29,6 +29,15 @@
       "teacher_resolved": true,
       "record": "resource/manifests/teacher-verifier-case3-20261125.json",
       "notes": "Graph surfaced the existing TestSerialize reference on the unpatched source. The patch privatised _iterator/_lock and forwarded send/throw/close under the same lock; the official verifier accepted it."
+    },
+    {
+      "order": 4,
+      "task_id": "tenacity_317",
+      "status": "executed",
+      "source_graph_novel_fact": false,
+      "teacher_resolved": true,
+      "record": "resource/manifests/teacher-verifier-case4-20261126.json",
+      "notes": "after_log applied the seconds format to the callback name and printed the raw seconds; the one-function graph query added nothing. Official verifier accepted the swap."
     }
   ],
   "teacher_patch_policy": "No reference or test patch was read before freezing any patch; case 3 controls were run after the teacher opened the source and that deviation is recorded."

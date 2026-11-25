@@ -28,6 +28,23 @@
 
 ## Work history
 
+### 2026-11-26 00:40 (Asia/Shanghai) - Teacher case 4: tenacity after_log format fixed and verified
+
+- Objective: continue the #39 mechanism study with the fourth predeclared case.
+- Case 4 `tenacity_317` ("Fix after_log logger format"): the defect is inside one function —
+  `sec_format` was applied to the callback name and the message printed the raw elapsed seconds. The frozen
+  patch applies the format to `seconds_since_start` and restores the callback name in the message.
+- Controls: `junzhejiao/teacher-controls-20261126-case4` valid (empty fails, gold passes).
+- Grading: `junzhejiao/teacher-verification-20261126-case4` valid and `teacher_resolved: true`, zero model
+  calls in the job. Local smoke produced "Finished call to '<fn>' after 0.123(s), this was the 1st time
+  calling it."
+- Graph: one match, no callers; a one-function defect gains nothing from the structural query (same as case 1).
+- Deviation recorded: the teacher opened the source before the controls job finished; no reference or test
+  patch was read.
+- Changed files: `docs/experiments/2026-11-25-teacher-source-graph-pilot.md`,
+  `resource/manifests/teacher-mechanism-cases-20261125.json`,
+  `resource/manifests/teacher-verifier-case4-20261126.json`, `WORKLOG.md`.
+
 ### 2026-11-25 19:30 (Asia/Shanghai) - Teacher cases 2 and 3: one deferred for statement ambiguity, one verified
 
 - Objective: continue the #39 mechanism study past case 1 on the frozen 12-task teacher development set.

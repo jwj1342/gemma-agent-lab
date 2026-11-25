@@ -119,6 +119,21 @@ than before; no reference patch or injected test was read at any point.
 **Receipts.** `resource/manifests/teacher-mechanism-cases-20261125.json` (all three cases) and
 `resource/manifests/teacher-verifier-case3-20261125.json` (hashes, kernel ids, result).
 
+## Case 4 (2026-11-26, same session)
+
+**`tenacity_317` — executed, resolved.** The statement is "Fix after_log logger format" and the defect is
+inside one function: `sec = sec_format % _utils.get_callback_name(retry_state.fn)` applied a float format to
+the callback name, then the message printed the unformatted `seconds_since_start`. The frozen patch applies
+`sec_format` to the elapsed seconds and puts the callback name back into the message.
+
+- Controls: `junzhejiao/teacher-controls-20261126-case4` — valid (empty fails, gold passes).
+- Grading: `junzhejiao/teacher-verification-20261126-case4` — valid controls and `teacher_resolved: true`,
+  zero model calls in the job.
+- Graph: the query returned the single `after_log` definition and no callers; for a defect inside one function
+  body the structural tool adds nothing, which is consistent with case 1.
+- Recorded deviation: the teacher opened the source before the controls job finished; no reference or test
+  patch was read.
+
 ## Decision and next gate
 
 Do not derive a graph-forcing student instruction from this case. Literal search already supplied the
