@@ -93,6 +93,32 @@ repair on one task; it is not evidence that the graph helped or that Gemma would
 All 97 project CPU tests pass, including source-graph ambiguity/shadowing and prediction-task isolation.
 Infrastructure PR #42 at `5d234fd` also has a successful hosted Repository checks run.
 
+## Cases 2 and 3 (2026-11-25, same session)
+
+**Case 2, `more_itertools_1116` (deferred, not graded).** The public statement is "Add random ordered
+combinatoric functions". Official controls are valid (empty fails, gold passes; kernel
+`junzhejiao/teacher-controls-20261125-case2`), but the statement does not name the new API, and the four
+plausible names (`random_product`, `random_permutation`, `random_combination`,
+`random_combination_with_replacement`) already exist in `more_itertools/recipes.py` as single-draw recipes that
+shadow anything new in `more.py`. A patch written from the statement alone would have to guess both the exported
+names and the iteration semantics, so it was not frozen. This is a concrete limit of a terse statement on a
+new-API task: the teacher can read the workspace but cannot see the required interface.
+
+**Case 3, `more_itertools_1157` (executed, resolved).** The statement asks to "add generator support to
+serialize()", make the attributes private and support `throw`, `send` and `close`. On the unpatched source the
+graph located `serialize.__init__/__iter__/__next__` and the existing `TestSerialize.test_concurrent_calls`
+reference, which is the first case where the structural query surfaced something the teacher had not already
+looked at. The frozen patch moved state to `_iterator`/`_lock` and forwarded `send`, `throw` and `close` under
+the same lock; local smoke checks exercised next/send/close, and the official verifier
+(`junzhejiao/teacher-verification-20261125-case3`) confirmed valid controls and `teacher_resolved: true` with
+zero model calls.
+
+**Protocol deviation, recorded.** For case 3 the controls were run after the teacher opened the source rather
+than before; no reference patch or injected test was read at any point.
+
+**Receipts.** `resource/manifests/teacher-mechanism-cases-20261125.json` (all three cases) and
+`resource/manifests/teacher-verifier-case3-20261125.json` (hashes, kernel ids, result).
+
 ## Decision and next gate
 
 Do not derive a graph-forcing student instruction from this case. Literal search already supplied the

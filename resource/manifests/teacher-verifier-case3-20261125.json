@@ -1,0 +1,21 @@
+{
+  "task_id": "more_itertools_1157",
+  "kernel": "junzhejiao/teacher-verification-20261125-case3",
+  "controls_kernel": "junzhejiao/teacher-controls-20261125-case3",
+  "checks": {
+    "empty_patch_fails_tests": true,
+    "gold_patch_passes_tests": true
+  },
+  "valid": true,
+  "empty_rc": 1,
+  "gold_rc": 0,
+  "teacher_resolved": true,
+  "teacher_rc": 0,
+  "teacher_error": null,
+  "patch_sha256": "23117f6ba6fdeff62dd3ffc818d74655bde0b52cd1dc2a6e962bf3f5bb9f6583",
+  "notebook_sha256": "555902d35436ca14491207d6c0971405034cc86390060774a7689f5cee342b9c",
+  "stream_log_sha256": "7496f033b0cdd996d36f7c8a03221dc4546cb50426adaf7dad023a250104222d",
+  "controls_stream_log_sha256": "ea6caddad2696caffb5390f0300a32e07577df5d354e674e94ddaf6c812509d5",
+  "model_calls": 0,
+  "note": "Official v31 verifier; no model inference in the job."
+}

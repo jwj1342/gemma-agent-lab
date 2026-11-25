@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "manifest": "teacher-mechanism-cases-20261125",
+  "scope": "Mechanism study on the frozen 12-task teacher development set; no independent paired model comparison.",
+  "cases": [
+    {
+      "order": 1,
+      "task_id": "more_itertools_757",
+      "status": "executed",
+      "source_graph_novel_fact": false,
+      "teacher_resolved": true,
+      "record": "resource/manifests/teacher-mechanism-20261125.json",
+      "notes": "Literal search already supplied the observed caller; the repair came from the named target and the documented contract."
+    },
+    {
+      "order": 2,
+      "task_id": "more_itertools_1116",
+      "status": "deferred",
+      "source_graph_novel_fact": false,
+      "teacher_resolved": null,
+      "notes": "Official controls are valid (empty fails, gold passes), but the public statement does not name the new API, and the four plausible names (random_product, random_permutation, random_combination, random_combination_with_replacement) already exist in more_itertools/recipes.py as single-draw recipes. A teacher patch would have to guess the exported names and the iteration semantics; deferred rather than graded, and this is recorded as a statement-specification limit of a terse task.",
+      "controls_receipt": "junzhejiao/teacher-controls-20261125-case2"
+    },
+    {
+      "order": 3,
+      "task_id": "more_itertools_1157",
+      "status": "executed",
+      "source_graph_novel_fact": true,
+      "teacher_resolved": true,
+      "record": "resource/manifests/teacher-verifier-case3-20261125.json",
+      "notes": "Graph surfaced the existing TestSerialize reference on the unpatched source. The patch privatised _iterator/_lock and forwarded send/throw/close under the same lock; the official verifier accepted it."
+    }
+  ],
+  "teacher_patch_policy": "No reference or test patch was read before freezing any patch; case 3 controls were run after the teacher opened the source and that deviation is recorded."
+}

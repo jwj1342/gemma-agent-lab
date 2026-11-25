@@ -9,10 +9,12 @@
 - The corrected 105-task manifest is provisional from 220 historical rc=0/1 rows. Old metadata is
   preserved; every selected task needs official controls on the frozen runtime before inference.
 - Current branch `experiment/teacher-evidence-20261125` starts #39 separately. Twelve teacher tasks over
-  four repositories are disjoint from the seven mined evaluation repositories. First case
-  more_itertools_757: current-session teacher patch passes official controls and independent grading;
-  five existing tests and 108 boundary combinations pass. Two partial AST graph queries added no new
-  observed diagnostic evidence beyond prior text search. No student instruction or adapter is promoted.
+  four repositories are disjoint from the seven mined evaluation repositories. Cases 1 and 3 are executed and
+  verified: more_itertools_757 (iter_index stop bound) and more_itertools_1157 (serialize generator support,
+  private `_iterator`/`_lock`, `send`/`throw`/`close` forwarded) both pass official controls and independent
+  grading; case 2 (more_itertools_1116) is deferred because the terse statement does not name the new API and
+  the four plausible names already exist as single-draw recipes. The graph added a novel locator only in case 3
+  (the existing `TestSerialize` reference). No student instruction or adapter is promoted.
 - All 97 project CPU tests pass. The prototype is not the official ADK graph and no independent
   graph-on/off teacher-model comparison or Gemma gain is claimed. The user is unsure about teacher API
   configuration; the current-session mechanism pilot uses no separate paid API.
@@ -25,6 +27,27 @@
   Kaggle, GPU allocation, competition submission, merge or recurring status monitor.
 
 ## Work history
+
+### 2026-11-25 19:30 (Asia/Shanghai) - Teacher cases 2 and 3: one deferred for statement ambiguity, one verified
+
+- Objective: continue the #39 mechanism study past case 1 on the frozen 12-task teacher development set.
+- Case 2 `more_itertools_1116` ("Add random ordered combinatoric functions"): official controls are valid
+  (kernel `junzhejiao/teacher-controls-20261125-case2`, empty fails, gold passes), but the statement does not
+  name the new API and the four plausible names already exist in `more_itertools/recipes.py` as single-draw
+  recipes. No patch was frozen; the case is recorded as deferred with the statement-specification limit.
+- Case 3 `more_itertools_1157` (serialize generator support): the graph located the unpatched
+  `serialize.__init__/__iter__/__next__` and the existing `TestSerialize.test_concurrent_calls` reference — the
+  first case where the structural query surfaced something new. The frozen patch privatised `_iterator`/`_lock`
+  and forwarded `send`/`throw`/`close` under the same lock; local smoke checks passed and the official verifier
+  (`junzhejiao/teacher-verification-20261125-case3`) returned valid controls and `teacher_resolved: true` with
+  zero model calls.
+- Deviation recorded: case 3 controls were run after the teacher opened the source; no reference or injected
+  test patch was read.
+- Changed files: `docs/experiments/2026-11-25-teacher-source-graph-pilot.md`,
+  `resource/manifests/teacher-mechanism-cases-20261125.json`,
+  `resource/manifests/teacher-verifier-case3-20261125.json`, `WORKLOG.md`. Raw evidence stays in the ignored
+  `runs/2026-11-25-issue39-teacher/case-2-*` and `case-3-*` directories.
+- Verification: case 3 verifier log hash recorded in the receipt; no GPU, no competition submission, no merge.
 
 ### 2026-11-25 01:57 (Asia/Shanghai) - Execute the first repository-disjoint #39 teacher mechanism trial
 
