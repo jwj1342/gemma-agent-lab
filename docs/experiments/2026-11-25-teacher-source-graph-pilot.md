@@ -150,6 +150,22 @@ logs in the ignored `runs/2026-11-26-issue39-tenacity_645/`.
 This is a reproducibility limit of the CPU verifier for VCS-versioned repositories, worth fixing in the harness
 (setuptools_scm/hatch-vcs pretend version plus a pip-less venv fallback) before using tenacity-family tasks.
 
+## Case 6 (2026-11-26, same session)
+
+**`mistune_486` — executed, resolved.** "Preserve literal hashes at the end of headings." The markdown
+renderer rewrites a Setext heading as ATX text, so a heading whose text ends in a hash run (`foo #` from
+`foo #\n---`) is emitted as `## foo #`, and the trailing hash is consumed as an ATX closing sequence on
+reparse. The frozen patch escapes the run when a space or the start of the text precedes it.
+
+- Controls: `junzhejiao/teacher-controls-20261126-case6` — valid (empty fails, gold passes).
+- Grading: `junzhejiao/teacher-verification-20261126-case6` — valid controls and `teacher_resolved: true`,
+  zero model calls in the job.
+- Local round trips: Setext trailing hash, escaped ATX hash, hash-only heading, closing-sequence heading and
+  attached hashes all keep the same HTML after reformatting.
+- `w3lib_338` was attempted first in this window and deferred: "scan the undecoded bytes of a document before
+  decoding it" names no function or symptom in the unpatched tree, and this checkout already contains an
+  `EncodingDecision`/`read_bom` layer, so a patch would be guesswork.
+
 ## Decision and next gate
 
 Do not derive a graph-forcing student instruction from this case. Literal search already supplied the
