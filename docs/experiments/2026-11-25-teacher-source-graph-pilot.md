@@ -166,6 +166,18 @@ reparse. The frozen patch escapes the run when a space or the start of the text 
   decoding it" names no function or symptom in the unpatched tree, and this checkout already contains an
   `EncodingDecision`/`read_bom` layer, so a patch would be guesswork.
 
+## Case 7 (2026-11-26, same session)
+
+**`mistune_395` — executed, resolved.** "Certain characters in markdown code incorrectly parsed (e.g., &)."
+`escape_url` returned `escape(quote(unescape(link), safe=safe))`, so a URL containing `&metric=` rendered as
+`&amp;metric=` inside the link, and the result depended on how the `html` module resolved. The frozen patch
+drops the `escape()` wrapper, which is exactly what the public issue's comment proposes.
+
+- Controls: `junzhejiao/teacher-controls-20261126-case7` — valid (empty fails, gold passes).
+- Grading: `junzhejiao/teacher-verification-20261126-case7` — valid controls and `teacher_resolved: true`,
+  zero model calls in the job.
+- Local smoke: the badge URL now keeps its literal ampersand.
+
 ## Decision and next gate
 
 Do not derive a graph-forcing student instruction from this case. Literal search already supplied the
