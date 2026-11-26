@@ -1,0 +1,108 @@
+{
+  "schema_version": 1,
+  "manifest": "teacher-mechanism-cases-20261125",
+  "scope": "Mechanism study on the frozen 12-task teacher development set; no independent paired model comparison.",
+  "cases": [
+    {
+      "order": 1,
+      "task_id": "more_itertools_757",
+      "status": "executed",
+      "source_graph_novel_fact": false,
+      "teacher_resolved": true,
+      "record": "resource/manifests/teacher-mechanism-20261125.json",
+      "notes": "Literal search already supplied the observed caller; the repair came from the named target and the documented contract."
+    },
+    {
+      "order": 2,
+      "task_id": "more_itertools_1116",
+      "status": "deferred",
+      "source_graph_novel_fact": false,
+      "teacher_resolved": null,
+      "notes": "Official controls are valid (empty fails, gold passes), but the public statement does not name the new API, and the four plausible names (random_product, random_permutation, random_combination, random_combination_with_replacement) already exist in more_itertools/recipes.py as single-draw recipes. A teacher patch would have to guess the exported names and the iteration semantics; deferred rather than graded, and this is recorded as a statement-specification limit of a terse task.",
+      "controls_receipt": "junzhejiao/teacher-controls-20261125-case2"
+    },
+    {
+      "order": 3,
+      "task_id": "more_itertools_1157",
+      "status": "executed",
+      "source_graph_novel_fact": true,
+      "teacher_resolved": true,
+      "record": "resource/manifests/teacher-verifier-case3-20261125.json",
+      "notes": "Graph surfaced the existing TestSerialize reference on the unpatched source. The patch privatised _iterator/_lock and forwarded send/throw/close under the same lock; the official verifier accepted it."
+    },
+    {
+      "order": 4,
+      "task_id": "tenacity_317",
+      "status": "executed",
+      "source_graph_novel_fact": false,
+      "teacher_resolved": true,
+      "record": "resource/manifests/teacher-verifier-case4-20261126.json",
+      "notes": "after_log applied the seconds format to the callback name and printed the raw seconds; the one-function graph query added nothing. Official verifier accepted the swap."
+    },
+    {
+      "order": 5,
+      "task_id": "tenacity_645",
+      "status": "environment_blocked",
+      "source_graph_novel_fact": false,
+      "teacher_resolved": null,
+      "record": "resource/manifests/teacher-verifier-case5-20261126.json",
+      "notes": "enabled=False on the direct-call path; the teacher patch is frozen and passes local smoke, but the official sandbox could not build the checkout (hatch-vcs needs .git, then the venv had no pip). Recorded as a harness limitation, not a teacher failure."
+    },
+    {
+      "order": 6,
+      "task_id": "mistune_486",
+      "status": "executed",
+      "source_graph_novel_fact": false,
+      "teacher_resolved": true,
+      "record": "resource/manifests/teacher-verifier-case6-20261126.json",
+      "notes": "The markdown renderer must escape a trailing hash run when it would be read back as an ATX closing sequence; five local round-trip cases keep the same HTML and the official verifier accepted the patch."
+    },
+    {
+      "order": 7,
+      "task_id": "mistune_395",
+      "status": "executed",
+      "source_graph_novel_fact": false,
+      "teacher_resolved": true,
+      "record": "resource/manifests/teacher-verifier-case7-20261126.json",
+      "notes": "escape_url applied escape() around the quoted URL, so \"&\" became \"&amp;\" inside the link; dropping the wrapper keeps the literal ampersand and the official verifier accepted the patch."
+    },
+    {
+      "order": 8,
+      "task_id": "mistune_502",
+      "status": "executed_after_one_retry",
+      "source_graph_novel_fact": false,
+      "teacher_resolved": true,
+      "record": "resource/manifests/teacher-verifier-case8-20261126.json",
+      "notes": "CommonMark 0.31.2 inline comments: the first frozen pattern missed the \"<!--->\" terminator and failed; a second attempt that added it passed. The retry used the visible failure, so it is repair-with-feedback rather than a frozen prior."
+    },
+    {
+      "order": 9,
+      "task_id": "w3lib_317",
+      "status": "deferred",
+      "source_graph_novel_fact": false,
+      "teacher_resolved": null,
+      "notes": "The title asks to \"handle UTF-16/32 the same for all 3 sources of encoding\", and the checkout shows the discrepancy: header and meta labels resolve to bare \"utf-16\"/\"utf-32\" (BOM-dependent decoding), while read_bom returns \"utf-16-le\"/\"utf-16-be\". It does not say which normalisation is expected (prefer BOM, reject the label, or decode the label into a concrete endianness), and the bytes are needed to choose. Not coded: a patch here would be a guess about the expected API contract."
+    },
+    {
+      "order": 10,
+      "task_id": "w3lib_167",
+      "status": "executed_after_one_retry",
+      "source_graph_novel_fact": false,
+      "teacher_resolved": true,
+      "record": "resource/manifests/teacher-verifier-case10-20261127.json",
+      "notes": "Expose separator on url_query_parameter/add_or_replace_parameter(s) and query_separator on canonicalize_url; attempt 1 targeted the wrong surface, attempt 2 passed."
+    }
+  ],
+  "teacher_patch_policy": "No reference or test patch was read before freezing any patch; case 3 controls were run after the teacher opened the source and that deviation is recorded.",
+  "summary": {
+    "attempted": 10,
+    "verified": 8,
+    "verified_first_try": 5,
+    "verified_after_retry": 3,
+    "deferred": 3,
+    "environment_blocked": 1,
+    "repositories_with_verified_repairs": 4,
+    "graph_novel_fact_cases": 1,
+    "note": "Two of the twelve frozen tasks (w3lib_338, tenacity_615) were not separately attempted: the first is deferred for the same statement reason as case 9, the second shares case 5 packaging blocker."
+  }
+}

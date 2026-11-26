@@ -2,30 +2,102 @@
 
 ## Current project state
 
-- November 25: infrastructure implementation and CPU verification complete. Official v31 CPU verifier
-  `junzhejiao/mined-verifier-smoke-20261125` version 2 passes both sqlparse_8b0342730b and lark_1540 controls;
-  94/94 Windows CPU tests pass. The prior pip bootstrap ordering failure and skipped required regex test
-  are corrected and preserved as separate failed evidence. #34's initial CPU deliverables are satisfied
-  with a provisional 105-task proposal; full runtime control approval and final-candidate L4 timing are
-  not claimed. Keep #34 open. User requests #39 next after this closeout.
-- November 24 evaluation infrastructure closeout is on `fix/mined-eval-infra-20261124`, based on PR #42
-  at `426b9c8b` plus #40's byte-writing fix (`a14431d` locally). Windows preparation passes 14/14;
-  the full CPU suite passes 93/93, repository checks pass with Bash available, and staged whitespace
-  checks pass. No model inference, GPU allocation or competition upload.
-- Strict mined controls now require executed JUnit tests, gold success and an ordinary empty assertion
-  failure. Targeted CPU rerun rejects all six disputed historical controls; both comparison tasks pass.
-  The default-image diagnostic ran Python 3.13; future notebooks pin the official starter image.
-- A shared corrected 105-task manifest is provisional, from 220 historical rc=0/1 rows. Old 105-task
-  metadata is preserved. Revalidate every selected task on the frozen runtime before inference.
-- Official-verifier smoke is a separate CPU job, `junzhejiao/mined-verifier-smoke-20261124`, version 4.
-  It pins v31 hashes and the starter image, freezes agent/task/ZIP inputs, and tests two mined tasks.
-  Results and publication status are recorded in the closeout report when collected. Earlier failed
-  preparations remain separate; none establish a successful verifier run.
-- See `docs/experiments/2026-11-24-evaluation-infrastructure-closeout.md`. Raw evidence remains in the
-  original workspace's ignored `runs/2026-11-24-eval-infra-closeout/`. Progress checks are user-directed;
-  this task reads job evidence directly and sets up no periodic polling.
+- Infrastructure closeout is published in PR #42 at `5d234fd`; hosted Repository checks pass. The
+  successful official v31 CPU smoke accepts two mined tasks after offline sandbox setup. The initial
+  #34 CPU feasibility deliverables are complete with qualifications. Keep #34 open for acceptance,
+  artifact sharing and the conditional final-candidate L4 timing; all-cohort runtime approval is pending.
+- The corrected 105-task manifest is provisional from 220 historical rc=0/1 rows. Old metadata is
+  preserved; every selected task needs official controls on the frozen runtime before inference.
+- Current branch `experiment/teacher-evidence-20261125` starts #39 separately. Twelve teacher tasks over
+  four repositories are disjoint from the seven mined evaluation repositories. Cases 1 and 3 are executed and
+  verified: more_itertools_757 (iter_index stop bound) and more_itertools_1157 (serialize generator support,
+  private `_iterator`/`_lock`, `send`/`throw`/`close` forwarded) both pass official controls and independent
+  grading; case 2 (more_itertools_1116) is deferred because the terse statement does not name the new API and
+  the four plausible names already exist as single-draw recipes. The graph added a novel locator only in case 3
+  (the existing `TestSerialize` reference). No student instruction or adapter is promoted.
+- All 97 project CPU tests pass. The prototype is not the official ADK graph and no independent
+  graph-on/off teacher-model comparison or Gemma gain is claimed. The user is unsure about teacher API
+  configuration; the current-session mechanism pilot uses no separate paid API.
+- Publication: infrastructure PR #42 at 5d234fd has successful hosted CI; teacher experiment commit
+  4da6631 is published as draft PR #43, stacked on #42's branch. Neither PR is merged, and neither
+  research issue is closed. Human teammate approval remains required before routine merging.
+- Reports: November 24 infrastructure closeout and November 25 teacher source-graph pilot under
+  `docs/experiments/`. Raw evidence is under the original workspace's ignored
+  `runs/2026-11-25-infra-and-teacher/` and `runs/2026-11-25-issue39-teacher/`. No model inference inside
+  Kaggle, GPU allocation, competition submission, merge or recurring status monitor.
 
 ## Work history
+
+### 2026-11-26 00:40 (Asia/Shanghai) - Teacher case 4: tenacity after_log format fixed and verified
+
+- Objective: continue the #39 mechanism study with the fourth predeclared case.
+- Case 4 `tenacity_317` ("Fix after_log logger format"): the defect is inside one function —
+  `sec_format` was applied to the callback name and the message printed the raw elapsed seconds. The frozen
+  patch applies the format to `seconds_since_start` and restores the callback name in the message.
+- Controls: `junzhejiao/teacher-controls-20261126-case4` valid (empty fails, gold passes).
+- Grading: `junzhejiao/teacher-verification-20261126-case4` valid and `teacher_resolved: true`, zero model
+  calls in the job. Local smoke produced "Finished call to '<fn>' after 0.123(s), this was the 1st time
+  calling it."
+- Graph: one match, no callers; a one-function defect gains nothing from the structural query (same as case 1).
+- Deviation recorded: the teacher opened the source before the controls job finished; no reference or test
+  patch was read.
+- Changed files: `docs/experiments/2026-11-25-teacher-source-graph-pilot.md`,
+  `resource/manifests/teacher-mechanism-cases-20261125.json`,
+  `resource/manifests/teacher-verifier-case4-20261126.json`, `WORKLOG.md`.
+
+### 2026-11-25 19:30 (Asia/Shanghai) - Teacher cases 2 and 3: one deferred for statement ambiguity, one verified
+
+- Objective: continue the #39 mechanism study past case 1 on the frozen 12-task teacher development set.
+- Case 2 `more_itertools_1116` ("Add random ordered combinatoric functions"): official controls are valid
+  (kernel `junzhejiao/teacher-controls-20261125-case2`, empty fails, gold passes), but the statement does not
+  name the new API and the four plausible names already exist in `more_itertools/recipes.py` as single-draw
+  recipes. No patch was frozen; the case is recorded as deferred with the statement-specification limit.
+- Case 3 `more_itertools_1157` (serialize generator support): the graph located the unpatched
+  `serialize.__init__/__iter__/__next__` and the existing `TestSerialize.test_concurrent_calls` reference — the
+  first case where the structural query surfaced something new. The frozen patch privatised `_iterator`/`_lock`
+  and forwarded `send`/`throw`/`close` under the same lock; local smoke checks passed and the official verifier
+  (`junzhejiao/teacher-verification-20261125-case3`) returned valid controls and `teacher_resolved: true` with
+  zero model calls.
+- Deviation recorded: case 3 controls were run after the teacher opened the source; no reference or injected
+  test patch was read.
+- Changed files: `docs/experiments/2026-11-25-teacher-source-graph-pilot.md`,
+  `resource/manifests/teacher-mechanism-cases-20261125.json`,
+  `resource/manifests/teacher-verifier-case3-20261125.json`, `WORKLOG.md`. Raw evidence stays in the ignored
+  `runs/2026-11-25-issue39-teacher/case-2-*` and `case-3-*` directories.
+- Verification: case 3 verifier log hash recorded in the receipt; no GPU, no competition submission, no merge.
+
+### 2026-11-25 01:57 (Asia/Shanghai) - Execute the first repository-disjoint #39 teacher mechanism trial
+
+- Objective: after infrastructure closeout, start the stronger-teacher work requested by the user.
+  User is unsure whether a separate API is configured; use a current-session mechanism trial and
+  distinguish it from an independent paired teacher evaluation. No extra teacher API was invoked.
+- Froze 12 public development tasks (three each from more-itertools, tenacity, w3lib and mistune),
+  excluding all seven mined evaluation repositories and leak-flagged tasks. Source, statement and
+  license provenance remain explicit. First case/order was fixed before opening the teacher packet.
+- Implemented a read-only partial AST source graph, with explicit symbol IDs, same-file syntactic
+  links, unresolved calls, source hashes and trace output. Two targeted tests reject dynamic/shadowed
+  links and ambiguous node shortcuts. It is not an ADK graph replacement or deployed competition skill.
+- more_itertools_757 passed official empty/gold controls first. Teacher read only public statement,
+  base source/tests and the Python 3.12 itertools contract, then froze a minimal stop-bound change.
+  Five existing tests and 108 independent boundary combinations pass. Independent v31 grading in
+  `junzhejiao/teacher-patch-verification-20261125` v1 resolves the teacher patch with valid controls.
+  No reference/test patch was shown to the teacher before its patch was frozen.
+- Two graph queries cost 0.6035 local process seconds / 1,025 bytes. They exposed a caller already
+  found by literal search; critical external/dynamic calls remained unresolved. No marginal diagnostic
+  fact, causal speedup, teacher A/B effect or Gemma gain is established. Do not force graph use or
+  promote a student procedure from this case; preserve the null result and the frozen remaining cases.
+- Changed the verifier notebook generator to grade a selected task's teacher prediction after valid
+  controls, with task isolation and patch hashes. Added three metadata receipts, the graph prototype,
+  focused tests and the English pilot report/navigation. Raw patches, source snapshots and logs remain
+  ignored under `runs/2026-11-25-issue39-teacher/` in the original workspace.
+- Verification: 97 CPU tests pass; static/whitespace checks are run for the published experiment branch.
+  Infrastructure PR #42's hosted CI is successful at 5d234fd. Independent teammate review remains
+  required before merging; neither #34 nor #39 is closed and no model/GPU competition run was launched.
+- Publication completed: teacher experiment commit 4da6631 is on draft PR #43, targeting PR #42's
+  infrastructure branch. Static checks passed (60 Python / 14 shell / 19 configuration / 70 Markdown /
+  three packages), as did whitespace checks. PR #42's body/head were confirmed updated. Follow-up:
+  reviewer acceptance for infrastructure; continue predeclared teacher cases only as a mechanism
+  study until an independent controlled teacher comparison and a held-out Gemma A/B are available.
 
 ### 2026-11-25 01:44 (Asia/Shanghai) - Complete official controls and assess #34 before starting #39
 

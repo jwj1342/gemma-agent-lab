@@ -1,0 +1,21 @@
+{
+  "task_id": "tenacity_317",
+  "kernel": "junzhejiao/teacher-verification-20261126-case4",
+  "controls_kernel": "junzhejiao/teacher-controls-20261126-case4",
+  "checks": {
+    "empty_patch_fails_tests": true,
+    "gold_patch_passes_tests": true
+  },
+  "valid": true,
+  "empty_rc": 1,
+  "gold_rc": 0,
+  "teacher_resolved": true,
+  "teacher_rc": 0,
+  "teacher_error": null,
+  "patch_sha256": "57447c3cc4f1266d6f8647cca3672d8cbd196e540c469e634bd4ef6a94bda298",
+  "notebook_sha256": "411787ae51329e680c5ef591ce375acfcf07adc9bd229724ca483c5972bca039",
+  "stream_log_sha256": "d2e26db61ae5c4c97a0ed6f6aa8c17a9e20a29153ea6578904a6ca7440ad2663",
+  "controls_stream_log_sha256": "c5ac008ed320ed2edc39a46226e03eb16821892d6363e9cc2f914d29d0bd76d8",
+  "model_calls": 0,
+  "note": "Official v31 verifier; no model inference in the job."
+}

@@ -1,0 +1,21 @@
+{
+  "task_id": "mistune_486",
+  "kernel": "junzhejiao/teacher-verification-20261126-case6",
+  "controls_kernel": "junzhejiao/teacher-controls-20261126-case6",
+  "checks": {
+    "empty_patch_fails_tests": true,
+    "gold_patch_passes_tests": true
+  },
+  "valid": true,
+  "empty_rc": 1,
+  "gold_rc": 0,
+  "teacher_resolved": true,
+  "teacher_rc": 0,
+  "teacher_error": null,
+  "patch_sha256": "7d24565ec2c22311420bf6f70df5ec358b048485c871f47a0b1826428858bf0e",
+  "notebook_sha256": "50e1913044af8d95537c08deb4990ee2f8d90323a7f3eb219f7d3fff8e2be1f0",
+  "stream_log_sha256": "623e5cfb0e7cd8bbfeeb72d71b93b48eb404acde2ac028fa7f48b733b860efcd",
+  "controls_stream_log_sha256": "79d895a98ffe2495f233458cf2ebf1307af69c4b9f6c892cda5b7e1818f49912",
+  "model_calls": 0,
+  "note": "Official v31 verifier; no model inference in the job."
+}

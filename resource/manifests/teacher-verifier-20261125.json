@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "kernel": "junzhejiao/teacher-patch-verification-20261125",
+  "kernel_version": 1,
+  "scope": "One current-session teacher patch, graded independently with official v31 controls. No Gemma inference or graph A/B.",
+  "task_id": "more_itertools_757",
+  "notebook_sha256": "e2d551a138a7e8dafaaf1a1fcaea2851305dcccd5087946e06b8957cdaaefbf2",
+  "log_sha256": "497ec9d69c667706dfb031f98d490cf4eb7a024ef7a6e1aa71cddf2a01ba8bbd",
+  "patch_sha256": "90f78db0bac00763ec2427a6634579ff4106de4752613f03c7d8bfc6afe6c421",
+  "result": {
+    "task_id": "more_itertools_757",
+    "checks": {
+      "empty_patch_fails_tests": true,
+      "gold_patch_passes_tests": true
+    },
+    "valid": true,
+    "empty_rc": 1,
+    "gold_rc": 0,
+    "teacher_resolved": true,
+    "teacher_rc": 0,
+    "teacher_error": null
+  },
+  "details": [
+    {
+      "side": "empty",
+      "resolved": false,
+      "test_exit_code": 1,
+      "error_message": null,
+      "total_llm_calls": 0,
+      "tool_calls": 0,
+      "duration_seconds": 10.406033783999987,
+      "test_output_sha256": "b5c2cc7932db056f6775e9418aa5fd0e13a7b291ddb25c3517b5a96aa20a5cf8"
+    },
+    {
+      "side": "gold",
+      "resolved": true,
+      "test_exit_code": 0,
+      "error_message": null,
+      "total_llm_calls": 0,
+      "tool_calls": 0,
+      "duration_seconds": 10.532889049999994,
+      "test_output_sha256": "c5443bf74994ca98db606cbd35cb01230820f0b80bbe6f83d3f938dac7dfbb06"
+    },
+    {
+      "side": "teacher",
+      "resolved": true,
+      "test_exit_code": 0,
+      "error_message": null,
+      "total_llm_calls": 0,
+      "tool_calls": 0,
+      "duration_seconds": 10.399169870000037,
+      "test_output_sha256": "8fc8d612ec8b4e697eb0c303e99fa4a2d65f72ae9ab324acf3d00bcb58fe3db1"
+    }
+  ]
+}
