@@ -215,6 +215,48 @@ added those three and the internal plumbing, and the verifier accepted it.
   zero model calls in the job.
 - The retry used the visible failure, so it is recorded as repair-with-feedback, like case 8.
 
+## Summary after ten cases
+
+Ten of the twelve frozen tasks were attempted; two were not graded for reasons unrelated to model capability.
+
+| # | Task | Outcome | First try? | Graph gave a new fact? |
+| ---: | --- | --- | --- | --- |
+| 1 | `more_itertools_757` | verified repair | yes | no |
+| 2 | `more_itertools_1116` | deferred: the statement names no API and the four plausible names already exist | - | no |
+| 3 | `more_itertools_1157` | verified repair | yes | **yes** (located the existing `TestSerialize` reference) |
+| 4 | `tenacity_317` | verified repair | yes | no |
+| 5 | `tenacity_645` | environment-blocked: hatch-vcs needs `.git`, then the sandbox venv had no pip | - | no |
+| 6 | `mistune_486` | verified repair | yes | no |
+| 7 | `mistune_395` | verified repair | yes | no |
+| 8 | `mistune_502` | verified repair after one retry | no | no |
+| 9 | `w3lib_317` | deferred: the title does not say which UTF-16/32 normalisation is wanted | - | no |
+| 10 | `w3lib_167` | verified repair after one retry | no | no |
+
+**Result: eight verified teacher repairs across four repositories (five on the first frozen patch, three after one
+retry), three deferred for statement ambiguity, one environment-blocked.** No GPU was used and no model
+inference ran inside the grading jobs.
+
+What the ten cases say:
+
+1. **Statement quality, not skill, separated the outcomes.** Every case that named the target function, the
+   expected keyword arguments or a concrete failing case (4, 6, 7, 8, 10) ended with a verified patch. Every
+   case whose statement was only a title (2, 9, and `w3lib_338`) could not be turned into a patch without
+   guessing an interface; three of three failed this way.
+2. **The retry cases failed on interface shape, not on the logic.** `mistune_502` missed one terminator branch
+   of a regular expression; `w3lib_167` threaded a keyword through the wrong public functions. In both cases the
+   visible failing test named the missing interface and the second attempt converged. That suggests the scarce
+   information for a teacher is *where the change belongs*, not *how to write it*.
+3. **The partial source graph added a new fact in one case out of ten.** It was useful when the change needed an
+   existing reference found by structure (`TestSerialize`), and useless for single-function defects, which were
+   the majority. The graph is not what makes a teacher succeed here; the task statement is.
+4. **The CPU verifier cannot grade VCS-versioned repositories yet.** `tenacity` uses `hatch-vcs` with
+   `source = "vcs"`; a tarball checkout has no `.git`, and the retry venv had no pip, so both tenacity tasks
+   (5 and a would-be 11) stop at sandbox setup. Fixing that is a harness task, not a study result.
+
+Boundaries that still hold: this is one session's trajectory per case, not an independent model comparison; the
+graph is a partial AST tool, not the official ADK graph; nothing here shows a Gemma gain, and no student prompt,
+adapter, baseline agent or final-submission selection changed.
+
 ## Decision and next gate
 
 Do not derive a graph-forcing student instruction from this case. Literal search already supplied the

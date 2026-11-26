@@ -93,5 +93,16 @@
       "notes": "Expose separator on url_query_parameter/add_or_replace_parameter(s) and query_separator on canonicalize_url; attempt 1 targeted the wrong surface, attempt 2 passed."
     }
   ],
-  "teacher_patch_policy": "No reference or test patch was read before freezing any patch; case 3 controls were run after the teacher opened the source and that deviation is recorded."
+  "teacher_patch_policy": "No reference or test patch was read before freezing any patch; case 3 controls were run after the teacher opened the source and that deviation is recorded.",
+  "summary": {
+    "attempted": 10,
+    "verified": 8,
+    "verified_first_try": 5,
+    "verified_after_retry": 3,
+    "deferred": 3,
+    "environment_blocked": 1,
+    "repositories_with_verified_repairs": 4,
+    "graph_novel_fact_cases": 1,
+    "note": "Two of the twelve frozen tasks (w3lib_338, tenacity_615) were not separately attempted: the first is deferred for the same statement reason as case 9, the second shares case 5 packaging blocker."
+  }
 }
