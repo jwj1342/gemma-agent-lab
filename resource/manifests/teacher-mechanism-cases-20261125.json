@@ -65,6 +65,15 @@
       "teacher_resolved": true,
       "record": "resource/manifests/teacher-verifier-case7-20261126.json",
       "notes": "escape_url applied escape() around the quoted URL, so \"&\" became \"&amp;\" inside the link; dropping the wrapper keeps the literal ampersand and the official verifier accepted the patch."
+    },
+    {
+      "order": 8,
+      "task_id": "mistune_502",
+      "status": "executed_after_one_retry",
+      "source_graph_novel_fact": false,
+      "teacher_resolved": true,
+      "record": "resource/manifests/teacher-verifier-case8-20261126.json",
+      "notes": "CommonMark 0.31.2 inline comments: the first frozen pattern missed the \"<!--->\" terminator and failed; a second attempt that added it passed. The retry used the visible failure, so it is repair-with-feedback rather than a frozen prior."
     }
   ],
   "teacher_patch_policy": "No reference or test patch was read before freezing any patch; case 3 controls were run after the teacher opened the source and that deviation is recorded."

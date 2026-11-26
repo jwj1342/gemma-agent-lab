@@ -178,6 +178,21 @@ drops the `escape()` wrapper, which is exactly what the public issue's comment p
   zero model calls in the job.
 - Local smoke: the badge URL now keeps its literal ampersand.
 
+## Case 8 (2026-11-26, same session)
+
+**`mistune_502` — resolved on the second attempt.** "Fix CommonMark 0.31.2 inline HTML comment recognition."
+The first frozen pattern (`<!--(?:>|[\s\S]*?--)`) handled `<!-->` and bodies with internal `--`, but for
+`foo <!---> foo -->` it swallowed everything up to the later terminator, so the expected `<p>foo <!---> foo
+--&gt;</p>` came back as a live comment. The visible failing case named the missing `->` terminator; the second
+attempt added it and the official verifier accepted the patch.
+
+- Controls: `junzhejiao/teacher-controls-20261126-case8` — valid (empty fails, gold passes).
+- Grading: `junzhejiao/teacher-verification-20261126-case8` v3 — valid controls and `teacher_resolved: true`,
+  zero model calls in the job.
+- Both 0.31.2 examples now render exactly as the corpus expects.
+
+This case is a repair-with-feedback, not a frozen-prior prediction; the distinction is recorded in the receipt.
+
 ## Decision and next gate
 
 Do not derive a graph-forcing student instruction from this case. Literal search already supplied the

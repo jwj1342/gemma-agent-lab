@@ -1,0 +1,22 @@
+{
+  "task_id": "mistune_502",
+  "kernel": "junzhejiao/teacher-verification-20261126-case8",
+  "controls_kernel": "junzhejiao/teacher-controls-20261126-case8",
+  "checks": {
+    "empty_patch_fails_tests": true,
+    "gold_patch_passes_tests": true
+  },
+  "valid": true,
+  "empty_rc": 1,
+  "gold_rc": 0,
+  "teacher_resolved": true,
+  "teacher_rc": 0,
+  "teacher_error": null,
+  "attempts": 2,
+  "patch_sha256": "434e894a8b4681770ef1557cafa0a68bd68ce98958d1ec8be94e10d6ee121e82",
+  "notebook_sha256": "ca8a509384b5c83ae81ff2272740e942370c82ddbcebfa934c78d02fae17f5b2",
+  "stream_log_sha256": "4bdfb05d5c502adb4d82482ecb528ad9f02b0c0299c2c5d345841a9005ece703",
+  "controls_stream_log_sha256": "5562e1b2af604e5668ff8c3ef48ddd25bdd2e8f7a4b9679b2edb75cac7b98926",
+  "model_calls": 0,
+  "note": "Official v31 verifier; attempt 1 failed on the \"<!--->\" case, attempt 2 passed."
+}
