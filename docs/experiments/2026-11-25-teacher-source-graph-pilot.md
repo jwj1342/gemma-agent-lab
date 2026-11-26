@@ -202,6 +202,19 @@ normalisation is wanted — prefer the BOM, reject the bare label, or pick an en
 bytes, not the label. A patch would be a guess about the expected contract, so the case is deferred like
 `more_itertools_1116` and `w3lib_338`.
 
+## Case 10 (2026-11-27, same session)
+
+**`w3lib_167` — resolved on the second attempt.** "Expose the separator parameter added upstream to parse_qs and
+parse_qsl." Attempt 1 threaded a separator through `parse_qsl_to_bytes`, `url_query_cleaner` and the internal
+helpers; the official tests then failed with `TypeError`, naming the surface they expect: `separator=` on
+`url_query_parameter` and `add_or_replace_parameter`, and `query_separator=` on `canonicalize_url`. Attempt 2
+added those three and the internal plumbing, and the verifier accepted it.
+
+- Controls: `junzhejiao/teacher-controls-20261127-case10` — valid (empty fails, gold passes).
+- Grading: `junzhejiao/teacher-verification-20261127-case10` v2 — valid controls and `teacher_resolved: true`,
+  zero model calls in the job.
+- The retry used the visible failure, so it is recorded as repair-with-feedback, like case 8.
+
 ## Decision and next gate
 
 Do not derive a graph-forcing student instruction from this case. Literal search already supplied the

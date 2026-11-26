@@ -1,0 +1,22 @@
+{
+  "task_id": "w3lib_167",
+  "kernel": "junzhejiao/teacher-verification-20261127-case10",
+  "controls_kernel": "junzhejiao/teacher-controls-20261127-case10",
+  "checks": {
+    "empty_patch_fails_tests": true,
+    "gold_patch_passes_tests": true
+  },
+  "valid": true,
+  "empty_rc": 1,
+  "gold_rc": 0,
+  "teacher_resolved": true,
+  "teacher_rc": 0,
+  "teacher_error": null,
+  "attempts": 2,
+  "patch_sha256": "2669a16b0fa0e087c6ea80cdc14a21d245c5363c24760580e6f62f1c8eeecdf2",
+  "notebook_sha256": "18da54623c3c2ef2d332e6424cf630ba685cd2d2c5cc7b915e1424b0905adc09",
+  "stream_log_sha256": "f13c9d3c457398aca231bddb5555a8d085cc8681cc090e86dcc98f5814ea0b1a",
+  "controls_stream_log_sha256": "ba6ee7dd48f5606af6fce2fba17ad208ecfb3171f1dfdbd8826461e76380ea6b",
+  "model_calls": 0,
+  "note": "Official v31 verifier; attempt 1 failed on the expected keyword names, attempt 2 passed."
+}
