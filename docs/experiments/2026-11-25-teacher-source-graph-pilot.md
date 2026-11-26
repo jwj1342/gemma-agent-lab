@@ -193,6 +193,15 @@ attempt added it and the official verifier accepted the patch.
 
 This case is a repair-with-feedback, not a frozen-prior prediction; the distinction is recorded in the receipt.
 
+## Case 9 (2026-11-27, same session)
+
+**`w3lib_317` — deferred, not coded.** "Handle UTF-{16,32} the same for all 3 sources of encoding." The
+checkout confirms the discrepancy the title refers to: header and meta labels resolve to bare `utf-16`/`utf-32`
+(decoding then depends on a BOM), while `read_bom` returns `utf-16-le`/`utf-16-be`. The title does not say which
+normalisation is wanted — prefer the BOM, reject the bare label, or pick an endianness — and the choice needs the
+bytes, not the label. A patch would be a guess about the expected contract, so the case is deferred like
+`more_itertools_1116` and `w3lib_338`.
+
 ## Decision and next gate
 
 Do not derive a graph-forcing student instruction from this case. Literal search already supplied the

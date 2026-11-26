@@ -74,6 +74,14 @@
       "teacher_resolved": true,
       "record": "resource/manifests/teacher-verifier-case8-20261126.json",
       "notes": "CommonMark 0.31.2 inline comments: the first frozen pattern missed the \"<!--->\" terminator and failed; a second attempt that added it passed. The retry used the visible failure, so it is repair-with-feedback rather than a frozen prior."
+    },
+    {
+      "order": 9,
+      "task_id": "w3lib_317",
+      "status": "deferred",
+      "source_graph_novel_fact": false,
+      "teacher_resolved": null,
+      "notes": "The title asks to \"handle UTF-16/32 the same for all 3 sources of encoding\", and the checkout shows the discrepancy: header and meta labels resolve to bare \"utf-16\"/\"utf-32\" (BOM-dependent decoding), while read_bom returns \"utf-16-le\"/\"utf-16-be\". It does not say which normalisation is expected (prefer BOM, reject the label, or decode the label into a concrete endianness), and the bytes are needed to choose. Not coded: a patch here would be a guess about the expected API contract."
     }
   ],
   "teacher_patch_policy": "No reference or test patch was read before freezing any patch; case 3 controls were run after the teacher opened the source and that deviation is recorded."
